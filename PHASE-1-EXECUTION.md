@@ -217,6 +217,78 @@
 
 ---
 
+### Track 4: Monitor-Agent & Self-Healing 🤖
+**Priority:** P0 - Critical Infrastructure  
+**Estimated Time:** 2-3 weeks (parallel to Tracks 1-3)  
+**Status:** 🔴 Not Started
+
+**Goal:** Build continuous validation and self-healing across ALL systems
+
+**Why This Matters:**
+- Catch issues before they become problems
+- Auto-fix 95%+ of common failures
+- 99.9% uptime without manual intervention
+- Scale monitoring to 100+ systems with same overhead
+- Sleep knowing issues auto-fix
+
+**Week 1: Core Framework**
+- [ ] Design Monitor-Agent architecture (Python async)
+- [ ] Set up SQLite for metrics/history
+- [ ] Build health check framework
+  - [ ] Gateway health (RPC endpoint, response time)
+  - [ ] Cron job status (last run times, failures)
+  - [ ] API connectivity (Anthropic, Twitter, GitHub)
+  - [ ] Disk space (alert at 90%)
+  - [ ] Git status (uncommitted changes, push failures)
+  - [ ] Memory system (daily files exist, extraction working)
+  - [ ] Backup verification (daily backups complete)
+  - [ ] StantonTimes health (posting, approvals flowing)
+  - [ ] Bloom CI health (builds passing, PRs reviewed)
+  - [ ] Security checks (failed auth, anomalies)
+- [ ] Implement basic alerting (Discord DM)
+- [ ] Deploy Monitor-Agent as persistent process
+
+**Week 2: Self-Healing Actions**
+- [ ] Auto-restart for crashed gateway
+- [ ] Auto-enable disabled cron jobs (if issue resolved)
+- [ ] Auto-rotate expiring credentials (90-day cycle)
+- [ ] Auto-clear old logs/temp files (keep last 30 days)
+- [ ] Auto-refresh Twitter cookies (proactive, before expiry)
+- [ ] Auto-retry failed cron jobs (exponential backoff)
+- [ ] Auto-commit memory changes (if uncommitted >1 hour)
+- [ ] Auto-fallback to local models (if API rate limited)
+- [ ] Test all self-healing in sandbox environment
+
+**Week 3: Dashboard & Integration**
+- [ ] Create monitoring dashboard (Obsidian note, auto-updated)
+- [ ] Add validation wrapper to all cron jobs
+- [ ] Integrate with HEARTBEAT.md (Monitor-Agent orchestrates)
+- [ ] Set up alerting thresholds (P0-P3 classification)
+- [ ] 48-hour burn-in test (zero manual interventions)
+
+**Deliverables:**
+- Monitor-Agent running 24/7 (PID in status file)
+- 15+ validation checks active (health check suite)
+- 10+ self-healing actions working (auto-fix playbook)
+- Monitoring dashboard live (Obsidian updated every 5 min)
+- Validation wrappers on all cron jobs
+- Documentation: `VALIDATION-SELF-HEALING-ARCHITECTURE.md`
+
+**Success Criteria:**
+- 99%+ uptime for all critical systems
+- 95%+ issues auto-healed without human intervention
+- Mean time to detection (MTTD) < 5 minutes
+- Mean time to resolution (MTTR) < 15 minutes
+- <1 manual intervention per week for routine issues
+
+**Notes:**
+- This runs in PARALLEL to Tracks 1-3 (not blocking)
+- Can be partially implemented (MVP in Week 1, expand in Weeks 2-3)
+- See full architecture doc: `VALIDATION-SELF-HEALING-ARCHITECTURE.md`
+- This is INFRASTRUCTURE - not optional
+
+---
+
 ## Execution Order
 
 **Recommended sequence:**
