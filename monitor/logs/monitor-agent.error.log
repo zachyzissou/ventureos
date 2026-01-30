@@ -363,3 +363,7 @@ HTTP Request: POST https://discord.com/api/webhooks/1465950119634407527/R8WHqL42
 {'healer': 'git', 'issue_id': 'b363b928', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:35:06.186031Z'}
 {'healer': 'git', 'issue_id': 'b363b928', 'event': 'Attempting heal', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:35:06.186475Z'}
 {'issue_id': 'b363b928-abd2-4dcf-b96b-74f722def90a', 'event': 'attempting_git_autocommit', 'logger': 'monitor.healers.git_healer', 'level': 'info', 'timestamp': '2026-01-30T20:35:06.187030Z'}
+{'file_count': 5, 'event': 'git_autocommit_success', 'logger': 'monitor.healers.git_healer', 'level': 'info', 'timestamp': '2026-01-30T20:35:06.694513Z'}
+{'healer': 'git', 'success': True, 'message': 'Auto-committed 5 file(s)', 'event': 'Heal attempt complete', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:35:06.695873Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:35:06.698425Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:35:06.704975Z'}
