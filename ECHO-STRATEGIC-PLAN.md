@@ -29,6 +29,156 @@ Transform Echo from reactive task-executor to proactive AI orchestrator - a true
 
 ---
 
+## Security & Compliance Framework
+
+**Priority:** P0 - Must be completed before expanding capabilities
+
+### Data Classification
+
+| Level | Definition | Examples | Handling Requirements |
+|-------|------------|----------|----------------------|
+| **Restricted** | Extreme damage if disclosed | Credentials, API keys, passwords, SSNs | Never cloud, encrypted at rest, never logged, auto-rotate |
+| **Confidential** | Serious damage if disclosed | Financial transactions, health data, private messages | Local LM Studio preferred, encrypted in transit, audit logs |
+| **Internal** | Moderate damage if disclosed | Project plans, business strategy, code | Cloud OK with encryption, access controls |
+| **Public** | No damage if disclosed | Published content, public profiles | Standard handling |
+
+### Security Principles
+
+1. **Least Privilege:** Grant minimum access needed for function
+2. **Defense in Depth:** Multiple layers of security controls
+3. **Zero Trust:** Verify everything, trust nothing by default
+4. **Audit Everything:** Comprehensive logging of all sensitive operations
+5. **Fail Secure:** Default to locked-down on error
+6. **Privacy by Design:** Build privacy into every capability from the start
+7. **Transparency:** Always know what data is being accessed and why
+
+### Security Controls
+
+**Authentication & Access:**
+- API keys rotated every 90 days (automated)
+- Credential storage: macOS Keychain or encrypted vault only
+- OAuth tokens: refresh tokens secured, access tokens short-lived
+- No hardcoded credentials in config or code
+- Service accounts with limited scope
+
+**Data Protection:**
+- Restricted data: Local processing only (LM Studio)
+- Confidential data: Encrypted in transit (TLS 1.3+), encrypted at rest
+- Sensitive memory files: Git-encrypted or local-only
+- Backup encryption: Full-disk encryption on all backup targets
+- Data retention: Auto-delete after retention period expires
+
+**Monitoring & Logging:**
+- All API calls logged (source, target, timestamp, result)
+- Credential access logged and alerted
+- Failed authentication attempts trigger review
+- Unusual patterns flagged (new locations, off-hours access, bulk exports)
+- Logs retained for 1 year minimum
+
+**Third-Party Services:**
+- Vet all new services before integration
+- Review privacy policies & data handling practices
+- Prefer self-hosted/local alternatives when feasible
+- API rate limiting to prevent abuse
+- Fallback plans if service fails or is compromised
+
+### Incident Response Plan
+
+**Incident Classification:**
+
+| Priority | Definition | Response Time | Notification |
+|----------|------------|---------------|--------------|
+| **P0** | Data breach, credential compromise, system takeover | Immediate | Zach immediately, all systems locked |
+| **P1** | Unauthorized access attempt, API key leaked | 15 minutes | Zach within 1 hour |
+| **P2** | Service degradation, failed security control | 1 hour | Next check-in |
+| **P3** | Policy violation, audit finding | 24 hours | Weekly summary |
+
+**Response Procedures:**
+
+**P0 - Critical Incident:**
+1. **Contain (0-5 min):**
+   - Kill all running processes
+   - Revoke all API keys immediately
+   - Disconnect from network if needed
+   - Snapshot system state for forensics
+2. **Notify (5-10 min):**
+   - Alert Zach via all channels (Discord, SMS, call if no response)
+   - Document incident timeline
+3. **Investigate (10-60 min):**
+   - Identify attack vector
+   - Assess data exposure
+   - Check for persistence mechanisms
+4. **Recover (1-24 hours):**
+   - Rotate all credentials
+   - Patch vulnerabilities
+   - Restore from clean backup if needed
+   - Re-enable services once verified secure
+5. **Review (24-48 hours):**
+   - Post-incident analysis
+   - Update security controls
+   - Document lessons learned
+
+**P1 - High Priority:**
+- Isolate affected component
+- Rotate compromised credentials
+- Review logs for indicators of compromise
+- Notify Zach within 1 hour
+- Post-incident review within 48 hours
+
+**Disaster Recovery:**
+- Daily backups of critical data (memory/, config/, projects/)
+- Backup retention: 7 daily, 4 weekly, 12 monthly
+- Restore testing quarterly
+- Cold standby configuration documented
+- Recovery time objective (RTO): 4 hours
+- Recovery point objective (RPO): 24 hours
+
+### Privacy Compliance
+
+**User Rights:**
+- Right to know what data is collected
+- Right to delete any stored data
+- Right to export all stored data
+- Right to opt-out of any capability
+- Right to manual override of any automation
+
+**Data Minimization:**
+- Collect only data necessary for function
+- Purge ephemeral data after use
+- Archive inactive projects after 90 days
+- Auto-delete logs after retention period
+
+**Consent & Control:**
+- Explicit opt-in for new capabilities accessing sensitive data
+- Always announce when accessing restricted data
+- User can revoke access at any time
+- Regular privacy reviews (quarterly)
+
+### Security Audit Schedule
+
+**Daily:**
+- Check for failed authentication attempts
+- Verify backup completion
+- Monitor for unusual API activity
+
+**Weekly:**
+- Review access logs for anomalies
+- Check for exposed credentials (GitHub scanning, etc.)
+- Verify all services operational
+
+**Monthly:**
+- Security policy review & updates
+- Credential rotation check
+- Third-party service review
+
+**Quarterly:**
+- Full security audit
+- Disaster recovery test
+- Privacy compliance review
+- Penetration testing (if feasible)
+
+---
+
 ## Current Capabilities Audit
 
 ### ✅ Working Today
@@ -146,8 +296,24 @@ Support physical and mental well-being
 ## Implementation Roadmap
 
 ### Phase 1: Foundation (Week 1-2)
-**Goal:** Solidify current systems, establish baseline
+**Goal:** Solidify current systems, establish baseline, lock down security
 
+**Security & Compliance (CRITICAL):**
+- [ ] **Enterprise Security Policy** - Document comprehensive security framework
+  - Data classification (public/internal/confidential/restricted)
+  - Access controls & authentication requirements
+  - Encryption standards (data at rest, in transit)
+  - API key & credential management
+  - Third-party service vetting criteria
+  - Logging & audit trail requirements
+- [ ] **Incident Response Policy** - Define breach/failure protocols
+  - Incident classification (P0/P1/P2/P3)
+  - Escalation procedures & notification chains
+  - Containment & recovery procedures
+  - Post-incident review process
+  - Disaster recovery & backup validation
+
+**Core Foundation:**
 - [ ] Complete this strategic plan (review & approve)
 - [ ] Audit all skills - document what works, what needs fixing
 - [ ] Fix any broken integrations (gog calendar/gmail issues)
@@ -156,9 +322,11 @@ Support physical and mental well-being
 - [ ] Create project portfolio dashboard (what's active, what's blocked)
 
 **Success Metrics:**
+- Security & incident response policies documented & approved
 - Zero system failures for 1 week
 - Daily briefings delivered without prompting
 - 90%+ fact capture rate from conversations
+- All credentials rotated & secured per policy
 
 ### Phase 2: Communications Hub (Week 3-4)
 **Goal:** Unified communications orchestration
@@ -238,6 +406,8 @@ Support physical and mental well-being
 
 | Capability | Priority | Complexity | Impact | Status | Owner |
 |------------|----------|------------|--------|--------|-------|
+| **Security Policy** | **P0** | **High** | **Critical** | 🔴 **Not started** | **Phase 1** |
+| **Incident Response** | **P0** | **High** | **Critical** | 🔴 **Not started** | **Phase 1** |
 | Daily briefings | P0 | Low | High | 🟡 Partial | Phase 1 |
 | Email triage | P0 | Medium | High | 🔴 Not started | Phase 2 |
 | Calendar intel | P0 | Medium | High | 🔴 Not started | Phase 2 |
@@ -302,23 +472,30 @@ Sensitive data stays local. Use LM Studio for private analysis. Never leak conte
 
 ## Risk Mitigation
 
+### Security Risks (P0 - See Security Framework Above)
+- **Data breach:** Comprehensive incident response plan, encryption at rest/transit, least privilege access
+- **Credential compromise:** Auto-rotation, keychain storage, immediate revocation procedures
+- **Unauthorized access:** Zero trust architecture, audit logging, anomaly detection
+- **Privacy violation:** Data classification system, explicit consent, user rights framework
+- **Third-party compromise:** Service vetting, fallback plans, isolation of sensitive operations
+
 ### Technical Risks
 - **System failures:** Multiple monitoring layers, auto-restart, alerting
 - **API rate limits:** Caching, batching, fallback strategies
-- **Data loss:** Git-backed memory, daily backups, archive policy
-- **Token burn:** Cost monitoring, model routing optimization
+- **Data loss:** Git-backed memory, daily backups, disaster recovery tested quarterly
+- **Token burn:** Cost monitoring, model routing optimization (Haiku → Sonnet → local)
 
 ### Operational Risks
-- **Over-automation:** Always allow user override, opt-out mechanisms
-- **Alert fatigue:** Strict filtering, priority classification, quiet hours
+- **Over-automation:** Always allow user override, opt-out mechanisms, explainable decisions
+- **Alert fatigue:** Strict filtering, priority classification, quiet hours (23:00-08:00)
 - **Context drift:** Regular memory maintenance, deduplication, archiving
-- **Privacy leaks:** Security skill active, prompt injection defense, sandbox sensitive operations
+- **Privacy leaks:** Prompt injection defense active, sensitive data stays local
 
 ### Strategic Risks
-- **Scope creep:** Phase-gated rollout, validate before expanding
+- **Scope creep:** Phase-gated rollout, validate before expanding, security review for new capabilities
 - **User friction:** Regular check-ins, iterate on workflows, adapt to feedback
 - **Capability gaps:** Skill creation pipeline, identify blockers early
-- **Dependency on Echo:** Document all automations, ensure manual fallbacks exist
+- **Dependency on Echo:** Document all automations, ensure manual fallbacks exist, never single point of failure
 
 ---
 
