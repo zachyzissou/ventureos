@@ -48,10 +48,13 @@ class MonitorAgent:
     
     def _init_detectors(self):
         """Initialize all detection modules"""
+        # Create shared HTTP client manager
+        self.http_manager = HTTPClientManager()
+        
         self.detectors = {
             "gateway": GatewayDetector(self.config),
             "cron": CronDetector(self.config),
-            "api": APIDetector(self.config, HTTPClientManager()),
+            "api": APIDetector(self.config, self.http_manager),
             "disk": DiskDetector(self.config),
         }
         logger.info("Detectors initialized", count=len(self.detectors))
@@ -95,44 +98,51 @@ class MonitorAgent:
         self.running = True
         logger.info("MonitorAgent starting main loop")
         
-        loop_count = 0
+        # Initialize HTTP client
+        await self.http_manager.start()
         
-        while self.running:
-            try:
-                loop_count += 1
-                loop_start = datetime.now()
-                
-                logger.debug("Starting monitoring cycle", loop=loop_count)
-                
-                # Run all checks
-                issues = await self._run_all_checks()
-                
-                logger.info("Monitoring cycle complete", 
-                           loop=loop_count,
-                           issues_found=len(issues))
-                
-                # Process each issue
-                for issue in issues:
-                    await self._process_issue(issue)
-                
-                # Update dashboard (TODO: implement)
-                # await self._update_dashboard()
-                
-                # Calculate sleep time (60s default)
-                loop_duration = (datetime.now() - loop_start).total_seconds()
-                sleep_time = max(1, 60 - loop_duration)
-                
-                logger.debug("Sleeping", seconds=sleep_time)
-                await asyncio.sleep(sleep_time)
-                
-            except KeyboardInterrupt:
-                logger.info("Received interrupt signal, shutting down")
-                self.running = False
-                break
-            except Exception as e:
-                logger.error("Error in main loop", error=str(e), loop=loop_count)
-                # Sleep on error to prevent tight loop
-                await asyncio.sleep(60)
+        try:
+            loop_count = 0
+            
+            while self.running:
+                try:
+                    loop_count += 1
+                    loop_start = datetime.now()
+                    
+                    logger.debug("Starting monitoring cycle", loop=loop_count)
+                    
+                    # Run all checks
+                    issues = await self._run_all_checks()
+                    
+                    logger.info("Monitoring cycle complete", 
+                               loop=loop_count,
+                               issues_found=len(issues))
+                    
+                    # Process each issue
+                    for issue in issues:
+                        await self._process_issue(issue)
+                    
+                    # Update dashboard (TODO: implement)
+                    # await self._update_dashboard()
+                    
+                    # Calculate sleep time (60s default)
+                    loop_duration = (datetime.now() - loop_start).total_seconds()
+                    sleep_time = max(1, 60 - loop_duration)
+                    
+                    logger.debug("Sleeping", seconds=sleep_time)
+                    await asyncio.sleep(sleep_time)
+                    
+                except KeyboardInterrupt:
+                    logger.info("Received interrupt signal, shutting down")
+                    self.running = False
+                    break
+                except Exception as e:
+                    logger.error("Error in main loop", error=str(e), loop=loop_count)
+                    # Sleep on error to prevent tight loop
+                    await asyncio.sleep(60)
+        finally:
+            # Cleanup HTTP client
+            await self.http_manager.stop()
     
     async def _run_all_checks(self) -> List[Issue]:
         """
