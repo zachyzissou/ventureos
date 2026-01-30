@@ -17,6 +17,67 @@
 
 ---
 
+## Development Acceleration: Coding Agents
+
+**New Integration (2026-01-30):** Leverage `codex-cli` and `cursor-agent` for 5-10x development velocity.
+
+### Tools Available
+- **Codex CLI** (`npx codex`) - Code generation, review, refactoring
+- **Cursor Agent** (`cursor-agent`) - Interactive sessions, planning, architecture analysis
+
+### When to Use
+
+**Codex for:**
+- Boilerplate generation (new detectors, validators, healers)
+- Test suite generation (pytest, comprehensive coverage)
+- Code review before commits
+- Refactoring existing code
+
+**Cursor Agent for:**
+- Architecture planning (`--mode plan`)
+- Complex multi-file changes
+- Session-based development (`--continue` to resume)
+- Q&A and code explanations (`--mode ask`)
+
+### Integration Into Phase Zero
+
+**Before implementing each module:**
+```bash
+# Validate approach with Cursor Agent
+cursor-agent --mode plan --print \
+  "Review the [MODULE] implementation plan and suggest improvements"
+```
+
+**When generating boilerplate:**
+```bash
+# Generate following existing patterns
+npx codex exec --full-auto \
+  "Create [NEW_MODULE] following the pattern in [EXISTING_MODULE]"
+```
+
+**Before committing:**
+```bash
+# Automated code review
+npx codex review [changed_files]
+```
+
+**For comprehensive testing:**
+```bash
+# Generate test suite
+npx codex exec --sandbox workspace-write \
+  "Generate unit tests for [MODULE] with 100% coverage following test_[pattern].py"
+```
+
+### Expected Impact
+- **Time savings:** 50-70% reduction in boilerplate writing
+- **Quality improvement:** AI code review catches issues before commit
+- **Test coverage:** Automated test generation ensures comprehensive coverage
+- **Documentation:** AI-generated docstrings and README updates
+
+See `CODING-AGENT-INTEGRATION.md` for complete guide.
+
+---
+
 ## Validation Methodology Integration
 
 Three validation layers synthesized from existing architecture:
