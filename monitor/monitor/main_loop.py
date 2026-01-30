@@ -317,21 +317,36 @@ async def main():
     """Entry point for Monitor-Agent"""
     
     import os
+    import yaml
     
     # Load webhook URL from environment
     discord_webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
     
-    # Default configuration
-    config = {
-        "database": {
-            "path": "data/monitor.db"
-        },
-        "healing": {
+    # Load configuration from YAML file
+    config_path = Path(__file__).parent.parent / "config" / "config.yaml"
+    
+    if config_path.exists():
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        logger.info("Loaded config from YAML", path=str(config_path))
+    else:
+        logger.warning("Config file not found, using defaults", path=str(config_path))
+        config = {}
+    
+    # Ensure required fields exist (backwards compatibility)
+    if "database" not in config:
+        config["database"] = {"path": "data/monitor.db"}
+    
+    if "healing" not in config:
+        config["healing"] = {
             "enabled": True,
+            "dry_run": True,  # SAFETY: Default to dry-run
             "max_attempts": 3,
             "cooldown_seconds": 300
-        },
-        "alerting": {
+        }
+    
+    if "alerting" not in config:
+        config["alerting"] = {
             "enabled": True,
             "discord": {
                 "webhook_url": discord_webhook,
@@ -340,7 +355,22 @@ async def main():
             "deduplication_window_seconds": 300,
             "batch_interval_seconds": 900
         }
-    }
+    else:
+        # Inject webhook URL from environment
+        if "discord" not in config["alerting"]:
+            config["alerting"]["discord"] = {}
+        config["alerting"]["discord"]["webhook_url"] = discord_webhook
+        if "mention_user_id" not in config["alerting"]["discord"]:
+            config["alerting"]["discord"]["mention_user_id"] = "956203522624462918"
+    
+    # Log critical safety settings
+    dry_run = config.get("healing", {}).get("dry_run", True)
+    logger.warning(
+        "SAFETY CHECK",
+        dry_run=dry_run,
+        manual_approval=config.get("healing", {}).get("manual_approval_required", []),
+        healing_enabled=config.get("healing", {}).get("enabled", False)
+    )
     
     # Create and run agent
     agent = MonitorAgent(config)

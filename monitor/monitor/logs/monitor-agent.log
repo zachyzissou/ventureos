@@ -881,3 +881,148 @@ HTTP Request: POST https://discord.com/api/webhooks/1466893157827612941/lbJ4vBd5
 {'healer': 'git', 'issue_id': '8d9fe01a', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:11:53.050452Z'}
 {'healer': 'git', 'issue_id': '8d9fe01a', 'event': 'Attempting heal', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:11:53.050696Z'}
 {'issue_id': '8d9fe01a-8865-48f9-b91f-d38b907d0a13', 'dry_run': False, 'event': 'attempting_git_autocommit', 'logger': 'monitor.healers.git_healer', 'level': 'info', 'timestamp': '2026-01-30T21:11:53.050972Z'}
+{'file_count': 3, 'event': 'git_autocommit_success', 'logger': 'monitor.healers.git_healer', 'level': 'info', 'timestamp': '2026-01-30T21:11:53.463935Z'}
+{'healer': 'git', 'success': True, 'message': 'Auto-committed 3 file(s)', 'event': 'Heal attempt complete', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:11:53.465115Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:11:53.467760Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:11:53.473245Z'}
+{'validator': 'obsidian', 'severity': 'P3', 'system': 'obsidian', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:11:54.495092Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:11:54.504448Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:11:54.510948Z'}
+{'validator': 'git', 'severity': 'P3', 'system': 'git', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:11:54.614557Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:11:54.616765Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:11:54.622970Z'}
+{'attempt': 1, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:12:04.508327Z'}
+{'attempt': 2, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:12:19.522730Z'}
+{'attempt': 3, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:12:34.595766Z'}
+{'retries': 3, 'last_error': 'Status check timed out (>10s)', 'event': 'gateway_unhealthy_verified', 'logger': 'monitor.detectors.gateway_detector', 'level': 'error', 'timestamp': '2026-01-30T21:12:34.596510Z'}
+{'detector': 'gateway', 'severity': 'P0', 'system': 'gateway', 'event': 'Issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.597202Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.604561Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.611718Z'}
+{'loop': 2, 'issues_found': 3, 'event': 'Monitoring cycle complete', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.612201Z'}
+{'issue_id': '3a4b76d3', 'severity': 'P0', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.612403Z'}
+{'healer': 'gateway', 'issue_id': '3a4b76d3', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.612587Z'}
+{'healer': 'gateway', 'issue_id': '3a4b76d3', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.612809Z'}
+{'issue_id': '3a4b76d3', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.612960Z'}
+{'issue_id': '3a4b76d3-73fe-4801-a6bc-138b31c8ad84', 'severity': 'P0', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.613115Z'}
+{'timeout': 10.0, 'max_connections': 100, 'event': 'HTTP client initialized', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.627377Z'}
+HTTP Request: POST https://discord.com/api/webhooks/1466893157827612941/lbJ4vBd59fBmY8iF8DZ3vpEa6E0C_y3GK6Mf9wzUGtpiOFyLGsmJP46j9LU5eZ_sWYiY "HTTP/1.1 204 No Content"
+{'issue_id': '3a4b76d3-73fe-4801-a6bc-138b31c8ad84', 'severity': 'P0', 'event': 'discord_alert_sent', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.950739Z'}
+{'event': 'HTTP client closed', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.951510Z'}
+{'issue_id': 'fb71ce8c', 'severity': 'P3', 'can_auto_fix': False, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.951666Z'}
+{'issue_id': 'fb71ce8c', 'event': 'Issue not auto-fixable, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.951738Z'}
+{'issue_id': 'fb71ce8c-153a-4faf-8679-ed415e011eb8', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.951800Z'}
+{'issue_id': '1447f072', 'severity': 'P3', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.951884Z'}
+{'healer': 'git', 'issue_id': '1447f072', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.951959Z'}
+{'healer': 'git', 'issue_id': '1447f072', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.952076Z'}
+{'issue_id': '1447f072', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.952217Z'}
+{'issue_id': '1447f072-c56f-4d8e-aafa-1bebedea5ba2', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:12:34.952362Z'}
+{'validator': 'obsidian', 'severity': 'P3', 'system': 'obsidian', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:54.490700Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:12:54.502121Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:12:54.512013Z'}
+{'validator': 'git', 'severity': 'P3', 'system': 'git', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:12:54.596511Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:12:54.598890Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:12:54.604963Z'}
+{'attempt': 1, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:13:04.514580Z'}
+{'attempt': 2, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:13:19.531905Z'}
+{'attempt': 3, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:13:34.552723Z'}
+{'retries': 3, 'last_error': 'Status check timed out (>10s)', 'event': 'gateway_unhealthy_verified', 'logger': 'monitor.detectors.gateway_detector', 'level': 'error', 'timestamp': '2026-01-30T21:13:34.553389Z'}
+{'detector': 'gateway', 'severity': 'P0', 'system': 'gateway', 'event': 'Issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.553889Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.557877Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.568547Z'}
+{'loop': 3, 'issues_found': 3, 'event': 'Monitoring cycle complete', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.569711Z'}
+{'issue_id': 'f7ce71e8', 'severity': 'P0', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.571076Z'}
+{'healer': 'gateway', 'issue_id': 'f7ce71e8', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.571291Z'}
+{'healer': 'gateway', 'issue_id': 'f7ce71e8', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.571474Z'}
+{'issue_id': 'f7ce71e8', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.571574Z'}
+{'issue_id': 'f7ce71e8-6b42-4d3e-ad2c-68f14b9eed8c', 'severity': 'P0', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.572647Z'}
+{'issue_id': '45f4ff23', 'severity': 'P3', 'can_auto_fix': False, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.572976Z'}
+{'issue_id': '45f4ff23', 'event': 'Issue not auto-fixable, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.573111Z'}
+{'issue_id': '45f4ff23-8251-4379-86ec-3d8248070f30', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.573212Z'}
+{'issue_id': '0996be39', 'severity': 'P3', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.573355Z'}
+{'healer': 'git', 'issue_id': '0996be39', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.573559Z'}
+{'healer': 'git', 'issue_id': '0996be39', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.573866Z'}
+{'issue_id': '0996be39', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.574109Z'}
+{'issue_id': '0996be39-c286-4822-ad95-11501b763197', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:13:34.574242Z'}
+{'validator': 'obsidian', 'severity': 'P3', 'system': 'obsidian', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:54.497924Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:13:54.518416Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:13:54.525649Z'}
+{'validator': 'git', 'severity': 'P3', 'system': 'git', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:13:54.606094Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:13:54.608197Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:13:54.615260Z'}
+{'attempt': 1, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:14:04.576856Z'}
+{'attempt': 2, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:14:19.712152Z'}
+{'attempt': 3, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:14:34.744401Z'}
+{'retries': 3, 'last_error': 'Status check timed out (>10s)', 'event': 'gateway_unhealthy_verified', 'logger': 'monitor.detectors.gateway_detector', 'level': 'error', 'timestamp': '2026-01-30T21:14:34.745125Z'}
+{'detector': 'gateway', 'severity': 'P0', 'system': 'gateway', 'event': 'Issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.746104Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.749831Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.761760Z'}
+{'loop': 4, 'issues_found': 3, 'event': 'Monitoring cycle complete', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.765825Z'}
+{'issue_id': '7111e5fb', 'severity': 'P0', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.766311Z'}
+{'healer': 'gateway', 'issue_id': '7111e5fb', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.766719Z'}
+{'healer': 'gateway', 'issue_id': '7111e5fb', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.767003Z'}
+{'issue_id': '7111e5fb', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.767215Z'}
+{'issue_id': '7111e5fb-cf91-41b1-935f-d64849b46a45', 'severity': 'P0', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.767335Z'}
+{'issue_id': 'f02288a0', 'severity': 'P3', 'can_auto_fix': False, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.767650Z'}
+{'issue_id': 'f02288a0', 'event': 'Issue not auto-fixable, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.767742Z'}
+{'issue_id': 'f02288a0-d2e1-4f34-94e2-f6730bb7e7c3', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.767879Z'}
+{'issue_id': '1fdb4185', 'severity': 'P3', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.768013Z'}
+{'healer': 'git', 'issue_id': '1fdb4185', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.772336Z'}
+{'healer': 'git', 'issue_id': '1fdb4185', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.772529Z'}
+{'issue_id': '1fdb4185', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.775295Z'}
+{'issue_id': '1fdb4185-88d3-4fcf-908c-535fe5aaa332', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:14:34.775566Z'}
+{'validator': 'obsidian', 'severity': 'P3', 'system': 'obsidian', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:54.502975Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:14:54.537741Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:14:54.561077Z'}
+{'validator': 'git', 'severity': 'P3', 'system': 'git', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:14:54.653819Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:14:54.655408Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:14:54.665121Z'}
+{'attempt': 1, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:15:04.573861Z'}
+{'attempt': 2, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:15:19.587777Z'}
+{'attempt': 3, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:15:34.599439Z'}
+{'retries': 3, 'last_error': 'Status check timed out (>10s)', 'event': 'gateway_unhealthy_verified', 'logger': 'monitor.detectors.gateway_detector', 'level': 'error', 'timestamp': '2026-01-30T21:15:34.600356Z'}
+{'detector': 'gateway', 'severity': 'P0', 'system': 'gateway', 'event': 'Issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.600847Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.611430Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.615969Z'}
+{'loop': 5, 'issues_found': 3, 'event': 'Monitoring cycle complete', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.616479Z'}
+{'issue_id': '7c8aee47', 'severity': 'P0', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.616763Z'}
+{'healer': 'gateway', 'issue_id': '7c8aee47', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.616976Z'}
+{'healer': 'gateway', 'issue_id': '7c8aee47', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.617206Z'}
+{'issue_id': '7c8aee47', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.617361Z'}
+{'issue_id': '7c8aee47-a27a-4a38-81d9-8da8ba2ec6e5', 'severity': 'P0', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.617518Z'}
+{'issue_id': 'c43c1492', 'severity': 'P3', 'can_auto_fix': False, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.617761Z'}
+{'issue_id': 'c43c1492', 'event': 'Issue not auto-fixable, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.617900Z'}
+{'issue_id': 'c43c1492-65e9-43ee-a0dd-041c608c1149', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.618039Z'}
+{'issue_id': 'a323eb6b', 'severity': 'P3', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.618235Z'}
+{'healer': 'git', 'issue_id': 'a323eb6b', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.618412Z'}
+{'healer': 'git', 'issue_id': 'a323eb6b', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.618574Z'}
+{'issue_id': 'a323eb6b', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.618708Z'}
+{'issue_id': 'a323eb6b-f797-464d-93fc-fc6a98497595', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:15:34.618843Z'}
+{'validator': 'obsidian', 'severity': 'P3', 'system': 'obsidian', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:54.495802Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:15:54.505798Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:15:54.510541Z'}
+{'validator': 'git', 'severity': 'P3', 'system': 'git', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:15:54.591793Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:15:54.593680Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:15:54.597800Z'}
+{'attempt': 1, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:16:04.509036Z'}
+{'attempt': 2, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:16:19.522282Z'}
+{'attempt': 3, 'error': 'Status check timed out (>10s)', 'event': 'gateway_check_failed_attempt', 'logger': 'monitor.detectors.gateway_detector', 'level': 'warning', 'timestamp': '2026-01-30T21:16:34.534572Z'}
+{'retries': 3, 'last_error': 'Status check timed out (>10s)', 'event': 'gateway_unhealthy_verified', 'logger': 'monitor.detectors.gateway_detector', 'level': 'error', 'timestamp': '2026-01-30T21:16:34.535375Z'}
+{'detector': 'gateway', 'severity': 'P0', 'system': 'gateway', 'event': 'Issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.535883Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.537928Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.541828Z'}
+{'loop': 6, 'issues_found': 3, 'event': 'Monitoring cycle complete', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.542272Z'}
+{'issue_id': '65fc9348', 'severity': 'P0', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.542467Z'}
+{'healer': 'gateway', 'issue_id': '65fc9348', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.542655Z'}
+{'healer': 'gateway', 'issue_id': '65fc9348', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.542866Z'}
+{'issue_id': '65fc9348', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.543015Z'}
+{'issue_id': '65fc9348-558e-4104-982b-20fec34356ce', 'severity': 'P0', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.543173Z'}
+{'issue_id': 'b261972f', 'severity': 'P3', 'can_auto_fix': False, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.543403Z'}
+{'issue_id': 'b261972f', 'event': 'Issue not auto-fixable, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.543545Z'}
+{'issue_id': 'b261972f-efb6-4b11-9f87-ee0a8227d615', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.550453Z'}
+{'issue_id': '95606e42', 'severity': 'P3', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.550595Z'}
+{'healer': 'git', 'issue_id': '95606e42', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.550684Z'}
+{'healer': 'git', 'issue_id': '95606e42', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.550755Z'}
+{'issue_id': '95606e42', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.550875Z'}
+{'issue_id': '95606e42-70f4-46e1-bab3-98dac58cd6b1', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:16:34.551002Z'}
+{'signal': 15, 'event': 'Received shutdown signal', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:36.729327Z'}
+{'event': 'Stopping MonitorAgent', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:16:36.729849Z'}
