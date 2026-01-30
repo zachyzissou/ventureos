@@ -25,3 +25,10 @@ HTTP Request: GET https://httpbin.org/status/200 "HTTP/1.1 200 OK"
 {'db_path': 'data/test_monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T18:54:23.409951Z'}
 Discord webhook URL not configured
 Discord webhook URL not configured
+Discord webhook URL not configured
+Discord webhook URL not configured
+Discord webhook URL not configured
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T19:41:01.583386Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T19:41:01.583640Z'}
+Discord webhook URL not configured
+Discord webhook URL not configured
