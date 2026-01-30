@@ -33,7 +33,33 @@ class GatewayHealer(BaseHealer):
     
     async def heal(self, issue: Issue) -> HealResult:
         """Restart the gateway daemon"""
-        logger.info("attempting_gateway_restart", issue_id=issue.id)
+        logger.info("attempting_gateway_restart", issue_id=issue.id, dry_run=self.dry_run)
+        
+        # Check if approval required
+        if await self.requires_approval("gateway_restart"):
+            approved = await self.request_approval(issue, "gateway_restart")
+            if not approved:
+                logger.warning("gateway_restart_denied", reason="approval_required")
+                return HealResult(
+                    success=False,
+                    action_taken="gateway restart (denied)",
+                    message="Manual approval required but not granted",
+                    metadata={"approval_required": True}
+                )
+        
+        # DRY RUN MODE: Log but don't execute
+        if self.dry_run:
+            logger.warning(
+                "dry_run_gateway_restart",
+                issue_id=issue.id,
+                message="DRY RUN: Would restart gateway, but dry_run=true"
+            )
+            return HealResult(
+                success=True,
+                action_taken="gateway restart (dry-run)",
+                message="DRY RUN: Would have restarted gateway",
+                metadata={"dry_run": True, "would_execute": "clawdbot gateway stop && clawdbot gateway start"}
+            )
         
         try:
             # First, try to stop gracefully

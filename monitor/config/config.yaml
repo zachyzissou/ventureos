@@ -15,6 +15,15 @@ check_frequencies:
   stantontimes: 900        # Every 15 minutes
   bloom_ci: 1800           # Every 30 minutes
 
+# Check configurations
+checks:
+  gateway:
+    enabled: true
+    frequency_seconds: 60
+    timeout_seconds: 10
+    retry_count: 3           # SAFETY: Check 3x before declaring dead
+    retry_delay_seconds: 5   # SAFETY: Wait 5s between retries
+
 # Thresholds
 thresholds:
   gateway:
@@ -74,8 +83,12 @@ alerts:
 # Self-healing settings
 healing:
   enabled: true
+  dry_run: true  # SAFETY: Log actions but don't execute (set false for production)
   max_attempts: 3
   cooldown_seconds: 300  # 5 min cooldown between same heal type
+  manual_approval_required:  # SAFETY: Actions requiring human approval
+    - gateway_restart
+    - cron_disable
   
   actions:
     restart_gateway:

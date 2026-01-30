@@ -33,7 +33,21 @@ class DiskHealer(BaseHealer):
     
     async def heal(self, issue: Issue) -> HealResult:
         """Clean up disk space by removing temp files and old logs"""
-        logger.info("attempting_disk_cleanup", issue_id=issue.id)
+        logger.info("attempting_disk_cleanup", issue_id=issue.id, dry_run=self.dry_run)
+        
+        # DRY RUN MODE: Log but don't execute
+        if self.dry_run:
+            logger.warning(
+                "dry_run_disk_cleanup",
+                issue_id=issue.id,
+                message="DRY RUN: Would clean disk space, but dry_run=true"
+            )
+            return HealResult(
+                success=True,
+                action_taken="disk cleanup (dry-run)",
+                message="DRY RUN: Would have cleaned old logs, temp files, npm cache, __pycache__",
+                metadata={"dry_run": True}
+            )
         
         try:
             cleaned_bytes = 0

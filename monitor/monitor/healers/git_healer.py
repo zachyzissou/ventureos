@@ -34,7 +34,21 @@ class GitHealer(BaseHealer):
     
     async def heal(self, issue: Issue) -> HealResult:
         """Auto-commit uncommitted changes"""
-        logger.info("attempting_git_autocommit", issue_id=issue.id)
+        logger.info("attempting_git_autocommit", issue_id=issue.id, dry_run=self.dry_run)
+        
+        # DRY RUN MODE: Log but don't execute
+        if self.dry_run:
+            logger.warning(
+                "dry_run_git_commit",
+                issue_id=issue.id,
+                message="DRY RUN: Would commit changes, but dry_run=true"
+            )
+            return HealResult(
+                success=True,
+                action_taken="git commit (dry-run)",
+                message="DRY RUN: Would have auto-committed uncommitted changes",
+                metadata={"dry_run": True}
+            )
         
         try:
             # Get list of uncommitted files

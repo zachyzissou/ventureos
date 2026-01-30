@@ -34,7 +34,23 @@ class CronHealer(BaseHealer):
     
     async def heal(self, issue: Issue) -> HealResult:
         """Enable disabled cron jobs or recreate missing ones"""
-        logger.info("attempting_cron_heal", issue_id=issue.id)
+        logger.info("attempting_cron_heal", issue_id=issue.id, dry_run=self.dry_run)
+        
+        # DRY RUN MODE: Log but don't execute
+        if self.dry_run:
+            affected_jobs = issue.metadata.get("jobs", [])
+            logger.warning(
+                "dry_run_cron_enable",
+                issue_id=issue.id,
+                jobs=affected_jobs,
+                message="DRY RUN: Would enable cron job(s), but dry_run=true"
+            )
+            return HealResult(
+                success=True,
+                action_taken="cron enable (dry-run)",
+                message=f"DRY RUN: Would have enabled {len(affected_jobs)} cron job(s)",
+                metadata={"dry_run": True, "jobs": affected_jobs}
+            )
         
         try:
             # Load jobs configuration

@@ -1,8 +1,8 @@
 """
 Monitor-Agent Healer Module
-Phase Zero: Architecture Fix
+Phase Zero: Architecture Fix + Safety Features
 
-Base class for all healers with concurrency safety.
+Base class for all healers with concurrency safety and dry-run mode.
 """
 
 import asyncio
@@ -22,13 +22,22 @@ class BaseHealer(ABC):
         self.config = config
         self.healing_config = config.get("healing", {})
         self.enabled = self.healing_config.get("enabled", True)
+        self.dry_run = self.healing_config.get("dry_run", False)  # SAFETY: dry-run mode
         self.max_attempts = self.healing_config.get("max_attempts", 3)
         self.cooldown_seconds = self.healing_config.get("cooldown_seconds", 300)
+        self.manual_approval_actions = set(
+            self.healing_config.get("manual_approval_required", [])
+        )
         
         # Thread-safe state management
         self._last_heal_times: Dict[str, int] = {}
         self._heal_attempts: Dict[str, int] = {}  # Track attempts per issue
         self._heal_lock = asyncio.Lock()  # Prevent race conditions
+        
+        if self.dry_run:
+            logger.warning("healer_dry_run_enabled",
+                         healer=self.__class__.__name__,
+                         message="Dry-run mode: will LOG actions but NOT execute")
     
     @abstractmethod
     async def heal(self, issue: Issue) -> HealResult:
@@ -76,6 +85,37 @@ class BaseHealer(ABC):
                 return False
             
             return True
+    
+    async def requires_approval(self, action: str) -> bool:
+        """Check if this action requires manual approval"""
+        return action in self.manual_approval_actions
+    
+    async def request_approval(self, issue: Issue, action: str) -> bool:
+        """
+        Request manual approval for critical action.
+        
+        TODO: Implement Discord notification with Y/N buttons.
+        For now:
+        - In dry-run: auto-approve (won't execute anyway)
+        - In production: auto-deny until Discord approval implemented
+        """
+        if self.dry_run:
+            logger.warning(
+                "approval_bypassed_dry_run",
+                action=action,
+                issue_id=issue.id,
+                message="Dry-run mode: would request approval but bypassing"
+            )
+            return True
+        
+        # TODO: Send Discord message with Y/N buttons, wait for response
+        logger.error(
+            "approval_required_not_implemented",
+            action=action,
+            issue_id=issue.id,
+            message="Manual approval required but Discord approval not yet implemented - DENYING"
+        )
+        return False
     
     async def record_heal_attempt(self, issue: Issue, action_name: str):
         """

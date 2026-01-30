@@ -1,15 +1,9 @@
 """
 Gateway Health Detector
-Phase Zero Day 2: Core Detectors
+Phase Zero Day 2: Core Detectors + Safety Features
 
 Monitors Clawdbot Gateway daemon status and health.
-"""
-
-"""
-Gateway Health Detector
-Phase Zero Day 2: Core Detectors
-
-Monitors Clawdbot Gateway daemon status and health.
+Includes retry logic to prevent false positives.
 """
 
 import asyncio
@@ -24,55 +18,101 @@ logger = get_logger(__name__)
 
 
 class GatewayDetector(InfrastructureDetector):
-    """Detects Gateway health issues"""
+    """Detects Gateway health issues with retry logic"""
     
-    async def check(self) -> Optional[Issue]:
-        """Check if Gateway is running and responsive"""
-        
-        # Check if gateway process is running
+    def __init__(self, config: dict):
+        super().__init__(config)
+        gateway_config = config.get("checks", {}).get("gateway", {})
+        self.retry_count = gateway_config.get("retry_count", 3)
+        self.retry_delay = gateway_config.get("retry_delay_seconds", 5)
+        self.timeout = gateway_config.get("timeout_seconds", 10)
+    
+    async def _check_once(self) -> tuple[bool, Optional[str]]:
+        """
+        Single health check attempt.
+        Returns (is_healthy, error_message)
+        """
         try:
             proc = await asyncio.create_subprocess_exec(
                 "/usr/local/bin/clawdbot", "status",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10.0)
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), 
+                timeout=self.timeout
+            )
             
             output = stdout.decode()
             
             # Check if output indicates gateway is running
-            if "Running" not in output and "running" not in output:
-                return Issue(
-                    severity=Severity.P0,
-                    category=Category.INFRASTRUCTURE,
-                    system="gateway",
-                    message="Gateway is not running",
-                    can_auto_fix=True,
-                    metadata={"output": output, "stderr": stderr.decode()}
-                )
-            
-            # Gateway is running - no issue
-            return None
-            
+            if "Running" in output or "running" in output:
+                return (True, None)
+            else:
+                return (False, f"Status check failed: {output}")
+                
         except asyncio.TimeoutError:
-            return Issue(
-                severity=Severity.P0,
-                category=Category.INFRASTRUCTURE,
-                system="gateway",
-                message="Gateway status check timed out (>10s)",
-                can_auto_fix=True,
-                metadata={"timeout": 10.0}
-            )
-        
+            return (False, f"Status check timed out (>{self.timeout}s)")
         except Exception as e:
-            return Issue(
-                severity=Severity.P0,
-                category=Category.INFRASTRUCTURE,
-                system="gateway",
-                message=f"Gateway status check failed: {str(e)}",
-                can_auto_fix=False,
-                metadata={"error": str(e), "type": type(e).__name__}
-            )
+            return (False, f"Status check error: {str(e)}")
+    
+    async def check(self) -> Optional[Issue]:
+        """
+        Check if Gateway is running and responsive.
+        Uses retry logic to prevent false positives.
+        """
+        logger.debug("gateway_check_starting", retries=self.retry_count)
+        
+        last_error = None
+        
+        # Try multiple times before declaring unhealthy
+        for attempt in range(self.retry_count):
+            if attempt > 0:
+                logger.debug(
+                    "gateway_check_retry", 
+                    attempt=attempt + 1, 
+                    max_attempts=self.retry_count,
+                    delay_seconds=self.retry_delay
+                )
+                await asyncio.sleep(self.retry_delay)
+            
+            is_healthy, error = await self._check_once()
+            
+            if is_healthy:
+                # Success! Gateway is healthy
+                if attempt > 0:
+                    logger.info(
+                        "gateway_healthy_after_retry",
+                        attempts=attempt + 1
+                    )
+                return None
+            else:
+                last_error = error
+                logger.warning(
+                    "gateway_check_failed_attempt",
+                    attempt=attempt + 1,
+                    error=last_error
+                )
+        
+        # All retries failed - gateway is definitely unhealthy
+        logger.error(
+            "gateway_unhealthy_verified",
+            retries=self.retry_count,
+            last_error=last_error
+        )
+        
+        return Issue(
+            severity=Severity.P0,
+            category=Category.INFRASTRUCTURE,
+            system="gateway",
+            message=f"Gateway unhealthy (verified {self.retry_count}x): {last_error}",
+            can_auto_fix=True,
+            metadata={
+                "retries": self.retry_count,
+                "last_error": last_error,
+                "retry_delay_seconds": self.retry_delay
+            }
+        )
     
     async def health_check(self) -> HealthCheck:
         """Perform health check and return status"""
