@@ -1,0 +1,25 @@
+{'db_path': 'data/test_monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T18:53:54.348911Z'}
+{'error': 'no such table: issues', 'issue_id': 'a6ec7676-d9d8-4e06-bd0e-3738c3465db6', 'event': 'Failed to record issue', 'logger': 'monitor.state_db', 'level': 'error', 'timestamp': '2026-01-30T18:53:54.349323Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T18:53:54.349450Z'}
+{'error': 'Failed to record issue: no such table: issues', 'event': 'Test Database Lifecycle failed with exception', 'logger': '__main__', 'level': 'error', 'timestamp': '2026-01-30T18:53:54.349539Z'}
+{'timeout': 10.0, 'max_connections': 100, 'event': 'HTTP client initialized', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T18:53:54.355041Z'}
+HTTP Request: GET https://httpbin.org/status/200 "HTTP/1.1 200 OK"
+HTTP Request: GET https://httpbin.org/status/200 "HTTP/1.1 200 OK"
+HTTP Request: GET https://httpbin.org/status/200 "HTTP/1.1 200 OK"
+{'event': 'HTTP client closed', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T18:53:54.665345Z'}
+{'timeout': 10.0, 'max_connections': 100, 'event': 'HTTP client initialized', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T18:53:54.672727Z'}
+{'event': 'HTTP client closed', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T18:53:54.673099Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T18:53:54.680433Z'}
+{'error': 'no such table: issues', 'event': 'Failed to get active issues', 'logger': 'monitor.state_db', 'level': 'error', 'timestamp': '2026-01-30T18:53:54.681482Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T18:53:54.682233Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T18:54:23.134894Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T18:54:23.136339Z'}
+{'timeout': 10.0, 'max_connections': 100, 'event': 'HTTP client initialized', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T18:54:23.140500Z'}
+HTTP Request: GET https://httpbin.org/status/200 "HTTP/1.1 200 OK"
+HTTP Request: GET https://httpbin.org/status/200 "HTTP/1.1 200 OK"
+HTTP Request: GET https://httpbin.org/status/200 "HTTP/1.1 200 OK"
+{'event': 'HTTP client closed', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T18:54:23.398082Z'}
+{'timeout': 10.0, 'max_connections': 100, 'event': 'HTTP client initialized', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T18:54:23.404443Z'}
+{'event': 'HTTP client closed', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T18:54:23.404761Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T18:54:23.407287Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T18:54:23.409951Z'}

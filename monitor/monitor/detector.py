@@ -1,13 +1,13 @@
 """
 Monitor-Agent Detector Module
-Phase Zero: Self-Healing Foundation
+Phase Zero: Architecture Fix
 
-Base class for all detectors. Specific detectors inherit from this.
+Base class for all detectors with proper imports.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, List
-from models import Issue, HealthCheck
+from typing import Optional
+from monitor.models import Issue, HealthCheck
 
 
 class BaseDetector(ABC):
