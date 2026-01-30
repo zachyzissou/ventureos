@@ -32,7 +32,7 @@ class GatewayDetector(InfrastructureDetector):
         # Check if gateway process is running
         try:
             proc = await asyncio.create_subprocess_exec(
-                "clawdbot", "status",
+                "/usr/local/bin/clawdbot", "status",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )

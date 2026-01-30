@@ -493,3 +493,38 @@ HTTP Request: POST https://discord.com/api/webhooks/1465950119634407527/R8WHqL42
 {'healer': 'git', 'issue_id': '38ea5449', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:30:02.780890Z'}
 {'healer': 'git', 'issue_id': '38ea5449', 'event': 'Attempting heal', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:30:02.781203Z'}
 {'issue_id': '38ea5449-c8ac-4d61-b464-e863763a82ff', 'event': 'attempting_git_autocommit', 'logger': 'monitor.healers.git_healer', 'level': 'info', 'timestamp': '2026-01-30T20:30:02.781550Z'}
+{'count': 4, 'event': 'Detectors initialized', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.056844Z'}
+{'count': 4, 'event': 'Validators initialized', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.060212Z'}
+{'count': 4, 'event': 'Healers initialized', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.060852Z'}
+{'event': 'Alerter initialized', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.061218Z'}
+{'config': {'database': {'path': 'data/monitor.db'}, 'healing': {'enabled': True, 'max_attempts': 3, 'cooldown_seconds': 300}, 'alerting': {'enabled': True, 'discord': {'webhook_url': 'https://discord.com/api/webhooks/1465950119634407527/R8WHqL42kj69H2XzWzUmYFZ9xwCbmdc44IOjA0BvAsqrvamotp2sd5jzVYpWtkS91DMh', 'mention_user_id': '956203522624462918'}, 'deduplication_window_seconds': 300, 'batch_interval_seconds': 900}}, 'event': 'MonitorAgent initialized', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.061523Z'}
+{'event': 'MonitorAgent starting main loop', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.062078Z'}
+{'validator': 'obsidian', 'severity': 'P3', 'system': 'obsidian', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.092483Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.115525Z'}
+{'detector': 'gateway', 'severity': 'P0', 'system': 'gateway', 'event': 'Issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.136884Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.144073Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.144386Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.165981Z'}
+{'validator': 'git', 'severity': 'P3', 'system': 'git', 'event': 'Validation issue detected', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.369688Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.373263Z'}
+{'db_path': 'data/monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.385751Z'}
+{'loop': 1, 'issues_found': 3, 'event': 'Monitoring cycle complete', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.386317Z'}
+{'issue_id': '384f0353', 'severity': 'P0', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.386601Z'}
+{'healer': 'gateway', 'issue_id': '384f0353', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.386780Z'}
+{'healer': 'gateway', 'issue_id': '384f0353', 'event': 'Attempting heal', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.386967Z'}
+{'issue_id': '384f0353-eb76-4848-b120-96a79ed8e782', 'event': 'attempting_gateway_restart', 'logger': 'monitor.healers.gateway_healer', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.387241Z'}
+{'error': "[Errno 2] No such file or directory: 'clawdbot'", 'event': 'gateway_restart_exception', 'logger': 'monitor.healers.gateway_healer', 'level': 'error', 'timestamp': '2026-01-30T20:34:04.408182Z'}
+{'healer': 'gateway', 'issue_id': '384f0353', 'error': "__init__() missing 1 required positional argument: 'action_taken'", 'event': 'Healer failed', 'logger': '__main__', 'level': 'error', 'timestamp': '2026-01-30T20:34:04.413611Z'}
+{'issue_id': '384f0353', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.414193Z'}
+{'issue_id': '384f0353-eb76-4848-b120-96a79ed8e782', 'severity': 'P0', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.414539Z'}
+{'timeout': 10.0, 'max_connections': 100, 'event': 'HTTP client initialized', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.439275Z'}
+HTTP Request: POST https://discord.com/api/webhooks/1465950119634407527/R8WHqL42kj69H2XzWzUmYFZ9xwCbmdc44IOjA0BvAsqrvamotp2sd5jzVYpWtkS91DMh "HTTP/1.1 204 No Content"
+{'issue_id': '384f0353-eb76-4848-b120-96a79ed8e782', 'severity': 'P0', 'event': 'discord_alert_sent', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.855787Z'}
+{'event': 'HTTP client closed', 'logger': 'monitor.http_client', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.856700Z'}
+{'issue_id': 'c09e7e64', 'severity': 'P3', 'can_auto_fix': False, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.856927Z'}
+{'issue_id': 'c09e7e64', 'event': 'Issue not auto-fixable, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.857007Z'}
+{'issue_id': 'c09e7e64-5589-4898-abc7-bd50845d97f8', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.857071Z'}
+{'issue_id': 'b67f5bc6', 'severity': 'P3', 'can_auto_fix': True, 'event': 'Processing issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.857164Z'}
+{'healer': 'git', 'issue_id': 'b67f5bc6', 'event': 'Found healer for issue', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.857257Z'}
+{'healer': 'git', 'issue_id': 'b67f5bc6', 'event': 'Attempting heal', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.857328Z'}
+{'issue_id': 'b67f5bc6-0ae6-421a-b7bc-1e78792b845a', 'event': 'attempting_git_autocommit', 'logger': 'monitor.healers.git_healer', 'level': 'info', 'timestamp': '2026-01-30T20:34:04.857414Z'}
