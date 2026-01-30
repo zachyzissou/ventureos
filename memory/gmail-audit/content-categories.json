@@ -1,0 +1,507 @@
+{
+  "generated": "2026-01-28T09:30:00Z",
+  "account": "zachgonser@gmail.com",
+  "categories": {
+    "newsletters": {
+      "identifiers": {
+        "fromPatterns": [
+          "*@substack.com",
+          "newsletter@*",
+          "*newsletter*@*",
+          "yo@dev.to"
+        ],
+        "subjectPatterns": [
+          "weekly",
+          "digest",
+          "this week",
+          "top posts"
+        ],
+        "bodyPatterns": [
+          "view in browser",
+          "unsubscribe"
+        ]
+      },
+      "sampleSenders": [
+        {"name": "Lenny's Newsletter", "email": "lenny@substack.com", "frequency": "high"},
+        {"name": "The Capitalist", "email": "thecapitalistmag@substack.com", "frequency": "high"},
+        {"name": "shit you should care about", "email": "shityoushouldcareabout@substack.com", "frequency": "high"},
+        {"name": "Newcomer", "email": "newcomer@substack.com", "frequency": "high"},
+        {"name": "Dan Koe", "email": "thedankoe@substack.com", "frequency": "medium"},
+        {"name": "The Growth Mindset", "email": "tmindset@substack.com", "frequency": "high"},
+        {"name": "Doomberg", "email": "doomberg@substack.com", "frequency": "medium"},
+        {"name": "The Counteroffensive", "email": "counteroffensive@substack.com", "frequency": "medium"},
+        {"name": "Unbiased Science", "email": "theunbiasedscipod@substack.com", "frequency": "medium"},
+        {"name": "Default Friend", "email": "defaultfriend@substack.com", "frequency": "medium"},
+        {"name": "The VC Corner", "email": "thevccorner@substack.com", "frequency": "medium"},
+        {"name": "Ancient Origins UNLEASHED", "email": "ancientoriginsunleashed@substack.com", "frequency": "medium"},
+        {"name": "UX Collective", "email": "uxco@substack.com", "frequency": "low"},
+        {"name": "a16z speedrun", "email": "speedrun@substack.com", "frequency": "low"},
+        {"name": "Parker Molloy - The Present Age", "email": "readtpa@substack.com", "frequency": "medium"},
+        {"name": "Max Read", "email": "maxread@substack.com", "frequency": "low"},
+        {"name": "The Common Reader", "email": "commonreader@substack.com", "frequency": "medium"},
+        {"name": "The Shit No One Tells You About Writing", "email": "theshitaboutwriting@substack.com", "frequency": "medium"},
+        {"name": "DEV Community Newsletter", "email": "yo@dev.to", "frequency": "weekly"},
+        {"name": "Todd Snyder", "email": "newsletter@toddsnyder.com", "frequency": "high"},
+        {"name": "Fantasy Grounds VTT", "email": "newsletter@fantasygrounds.com", "frequency": "weekly"}
+      ],
+      "suggestedFilters": [
+        {
+          "criteria": {"from": "@substack.com"},
+          "action": "label:Newsletters, skip inbox (already partially in place)"
+        },
+        {
+          "criteria": {"from": "yo@dev.to"},
+          "action": "label:Newsletters/Tech"
+        },
+        {
+          "criteria": {"from": "newsletter@toddsnyder.com"},
+          "action": "label:Shopping/Fashion, skip inbox"
+        },
+        {
+          "criteria": {"from": "newsletter@fantasygrounds.com"},
+          "action": "label:Gaming/TTRPG"
+        }
+      ],
+      "notes": "Heavy Substack user - 20+ active subscriptions. Gmail already labels many as Newsletters."
+    },
+    "transactional": {
+      "identifiers": {
+        "fromPatterns": [
+          "ebay@ebay.com",
+          "support@*.com",
+          "orders@*",
+          "noreply@shop.app",
+          "tracking@shipstation.com",
+          "*weborders*@*",
+          "pkginfo@ups.com"
+        ],
+        "subjectPatterns": [
+          "order",
+          "receipt",
+          "invoice",
+          "confirmation",
+          "confirmed",
+          "shipped",
+          "delivered",
+          "tracking",
+          "on its way",
+          "has arrived"
+        ]
+      },
+      "sampleSenders": [
+        {"name": "eBay", "email": "ebay@ebay.com", "type": "orders"},
+        {"name": "Shop App", "email": "noreply@shop.app", "type": "tracking"},
+        {"name": "ShipStation (various stores)", "email": "tracking@shipstation.com", "type": "shipping"},
+        {"name": "Puffco", "email": "support@puffco.com", "type": "orders"},
+        {"name": "Clubhouse Drops", "email": "support@clubhousedrops.com", "type": "orders"},
+        {"name": "PAX", "email": "news-us@pax.com", "type": "orders"},
+        {"name": "Insta360", "email": "noreply@dm.insta360.com", "type": "orders"},
+        {"name": "CORSAIR", "email": "weborders@store.corsair.com", "type": "orders"},
+        {"name": "B&H Photo", "email": "ord-status@bhphotovideo.com", "type": "orders"},
+        {"name": "Madison Seating", "email": "orders@madisonseating.com", "type": "shipping"},
+        {"name": "NANUK USA", "email": "info@nanuk.com", "type": "orders"},
+        {"name": "Meta Store", "email": "store@email.meta.com", "type": "orders"},
+        {"name": "UPS", "email": "pkginfo@ups.com", "type": "shipping"}
+      ],
+      "suggestedFilters": [
+        {
+          "criteria": {"from": "ebay@ebay.com", "subject": "Order"},
+          "action": "label:eBay/Orders (already exists)"
+        },
+        {
+          "criteria": {"from": "tracking@shipstation.com"},
+          "action": "label:Orders/Shipping"
+        },
+        {
+          "criteria": {"subject": "(shipped OR delivered OR tracking)"},
+          "action": "label:Orders/Shipping, mark important"
+        },
+        {
+          "criteria": {"from": "(support@puffco.com OR support@clubhousedrops.com)"},
+          "action": "label:Shopping/Cannabis (already exists)"
+        }
+      ],
+      "notes": "Active online shopper. eBay/Orders label exists. Shopping/Cannabis category exists for specific vendors."
+    },
+    "security": {
+      "identifiers": {
+        "fromPatterns": [
+          "security@facebookmail.com",
+          "security@mail.instagram.com",
+          "account-security-noreply@accountprotection.microsoft.com",
+          "no-reply@accounts.google.com",
+          "security@*"
+        ],
+        "subjectPatterns": [
+          "new login",
+          "sign in",
+          "security alert",
+          "security code",
+          "recovery code",
+          "verification",
+          "did you just log in"
+        ]
+      },
+      "sampleSenders": [
+        {"name": "Facebook Security", "email": "security@facebookmail.com", "type": "login alerts"},
+        {"name": "Instagram Security", "email": "security@mail.instagram.com", "type": "login alerts"},
+        {"name": "Microsoft Account", "email": "account-security-noreply@accountprotection.microsoft.com", "type": "security"},
+        {"name": "Google Accounts", "email": "no-reply@accounts.google.com", "type": "security alerts"},
+        {"name": "Linear", "email": "security@updates.linear.app", "type": "login alerts"},
+        {"name": "Synergy", "email": "security@symless.com", "type": "incident notice"},
+        {"name": "Steam", "email": "noreply@steampowered.com", "type": "login alerts"}
+      ],
+      "suggestedFilters": [
+        {
+          "criteria": {"from": "(security@facebookmail.com OR security@mail.instagram.com)"},
+          "action": "label:Security/Logins (already exists), mark important"
+        },
+        {
+          "criteria": {"from": "no-reply@accounts.google.com", "subject": "Security alert"},
+          "action": "label:Security Alerts/Google (already exists)"
+        },
+        {
+          "criteria": {"from": "account-security-noreply@accountprotection.microsoft.com"},
+          "action": "label:Security/Microsoft, mark important"
+        },
+        {
+          "criteria": {"subject": "(recovery code OR security code OR verification code)"},
+          "action": "label:Security/Verification, mark important"
+        }
+      ],
+      "existingLabels": ["Security/Logins", "Security Alerts/Google", "Security/Verification"],
+      "notes": "Good existing filter structure. Security/Logins captures Meta logins."
+    },
+    "financial": {
+      "identifiers": {
+        "fromPatterns": [
+          "*@stripe.com",
+          "noreply@robinhood.com",
+          "*@communications.paypal.com",
+          "no-reply@patreon.com",
+          "billing@*",
+          "*failed-payments*@stripe.com"
+        ],
+        "subjectPatterns": [
+          "receipt",
+          "payment",
+          "statement",
+          "balance",
+          "subscription",
+          "unsuccessful",
+          "didn't go through",
+          "failed"
+        ]
+      },
+      "sampleSenders": [
+        {"name": "Robinhood", "email": "noreply@robinhood.com", "type": "brokerage"},
+        {"name": "Stripe Receipts (various)", "email": "*@stripe.com", "type": "receipts"},
+        {"name": "PayPal", "email": "no_reply@communications.paypal.com", "type": "updates"},
+        {"name": "xAI (Grok)", "email": "invoice+statements+acct_*@stripe.com", "type": "subscription"},
+        {"name": "Staccato AI", "email": "invoice+statements+acct_*@stripe.com", "type": "subscription"},
+        {"name": "Eleven Labs", "email": "failed-payments+*@stripe.com", "type": "subscription"},
+        {"name": "Cursor", "email": "failed-payments+*@stripe.com", "type": "subscription"},
+        {"name": "Tailscale", "email": "failed-payments+*@stripe.com", "type": "subscription"},
+        {"name": "Figma", "email": "support+notifications@figma.com", "type": "subscription"},
+        {"name": "OpenAI", "email": "noreply@tm.openai.com", "type": "subscription"},
+        {"name": "TrueAccord", "email": "support@email.trueaccord.com", "type": "debt"},
+        {"name": "Parsec", "email": "billing@parsec.app", "type": "subscription"},
+        {"name": "Public Investing", "email": "hello@team.public.com", "type": "brokerage"},
+        {"name": "Ko-fi", "email": "Ko-fi@ko-fi.com", "type": "creator support"},
+        {"name": "Social Security", "email": "no-reply@ssa.gov", "type": "government"}
+      ],
+      "suggestedFilters": [
+        {
+          "criteria": {"from": "noreply@robinhood.com"},
+          "action": "label:Financial/Investments, mark important"
+        },
+        {
+          "criteria": {"from": "failed-payments*@stripe.com"},
+          "action": "label:Financial/Failed Payments, mark important"
+        },
+        {
+          "criteria": {"from": "invoice*@stripe.com"},
+          "action": "label:Financial/Subscriptions"
+        },
+        {
+          "criteria": {"subject": "payment was unsuccessful"},
+          "action": "label:Financial/Failed Payments, mark important"
+        }
+      ],
+      "existingLabels": ["Financial/Subscriptions", "Financial/Paypal Receipts"],
+      "notes": "Many failed payment notices - suggests card issues or expired subscriptions. Heavy SaaS/AI tool user."
+    },
+    "gaming": {
+      "identifiers": {
+        "fromPatterns": [
+          "noreply@steampowered.com",
+          "*@patreon.com",
+          "noreply@discord.com",
+          "*@arenabreakoutinfinite.com",
+          "*@embark.email",
+          "*@fantasygrounds.com"
+        ],
+        "subjectPatterns": [
+          "update",
+          "patch",
+          "now available",
+          "sale",
+          "live",
+          "stream"
+        ]
+      },
+      "sampleSenders": [
+        {"name": "Steam", "email": "noreply@steampowered.com", "type": "platform"},
+        {"name": "Discord", "email": "noreply@discord.com", "type": "platform"},
+        {"name": "Arena Breakout Infinite", "email": "noreply@arenabreakoutinfinite.com", "type": "game"},
+        {"name": "ARC Raiders", "email": "noreply@embark.email", "type": "game"},
+        {"name": "Fantasy Grounds VTT", "email": "newsletter@fantasygrounds.com", "type": "TTRPG"},
+        {"name": "Roberts Space Industries", "email": "no-reply@robertsspaceindustries.com", "type": "Star Citizen"}
+      ],
+      "patreonCreators": [
+        {"name": "PixelPawsAI", "type": "AI/Art"},
+        {"name": "Small Brained American", "type": "travel/content"},
+        {"name": "Sailing La Vagabonde", "type": "sailing/travel"},
+        {"name": "bluethebone", "type": "art"},
+        {"name": "Macroblank", "type": "music"},
+        {"name": "sgthale (MyRobot)", "type": "game dev"},
+        {"name": "EmuDeck", "type": "emulation"},
+        {"name": "KYBER V2", "type": "Star Wars BF2 mod"},
+        {"name": "Brandulate AI", "type": "AI models"},
+        {"name": "Brian Fritz", "type": "unknown"},
+        {"name": "AntiZero", "type": "unknown"}
+      ],
+      "suggestedFilters": [
+        {
+          "criteria": {"from": "*@patreon.com"},
+          "action": "label:Patreon (already exists), label:Gaming/Patreon (already exists)"
+        },
+        {
+          "criteria": {"from": "noreply@steampowered.com"},
+          "action": "label:Gaming/Steam"
+        },
+        {
+          "criteria": {"from": "noreply@discord.com"},
+          "action": "label:Gaming/Discord"
+        },
+        {
+          "criteria": {"from": "no-reply@robertsspaceindustries.com"},
+          "action": "label:Gaming/StarCitizen"
+        }
+      ],
+      "existingLabels": ["Patreon", "Gaming/Patreon"],
+      "notes": "Active Patreon supporter with 10+ creators. Gaming/Patreon label exists. Star Citizen interest (CIG application noted)."
+    },
+    "shopping": {
+      "identifiers": {
+        "fromPatterns": [
+          "*@logitech.com",
+          "*@marketing.*",
+          "*@mail1.fsastore.com",
+          "hello@marketing.going.com",
+          "*@northerner.com"
+        ],
+        "subjectPatterns": [
+          "sale",
+          "% off",
+          "discount",
+          "deal",
+          "free shipping",
+          "limited time",
+          "flash sale",
+          "ends"
+        ]
+      },
+      "sampleSenders": [
+        {"name": "Logitech", "email": "logitech@messaging.logitech.com", "category": "tech"},
+        {"name": "Logitech G", "email": "logitechg@messaging.logitech.com", "category": "gaming peripherals"},
+        {"name": "Going (cheap flights)", "email": "hello@marketing.going.com", "category": "travel"},
+        {"name": "Canoe Club", "email": "secrethandshake@shopcanoeclub.com", "category": "fashion"},
+        {"name": "Todd Snyder", "email": "newsletter@toddsnyder.com", "category": "fashion"},
+        {"name": "Northerner", "email": "hello-US@northerner.com", "category": "tobacco/nicotine"},
+        {"name": "FSA Store", "email": "info@mail1.fsastore.com", "category": "health"},
+        {"name": "FROM JAPAN", "email": "no-reply@notify.fromjapan.co.jp", "category": "import/proxy"},
+        {"name": "Self Credit", "email": "no-reply@email.self.inc", "category": "financial product"}
+      ],
+      "suggestedFilters": [
+        {
+          "criteria": {"from": "*@logitech.com"},
+          "action": "label:Shopping/Tech"
+        },
+        {
+          "criteria": {"from": "hello@marketing.going.com"},
+          "action": "label:Travel/Deals"
+        },
+        {
+          "criteria": {"from": "no-reply@notify.fromjapan.co.jp"},
+          "action": "label:Shopping/Japan"
+        },
+        {
+          "criteria": {"subject": "(sale OR % off OR discount)", "from": "-substack.com"},
+          "action": "label:Promotions"
+        }
+      ],
+      "existingLabels": ["Shopping/Deals"],
+      "notes": "Mix of tech, fashion, travel deals. FROM JAPAN proxy service used for Japanese imports."
+    },
+    "promotional": {
+      "identifiers": {
+        "fromPatterns": [
+          "*@marketing.*",
+          "*@email.*",
+          "*@notify.*"
+        ],
+        "gmailCategory": "CATEGORY_PROMOTIONS"
+      },
+      "sampleSenders": [
+        {"name": "Torchy's Tacos", "email": "noreply@marketing.torchystacos.com", "category": "food"},
+        {"name": "Self Credit Builder", "email": "no-reply@email.self.inc", "category": "fintech"},
+        {"name": "FROM JAPAN", "email": "no-reply@notify.fromjapan.co.jp", "category": "shopping"},
+        {"name": "Unity Asset Store", "email": "no-reply@unity3d.com", "category": "gamedev"},
+        {"name": "Fantia", "email": "noreply@fantia.jp", "category": "creator platform"},
+        {"name": "Fanvue", "email": "no-reply@fanvue.com", "category": "creator platform"},
+        {"name": "ARC Raiders", "email": "noreply@embark.email", "category": "gaming"}
+      ],
+      "suggestedFilters": [
+        {
+          "criteria": {"from": "noreply@marketing.torchystacos.com"},
+          "action": "label:Food/Local, skip inbox"
+        },
+        {
+          "criteria": {"from": "(noreply@fantia.jp OR no-reply@fanvue.com)"},
+          "action": "label:Creator Platforms"
+        }
+      ],
+      "notes": "Gmail's CATEGORY_PROMOTIONS catches most. Consider auto-archiving low-priority promos."
+    },
+    "work": {
+      "identifiers": {
+        "fromPatterns": [
+          "noreply@backstage.com",
+          "*@lever.co",
+          "*@hire.lever.co"
+        ],
+        "subjectPatterns": [
+          "job",
+          "role",
+          "application",
+          "interview"
+        ]
+      },
+      "sampleSenders": [
+        {"name": "Backstage", "email": "noreply@backstage.com", "type": "casting/acting jobs"},
+        {"name": "Outreach (via Lever)", "email": "no-reply@hire.lever.co", "type": "tech jobs"},
+        {"name": "Cloud Imperium Games", "email": "recruitment@cloudimperiumgames.com", "type": "game dev"}
+      ],
+      "suggestedFilters": [
+        {
+          "criteria": {"from": "noreply@backstage.com"},
+          "action": "label:Work/Backstage (already exists)"
+        },
+        {
+          "criteria": {"from": "*@lever.co"},
+          "action": "label:Work/JobApplications"
+        }
+      ],
+      "existingLabels": ["Work/Backstage"],
+      "notes": "Actor/performer - daily Backstage casting notifications. Also tech job applications."
+    },
+    "creatorPlatforms": {
+      "identifiers": {
+        "fromPatterns": [
+          "*@patreon.com",
+          "noreply@bandcamp.com",
+          "noreply@boosty.to",
+          "noreply@fantia.jp",
+          "no-reply@fanvue.com"
+        ]
+      },
+      "sampleSenders": [
+        {"name": "Patreon", "email": "*@patreon.com", "notes": "Heavy user, 10+ subscriptions"},
+        {"name": "Bandcamp", "email": "noreply@bandcamp.com", "notes": "Music discovery"},
+        {"name": "Boosty", "email": "noreply@boosty.to", "notes": "Russian creator platform"},
+        {"name": "Fantia", "email": "noreply@fantia.jp", "notes": "Japanese creator platform"},
+        {"name": "Fanvue", "email": "no-reply@fanvue.com", "notes": "Creator platform"},
+        {"name": "Ko-fi", "email": "Ko-fi@ko-fi.com", "notes": "Creator support"}
+      ],
+      "suggestedFilters": [
+        {
+          "criteria": {"from": "noreply@bandcamp.com"},
+          "action": "label:Music/Bandcamp (Bandcamp label exists)"
+        },
+        {
+          "criteria": {"from": "noreply@boosty.to"},
+          "action": "label:Creator Platforms/Boosty"
+        }
+      ],
+      "existingLabels": ["Patreon", "Bandcamp"],
+      "notes": "Active supporter of creators across multiple platforms."
+    }
+  },
+  "uncategorized": {
+    "sampleSenders": [
+      {"name": "PODS Moving", "email": "podscustomercare@email.pods.com", "notes": "Moving/storage"},
+      {"name": "Scenetime", "email": "noreply@mail.scenetime.com", "notes": "Torrent tracker"},
+      {"name": "True Finance", "email": "hello@newsletter.jointrue.com", "notes": "Fintech"},
+      {"name": "Baltic Networks", "email": "hello@balticnetworks.com", "notes": "Networking equipment"}
+    ],
+    "needsReview": true,
+    "notes": "Small number of uncategorized senders. Most fit existing or suggested categories."
+  },
+  "existingLabelStructure": {
+    "security": ["Security/Logins", "Security Alerts/Google", "Security/Verification"],
+    "financial": ["Financial/Subscriptions", "Financial/Paypal Receipts"],
+    "shopping": ["Shopping/Deals", "Shopping/Cannabis", "eBay/Orders"],
+    "gaming": ["Patreon", "Gaming/Patreon"],
+    "work": ["Work/Backstage"],
+    "music": ["Bandcamp"]
+  },
+  "recommendations": {
+    "highPriority": [
+      {
+        "action": "Create filter for failed payments",
+        "criteria": "from:(*failed-payments*@stripe.com) OR subject:(payment was unsuccessful OR didn't go through)",
+        "reason": "Many failed subscription payments need attention"
+      },
+      {
+        "action": "Consolidate shipping notifications",
+        "criteria": "from:(tracking@shipstation.com OR pkginfo@ups.com) OR subject:(shipped OR delivered)",
+        "label": "Orders/Shipping",
+        "reason": "Shipping updates scattered across inbox"
+      }
+    ],
+    "mediumPriority": [
+      {
+        "action": "Label Steam/gaming platform emails",
+        "criteria": "from:(noreply@steampowered.com OR noreply@discord.com)",
+        "label": "Gaming/Platforms"
+      },
+      {
+        "action": "Auto-archive promotional newsletters",
+        "criteria": "from:newsletter@toddsnyder.com",
+        "reason": "High frequency fashion promos"
+      },
+      {
+        "action": "Label FROM JAPAN proxy emails",
+        "criteria": "from:no-reply@notify.fromjapan.co.jp",
+        "label": "Shopping/Japan Import"
+      }
+    ],
+    "lowPriority": [
+      {
+        "action": "Create Substack management",
+        "note": "20+ Substack subscriptions - consider reviewing and pruning"
+      },
+      {
+        "action": "Review Patreon subscriptions",
+        "note": "Several failed Patreon payments detected - may need card update"
+      }
+    ]
+  },
+  "insights": {
+    "heavyCategories": ["Newsletters (Substack)", "Patreon", "Shopping/Orders", "AI/SaaS Subscriptions"],
+    "paymentIssues": "Multiple failed payment notices from Stripe - likely expired card or funding issue",
+    "wellOrganized": ["Security alerts (good existing labels)", "eBay orders", "Backstage casting"],
+    "needsWork": ["Shipping notifications (scattered)", "Gaming emails (no unified label)", "Financial receipts (partial)"]
+  }
+}

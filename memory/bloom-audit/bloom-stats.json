@@ -1,0 +1,39 @@
+{
+  "generated": "2026-01-28 10:29:25",
+  "project": "C:\\Users\\Zachg\\Development\\Games\\Bloom",
+  "summary": {
+    "totalFiles": 766,
+    "totalLines": 174259,
+    "avgLinesPerFile": 227,
+    "largeFilesCount": 47
+  },
+  "largeFiles": [
+    {"path": "Assets/Scripts/Editor/BatchTerrainGenerator.cs", "lines": 4882},
+    {"path": "Assets/Scripts/Environment/Water/LakeSystem.cs", "lines": 4394},
+    {"path": "Assets/Scripts/Editor/TerraTestingSuite.cs", "lines": 3756},
+    {"path": "Assets/Scripts/Environment/Water/RiverSystem.cs", "lines": 3413},
+    {"path": "Assets/Scripts/WorldGeneration/Pipeline/Stages/ValidationStage.cs", "lines": 2324},
+    {"path": "Assets/Scripts/Editor/WorldGeneration/Hydrology/HydrologyMetadataBuilderEditor.cs", "lines": 1753},
+    {"path": "Assets/Scripts/Terrain/Pipeline/Configs/WaterFeatureConfig.cs", "lines": 1698},
+    {"path": "Assets/Scripts/Terrain/MacroFeatures/MacroWorldGenerator.cs", "lines": 1474},
+    {"path": "Assets/Scripts/WorldGeneration/Pipeline/Stages/DetailZoneStage.cs", "lines": 1411},
+    {"path": "Assets/Scripts/Terrain/RuntimeTerrainLoader.cs", "lines": 1326}
+  ],
+  "topFolders": {
+    "Editor": 59,
+    "WorldGeneration": 45,
+    "Networking": 42,
+    "UI": 38,
+    "Stages": 25,
+    "Integration": 18,
+    "Pipeline": 17,
+    "Features": 17,
+    "Vegetation": 15,
+    "Terrain": 14
+  },
+  "warningThresholds": {
+    "doNotLoadWhole": 500,
+    "refactorCandidate": 1000,
+    "criticalSize": 2000
+  }
+}

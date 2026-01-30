@@ -1,0 +1,438 @@
+{
+  "generated": "2026-01-28T02:15:00Z",
+  "account": "zachgonser@gmail.com",
+  "totalDomainsAnalyzed": 27,
+  "senders": [
+    {
+      "domain": "fsastore.com",
+      "count": 50,
+      "category": "spam",
+      "sampleFrom": "FSA Store <info@mail1.fsastore.com>",
+      "sampleSubjects": [
+        "GLP-1s now come in a pill 🪄",
+        "Up to 40% off begins NOW",
+        "Hot stone therapy? It's eligible 🔥"
+      ],
+      "recommendation": "unsubscribe",
+      "notes": "Daily promotional emails about FSA-eligible products. Very high volume (2+ per day)."
+    },
+    {
+      "domain": "feverup.com",
+      "count": 50,
+      "category": "spam",
+      "sampleFrom": "Emily from Fever <hello@email.feverup.com>",
+      "sampleSubjects": [
+        "🎉 Tickets for The Big Game at Dave and Busters are available now!",
+        "Valentine's ideas, sorted for you 💕",
+        "Harry Potter™: The Exhibition 🚨 New dates available!"
+      ],
+      "recommendation": "unsubscribe",
+      "notes": "Event promotional emails. Multiple per week from various sub-brands (Candlelight, Jazz Room, etc.)."
+    },
+    {
+      "domain": "fromjapan.co.jp",
+      "count": 50,
+      "category": "spam",
+      "sampleFrom": "FROM JAPAN Limited <no-reply@notify.fromjapan.co.jp>",
+      "sampleSubjects": [
+        "5% OFF all Rakuten items campaign! [OM]",
+        "(24 hours only) 10% OFF all Rakuten Rakuma items campaign [OM]",
+        "🚨 New Pokémon TCG Munikis Zero Set is now on sale!"
+      ],
+      "recommendation": "unsubscribe",
+      "notes": "Japanese proxy shopping service. Near-daily promotional emails about various marketplace discounts."
+    },
+    {
+      "domain": "upgrade.com",
+      "count": 50,
+      "category": "spam",
+      "sampleFrom": "Upgrade <email@e.upgrade.com>",
+      "sampleSubjects": [
+        "Your January invitation to check your rate is here",
+        "Here's your Sunday loan invitation",
+        "Reset your finances"
+      ],
+      "recommendation": "unsubscribe",
+      "notes": "Loan solicitation spam. 2-3 emails per week with nearly identical messaging. Also sends as 'Universal Credit'."
+    },
+    {
+      "domain": "self.inc",
+      "count": 50,
+      "category": "spam",
+      "sampleFrom": "Self <no-reply@email.self.inc>",
+      "sampleSubjects": [
+        "Our welcome offer is waiting",
+        "Intro offer: $0 annual fee for your first year*",
+        "Zachary, you're invited to apply 💳"
+      ],
+      "recommendation": "unsubscribe",
+      "notes": "Credit-building service spam. Very repetitive messaging about the same product offers."
+    },
+    {
+      "domain": "substack.com",
+      "count": 50,
+      "category": "newsletter",
+      "sampleFrom": "Lenny's Newsletter <lenny@substack.com>",
+      "sampleSubjects": [
+        "Product Pass drop: Canva, ElevenLabs, Manus, Factory...",
+        "Why your product stopped growing (and the 5-step framework)",
+        "Advanced Claude Code and Cursor techniques"
+      ],
+      "recommendation": "keep",
+      "notes": "Various subscribed newsletters. High value content from multiple authors including Lenny, Doomberg, Dan Koe, Default Friend, etc. Consider reviewing individual subscriptions."
+    },
+    {
+      "domain": "dev.to",
+      "count": 50,
+      "category": "newsletter",
+      "sampleFrom": "DEV Community Newsletter <yo@dev.to>",
+      "sampleSubjects": [
+        "CSS optical illusions, community wins, hackathons, and more!",
+        "Is an AI model actually software? Top 7 posts from last week",
+        "The strength of boring stacks, a 30-minute security audit"
+      ],
+      "recommendation": "filter",
+      "notes": "Developer community newsletter and challenge notifications. Weekly digest is useful; challenge notifications are less so. Consider filtering to folder."
+    },
+    {
+      "domain": "tiller.com",
+      "count": 50,
+      "category": "newsletter",
+      "sampleFrom": "hello@tiller.com",
+      "sampleSubjects": [
+        "Hello, Money",
+        "Hello, Money",
+        "Hello, Money"
+      ],
+      "recommendation": "keep",
+      "notes": "Daily finance summary tool. Same subject every day but provides actual account data synced to spreadsheets. Useful for financial tracking."
+    },
+    {
+      "domain": "ebay.com",
+      "count": 24,
+      "category": "shopping",
+      "sampleFrom": "eBay <ebay@ebay.com>",
+      "sampleSubjects": [
+        "🚚 Order update: NVIDIA Quadro RTX 8000",
+        "Check out the latest from your saved sellers",
+        "Order confirmed: Nvidia Nvlink Hb Bridge"
+      ],
+      "recommendation": "keep",
+      "notes": "Mix of transactional (orders, shipping) and promotional. Recent activity shows high-value GPU purchases. Keep for order tracking."
+    },
+    {
+      "domain": "toddsnyder.com",
+      "count": 50,
+      "category": "shopping",
+      "sampleFrom": "Todd Snyder <newsletter@toddsnyder.com>",
+      "sampleSubjects": [
+        "5 Styles We're Loving This Month",
+        "FINAL HOURS: 70% Off Ends At Midnight",
+        "COLLAB ALERT: TS x Balmoral Defender"
+      ],
+      "recommendation": "filter",
+      "notes": "Premium menswear brand. Frequent sales/promotional emails (nearly daily). Filter to shopping folder or unsubscribe if not actively buying."
+    },
+    {
+      "domain": "taylorstitch.com",
+      "count": 11,
+      "category": "shopping",
+      "sampleFrom": "Taylor Stitch <info@taylorstitch.com>",
+      "sampleSubjects": [
+        "A Relaxed Take on Merino",
+        "The Selvedge Selection",
+        "Your 20% Off Code Is Inside"
+      ],
+      "recommendation": "filter",
+      "notes": "Quality menswear brand. Lower volume than Todd Snyder. Filter to shopping folder."
+    },
+    {
+      "domain": "yeti.com",
+      "count": 39,
+      "category": "shopping",
+      "sampleFrom": "YETI <YETI@mail.yeti.com>",
+      "sampleSubjects": [
+        "JUST IN: The Alpenglow Collection",
+        "Still Standing Strong",
+        "The SILO™ Jug Lineup"
+      ],
+      "recommendation": "filter",
+      "notes": "Outdoor/cooler brand. Regular promotional emails about new products and sales. Filter to shopping folder."
+    },
+    {
+      "domain": "logitech.com",
+      "count": 50,
+      "category": "shopping",
+      "sampleFrom": "Logitech <logitech@messaging.logitech.com>",
+      "sampleSubjects": [
+        "Unlock 30% OFF Alto Keys When You Buy MX Master 4",
+        "Pre-order your PRO X2 Superstrike NOW*",
+        "Our 2025 Best Sellers Are Here!"
+      ],
+      "recommendation": "filter",
+      "notes": "Tech peripherals brand. Mix of Logitech and Logitech G (gaming) emails. Product announcements and deals."
+    },
+    {
+      "domain": "shopcanoeclub.com",
+      "count": 8,
+      "category": "shopping",
+      "sampleFrom": "Canoe Club <secrethandshake@shopcanoeclub.com>",
+      "sampleSubjects": [
+        "ROTOTO",
+        "Introducing Patreon",
+        "Seasonal Sale"
+      ],
+      "recommendation": "keep",
+      "notes": "Boutique Japanese-inspired clothing. Lower volume, curated content. Keep if interested in niche fashion."
+    },
+    {
+      "domain": "onlineweeddispensary.co",
+      "count": 45,
+      "category": "cannabis",
+      "sampleFrom": "Michael from OWD <michael@onlineweeddispensary.co>",
+      "sampleSubjects": [
+        "Friend, we have something worth stocking up on.",
+        "Quick heads-up, friend. Your cart could be worth more 🔥",
+        "Time for a proper re-up, friend🔥"
+      ],
+      "recommendation": "unsubscribe",
+      "notes": "Cannabis dispensary promotional spam. Very repetitive 'friend' messaging pattern. 2-3 emails per week."
+    },
+    {
+      "domain": "pax.com",
+      "count": 8,
+      "category": "cannabis",
+      "sampleFrom": "PAX <news-us@pax.com>",
+      "sampleSubjects": [
+        "We'd love to hear what you think!",
+        "Your PAX order has arrived",
+        "Get the Most Out of Your New Pax"
+      ],
+      "recommendation": "keep",
+      "notes": "Vaporizer brand. Recent order activity. Mix of transactional and promotional. Low volume."
+    },
+    {
+      "domain": "flowgardens.com",
+      "count": 50,
+      "category": "cannabis",
+      "sampleFrom": "Flow Gardens <orders@flowgardens.com>",
+      "sampleSubjects": [
+        "Don't Miss Out: Tuesday Treats Await!",
+        "The Flower Our Founder Believes In 🔥",
+        "Fresh Harvest Friday 🌱"
+      ],
+      "recommendation": "filter",
+      "notes": "CBD/hemp flower vendor. Regular promotional emails about new strains and sales. Filter if still purchasing, otherwise unsubscribe."
+    },
+    {
+      "domain": "alppouch.com",
+      "count": 28,
+      "category": "cannabis",
+      "sampleFrom": "ALP Pouches <howdy@alppouch.com>",
+      "sampleSubjects": [
+        "Ride the Snow Storm with ALP ❄️",
+        "What Tucker Refuses to Compromise On 💪",
+        "We Asked AI What the Best Nicotine Pouch Is 👀"
+      ],
+      "recommendation": "unsubscribe",
+      "notes": "Nicotine pouch brand. Marketing-heavy promotional emails. Unsubscribe if not actively using."
+    },
+    {
+      "domain": "robinhood.com",
+      "count": 50,
+      "category": "financial",
+      "sampleFrom": "Robinhood <noreply@robinhood.com>",
+      "sampleSubjects": [
+        "Your recent login to Robinhood",
+        "Your individual account statement is available",
+        "🗓️ What's new for tax season 2026"
+      ],
+      "recommendation": "keep",
+      "notes": "Brokerage account. Mostly transactional (statements, security alerts, tax docs). Essential for financial records."
+    },
+    {
+      "domain": "stripe.com",
+      "count": 50,
+      "category": "financial",
+      "sampleFrom": "Various <*@stripe.com>",
+      "sampleSubjects": [
+        "Your receipt from xAI, LLC",
+        "Your receipt from Eleven Labs Inc.",
+        "Your receipt from Obsidian"
+      ],
+      "recommendation": "keep",
+      "notes": "Payment processor receipts. Essential transaction records for subscriptions (xAI, ElevenLabs, Tailscale, Last.fm, etc.). Keep for expense tracking."
+    },
+    {
+      "domain": "paypal.com",
+      "count": 6,
+      "category": "financial",
+      "sampleFrom": "PayPal Communications <no_reply@communications.paypal.com>",
+      "sampleSubjects": [
+        "We're making some changes to our PayPal legal agreements"
+      ],
+      "recommendation": "keep",
+      "notes": "Mostly legal agreement updates. Low volume. Keep for account management."
+    },
+    {
+      "domain": "steampowered.com",
+      "count": 6,
+      "category": "gaming",
+      "sampleFrom": "Steam <noreply@steampowered.com>",
+      "sampleSubjects": [
+        "Steam Winter Sale on now, with recommended deals just for you.",
+        "We have updated the Steam Subscriber Agreement",
+        "New sign in to Steam"
+      ],
+      "recommendation": "keep",
+      "notes": "Gaming platform. Seasonal sale notifications and security alerts. Low volume, useful."
+    },
+    {
+      "domain": "discord.com",
+      "count": 50,
+      "category": "gaming",
+      "sampleFrom": "Discord <noreply@discord.com>",
+      "sampleSubjects": [
+        "Your Discord subscription will renew soon",
+        "Discord Payment Succeeded",
+        "Discord Payment Failed"
+      ],
+      "recommendation": "filter",
+      "notes": "Communication platform. Lots of payment failure notifications (resolved). Also game reward codes. Filter to manage noise."
+    },
+    {
+      "domain": "patreon.com",
+      "count": 50,
+      "category": "gaming",
+      "sampleFrom": "Various Creators <bingo@patreon.com>",
+      "sampleSubjects": [
+        "Prompt Tag Autocomplete – LM Nightly Update",
+        "Are We Stupid? Our Latest Plan Unveiled...",
+        "MyRobot Development Part 90"
+      ],
+      "recommendation": "keep",
+      "notes": "Creator platform updates. Mix of AI/tech (PixelPawsAI, Brandulate AI), travel (Sailing La Vagabonde, Small Brained American), gaming (EmuDeck, KYBER). Review individual subscriptions."
+    },
+    {
+      "domain": "fantia.jp",
+      "count": 50,
+      "category": "gaming",
+      "sampleFrom": "Fantia <noreply@fantia.jp>",
+      "sampleSubjects": [
+        "👑2位「みら」さん！1位は??✨実写（写真・映像）投稿ランキング✨",
+        "【Fantia】トーク機能・バッジ機能のお知らせ",
+        "人気コスプレイヤーの「上野」様を特集！"
+      ],
+      "recommendation": "unsubscribe",
+      "notes": "Japanese content creator platform. Primarily Japanese promotional emails about cosplay/creator rankings. Unsubscribe if not actively using."
+    },
+    {
+      "domain": "bandcamp.com",
+      "count": 50,
+      "category": "gaming",
+      "sampleFrom": "Bandcamp <noreply@bandcamp.com>",
+      "sampleSubjects": [
+        "New music for you on Bandcamp",
+        "Thank you for a great 2025 on Bandcamp",
+        "Get everything Neoncity Records makes, and then some."
+      ],
+      "recommendation": "keep",
+      "notes": "Music platform. New release notifications from followed artists (vaporwave, electronic). Weekly recommendations. Filter to music folder."
+    },
+    {
+      "domain": "cursor.com",
+      "count": 15,
+      "category": "tech",
+      "sampleFrom": "Cursor Team <team@mail.cursor.com>",
+      "sampleSubjects": [
+        "Cursor Updates: Subagents, Skills, and More",
+        "GPT-5.2 Codex is out in Cursor",
+        "Your Year in Code"
+      ],
+      "recommendation": "keep",
+      "notes": "AI code editor. Product updates and feature announcements. Low volume, high value for development work."
+    },
+    {
+      "domain": "warp.dev",
+      "count": 5,
+      "category": "tech",
+      "sampleFrom": "Eric from Warp <feedback+customerio@warp.dev>",
+      "sampleSubjects": [
+        "RSVP! Warp Onboarding 101 & 201",
+        "Friday? Try something new!",
+        "Index your entire codebase with Warp"
+      ],
+      "recommendation": "keep",
+      "notes": "Terminal application. Product onboarding and feature updates. Very low volume."
+    },
+    {
+      "domain": "openai.com",
+      "count": 19,
+      "category": "tech",
+      "sampleFrom": "OpenAI <noreply@email.openai.com>",
+      "sampleSubjects": [
+        "ChatGPT - Your data export is ready",
+        "GPT-5.2 is now live in the OpenAI API",
+        "Introducing GPT-4o in the API"
+      ],
+      "recommendation": "keep",
+      "notes": "AI platform. Important API announcements, billing updates, and account notifications. Essential for AI development work."
+    }
+  ],
+  "summary": {
+    "totalSpam": 245,
+    "totalNewsletter": 150,
+    "totalShopping": 182,
+    "totalCannabis": 131,
+    "totalFinancial": 106,
+    "totalGaming": 206,
+    "totalTech": 39,
+    "unsubscribeCandidates": [
+      "fsastore.com",
+      "feverup.com",
+      "fromjapan.co.jp",
+      "upgrade.com",
+      "self.inc",
+      "onlineweeddispensary.co",
+      "alppouch.com",
+      "fantia.jp"
+    ],
+    "filterCandidates": [
+      "dev.to",
+      "toddsnyder.com",
+      "taylorstitch.com",
+      "yeti.com",
+      "logitech.com",
+      "flowgardens.com",
+      "discord.com",
+      "bandcamp.com"
+    ],
+    "keepAsIs": [
+      "substack.com",
+      "tiller.com",
+      "ebay.com",
+      "shopcanoeclub.com",
+      "pax.com",
+      "robinhood.com",
+      "stripe.com",
+      "paypal.com",
+      "steampowered.com",
+      "patreon.com",
+      "cursor.com",
+      "warp.dev",
+      "openai.com"
+    ],
+    "highPriority": [
+      "fsastore.com - Highest volume spam (2+ daily)",
+      "upgrade.com - Predatory loan solicitations",
+      "self.inc - Aggressive credit card marketing",
+      "fantia.jp - Japanese spam likely not useful"
+    ],
+    "actionItems": [
+      "Unsubscribe from 8 high-volume spam domains to reduce ~50+ emails/week",
+      "Create Gmail filters for 8 shopping/promo domains to auto-archive",
+      "Review Substack subscriptions individually - some may be stale",
+      "Review Patreon subscriptions - check if still supporting all creators"
+    ]
+  }
+}

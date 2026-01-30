@@ -1,0 +1,331 @@
+{
+  "generated": "2026-01-28T08:30:00-06:00",
+  "account": "zachgonser@gmail.com",
+  "totalLabels": 89,
+  "summary": {
+    "labelsWithEmails": 18,
+    "labelsEmpty": 45,
+    "duplicatePairs": 6,
+    "labelsWithActiveFilters": 6,
+    "recommendation": "Migrate content from plain labels to emoji labels, then delete plain labels"
+  },
+  "labelGroups": {
+    "emojiHierarchy": {
+      "newsletters": {
+        "name": "📰 Newsletters",
+        "id": "Label_20",
+        "hasEmails": false,
+        "children": [
+          {"name": "📰 Newsletters/Tech-AI", "id": "Label_21", "hasEmails": false},
+          {"name": "📰 Newsletters/Finance", "id": "Label_22", "hasEmails": false},
+          {"name": "📰 Newsletters/Culture", "id": "Label_23", "hasEmails": false},
+          {"name": "📰 Newsletters/Gaming", "id": "Label_24", "hasEmails": false}
+        ]
+      },
+      "shopping": {
+        "name": "🛒 Shopping",
+        "id": "Label_25",
+        "hasEmails": false,
+        "children": [
+          {"name": "🛒 Shopping/Orders", "id": "Label_26", "hasEmails": false},
+          {"name": "🛒 Shopping/Deals", "id": "Label_27", "hasEmails": false},
+          {"name": "🛒 Shopping/Cannabis", "id": "Label_28", "hasEmails": false}
+        ]
+      },
+      "gaming": {
+        "name": "🎮 Gaming",
+        "id": "Label_29",
+        "hasEmails": false,
+        "children": [
+          {"name": "🎮 Gaming/Star Citizen", "id": "Label_30", "hasEmails": false},
+          {"name": "🎮 Gaming/Steam-Deals", "id": "Label_31", "hasEmails": false},
+          {"name": "🎮 Gaming/Patreon", "id": "Label_32", "hasEmails": false}
+        ]
+      },
+      "work": {
+        "name": "💼 Work",
+        "id": "Label_33",
+        "hasEmails": false,
+        "children": [
+          {"name": "💼 Work/Backstage", "id": "Label_34", "hasEmails": false},
+          {"name": "💼 Work/Job Alerts", "id": "Label_35", "hasEmails": false}
+        ]
+      },
+      "security": {
+        "name": "🔐 Security",
+        "id": "Label_36",
+        "hasEmails": false,
+        "children": [
+          {"name": "🔐 Security/Logins", "id": "Label_37", "hasEmails": false},
+          {"name": "🔐 Security/Verification", "id": "Label_38", "hasEmails": false}
+        ]
+      },
+      "financial": {
+        "name": "💰 Financial",
+        "id": "Label_39",
+        "hasEmails": false,
+        "children": [
+          {"name": "💰 Financial/Receipts", "id": "Label_40", "hasEmails": false},
+          {"name": "💰 Financial/Subscriptions", "id": "Label_41", "hasEmails": false}
+        ]
+      },
+      "ebay": {
+        "name": "📦 eBay",
+        "id": "Label_42",
+        "hasEmails": false,
+        "children": [
+          {"name": "📦 eBay/Orders", "id": "Label_43", "hasEmails": false},
+          {"name": "📦 eBay/Messages", "id": "Label_44", "hasEmails": false},
+          {"name": "📦 eBay/Watching", "id": "Label_45", "hasEmails": false}
+        ]
+      }
+    },
+    "duplicateHierarchy": {
+      "newsletters": {
+        "name": "Newsletters",
+        "id": "Label_18",
+        "hasEmails": true,
+        "emailEstimate": "many",
+        "migrateToId": "Label_20",
+        "migrateToName": "📰 Newsletters",
+        "children": [
+          {"name": "Newsletters/Tech-AI", "id": "Label_46", "hasEmails": true, "migrateToId": "Label_21"},
+          {"name": "Newsletters/Finance", "id": "Label_47", "hasEmails": false, "migrateToId": "Label_22"},
+          {"name": "Newsletters/Culture", "id": "Label_48", "hasEmails": false, "migrateToId": "Label_23"},
+          {"name": "Newsletters/Gaming", "id": "Label_49", "hasEmails": false, "migrateToId": "Label_24"}
+        ]
+      },
+      "shopping": {
+        "name": "Shopping",
+        "id": "Label_50",
+        "hasEmails": false,
+        "migrateToId": "Label_25",
+        "migrateToName": "🛒 Shopping",
+        "children": [
+          {"name": "Shopping/Orders", "id": "Label_51", "hasEmails": false, "migrateToId": "Label_26"},
+          {"name": "Shopping/Deals", "id": "Label_52", "hasEmails": true, "migrateToId": "Label_27"},
+          {"name": "Shopping/Cannabis", "id": "Label_53", "hasEmails": true, "migrateToId": "Label_28"}
+        ]
+      },
+      "gaming": {
+        "name": "Gaming",
+        "id": "Label_54",
+        "hasEmails": false,
+        "migrateToId": "Label_29",
+        "migrateToName": "🎮 Gaming",
+        "children": [
+          {"name": "Gaming/Star Citizen", "id": "Label_55", "hasEmails": false, "migrateToId": "Label_30"},
+          {"name": "Gaming/Steam-Deals", "id": "Label_56", "hasEmails": false, "migrateToId": "Label_31"},
+          {"name": "Gaming/Patreon", "id": "Label_57", "hasEmails": false, "migrateToId": "Label_32"}
+        ]
+      },
+      "work": {
+        "name": "Work",
+        "id": "Label_8",
+        "hasEmails": false,
+        "migrateToId": "Label_33",
+        "migrateToName": "💼 Work",
+        "children": [
+          {"name": "Work/Backstage", "id": "Label_58", "hasEmails": false, "migrateToId": "Label_34"},
+          {"name": "Work/Job Alerts", "id": "Label_59", "hasEmails": false, "migrateToId": "Label_35"}
+        ]
+      },
+      "security": {
+        "name": "Security",
+        "id": "Label_60",
+        "hasEmails": false,
+        "migrateToId": "Label_36",
+        "migrateToName": "🔐 Security",
+        "children": [
+          {"name": "Security/Logins", "id": "Label_61", "hasEmails": true, "migrateToId": "Label_37"},
+          {"name": "Security/Verification", "id": "Label_62", "hasEmails": true, "migrateToId": "Label_38"}
+        ]
+      },
+      "ebay": {
+        "name": "eBay",
+        "id": "Label_65",
+        "hasEmails": true,
+        "emailEstimate": "many",
+        "migrateToId": "Label_42",
+        "migrateToName": "📦 eBay",
+        "children": [
+          {"name": "eBay/Orders", "id": "Label_66", "hasEmails": true, "migrateToId": "Label_43"},
+          {"name": "eBay/Messages", "id": "Label_67", "hasEmails": true, "migrateToId": "Label_44"},
+          {"name": "eBay/Watching", "id": "Label_68", "hasEmails": false, "migrateToId": "Label_45"}
+        ]
+      }
+    },
+    "standalone": [
+      {
+        "name": "[Mailbox]",
+        "id": "Label_10",
+        "hasEmails": false,
+        "hasFilter": false,
+        "recommendation": "archive",
+        "children": [
+          {"name": "[Mailbox]/To Buy", "id": "Label_11", "hasEmails": false},
+          {"name": "[Mailbox]/To Read", "id": "Label_12", "hasEmails": false},
+          {"name": "[Mailbox]/To Watch", "id": "Label_13", "hasEmails": false},
+          {"name": "[Mailbox]/Later", "id": "Label_14", "hasEmails": false}
+        ]
+      },
+      {"name": "Notes", "id": "Label_3", "hasEmails": true, "hasFilter": false, "recommendation": "keep"},
+      {"name": "Personal", "id": "Label_4", "hasEmails": false, "hasFilter": false, "recommendation": "archive"},
+      {"name": "Receipts", "id": "Label_5", "hasEmails": true, "hasFilter": false, "recommendation": "migrate-to-financial"},
+      {"name": "Travel", "id": "Label_7", "hasEmails": false, "hasFilter": false, "recommendation": "archive"},
+      {"name": "Patreon", "id": "Label_2664901152156221069", "hasEmails": true, "hasFilter": true, "recommendation": "migrate-to-gaming-patreon"},
+      {"name": "Bandcamp", "id": "Label_7205947996082236194", "hasEmails": true, "hasFilter": true, "recommendation": "keep-or-create-music-category"},
+      {"name": "Invitehawk", "id": "Label_3385680381577586951", "hasEmails": true, "hasFilter": true, "recommendation": "keep"},
+      {"name": "Orders/Shipping", "id": "Label_19", "hasEmails": false, "hasFilter": false, "recommendation": "delete"},
+      {"name": "Aloe City World", "id": "Label_3859143381567144947", "hasEmails": false, "hasFilter": false, "recommendation": "delete"},
+      {"name": "zachgonser@me.com", "id": "Label_9", "hasEmails": false, "hasFilter": false, "recommendation": "archive"}
+    ],
+    "financialLegacy": {
+      "note": "Old Financial tree - migrate to 💰 Financial",
+      "labels": [
+        {"name": "Financial", "id": "Label_6686462438545972229", "hasEmails": false, "migrateToId": "Label_39"},
+        {"name": "Financial/Music", "id": "Label_4685524895131476366", "hasEmails": false, "recommendation": "delete"},
+        {"name": "Financial/Paypal Receipts", "id": "Label_5492261333926184688", "hasEmails": true, "hasFilter": true, "migrateToId": "Label_40"},
+        {"name": "Financial/Possible Notifications", "id": "Label_5959404324605026310", "hasEmails": false, "hasFilter": true, "recommendation": "archive"},
+        {"name": "Financial/Receipts", "id": "Label_63", "hasEmails": false, "migrateToId": "Label_40"},
+        {"name": "Financial/Subscriptions", "id": "Label_64", "hasEmails": true, "migrateToId": "Label_41"}
+      ]
+    },
+    "securityAlerts": {
+      "note": "Separate Security Alerts tree - consider merging with 🔐 Security",
+      "labels": [
+        {"name": "Security Alerts", "id": "Label_5790364762608258859", "hasEmails": false, "recommendation": "merge-to-security"},
+        {"name": "Security Alerts/Google", "id": "Label_1299508093724075565", "hasEmails": true, "hasFilter": true, "recommendation": "merge-to-security-logins"}
+      ]
+    },
+    "receiptLabels": {
+      "note": "Various receipt labels - consolidate into 💰 Financial/Receipts",
+      "labels": [
+        {"name": "Indexer Receipts", "id": "Label_3390527203184852850", "hasEmails": true, "recommendation": "migrate-to-financial-receipts"},
+        {"name": "BoostHill Recepts", "id": "Label_6292924901770141070", "hasEmails": false, "recommendation": "delete"}
+      ]
+    }
+  },
+  "duplicatePairs": [
+    {"emoji": "📰 Newsletters", "emojiId": "Label_20", "plain": "Newsletters", "plainId": "Label_18", "plainHasEmails": true, "recommendation": "migrate-to-emoji"},
+    {"emoji": "🛒 Shopping", "emojiId": "Label_25", "plain": "Shopping", "plainId": "Label_50", "plainHasEmails": false, "recommendation": "migrate-to-emoji"},
+    {"emoji": "🎮 Gaming", "emojiId": "Label_29", "plain": "Gaming", "plainId": "Label_54", "plainHasEmails": false, "recommendation": "migrate-to-emoji"},
+    {"emoji": "💼 Work", "emojiId": "Label_33", "plain": "Work", "plainId": "Label_8", "plainHasEmails": false, "recommendation": "migrate-to-emoji"},
+    {"emoji": "🔐 Security", "emojiId": "Label_36", "plain": "Security", "plainId": "Label_60", "plainHasEmails": false, "recommendation": "migrate-to-emoji"},
+    {"emoji": "📦 eBay", "emojiId": "Label_42", "plain": "eBay", "plainId": "Label_65", "plainHasEmails": true, "recommendation": "migrate-to-emoji"}
+  ],
+  "filtersAnalysis": {
+    "totalFilters": 9,
+    "filtersTargetingLabels": [
+      {"filterId": "ANe1Bmi...4g", "targetLabel": "Financial/Possible Notifications", "targetLabelId": "Label_5959404324605026310", "from": "support@possiblefinance.com"},
+      {"filterId": "ANe1Bmj...Mg", "targetLabel": "Security Alerts/Google", "targetLabelId": "Label_1299508093724075565", "from": "no-reply@accounts.google.com"},
+      {"filterId": "ANe1Bmg...cQ", "targetLabel": "Invitehawk", "targetLabelId": "Label_3385680381577586951", "from": "do-not-reply@invitehawk.com"},
+      {"filterId": "ANe1Bmi...4Q", "targetLabel": "Financial/Paypal Receipts", "targetLabelId": "Label_5492261333926184688", "from": "service@paypal.com", "query": "receipt"},
+      {"filterId": "ANe1Bmj...wA", "targetLabel": "Patreon", "targetLabelId": "Label_2664901152156221069", "from": "@patreon.com"},
+      {"filterId": "ANe1Bmg...9g", "targetLabel": "Bandcamp", "targetLabelId": "Label_7205947996082236194", "from": "bandcamp.com"}
+    ],
+    "note": "These filters need updating after label migration"
+  },
+  "recommendations": {
+    "labelsToKeep": [
+      "📰 Newsletters (and children)",
+      "🛒 Shopping (and children)",
+      "🎮 Gaming (and children)",
+      "💼 Work (and children)",
+      "🔐 Security (and children)",
+      "💰 Financial (and children)",
+      "📦 eBay (and children)",
+      "Notes",
+      "Bandcamp",
+      "Invitehawk"
+    ],
+    "labelsToMigrate": [
+      {"from": "Newsletters tree", "to": "📰 Newsletters tree", "hasEmails": true},
+      {"from": "Shopping/Deals", "to": "🛒 Shopping/Deals", "hasEmails": true},
+      {"from": "Shopping/Cannabis", "to": "🛒 Shopping/Cannabis", "hasEmails": true},
+      {"from": "Security/Logins", "to": "🔐 Security/Logins", "hasEmails": true},
+      {"from": "Security/Verification", "to": "🔐 Security/Verification", "hasEmails": true},
+      {"from": "Financial/Subscriptions", "to": "💰 Financial/Subscriptions", "hasEmails": true},
+      {"from": "eBay tree", "to": "📦 eBay tree", "hasEmails": true},
+      {"from": "Financial/Paypal Receipts", "to": "💰 Financial/Receipts", "hasEmails": true},
+      {"from": "Indexer Receipts", "to": "💰 Financial/Receipts", "hasEmails": true},
+      {"from": "Receipts", "to": "💰 Financial/Receipts", "hasEmails": true},
+      {"from": "Security Alerts/Google", "to": "🔐 Security/Logins", "hasEmails": true},
+      {"from": "Patreon", "to": "🎮 Gaming/Patreon", "hasEmails": true, "note": "Update filter to target emoji label"}
+    ],
+    "labelsToArchive": [
+      "[Mailbox] tree (5 labels, all empty)",
+      "Personal (empty)",
+      "Travel (empty)",
+      "zachgonser@me.com (empty)",
+      "Financial/Possible Notifications (empty, has filter - consider keeping filter)",
+      "Security Alerts (empty parent)"
+    ],
+    "labelsToDelete": [
+      "Orders/Shipping (empty, no filter)",
+      "Aloe City World (empty, no filter)",
+      "BoostHill Recepts (empty, no filter, typo in name)",
+      "Financial/Music (empty, no filter)",
+      "All non-emoji duplicates AFTER migration complete"
+    ],
+    "filtersToUpdate": [
+      {"filter": "Patreon filter", "currentTarget": "Patreon", "newTarget": "🎮 Gaming/Patreon"},
+      {"filter": "Paypal Receipts filter", "currentTarget": "Financial/Paypal Receipts", "newTarget": "💰 Financial/Receipts"},
+      {"filter": "Security Alerts/Google filter", "currentTarget": "Security Alerts/Google", "newTarget": "🔐 Security/Logins"},
+      {"filter": "Possible Finance filter", "currentTarget": "Financial/Possible Notifications", "newTarget": "Consider deleting or moving to 💰 Financial"}
+    ]
+  },
+  "migrationPlan": {
+    "phase1": {
+      "name": "Migrate emails from duplicate labels to emoji labels",
+      "actions": [
+        "Search each non-emoji label with emails",
+        "Add corresponding emoji label to each message",
+        "Remove non-emoji label from each message"
+      ],
+      "labelsToProcess": [
+        "Newsletters → 📰 Newsletters",
+        "Newsletters/Tech-AI → 📰 Newsletters/Tech-AI",
+        "Shopping/Deals → 🛒 Shopping/Deals",
+        "Shopping/Cannabis → 🛒 Shopping/Cannabis",
+        "Security/Logins → 🔐 Security/Logins",
+        "Security/Verification → 🔐 Security/Verification",
+        "Financial/Subscriptions → 💰 Financial/Subscriptions",
+        "eBay → 📦 eBay",
+        "eBay/Orders → 📦 eBay/Orders",
+        "eBay/Messages → 📦 eBay/Messages"
+      ]
+    },
+    "phase2": {
+      "name": "Consolidate receipt labels",
+      "actions": [
+        "Migrate Financial/Paypal Receipts → 💰 Financial/Receipts",
+        "Migrate Indexer Receipts → 💰 Financial/Receipts",
+        "Migrate Receipts → 💰 Financial/Receipts"
+      ]
+    },
+    "phase3": {
+      "name": "Consolidate security labels",
+      "actions": [
+        "Migrate Security Alerts/Google → 🔐 Security/Logins"
+      ]
+    },
+    "phase4": {
+      "name": "Update filters",
+      "actions": [
+        "Update Patreon filter target",
+        "Update Paypal Receipts filter target",
+        "Update Security Alerts/Google filter target",
+        "Review Possible Finance filter"
+      ]
+    },
+    "phase5": {
+      "name": "Delete empty/migrated labels",
+      "actions": [
+        "Delete all non-emoji duplicate labels",
+        "Delete orphaned labels (Orders/Shipping, Aloe City World, BoostHill Recepts)",
+        "Archive [Mailbox] tree"
+      ]
+    }
+  }
+}

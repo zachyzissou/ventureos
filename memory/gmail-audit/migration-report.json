@@ -1,0 +1,91 @@
+{
+  "generated": "2026-01-27T21:30:00-06:00",
+  "phase": 1,
+  "status": "complete",
+  "batches": [
+    {
+      "name": "Newsletters",
+      "sourceLabel": "Label_18",
+      "targetLabel": "Label_20 (📰 Newsletters)",
+      "found": 20,
+      "migrated": 20,
+      "errors": []
+    },
+    {
+      "name": "Newsletters/Tech-AI",
+      "sourceLabel": "Label_46",
+      "targetLabel": "Label_21 (📰 Newsletters/Tech-AI)",
+      "found": 20,
+      "migrated": 20,
+      "errors": []
+    },
+    {
+      "name": "Shopping/Deals",
+      "sourceLabel": "Label_52",
+      "targetLabel": "Label_27 (🛒 Shopping/Deals)",
+      "found": 20,
+      "migrated": 20,
+      "errors": []
+    },
+    {
+      "name": "Shopping/Cannabis",
+      "sourceLabel": "Label_53",
+      "targetLabel": "Label_28 (🛒 Shopping/Cannabis)",
+      "found": 20,
+      "migrated": 20,
+      "errors": []
+    },
+    {
+      "name": "Security/Logins",
+      "sourceLabel": "Label_61",
+      "targetLabel": "Label_37 (🔐 Security/Logins)",
+      "found": 20,
+      "migrated": 20,
+      "errors": []
+    },
+    {
+      "name": "Security/Verification",
+      "sourceLabel": "Label_62",
+      "targetLabel": "Label_38 (🔐 Security/Verification)",
+      "found": 20,
+      "migrated": 20,
+      "errors": []
+    },
+    {
+      "name": "eBay",
+      "sourceLabel": "Label_65",
+      "targetLabel": "Label_42 (📦 eBay)",
+      "found": 0,
+      "migrated": 0,
+      "errors": [],
+      "note": "No threads found with this label"
+    },
+    {
+      "name": "eBay/Orders",
+      "sourceLabel": "Label_66",
+      "targetLabel": "Label_43 (📦 eBay/Orders)",
+      "found": 0,
+      "migrated": 0,
+      "errors": [],
+      "note": "No threads found with this label"
+    },
+    {
+      "name": "eBay/Messages",
+      "sourceLabel": "Label_67",
+      "targetLabel": "Label_44 (📦 eBay/Messages)",
+      "found": 0,
+      "migrated": 0,
+      "errors": [],
+      "note": "No threads found with this label"
+    }
+  ],
+  "totalMigrated": 120,
+  "totalErrors": 0,
+  "notes": [
+    "Each batch was limited to 20 threads (first 20 found)",
+    "5-second delay between each thread modification",
+    "30-second pause between batches",
+    "eBay labels (7-9) had no threads in the non-emoji versions",
+    "Additional passes may be needed if more than 20 threads exist per label"
+  ]
+}

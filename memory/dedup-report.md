@@ -1,0 +1,542 @@
+﻿# Obsidian Article Deduplication Report
+Generated: 2026-01-27 23:36:46
+
+## Summary
+- **Total duplicate sets processed:** 262
+- **Files kept (primary):** 262
+- **Files moved to trash:** 6
+- **Files renamed (different content):** 257
+- **Errors encountered:** 0
+
+## Files Kept (Primary/Longest)
+- **Faster cron script.md** (DevOps) - 11721 chars
+- **Free Ableton chord tools.md** (DevOps) - 9117 chars
+- **Elon Musk Patent Count.md** (Infrastructure) - 1935 chars
+- **Enable mods in Docker.md** (DevOps) - 2873 chars
+- **MacOS NetBoot in Docker.md** (DevOps) - 3159 chars
+- **Nuclear agreements and policies.md** (General) - 1678 chars
+- **GitLab Omnibus config.md** (DevOps) - 3746 chars
+- **iOS Pi Printing Integration.md** (DevOps) - 2756 chars
+- **Apple Pay Fees Explained.md** (General) - 6812 chars
+- **12V-2x6 Cable Orientation.md** (DevOps) - 2447 chars
+- **Barberbeats song prompt.md** (General) - 182736 chars
+- **Trap Drumbeat Analysis.md** (Development) - 4128 chars
+- **Disable Num Lock popup.md** (DevOps) - 3448 chars
+- **eBay SpeedPAK Tracking Explained.md** (General) - 9247 chars
+- **Analyze CSV structure.md** (DevOps) - 2767 chars
+- **Bootable SSD Creation Tools.md** (DevOps) - 7568 chars
+- **Home inspector water meter access.md** (Productivity) - 2069 chars
+- **Kubernetes experience overview.md** (DevOps) - 5719 chars
+- **Filter YouTube audio Discord.md** (DevOps) - 7888 chars
+- **Game update tracking tips.md** (DevOps) - 8136 chars
+- **3D CGI VR Creators.md** (DevOps) - 1585 chars
+- **aUEC exploits and methods.md** (Gaming) - 2686 chars
+- **Outsourcing Dev Work India.md** (General) - 33995 chars
+- **Trackers Supporting Cross-Seeding.md** (Infrastructure) - 6609 chars
+- **Plex Cache Bloat Fix.md** (DevOps) - 3564 chars
+- **Stylish Hats for XL Heads.md** (DevOps) - 1412 chars
+- **Parking cores explained.md** (DevOps) - 2594 chars
+- **Playwright Test Hangs Debug.md** (DevOps) - 2904 chars
+- **Unraid Data Loss Warning.md** (DevOps) - 9331 chars
+- **Upgrade to 24-bit FLAC.md** (Gaming) - 7711 chars
+- **Tailwind CSS Integration Fix.md** (DevOps) - 4972 chars
+- **Threadripper vs Dual Xeons.md** (DevOps) - 2303 chars
+- **BT.845 Flight Information.md** (DevOps) - 3056 chars
+- **UI in Server Datacenter.md** (DevOps) - 3158 chars
+- **Unraid Connect DNS Issue.md** (DevOps) - 2832 chars
+- **Touchbar support in Omarchy.md** (DevOps) - 3306 chars
+- **Troubleshoot web search error.md** (DevOps) - 1310 chars
+- **Username generator recommendations.md** (DevOps) - 9903 chars
+- **Using --memory in Unraid.md** (DevOps) - 3729 chars
+- **Unraid Connect Nginx Issue.md** (DevOps) - 3349 chars
+- **Unraid not detecting drives.md** (DevOps) - 4582 chars
+- **SMB Windows Unraid Issue.md** (DevOps) - 2851 chars
+- **SongKong Plex Configuration.md** (DevOps) - 3766 chars
+- **Server CPU Upgrade Help.md** (DevOps) - 1026 chars
+- **Slurp Squad Fortnite cosmetics.md** (Gaming) - 230 chars
+- **Star Citizen Profile Request.md** (Gaming) - 814 chars
+- **Tech Stack Modernization Research.md** (DevOps) - 5611 chars
+- **Speed Up SMB Traffic.md** (DevOps) - 9188 chars
+- **SQLite database connection error.md** (DevOps) - 4941 chars
+- **GLP-1 agonists explanation.md** (Gaming) - 4060 chars
+- **Partner Ops Manager Role.md** (Infrastructure) - 8995 chars
+- **Cleaning cost estimate.md** (DevOps) - 6736 chars
+- **Email templates creation.md** (DevOps) - 20306 chars
+- **Tim Cook successor candidate.md** (Development) - 7952 chars
+- **Tracking Extraction Clarification.md** (Development) - 5782 chars
+- **Invite Email Template.md** (DevOps) - 2937 chars
+- **Data analysis request.md** (Development) - 8066 chars
+- **Webpage Builders on Unraid.md** (DevOps) - 3139 chars
+- **Welcome message rewrite.md** (Business) - 4640 chars
+- **Using Redis in Docker.md** (DevOps) - 3169 chars
+- **Video Link Assistance.md** (Gaming) - 616 chars
+- **Windows tools recommendations.md** (DevOps) - 8607 chars
+- **XML for Unraid Docker.md** (DevOps) - 8825 chars
+- **What is RevOps.md** (Infrastructure) - 2247 chars
+- **Wiki.js Configuration Help.md** (DevOps) - 3320 chars
+- **Auto Add Games Sunshine.md** (DevOps) - 9068 chars
+- **Fixing faces in SwarmUI.md** (General) - 29123 chars
+- **Kometa Setup Guide.md** (Infrastructure) - 118 chars
+- **7DTD Modded Server Setup.md** (General) - 23207 chars
+- **Advanced tips SwarmUI SD 1.5.md** (General) - 29181 chars
+- **Funny song revision.md** (Gaming) - 8769 chars
+- **Gun Builds for Warzone.md** (General) - 35218 chars
+- **VS Code setup.md** (General) - 96517 chars
+- **Disable Windows key.md** (Gaming) - 6833 chars
+- **Social cultural docs Asia.md** (Gaming) - 8720 chars
+- **Steam Deck ROM marketplace.md** (DevOps) - 2341 chars
+- **Slskd UID GID Setup.md** (DevOps) - 7082 chars
+- **SlurpGG Wiki Template.md** (DevOps) - 5617 chars
+- **Valheim Mods Comparison.md** (Gaming) - 2357 chars
+- **Wabbajack on Steam Deck.md** (DevOps) - 218 chars
+- **Steam-based Game Recommendations.md** (Gaming) - 2366 chars
+- **Storage tips for THCa.md** (Personal) - 2352 chars
+- **Historical TV and Docs.md** (General) - 21721 chars
+- **Project analysis and revamp.md** (General) - 19776 chars
+- **YouTube Video Download Guide.md** (General) - 1016 chars
+- **GTA V Mod Packs.md** (General) - 53475 chars
+- **T-shirt brand ideas.md** (General) - 10042 chars
+- **Route plan for tasks.md** (Productivity) - 5812 chars
+- **Unlock Classic XI EA FC.md** (Gaming) - 3363 chars
+- **Asia trip planning.md** (General) - 28550 chars
+- **Reset Xbox Controller Windows.md** (Gaming) - 1689 chars
+- **Username suggestions.md** (Gaming) - 702 chars
+- **NFL Viewership Stats.md** (Gaming) - 1623 chars
+- **Presidential power and constitution.md** (Productivity) - 1083 chars
+- **Lake Pend Oreille info.md** (General) - 15524 chars
+- **Making Music Like Hotel Pools.md** (Infrastructure) - 9021 chars
+- **XGS-PON to GPON setup.md** (DevOps) - 5009 chars
+- **Zombies Camo Unlock Guide.md** (Gaming) - 2368 chars
+- **Slskd permissions fix.md** (DevOps) - 3787 chars
+- **Download n8n Docs PDF.md** (DevOps) - 5111 chars
+- **EA FC 25 Lag Fix.md** (DevOps) - 8650 chars
+- **Cyberpunk modding progress.md** (Gaming) - 8702 chars
+- **Develop low noise brand.md** (Gaming) - 8656 chars
+- **File system cleanup tools.md** (DevOps) - 8023 chars
+- **Fix pip py errors.md** (DevOps) - 3986 chars
+- **Enshrouded Server Mods.md** (DevOps) - 3165 chars
+- **Enshrouded Server on Unraid.md** (DevOps) - 7361 chars
+- **Best Minecraft Launchers.md** (Gaming) - 8667 chars
+- **Best password manager features.md** (DevOps) - 3711 chars
+- **Best Audiobook Server Unraid.md** (DevOps) - 8919 chars
+- **Best IPTV with EPG.md** (Infrastructure) - 8860 chars
+- **Check ports on Unraid.md** (DevOps) - 5934 chars
+- **Cloudflare Email Routing Impact.md** (DevOps) - 3825 chars
+- **Best PC Racing Wheel.md** (Gaming) - 2249 chars
+- **Build Custom Lidarr Docker.md** (DevOps) - 2416 chars
+- **Open source Oregon Trail multiplayer.md** (Gaming) - 8799 chars
+- **Overclocking Crucial CP2K32G60C40U5B.md** (Hardware) - 1743 chars
+- **Most Likely Code.md** (Gaming) - 1496 chars
+- **Online game servers query.md** (Gaming) - 1561 chars
+- **Server only mods.md** (DevOps) - 6560 chars
+- **SignalRGB vs iCUE features.md** (DevOps) - 8778 chars
+- **Palworld server mission language issue.md** (DevOps) - 2595 chars
+- **PvE Extraction FPS Games.md** (DevOps) - 2288 chars
+- **GTA V Mod Tools.md** (DevOps) - 8544 chars
+- **IPMI iLO Unraid Setup.md** (DevOps) - 2951 chars
+- **GitLab CE alternatives.md** (DevOps) - 9124 chars
+- **Godot RTS City Builder.md** (Gaming) - 2344 chars
+- **Local Electronics Liquidation Tips.md** (Infrastructure) - 8990 chars
+- **Metadata server down issue.md** (DevOps) - 3702 chars
+- **IPTV to Plex options.md** (DevOps) - 7189 chars
+- **Lidarr Folder Structure Setup.md** (DevOps) - 3745 chars
+- **Star Citizen News Bot.md** (Gaming) - 3448 chars
+- **Suno persona creation.md** (AI) - 9029 chars
+- **Simple image generation apps.md** (DevOps) - 8788 chars
+- **SMB Issues Windows 11.md** (DevOps) - 4252 chars
+- **Teaching Creative Coding Agents.md** (AI) - 9352 chars
+- **Terrain gen system refactor.md** (DevOps) - 7619 chars
+- **Sync PC to Unraid.md** (DevOps) - 2538 chars
+- **T-shirt Design Kickoff.md** (Creative) - 9036 chars
+- **Palworld server modding guide.md** (DevOps) - 2557 chars
+- **Project analysis guidance.md** (DevOps) - 7465 chars
+- **Non-official Jellyfin repos.md** (DevOps) - 2266 chars
+- **One-click Palworld mods.md** (DevOps) - 4148 chars
+- **Resume Rewrite for VP Role.md** (Business) - 3270 chars
+- **RSS feed newsletter prompt.md** (Infrastructure) - 11567 chars
+- **Project Name Suggestions.md** (DevOps) - 9179 chars
+- **Proxying game server through CF.md** (DevOps) - 2946 chars
+- **Album Art Request.md** (Creative) - 670 chars
+- **Alternative app stores for Mac.md** (DevOps) - 2329 chars
+- **Agentzero Docker Branch Setup.md** (DevOps) - 2332 chars
+- **AI song suggestions.md** (Gaming) - 9488 chars
+- **Automate Soccer Game Calendar.md** (DevOps) - 5408 chars
+- **Best DB for Jira Docker.md** (DevOps) - 3355 chars
+- **Auto-generate playlists.md** (DevOps) - 8796 chars
+- **Automate JAV Search Unraid.md** (DevOps) - 4173 chars
+- **Uncensored AI Alternatives.md** (Development) - 9006 chars
+- **Valheim Server Mod List.md** (Gaming) - 2496 chars
+- **Toonami Aftermath Plex setup.md** (DevOps) - 3604 chars
+- **Twitch stream background design.md** (Creative) - 5090 chars
+- **9950X3D vs 9800X3D.md** (DevOps) - 2137 chars
+- **Access Audiobookshelf Remotely.md** (DevOps) - 4871 chars
+- **VirtIO Drivers for WS2012.md** (DevOps) - 2913 chars
+- **Where to shop for art.md** (DevOps) - 397 chars
+- **n8n RunwayML Integration.md** (Development) - 4952 chars
+- **Best RSS App Unraid.md** (DevOps) - 6461 chars
+- **Clean Article Text Issue.md** (DevOps) - 4458 chars
+- **ATM 10 Server Config Tips.md** (DevOps) - 3612 chars
+- **Best OpenAI model for writing.md** (AI) - 8549 chars
+- **Design automation solutions.md** (DevOps) - 9011 chars
+- **Eevee Nara LoRA Models.md** (AI) - 1156 chars
+- **ComfyUI Windows installation scripts.md** (DevOps) - 3898 chars
+- **Container list update.md** (DevOps) - 12033 chars
+- **Affordable AMD Combo.md** (DevOps) - 2962 chars
+- **Affordable high VRAM GPUs.md** (DevOps) - 2609 chars
+- **1600W PSU for 5090s.md** (Gaming) - 9133 chars
+- **Add Extensions to ComfyUI.md** (DevOps) - 6583 chars
+- **Apple Notebook Benchmarks 2026.md** (Gaming) - 2592 chars
+- **Apps for Unreal Engine.md** (DevOps) - 8820 chars
+- **AI HAT vs GPU.md** (Gaming) - 2305 chars
+- **AI impact on economy.md** (Infrastructure) - 8612 chars
+- **Homepage Docker Integration Unraid.md** (DevOps) - 3087 chars
+- **Hugging Face download GUI.md** (DevOps) - 3478 chars
+- **Gameplay project review.md** (Development) - 9287 chars
+- **Glance Config File Setup.md** (DevOps) - 5748 chars
+- **Kometa config analysis.md** (DevOps) - 3660 chars
+- **Local LoRA video training.md** (DevOps) - 9114 chars
+- **Interactive Music 3D Ideas.md** (Creative) - 7338 chars
+- **Interactive music 3D.md** (Creative) - 5944 chars
+- **Fix virtual environment prompt.md** (DevOps) - 3675 chars
+- **Fixing JSON config.md** (DevOps) - 5027 chars
+- **Finding RSS Feeds.md** (DevOps) - 8958 chars
+- **Finding Windows tools.md** (DevOps) - 8968 chars
+- **Game Concept Foundation.md** (General) - 188403 chars
+- **Game server names ideas.md** (DevOps) - 2336 chars
+- **Florence2 in ComfyUI.md** (DevOps) - 4421 chars
+- **Flux steps in SwarmUI.md** (DevOps) - 8496 chars
+- **Best game engine for vibe coding.md** (Gaming) - 8704 chars
+- **n8n Movie Clip Workflow.md** (DevOps) - 4396 chars
+- **NPM Dependency Conflict Fix.md** (DevOps) - 2522 chars
+- **MCP Servers Overview.md** (DevOps) - 4836 chars
+- **Merethic Modpack and Brightness.md** (DevOps) - 411 chars
+- **Open unsupported macOS apps.md** (DevOps) - 3479 chars
+- **Oregon Trail Game Names.md** (Gaming) - 8660 chars
+- **Obsidian Claude Code MCP.md** (DevOps) - 927 chars
+- **Ollama model loading issues.md** (DevOps) - 6071 chars
+- **Lidarr Soularr Configuration Guide.md** (DevOps) - 409 chars
+- **Looting Backpacks in Cycle.md** (Gaming) - 7935 chars
+- **Lidarr Plugins Branch Unraid.md** (DevOps) - 3392 chars
+- **Lidarr rename edition setup.md** (DevOps) - 3376 chars
+- **MCP server managers.md** (DevOps) - 6213 chars
+- **MCP server setup help.md** (DevOps) - 6587 chars
+- **Lovense Solace Pro SLR Compatibility.md** (Development) - 5942 chars
+- **Main Decider at CoD.md** (Gaming) - 1797 chars
+- **RedM Ranching Servers.md** (Gaming) - 8299 chars
+- **RSS AI Models.md** (DevOps) - 2251 chars
+- **Project deep dive prompt.md** (DevOps) - 2631 chars
+- **RDP Client Suggestions.md** (DevOps) - 3546 chars
+- **Seeding with Prowlarr Fix.md** (DevOps) - 3602 chars
+- **Self-hosted social media options.md** (DevOps) - 6756 chars
+- **Running CF Workers on Unraid.md** (DevOps) - 603 chars
+- **Samba Windows Unraid fix.md** (DevOps) - 2971 chars
+- **Palworld Server Manager Mods.md** (Gaming) - 7948 chars
+- **Pass Creator to Ollama.md** (DevOps) - 5116 chars
+- **PalDefender Whitelist Setup.md** (DevOps) - 2522 chars
+- **Palworld server connection issues.md** (DevOps) - 2555 chars
+- **Plex preferences file error.md** (DevOps) - 2799 chars
+- **Plugin development in Lidarr.md** (DevOps) - 4778 chars
+- **Plex container permission issue.md** (DevOps) - 2737 chars
+- **Plex n8n workflows search.md** (DevOps) - 3073 chars
+- **Install TeamViewer on RPi.md** (DevOps) - 2638 chars
+- **Connect SillyTavern to Discord.md** (DevOps) - 2537 chars
+- **Connect VS Code to Ollama.md** (DevOps) - 3368 chars
+- **Concept art creation.md** (Creative) - 909 chars
+- **Configure web search.md** (DevOps) - 2904 chars
+- **Cool ISOs for Netboot.md** (DevOps) - 3975 chars
+- **Cover Letter Request.md** (Business) - 4088 chars
+- **Consulting services website plan.md** (Infrastructure) - 9114 chars
+- **Containers using port 80.md** (DevOps) - 2489 chars
+- **Bootable Linux ISO Creation.md** (DevOps) - 8222 chars
+- **Character card template.md** (DevOps) - 14286 chars
+- **Best Moddable Racing Games.md** (Gaming) - 8779 chars
+- **Binhex Plex libusb error.md** (DevOps) - 2854 chars
+- **Claude command fix.md** (DevOps) - 4258 chars
+- **Claude command not found.md** (DevOps) - 3749 chars
+- **Chinese Fast Fortress Build.md** (Gaming) - 8848 chars
+- **Claude assistance request.md** (DevOps) - 4376 chars
+- **Generate Slskd API Key.md** (DevOps) - 2407 chars
+- **Get Plex Music ID.md** (DevOps) - 2444 chars
+- **Fix VS Code view.md** (DevOps) - 2344 chars
+- **Free DDNS UniFi Setup.md** (DevOps) - 2820 chars
+- **Install AbletonMCP Windows.md** (DevOps) - 3222 chars
+- **Install Copilot on VS Code Server.md** (DevOps) - 3774 chars
+- **GitHub setup guide.md** (DevOps) - 784 chars
+- **GPU rental options.md** (DevOps) - 3700 chars
+- **Discord ticket system tools.md** (DevOps) - 4160 chars
+- **Emby Dispatcharr Setup Guide.md** (DevOps) - 2607 chars
+- **Cyber-retro Anime Avatar.md** (Creative) - 823 chars
+- **Dashy Alternatives for Unraid.md** (DevOps) - 3218 chars
+- **Firmware update troubleshooting.md** (Development) - 8178 chars
+- **Fix PowerShell issue.md** (DevOps) - 8592 chars
+- **Expanding Unraid with Cloud.md** (DevOps) - 4986 chars
+- **Finding Hidden WAPs.md** (Infrastructure) - 8866 chars
+## Files Moved to Trash
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Python\Filter YouTube audio Discord.md` â†’ `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\META\Trash\duplicates\Development_Filter YouTube audio Discord.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Python\Trackers Supporting Cross-Seeding.md` â†’ `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\META\Trash\duplicates\Development_Trackers Supporting Cross-Seeding.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Slskd UID GID Setup.md` â†’ `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\META\Trash\duplicates\Development_Slskd UID GID Setup.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Fix PowerShell issue.md` â†’ `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\META\Trash\duplicates\AI_Fix PowerShell issue.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Palworld Server Manager Mods.md` â†’ `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\META\Trash\duplicates\AI_Palworld Server Manager Mods.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Bootable SSD Creation Tools.md` â†’ `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\META\Trash\duplicates\Development_Bootable SSD Creation Tools.md`
+## Files Renamed (Different Content)
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Enable mods in Docker.md` â†’ `Enable mods in Docker - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Faster cron script.md` â†’ `Faster cron script - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\eBay SpeedPAK Tracking Explained.md` â†’ `eBay SpeedPAK Tracking Explained - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Elon Musk Patent Count.md` â†’ `Elon Musk Patent Count - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\iOS Pi Printing Integration.md` â†’ `iOS Pi Printing Integration - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\MacOS NetBoot in Docker.md` â†’ `MacOS NetBoot in Docker - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Free Ableton chord tools.md` â†’ `Free Ableton chord tools - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\GitLab Omnibus config.md` â†’ `GitLab Omnibus config - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Creative\Music\Barberbeats song prompt.md` â†’ `Barberbeats song prompt - Creative.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Creative\Music\Trap Drumbeat Analysis.md` â†’ `Trap Drumbeat Analysis - Creative.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Business\General\Tracking Extraction Clarification.md` â†’ `Tracking Extraction Clarification - Business.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Creative\Design\BT.845 Flight Information.md` â†’ `BT.845 Flight Information - Creative.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Analyze CSV structure.md` â†’ `Analyze CSV structure - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Disable Num Lock popup.md` â†’ `Disable Num Lock popup - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\General\Apple Pay Fees Explained.md` â†’ `Apple Pay Fees Explained - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\12V-2x6 Cable Orientation.md` â†’ `12V-2x6 Cable Orientation - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Python\Home inspector water meter access.md` â†’ `Home inspector water meter access - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Python\Kubernetes experience overview.md` â†’ `Kubernetes experience overview - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Upgrade to 24-bit FLAC.md` â†’ `Upgrade to 24-bit FLAC - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Python\Game update tracking tips.md` â†’ `Game update tracking tips - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\aUEC exploits and methods.md` â†’ `aUEC exploits and methods - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Auto Add Games Sunshine.md` â†’ `Auto Add Games Sunshine - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Python\Outsourcing Dev Work India.md` â†’ `Outsourcing Dev Work India - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\3D CGI VR Creators.md` â†’ `3D CGI VR Creators - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Playwright Test Hangs Debug.md` â†’ `Playwright Test Hangs Debug - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Plex Cache Bloat Fix.md` â†’ `Plex Cache Bloat Fix - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Nuclear agreements and policies.md` â†’ `Nuclear agreements and policies - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Parking cores explained.md` â†’ `Parking cores explained - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Threadripper vs Dual Xeons.md` â†’ `Threadripper vs Dual Xeons - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Unraid Data Loss Warning.md` â†’ `Unraid Data Loss Warning - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Stylish Hats for XL Heads.md` â†’ `Stylish Hats for XL Heads - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\JavaScript\Tailwind CSS Integration Fix.md` â†’ `Tailwind CSS Integration Fix - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Troubleshoot web search error.md` â†’ `Troubleshoot web search error - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\UI in Server Datacenter.md` â†’ `UI in Server Datacenter - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Tech Stack Modernization Research.md` â†’ `Tech Stack Modernization Research - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Touchbar support in Omarchy.md` â†’ `Touchbar support in Omarchy - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Unraid not detecting drives.md` â†’ `Unraid not detecting drives - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Username generator recommendations.md` â†’ `Username generator recommendations - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Unraid Connect DNS Issue.md` â†’ `Unraid Connect DNS Issue - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Unraid Connect Nginx Issue.md` â†’ `Unraid Connect Nginx Issue - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Slurp Squad Fortnite cosmetics.md` â†’ `Slurp Squad Fortnite cosmetics - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\SMB Windows Unraid Issue.md` â†’ `SMB Windows Unraid Issue - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Self-hosted social media options.md` â†’ `Self-hosted social media options - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Server CPU Upgrade Help.md` â†’ `Server CPU Upgrade Help - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\SQLite database connection error.md` â†’ `SQLite database connection error - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Star Citizen Profile Request.md` â†’ `Star Citizen Profile Request - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\SongKong Plex Configuration.md` â†’ `SongKong Plex Configuration - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Speed Up SMB Traffic.md` â†’ `Speed Up SMB Traffic - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Business\Botrista\Email templates creation.md` â†’ `Email templates creation - Business.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Business\Botrista\GLP-1 agonists explanation.md` â†’ `GLP-1 agonists explanation - Business.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\XML for Unraid Docker.md` â†’ `XML for Unraid Docker - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Business\Botrista\Cleaning cost estimate.md` â†’ `Cleaning cost estimate - Business.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Business\General\Data analysis request.md` â†’ `Data analysis request - Business.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Business\General\Tim Cook successor candidate.md` â†’ `Tim Cook successor candidate - Business.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Business\Botrista\Partner Ops Manager Role.md` â†’ `Partner Ops Manager Role - Business.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Business\FotoPress\Invite Email Template.md` â†’ `Invite Email Template - Business.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Video Link Assistance.md` â†’ `Video Link Assistance - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Webpage Builders on Unraid.md` â†’ `Webpage Builders on Unraid - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Using --memory in Unraid.md` â†’ `Using --memory in Unraid - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Using Redis in Docker.md` â†’ `Using Redis in Docker - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Wiki.js Configuration Help.md` â†’ `Wiki.js Configuration Help - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Windows tools recommendations.md` â†’ `Windows tools recommendations - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Welcome message rewrite.md` â†’ `Welcome message rewrite - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\What is RevOps.md` â†’ `What is RevOps - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Docker\Fixing faces in SwarmUI.md` â†’ `Fixing faces in SwarmUI - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Docker\Kometa Setup Guide.md` â†’ `Kometa Setup Guide - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Docker\7DTD Modded Server Setup.md` â†’ `7DTD Modded Server Setup - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Docker\Advanced tips SwarmUI SD 1.5.md` â†’ `Advanced tips SwarmUI SD 1.5 - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Linux\Funny song revision.md` â†’ `Funny song revision - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Linux\Gun Builds for Warzone.md` â†’ `Gun Builds for Warzone - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Docker\VS Code setup.md` â†’ `VS Code setup - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Linux\Disable Windows key.md` â†’ `Disable Windows key - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Social cultural docs Asia.md` â†’ `Social cultural docs Asia - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Steam Deck ROM marketplace.md` â†’ `Steam Deck ROM marketplace - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Slskd permissions fix.md` â†’ `Slskd permissions fix - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\SlurpGG Wiki Template.md` â†’ `SlurpGG Wiki Template - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Valheim Mods Comparison.md` â†’ `Valheim Mods Comparison - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Wabbajack on Steam Deck.md` â†’ `Wabbajack on Steam Deck - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Steam-based Game Recommendations.md` â†’ `Steam-based Game Recommendations - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Storage tips for THCa.md` â†’ `Storage tips for THCa - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Gaming\General\Historical TV and Docs.md` â†’ `Historical TV and Docs - Gaming.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Gaming\General\Project analysis and revamp.md` â†’ `Project analysis and revamp - Gaming.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Unraid\YouTube Video Download Guide.md` â†’ `YouTube Video Download Guide - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Gaming\General\GTA V Mod Packs.md` â†’ `GTA V Mod Packs - Gaming.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Gaming\Minecraft\T-shirt brand ideas.md` â†’ `T-shirt brand ideas - Gaming.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Productivity\Automation\Route plan for tasks.md` â†’ `Route plan for tasks - Productivity.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Gaming\General\Unlock Classic XI EA FC.md` â†’ `Unlock Classic XI EA FC - Gaming.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Gaming\Minecraft\Asia trip planning.md` â†’ `Asia trip planning - Gaming.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Linux\Reset Xbox Controller Windows.md` â†’ `Reset Xbox Controller Windows - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Linux\Username suggestions.md` â†’ `Username suggestions - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Linux\NFL Viewership Stats.md` â†’ `NFL Viewership Stats - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Linux\Presidential power and constitution.md` â†’ `Presidential power and constitution - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Unraid\Lake Pend Oreille info.md` â†’ `Lake Pend Oreille info - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Unraid\Making Music Like Hotel Pools.md` â†’ `Making Music Like Hotel Pools - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Linux\XGS-PON to GPON setup.md` â†’ `XGS-PON to GPON setup - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Linux\Zombies Camo Unlock Guide.md` â†’ `Zombies Camo Unlock Guide - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Download n8n Docs PDF.md` â†’ `Download n8n Docs PDF - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\EA FC 25 Lag Fix.md` â†’ `EA FC 25 Lag Fix - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Cyberpunk modding progress.md` â†’ `Cyberpunk modding progress - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Develop low noise brand.md` â†’ `Develop low noise brand - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\File system cleanup tools.md` â†’ `File system cleanup tools - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Fix pip py errors.md` â†’ `Fix pip py errors - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Enshrouded Server Mods.md` â†’ `Enshrouded Server Mods - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Enshrouded Server on Unraid.md` â†’ `Enshrouded Server on Unraid - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Best Minecraft Launchers.md` â†’ `Best Minecraft Launchers - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Best password manager features.md` â†’ `Best password manager features - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Best Audiobook Server Unraid.md` â†’ `Best Audiobook Server Unraid - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Best IPTV with EPG.md` â†’ `Best IPTV with EPG - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Check ports on Unraid.md` â†’ `Check ports on Unraid - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Cloudflare Email Routing Impact.md` â†’ `Cloudflare Email Routing Impact - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Best PC Racing Wheel.md` â†’ `Best PC Racing Wheel - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Build Custom Lidarr Docker.md` â†’ `Build Custom Lidarr Docker - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Open source Oregon Trail multiplayer.md` â†’ `Open source Oregon Trail multiplayer - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Overclocking Crucial CP2K32G60C40U5B.md` â†’ `Overclocking Crucial CP2K32G60C40U5B - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Most Likely Code.md` â†’ `Most Likely Code - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Online game servers query.md` â†’ `Online game servers query - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Server only mods.md` â†’ `Server only mods - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\SignalRGB vs iCUE features.md` â†’ `SignalRGB vs iCUE features - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Palworld server mission language issue.md` â†’ `Palworld server mission language issue - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\PvE Extraction FPS Games.md` â†’ `PvE Extraction FPS Games - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\GTA V Mod Tools.md` â†’ `GTA V Mod Tools - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\IPMI iLO Unraid Setup.md` â†’ `IPMI iLO Unraid Setup - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\GitLab CE alternatives.md` â†’ `GitLab CE alternatives - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Godot RTS City Builder.md` â†’ `Godot RTS City Builder - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Local Electronics Liquidation Tips.md` â†’ `Local Electronics Liquidation Tips - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Metadata server down issue.md` â†’ `Metadata server down issue - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\IPTV to Plex options.md` â†’ `IPTV to Plex options - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\Development\Unity\Lidarr Folder Structure Setup.md` â†’ `Lidarr Folder Structure Setup - Development.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Seeding with Prowlarr Fix.md` â†’ `Seeding with Prowlarr Fix - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Simple image generation apps.md` â†’ `Simple image generation apps - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\SMB Issues Windows 11.md` â†’ `SMB Issues Windows 11 - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Resume Rewrite for VP Role.md` â†’ `Resume Rewrite for VP Role - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\RSS feed newsletter prompt.md` â†’ `RSS feed newsletter prompt - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Sync PC to Unraid.md` â†’ `Sync PC to Unraid - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\T-shirt Design Kickoff.md` â†’ `T-shirt Design Kickoff - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Star Citizen News Bot.md` â†’ `Star Citizen News Bot - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Suno persona creation.md` â†’ `Suno persona creation - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Non-official Jellyfin repos.md` â†’ `Non-official Jellyfin repos - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\One-click Palworld mods.md` â†’ `One-click Palworld mods - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Local LoRA video training.md` â†’ `Local LoRA video training - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\n8n RunwayML Integration.md` â†’ `n8n RunwayML Integration - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Project Name Suggestions.md` â†’ `Project Name Suggestions - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Proxying game server through CF.md` â†’ `Proxying game server through CF - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Palworld server modding guide.md` â†’ `Palworld server modding guide - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Project analysis guidance.md` â†’ `Project analysis guidance - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Agentzero Docker Branch Setup.md` â†’ `Agentzero Docker Branch Setup - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\AI song suggestions.md` â†’ `AI song suggestions - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\9950X3D vs 9800X3D.md` â†’ `9950X3D vs 9800X3D - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Access Audiobookshelf Remotely.md` â†’ `Access Audiobookshelf Remotely - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Auto-generate playlists.md` â†’ `Auto-generate playlists - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Automate JAV Search Unraid.md` â†’ `Automate JAV Search Unraid - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Album Art Request.md` â†’ `Album Art Request - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Alternative app stores for Mac.md` â†’ `Alternative app stores for Mac - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Toonami Aftermath Plex setup.md` â†’ `Toonami Aftermath Plex setup - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Twitch stream background design.md` â†’ `Twitch stream background design - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Teaching Creative Coding Agents.md` â†’ `Teaching Creative Coding Agents - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Terrain gen system refactor.md` â†’ `Terrain gen system refactor - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\VirtIO Drivers for WS2012.md` â†’ `VirtIO Drivers for WS2012 - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Where to shop for art.md` â†’ `Where to shop for art - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Uncensored AI Alternatives.md` â†’ `Uncensored AI Alternatives - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Valheim server mod list.md` â†’ `Valheim server mod list - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Best RSS App Unraid.md` â†’ `Best RSS App Unraid - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Clean Article Text Issue.md` â†’ `Clean Article Text Issue - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\ATM 10 Server Config Tips.md` â†’ `ATM 10 Server Config Tips - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Best OpenAI model for writing.md` â†’ `Best OpenAI model for writing - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Design automation solutions.md` â†’ `Design automation solutions - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Eevee Nara LoRA Models.md` â†’ `Eevee Nara LoRA Models - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\ComfyUI Windows installation scripts.md` â†’ `ComfyUI Windows installation scripts - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Container list update.md` â†’ `Container list update - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Affordable AMD Combo.md` â†’ `Affordable AMD Combo - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Affordable high VRAM GPUs.md` â†’ `Affordable high VRAM GPUs - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\1600W PSU for 5090s.md` â†’ `1600W PSU for 5090s - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Add Extensions to ComfyUI.md` â†’ `Add Extensions to ComfyUI - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Apple Notebook Benchmarks 2026.md` â†’ `Apple Notebook Benchmarks 2026 - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Apps for Unreal Engine.md` â†’ `Apps for Unreal Engine - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\AI HAT vs GPU.md` â†’ `AI HAT vs GPU - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\AI impact on economy.md` â†’ `AI impact on economy - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Glance Config File Setup.md` â†’ `Glance Config File Setup - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Homepage Docker Integration Unraid.md` â†’ `Homepage Docker Integration Unraid - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Game server names ideas.md` â†’ `Game server names ideas - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Gameplay project review.md` â†’ `Gameplay project review - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Interactive music 3D.md` â†’ `Interactive music 3D - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Kometa config analysis.md` â†’ `Kometa config analysis - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Hugging Face download GUI.md` â†’ `Hugging Face download GUI - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Interactive Music 3D Ideas.md` â†’ `Interactive Music 3D Ideas - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Fix virtual environment prompt.md` â†’ `Fix virtual environment prompt - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Fixing JSON config.md` â†’ `Fixing JSON config - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Finding RSS Feeds.md` â†’ `Finding RSS Feeds - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Finding Windows tools.md` â†’ `Finding Windows tools - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\DevOps\Docker\Game concept foundation.md` â†’ `Game concept foundation - DevOps.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Game concept foundation.md` â†’ `Game concept foundation - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Florence2 in ComfyUI.md` â†’ `Florence2 in ComfyUI - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\ImageGen\Flux steps in SwarmUI.md` â†’ `Flux steps in SwarmUI - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\MCP server setup help.md` â†’ `MCP server setup help - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\MCP Servers Overview.md` â†’ `MCP Servers Overview - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Main Decider at CoD.md` â†’ `Main Decider at CoD - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\MCP server managers.md` â†’ `MCP server managers - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\NPM Dependency Conflict Fix.md` â†’ `NPM Dependency Conflict Fix - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Obsidian Claude Code MCP.md` â†’ `Obsidian Claude Code MCP - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Merethic Modpack and Brightness.md` â†’ `Merethic Modpack and Brightness - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\n8n Movie Clip Workflow.md` â†’ `n8n Movie Clip Workflow - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Install TeamViewer on RPi.md` â†’ `Install TeamViewer on RPi - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Lidarr Plugins Branch Unraid.md` â†’ `Lidarr Plugins Branch Unraid - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Install AbletonMCP Windows.md` â†’ `Install AbletonMCP Windows - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Install Copilot on VS Code Server.md` â†’ `Install Copilot on VS Code Server - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Looting Backpacks in Cycle.md` â†’ `Looting Backpacks in Cycle - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Lovense Solace Pro SLR Compatibility.md` â†’ `Lovense Solace Pro SLR Compatibility - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Lidarr rename edition setup.md` â†’ `Lidarr rename edition setup - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Lidarr Soularr Configuration Guide.md` â†’ `Lidarr Soularr Configuration Guide - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Project deep dive prompt.md` â†’ `Project deep dive prompt - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\RDP Client Suggestions.md` â†’ `RDP Client Suggestions - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Plex preferences file error.md` â†’ `Plex preferences file error - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Plugin development in Lidarr.md` â†’ `Plugin development in Lidarr - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Running CF Workers on Unraid.md` â†’ `Running CF Workers on Unraid - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Samba Windows Unraid fix.md` â†’ `Samba Windows Unraid fix - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\RedM Ranching Servers.md` â†’ `RedM Ranching Servers - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\RSS AI Models.md` â†’ `RSS AI Models - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Oregon Trail Game Names.md` â†’ `Oregon Trail Game Names - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\PalDefender Whitelist Setup.md` â†’ `PalDefender Whitelist Setup - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Ollama model loading issues.md` â†’ `Ollama model loading issues - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Open unsupported macOS apps.md` â†’ `Open unsupported macOS apps - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Plex container permission issue.md` â†’ `Plex container permission issue - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Plex n8n workflows search.md` â†’ `Plex n8n workflows search - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Palworld server connection issues.md` â†’ `Palworld server connection issues - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Pass Creator to Ollama.md` â†’ `Pass Creator to Ollama - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Claude command not found.md` â†’ `Claude command not found - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Concept art creation.md` â†’ `Concept art creation - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Claude assistance request.md` â†’ `Claude assistance request - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Claude command fix.md` â†’ `Claude command fix - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Connect VS Code to Ollama.md` â†’ `Connect VS Code to Ollama - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Consulting services website plan.md` â†’ `Consulting services website plan - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Configure web search.md` â†’ `Configure web search - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Connect SillyTavern to Discord.md` â†’ `Connect SillyTavern to Discord - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Best game engine for vibe coding.md` â†’ `Best game engine for vibe coding - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Best Moddable Racing Games.md` â†’ `Best Moddable Racing Games - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Automate Soccer Game Calendar.md` â†’ `Automate Soccer Game Calendar - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Best DB for Jira Docker.md` â†’ `Best DB for Jira Docker - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Character card template.md` â†’ `Character card template - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Chinese Fast Fortress Build.md` â†’ `Chinese Fast Fortress Build - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Binhex Plex libusb error.md` â†’ `Binhex Plex libusb error - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Bootable Linux ISO Creation.md` â†’ `Bootable Linux ISO Creation - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Fix VS Code view.md` â†’ `Fix VS Code view - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Free DDNS UniFi Setup.md` â†’ `Free DDNS UniFi Setup - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Finding Hidden WAPs.md` â†’ `Finding Hidden WAPs - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Firmware update troubleshooting.md` â†’ `Firmware update troubleshooting - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\GitHub setup guide.md` â†’ `GitHub setup guide - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\GPU rental options.md` â†’ `GPU rental options - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Generate Slskd API Key.md` â†’ `Generate Slskd API Key - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Get Plex Music ID.md` â†’ `Get Plex Music ID - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Cover Letter Request.md` â†’ `Cover Letter Request - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Cyber-retro Anime Avatar.md` â†’ `Cyber-retro Anime Avatar - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Containers using port 80.md` â†’ `Containers using port 80 - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Cool ISOs for Netboot.md` â†’ `Cool ISOs for Netboot - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Emby Dispatcharr Setup Guide.md` â†’ `Emby Dispatcharr Setup Guide - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Expanding Unraid with Cloud.md` â†’ `Expanding Unraid with Cloud - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Dashy Alternatives for Unraid.md` â†’ `Dashy Alternatives for Unraid - AI.md`
+- `C:\Users\Zachg\Documents\VaultZap\Mind Map\Articles\AI\LLM\Discord ticket system tools.md` â†’ `Discord ticket system tools - AI.md`
+
+
+## Validation
+âœ… **PASSED** - Zero duplicate filenames remain after processing.
