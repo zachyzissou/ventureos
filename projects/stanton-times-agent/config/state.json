@@ -1,5 +1,5 @@
 {
-  "last_check": "2026-01-30T11:30:00-06:00",
+  "last_check": "2026-01-30T22:19:00Z",
   "seen_tweet_ids": {
     "RobertsSpaceInd": [
       "2017260817859719276",
@@ -70,6 +70,7 @@
       "2015786625238790381"
     ],
     "BTV_Cast": [
+      "2017311271461257722",
       "2016966445796557011",
       "2016965424890470883",
       "2016958107281240265",
@@ -136,11 +137,27 @@
       "posted_at": "2026-01-29T00:30:00-06:00"
     }
   ],
-  "last_engagement_check": "2026-01-29T18:45:00-06:00",
+  "last_engagement_check": "2026-01-30T22:19:00Z",
   "engagement_stats": {
     "mentions_found": 0,
     "replies_found": 0,
     "engagements_made": 0
   },
-  "pendingApprovals": []
+  "pendingApprovals": [
+    {
+      "id": "feb-preview-2026",
+      "created_at": "2026-01-30T22:19:00Z",
+      "source_tweet_id": "2017311271461257722",
+      "source_author": "BTV_Cast",
+      "topic": "February 2026 Preview",
+      "draft_tweet": "📅 February Preview: What's Coming to Star Citizen\n\n✨ Coramor celebrations\n🆓 Free Fly opportunities\n🐀 Red Festival returns (Year of the Rat)\n🎁 Referral Bonus + Monthly Bundle\n🚢 New ship reveal\n\nDetails on RSI comms-link\n\n(via @BTV_Cast coverage)\n\n#StarCitizen",
+      "character_count": 237,
+      "validation": {
+        "newsworthy": true,
+        "community_impact": true,
+        "factual": true,
+        "credited": true
+      }
+    }
+  ]
 }
