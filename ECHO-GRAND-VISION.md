@@ -19,8 +19,8 @@ You + Echo + specialized sub-agents = an organization that competes with entire 
 ## The Architecture (5 Layers)
 
 ### Layer 1: Life Operating System (Foundation)
-**Timeline:** 2026-2027 (Year 1-2)  
-**Status:** Phase 1-4 of current strategic plan
+**Timeline:** Q1-Q2 2026 (6 months max)  
+**Status:** Phase 0-1 of current strategic plan
 
 **Capabilities:**
 - Executive function augmentation (ADHD-optimized workflows)
@@ -38,8 +38,8 @@ You + Echo + specialized sub-agents = an organization that competes with entire 
 ---
 
 ### Layer 2: Autonomous Business Units (Application)
-**Timeline:** 2027-2028 (Year 2-3)  
-**Status:** Foundation exists (StantonTimes, Bloom), needs autonomy upgrade
+**Timeline:** Q2 2026 - Q4 2027 (18 months)  
+**Status:** Foundation exists (StantonTimes, Low Noise Studios), needs autonomy upgrade
 
 **Current Portfolio:**
 
@@ -53,8 +53,8 @@ You + Echo + specialized sub-agents = an organization that competes with entire 
 - **Goal:** Profitable media brand running 24/7 with minimal oversight
 - **Success Metric:** $5K/month revenue by end of 2027
 
-#### 2.2 Bloom Game Studio (AI-Assisted Development)
-- **Current:** Active development project
+#### 2.2 Low Noise Studios (AI-Assisted Game Development)
+- **Current:** Active development of Bloom (multiplayer survival game)
 - **Target:** Launch-ready game with AI-optimized pipeline
 - **Revenue Model:**
   - Phase 1: Steam Early Access
@@ -98,7 +98,7 @@ You + Echo + specialized sub-agents = an organization that competes with entire 
 ---
 
 ### Layer 3: AI-Human Hybrid Organization (Structure)
-**Timeline:** 2027-2029 (Year 2-4)  
+**Timeline:** Q4 2026 - Q4 2027 (12 months)  
 **Status:** Design phase
 
 **Organizational Design:**
@@ -107,7 +107,7 @@ You + Echo + specialized sub-agents = an organization that competes with entire 
 Zach (CEO)
 ├── Echo (Chief Orchestrator)
 │   ├── StantonTimes-Agent (Media Operations)
-│   ├── Bloom-Agent (Game Development)
+│   ├── LowNoise-Agent (Game Studio - Bloom development)
 │   ├── Finance-Agent (CFO)
 │   ├── Health-Agent (Wellness Coach)
 │   ├── Social-Agent (Relationship Manager)
@@ -115,8 +115,8 @@ Zach (CEO)
 │   ├── Research-Agent (Innovation Lab)
 │   └── Security-Agent (Privacy & Compliance)
 └── Human Contractors (Specialists as needed)
-    ├── Artist (Bloom assets)
-    ├── Sound Designer (Bloom audio)
+    ├── Artist (Bloom game assets)
+    ├── Sound Designer (Bloom game audio)
     ├── Video Editor (StantonTimes multimedia)
     └── etc.
 ```
@@ -151,7 +151,7 @@ Zach (CEO)
 ---
 
 ### Layer 4: AI Infrastructure Platform (Scalability)
-**Timeline:** 2028-2030 (Year 3-5)  
+**Timeline:** Q1 2027 - Q4 2028 (24 months)  
 **Status:** Extract & productize from Echo
 
 **Product Vision: "Clawdbot Enterprise"**
@@ -178,16 +178,16 @@ Zach (CEO)
 - **Consulting:** Implementation, training, custom development
 
 **Go-to-Market:**
-1. **2028:** Open source Clawdbot core (community building)
-2. **2029:** Launch SaaS platform (monetize hosting)
-3. **2030:** Enterprise sales motion (bigger contracts)
+1. **Q1 2027:** Open source Clawdbot core (community building)
+2. **Q2-Q3 2027:** Launch SaaS platform beta (early adopters)
+3. **Q4 2027-2028:** Scale SaaS + enterprise sales motion
 
-**Success Metric:** 1,000+ active users, $500K ARR by 2030
+**Success Metric:** 1,000+ active users, $500K ARR by end of 2028
 
 ---
 
 ### Layer 5: AI Research Lab (Innovation)
-**Timeline:** 2027-2031 (Ongoing)  
+**Timeline:** Q3 2026 - Ongoing  
 **Status:** Document learnings, publish, contribute
 
 **Research Themes:**
@@ -254,18 +254,17 @@ Zach (CEO)
 
 ---
 
-## Revenue Projections (5-Year)
+## Revenue Projections (AI-Augmented Speed)
 
 | Year | Life OS | Business Units | Platform | Total | Notes |
 |------|---------|----------------|----------|-------|-------|
-| **2026** | $0 | $5K | $0 | **$5K** | Foundation building, StantonTimes early revenue |
-| **2027** | $0 | $50K | $0 | **$50K** | StantonTimes profitable, Bloom development, consulting starts |
-| **2028** | $0 | $150K | $20K | **$170K** | Bloom launch, consulting growth, platform beta |
-| **2029** | $0 | $250K | $100K | **$350K** | All business units profitable, platform traction |
-| **2030** | $0 | $400K | $300K | **$700K** | Scale mode, enterprise platform customers |
-| **2031** | $0 | $600K | $500K+ | **$1M+** | Mature portfolio, platform established |
+| **2026** | $0 | $30K | $0 | **$30K** | Foundation + first units profitable, StantonTimes + consulting |
+| **2027** | $0 | $150K | $50K | **$200K** | Bloom launch, consulting scaled, platform beta revenue |
+| **2028** | $0 | $300K | $200K | **$500K** | All units profitable, platform traction, enterprise customers |
+| **2029** | $0 | $500K | $500K | **$1M** | Scale mode, mature portfolio, established platform |
+| **2030** | $0 | $800K | $700K+ | **$1.5M+** | Ecosystem growth, new ventures, platform dominance |
 
-**Key Assumption:** You + Echo can manage this portfolio without hiring full-time employees (contractors only).
+**Key Assumption:** AI-augmented execution = 3-5x faster than traditional teams. You + Echo + sub-agents can move at startup speed without startup overhead.
 
 ---
 
@@ -291,7 +290,7 @@ Zach (CEO)
 
 ---
 
-## Success Metrics (2031 Vision)
+## Success Metrics (2029-2030 Vision)
 
 **Personal:**
 - ✅ Operating at 10x capacity vs. 2026 baseline
@@ -326,48 +325,67 @@ Zach (CEO)
 
 ---
 
-## The Phases (Detailed Roadmap)
+## The Phases (Aggressive Roadmap)
 
 ### Phase 0: Foundation (Q1 2026) ← **WE ARE HERE**
+**Target: Feb-Mar 2026 (6 weeks)**
 - Security & privacy framework
 - Daily operations automation
 - Skills audit & integration fixes
 - Life OS core capabilities online
 
-### Phase 1: Personal Optimization (Q2-Q3 2026)
-- Email/calendar orchestration
-- Financial tracking & optimization
-- Job search automation
-- Health & wellness baseline
-- Knowledge management system (PARA + continuous learning)
+### Phase 1: Personal Optimization (Q2 2026)
+**Target: Apr-Jun 2026 (3 months)**
+- Email/calendar orchestration live
+- Financial tracking automated
+- Job search capability operational
+- Health & wellness monitoring active
+- Knowledge management (PARA) fully implemented
 
-### Phase 2: First Business Unit Autonomy (Q4 2026)
-- StantonTimes fully autonomous (approval → auto-post with quality checks)
-- Bloom development accelerated (AI-assisted pipeline)
-- Consulting beta (help 3-5 friends with AI workflows)
+### Phase 2: First Revenue (Q2-Q3 2026)
+**Target: May-Sep 2026 (5 months)**
+- StantonTimes monetization activated ($2K+/mo)
+- Consulting launched (5-10 clients, $10K+)
+- Bloom development sprint (AI-assisted pipeline validated)
+- First $30K revenue year achieved
 
-### Phase 3: Portfolio Expansion (2027)
-- Talent matching service alpha (recruit for friends/network)
-- Research blog launched (weekly posts)
-- AI orchestration course v1
-- Sub-agent specialization architecture
+### Phase 3: Portfolio Expansion (Q4 2026)
+**Target: Oct-Dec 2026 (3 months)**
+- StantonTimes fully autonomous + scaled ($5K/mo)
+- Talent matching service alpha (3+ placements)
+- Research blog launched (building audience)
+- Sub-agent architecture implemented
+- Preparing for Bloom launch
 
-### Phase 4: Platform Extraction (2028)
-- Clawdbot core open sourced
+### Phase 4: Platform Extraction (Q1-Q2 2027)
+**Target: Jan-Jun 2027 (6 months)**
+- Clawdbot core open sourced (community launch)
 - Multi-tenant architecture developed
-- Skills marketplace launched
-- SaaS beta (10-20 early adopters)
+- SaaS beta (20-50 early adopters)
+- Bloom launches (Early Access)
 
-### Phase 5: Scale & Systematize (2029-2030)
-- Enterprise sales motion
-- Conference speaking circuit
-- Book writing (research compilation)
-- Advanced business units (expand portfolio)
+### Phase 5: Scale Mode (Q3-Q4 2027)
+**Target: Jul-Dec 2027 (6 months)**
+- Platform revenue $50K+ ARR
+- Bloom profitable (10K+ players)
+- Consulting scaled ($100K+ run rate)
+- All business units generating revenue
+- $200K+ year target achieved
 
-### Phase 6: Mature Ecosystem (2031+)
-- Self-sustaining platform business
-- Research lab fully operational
-- Portfolio generating passive income
+### Phase 6: Enterprise & Ecosystem (2028)
+**Target: Full year**
+- Enterprise sales motion ($500K+ ARR target)
+- Conference speaking circuit (establish thought leadership)
+- Book contract secured (advance + future royalties)
+- Portfolio expansion (new ventures)
+- $500K+ year target
+
+### Phase 7: Maturity & Expansion (2029-2030)
+**Target: 24 months**
+- Platform dominance ($700K+ ARR)
+- Multiple profitable business units
+- Research lab fully operational (published papers)
+- $1M+ annual revenue achieved
 - New ventures as opportunities arise
 
 ---
