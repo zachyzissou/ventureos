@@ -135,11 +135,12 @@ Before deploying again:
 ## Impact Assessment
 
 ### What Happened
-- Gateway restarted once at 15:11:52
-- Discord connection briefly disrupted
-- Monitor-Agent continued running
-- No data loss
-- No service outage
+- Gateway restarted at 15:11:52 (Monitor-Agent thought it succeeded)
+- **Gateway did NOT come back up properly** ⚠️
+- Zach had to manually restart gateway at 15:17
+- Discord connection disrupted for ~5 minutes
+- Monitor-Agent continued running (making things worse)
+- **Required manual intervention to fix**
 
 ### What Could Have Happened (Worst Case)
 - Multiple gateway restarts (but cooldowns prevented this)
@@ -148,9 +149,11 @@ Before deploying again:
 - User frustration
 
 ### Actual Risk
-- **Low** - Gateway restart is safe operation
-- **Medium** - User experience disrupted
-- **High** - Trust in automation damaged
+- ~~Low - Gateway restart is safe operation~~ **FALSE**
+- **HIGH** - Gateway restart failed, required manual fix
+- **HIGH** - User experience disrupted (5min downtime)
+- **CRITICAL** - Trust in automation damaged
+- **CRITICAL** - Monitor-Agent became the problem, not the solution
 
 ---
 
