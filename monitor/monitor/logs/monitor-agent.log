@@ -36,3 +36,63 @@ Discord webhook URL not configured
 Discord webhook URL not configured
 Discord webhook URL not configured
 Discord webhook URL not configured
+{'count': 4, 'event': 'Detectors initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.336462Z'}
+{'count': 4, 'event': 'Validators initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.336940Z'}
+{'count': 4, 'event': 'Healers initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.336999Z'}
+{'event': 'Alerter initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337033Z'}
+{'config': {'database': {'path': 'data/test_monitor.db'}, 'healing': {'enabled': True, 'max_attempts': 3, 'cooldown_seconds': 300}, 'alerting': {'enabled': True, 'discord': {'webhook_url': 'https://test', 'mention_user_id': '123'}}}, 'event': 'MonitorAgent initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337063Z'}
+{'count': 4, 'event': 'Detectors initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337118Z'}
+{'count': 4, 'event': 'Validators initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337168Z'}
+{'count': 4, 'event': 'Healers initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337209Z'}
+{'event': 'Alerter initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337235Z'}
+{'config': {'database': {'path': 'data/test_monitor.db'}, 'healing': {'enabled': True}, 'alerting': {'enabled': True, 'discord': {'webhook_url': 'https://test'}}}, 'event': 'MonitorAgent initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337263Z'}
+{'count': 4, 'event': 'Detectors initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337343Z'}
+{'count': 4, 'event': 'Validators initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337391Z'}
+{'count': 4, 'event': 'Healers initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337432Z'}
+{'event': 'Alerter initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337457Z'}
+{'config': {'database': {'path': 'data/test_monitor.db'}, 'healing': {'enabled': True}, 'alerting': {'enabled': True, 'discord': {'webhook_url': 'https://test'}}}, 'event': 'MonitorAgent initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337483Z'}
+{'detector': 'gateway', 'error': "'GatewayDetector' object has no attribute 'detect'", 'event': 'Detector failed', 'logger': 'monitor.main_loop', 'level': 'error', 'timestamp': '2026-01-30T20:09:31.337566Z'}
+{'detector': 'cron', 'error': "'CronDetector' object has no attribute 'detect'", 'event': 'Detector failed', 'logger': 'monitor.main_loop', 'level': 'error', 'timestamp': '2026-01-30T20:09:31.337603Z'}
+{'detector': 'api', 'error': "'APIDetector' object has no attribute 'detect'", 'event': 'Detector failed', 'logger': 'monitor.main_loop', 'level': 'error', 'timestamp': '2026-01-30T20:09:31.337631Z'}
+{'detector': 'disk', 'error': "'DiskDetector' object has no attribute 'detect'", 'event': 'Detector failed', 'logger': 'monitor.main_loop', 'level': 'error', 'timestamp': '2026-01-30T20:09:31.337658Z'}
+{'validator': 'obsidian', 'severity': 'P3', 'system': 'obsidian', 'event': 'Validation issue detected', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.337941Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.340387Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.340540Z'}
+{'validator': 'obsidian', 'error': "'StateDatabase' object has no attribute 'store_issue'", 'event': 'Validator failed', 'logger': 'monitor.main_loop', 'level': 'error', 'timestamp': '2026-01-30T20:09:31.340589Z'}
+{'validator': 'git', 'severity': 'P3', 'system': 'git', 'event': 'Validation issue detected', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.353197Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.353454Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.353559Z'}
+{'validator': 'git', 'error': "'StateDatabase' object has no attribute 'store_issue'", 'event': 'Validator failed', 'logger': 'monitor.main_loop', 'level': 'error', 'timestamp': '2026-01-30T20:09:31.353590Z'}
+{'count': 4, 'event': 'Detectors initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.353726Z'}
+{'count': 4, 'event': 'Validators initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.353782Z'}
+{'count': 4, 'event': 'Healers initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.353830Z'}
+{'event': 'Alerter initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.353857Z'}
+{'config': {'database': {'path': 'data/test_monitor.db'}, 'healing': {'enabled': True}, 'alerting': {'enabled': True, 'discord': {'webhook_url': 'https://test'}}}, 'event': 'MonitorAgent initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.353882Z'}
+{'event': 'Stopping MonitorAgent', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:31.353917Z'}
+{'count': 4, 'event': 'Detectors initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.787580Z'}
+{'count': 4, 'event': 'Validators initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.787812Z'}
+{'count': 4, 'event': 'Healers initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.787874Z'}
+{'event': 'Alerter initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.787907Z'}
+{'config': {'database': {'path': 'data/test_monitor.db'}, 'healing': {'enabled': True, 'max_attempts': 3, 'cooldown_seconds': 300}, 'alerting': {'enabled': True, 'discord': {'webhook_url': 'https://test', 'mention_user_id': '123'}}}, 'event': 'MonitorAgent initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.787939Z'}
+{'count': 4, 'event': 'Detectors initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.787995Z'}
+{'count': 4, 'event': 'Validators initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.788044Z'}
+{'count': 4, 'event': 'Healers initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.788088Z'}
+{'event': 'Alerter initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.788114Z'}
+{'config': {'database': {'path': 'data/test_monitor.db'}, 'healing': {'enabled': True}, 'alerting': {'enabled': True, 'discord': {'webhook_url': 'https://test'}}}, 'event': 'MonitorAgent initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.788143Z'}
+{'count': 4, 'event': 'Detectors initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.788223Z'}
+{'count': 4, 'event': 'Validators initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.788275Z'}
+{'count': 4, 'event': 'Healers initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.788317Z'}
+{'event': 'Alerter initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.788344Z'}
+{'config': {'database': {'path': 'data/test_monitor.db'}, 'healing': {'enabled': True}, 'alerting': {'enabled': True, 'discord': {'webhook_url': 'https://test'}}}, 'event': 'MonitorAgent initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.788369Z'}
+{'validator': 'obsidian', 'severity': 'P3', 'system': 'obsidian', 'event': 'Validation issue detected', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.792506Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.794538Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.795421Z'}
+{'validator': 'git', 'severity': 'P3', 'system': 'git', 'event': 'Validation issue detected', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.807764Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database connected', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.808026Z'}
+{'db_path': 'data/test_monitor.db', 'event': 'Database closed', 'logger': 'monitor.state_db', 'level': 'info', 'timestamp': '2026-01-30T20:09:57.808765Z'}
+{'count': 4, 'event': 'Detectors initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:10:00.048643Z'}
+{'count': 4, 'event': 'Validators initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:10:00.048769Z'}
+{'count': 4, 'event': 'Healers initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:10:00.048832Z'}
+{'event': 'Alerter initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:10:00.048865Z'}
+{'config': {'database': {'path': 'data/test_monitor.db'}, 'healing': {'enabled': True}, 'alerting': {'enabled': True, 'discord': {'webhook_url': 'https://test'}}}, 'event': 'MonitorAgent initialized', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:10:00.048894Z'}
+{'event': 'Stopping MonitorAgent', 'logger': 'monitor.main_loop', 'level': 'info', 'timestamp': '2026-01-30T20:10:00.048929Z'}
