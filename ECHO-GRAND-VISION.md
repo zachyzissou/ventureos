@@ -30,10 +30,54 @@ You + Echo + specialized sub-agents = an organization that competes with entire 
 - Health & wellness optimization (biometrics, coaching, accountability)
 - Relationship management (social CRM, thoughtful engagement)
 - Career acceleration (job search, networking, skill building)
+- **AI-assisted development framework** (10x code velocity with quality gates) 🆕
 
 **Success Metric:** You operate at 10x your previous capacity with less stress.
 
 **Revenue Impact:** $0 (pure capability building) → Unlocks everything else
+
+**New Infrastructure: AI-Assisted Development Framework** 🤖
+
+**Vision:** Robust orchestration system for Codex/Cursor that automates entire development pipeline.
+
+**Problem:** Currently building Monitor-Agent, StantonTimes automation, Bloom features requires manual coding. Even with AI tools (Codex/Cursor), still slow due to:
+- Manual prompt crafting
+- Working directory setup
+- Output validation
+- Test generation
+- Quality review
+Each component takes 10-30 minutes.
+
+**Solution:** `./codegen` CLI that automates everything:
+```bash
+# Instead of 30 minutes of manual work:
+./codegen healer NetworkHealer --fixes "restart NetworkManager"
+
+# System automatically:
+# ✅ Selects template, injects examples
+# ✅ Generates code via Codex
+# ✅ Validates quality (syntax, imports, patterns) 
+# ✅ Auto-generates tests
+# ✅ Runs test suite
+# ✅ Quality score: 9.2/10 → Auto-commits
+# 
+# Done in 2 minutes. Quality guaranteed.
+```
+
+**Impact:**
+- **Development velocity:** 28 min → 2 min per component (93% reduction)
+- **Quality:** Only accepts code scoring >8.0/10
+- **Test coverage:** 100% auto-generated
+- **Reusable:** Works for Monitor-Agent, StantonTimes, Bloom, all future projects
+
+**Timeline:** Week 3-4 of Phase Zero (parallel to Days 6-7)
+
+**ROI:** 
+- Phase Zero alone: Save 4+ hours (10 components × 28 min saved)
+- Phase 1-7: Save 50+ hours across all development
+- Long-term: **Becomes a sellable product** (Layer 4 platform component)
+
+This isn't just infrastructure for Echo—it's a **product in itself** that could be sold to other developers.
 
 ---
 

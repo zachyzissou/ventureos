@@ -78,6 +78,72 @@ See `CODING-AGENT-INTEGRATION.md` for complete guide.
 
 ---
 
+## Track 5: AI-Assisted Development Framework 🤖
+
+**Priority:** P0 - Development velocity multiplier  
+**Timeline:** Parallel to Days 6-7 (1-2 weeks)  
+**Status:** 🔴 Proposal stage  
+**Execution Mode:** Sub-agent (parallel development)
+
+### Vision
+
+Build robust orchestration system for Codex/Cursor instead of manual prompts.
+
+**Problem:** Currently requires manual prompt crafting, working directory setup, output validation, test generation. Slow and error-prone.
+
+**Solution:** `./codegen` CLI that automates entire pipeline:
+- Template selection
+- Context injection (existing code examples)
+- Quality validation (syntax, imports, patterns)
+- Test generation + execution
+- Auto-commit if quality > 8.0/10
+
+### Components
+
+1. **CLI Wrapper** (`./codegen detector|healer|alerter|tests`)
+2. **Template Engine** (smart prompt construction)
+3. **Quality Validator** (automated validation gates)
+4. **Multi-Agent Orchestration** (Codex/Cursor/Claude selection)
+5. **Feedback Loop** (learns from successes/failures)
+
+### Expected Impact
+
+**Time savings:** 28 min/component → 2 min (93% reduction)  
+**Quality improvement:** Only accept code scoring >8.0/10  
+**Test coverage:** 100% auto-generated  
+**Reusable:** Works for all future projects (StantonTimes, Bloom, etc.)
+
+### Implementation Plan
+
+**Week 1:** Core CLI + basic validation  
+**Week 2:** Quality gates + auto-testing  
+**Week 3:** Multi-agent orchestration  
+**Week 4:** Feedback loop + optimization
+
+### Integration Strategy
+
+**Parallel Execution:**
+- Echo continues Days 6-7 manually (~1-1.5 hours)
+- Sub-agent builds framework (1-2 weeks)
+- Framework ready for Phase 1+ development
+
+**Deliverables:**
+- `codegen` CLI tool
+- Quality validation system
+- Template library
+- Usage documentation
+- Metrics dashboard
+
+**Success Metrics:**
+- >90% success rate on first generation
+- <2 min per component generation
+- Quality score >8.0/10 consistently
+- 100% test coverage auto-generated
+
+See `AI-DEV-FRAMEWORK-PROPOSAL.md` for complete design.
+
+---
+
 ## Validation Methodology Integration
 
 Three validation layers synthesized from existing architecture:
