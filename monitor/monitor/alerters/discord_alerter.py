@@ -8,9 +8,9 @@ from typing import Optional
 from monitor.models import Issue, HealResult, Severity
 from monitor.alerter import BaseAlerter
 from monitor.http_client import HTTPClientManager
-import logging
+from monitor.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DiscordAlerter(BaseAlerter):

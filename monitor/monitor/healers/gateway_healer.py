@@ -8,9 +8,9 @@ import subprocess
 from typing import Optional
 from monitor.models import Issue, HealResult
 from monitor.healer import BaseHealer
-import logging
+from monitor.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class GatewayHealer(BaseHealer):
