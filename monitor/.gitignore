@@ -1,0 +1,9 @@
+# Monitor-Agent runtime files
+logs/
+*.log
+data/monitor.db
+data/monitor.db-journal
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/

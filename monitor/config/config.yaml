@@ -170,13 +170,15 @@ cron_jobs:
 
 # API endpoints to monitor
 apis:
-  - name: anthropic
-    url: https://api.anthropic.com/v1/messages
-    method: OPTIONS
-    timeout: 5000
+  # Anthropic doesn't support OPTIONS or GET without auth, so skip for now
+  # TODO: Add proper health check when we have credentials
+  # - name: anthropic
+  #   url: https://api.anthropic.com/v1/messages
+  #   method: GET
+  #   timeout: 5000
   
   - name: discord
-    url: https://discord.com/api/v10/users/@me
+    url: https://discord.com/api/v10/gateway
     method: GET
     timeout: 3000
   
