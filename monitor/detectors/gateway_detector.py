@@ -5,17 +5,28 @@ Phase Zero Day 2: Core Detectors
 Monitors Clawdbot Gateway daemon status and health.
 """
 
+"""
+Gateway Health Detector
+Phase Zero Day 2: Core Detectors
+
+Monitors Clawdbot Gateway daemon status and health.
+"""
+
 import asyncio
 import time
 from typing import Optional
 import sys
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add parent directory to path for standalone execution
+if __name__ == "__main__":
+    sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from detector import InfrastructureDetector
-from models import Issue, HealthCheck, Severity, Category, Status
+from monitor.detector import InfrastructureDetector
+from monitor.models import Issue, HealthCheck, Severity, Category, Status
+from monitor.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class GatewayDetector(InfrastructureDetector):

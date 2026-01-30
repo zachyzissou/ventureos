@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any
 from enum import Enum
 import uuid
 import time
+import json
 
 
 class Severity(str, Enum):
@@ -56,7 +57,7 @@ class Issue:
             "system": self.system,
             "message": self.message,
             "can_auto_fix": 1 if self.can_auto_fix else 0,
-            "metadata": str(self.metadata),
+            "metadata": json.dumps(self.metadata),
             "detected_at": self.detected_at,
             "resolved_at": self.resolved_at,
         }
@@ -79,7 +80,7 @@ class HealResult:
             "action_name": self.action_taken,
             "success": 1 if self.success else 0,
             "message": self.message,
-            "metadata": str(self.metadata),
+            "metadata": json.dumps(self.metadata),
         }
 
 
@@ -103,7 +104,7 @@ class HealthCheck:
             "check_name": self.check_name,
             "status": self.status.value,
             "response_time_ms": self.response_time_ms,
-            "metadata": str(self.metadata),
+            "metadata": json.dumps(self.metadata),
         }
 
 
@@ -123,5 +124,5 @@ class Metric:
             "metric_name": self.metric_name,
             "value": self.value,
             "unit": self.unit,
-            "metadata": str(self.metadata),
+            "metadata": json.dumps(self.metadata),
         }
