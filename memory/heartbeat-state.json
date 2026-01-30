@@ -1,11 +1,11 @@
 {
   "lastChecks": {
-    "system": 1769776800,
-    "memory": 1769774979,
+    "system": 1769779400,
+    "memory": 1769779400,
     "stanton": 1769777847,
     "bloom": 1769776800
   },
-  "lastProactive": 1769771400,
+  "lastProactive": 1769779400,
   "quietHours": {
     "start": "23:00",
     "end": "08:00"
