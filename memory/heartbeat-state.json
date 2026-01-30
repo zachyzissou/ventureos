@@ -3,10 +3,10 @@
     "system": 1769801327,
     "memory": 1769808779,
     "stanton": 1769801327,
-    "bloom": 1769790000
+    "bloom": 1769790000,
+    "extraction": 1769809970
   },
   "lastProactive": 1769801327,
-  "lastObsidianExtraction": 1738289231,
   "quietHours": {
     "start": "23:00",
     "end": "08:00"
