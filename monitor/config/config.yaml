@@ -1,0 +1,158 @@
+# Monitor-Agent Configuration
+# Phase Zero: Self-Healing Foundation
+
+# Check frequencies (seconds)
+check_frequencies:
+  gateway_health: 60        # Every 1 minute
+  cron_jobs: 300           # Every 5 minutes
+  api_health: 300          # Every 5 minutes
+  disk_space: 3600         # Every 1 hour
+  memory_system: 3600      # Every 1 hour
+  state_files: 1800        # Every 30 minutes
+  obsidian_sync: 3600      # Every 1 hour
+  git_status: 3600         # Every 1 hour
+  backup_verification: 86400  # Every 24 hours
+  stantontimes: 900        # Every 15 minutes
+  bloom_ci: 1800           # Every 30 minutes
+
+# Thresholds
+thresholds:
+  gateway:
+    response_time_ms: 10000  # 10 seconds max
+    restart_cooldown: 300    # 5 minutes between restarts
+    max_restarts: 3          # Max restarts before escalation
+  
+  disk:
+    warning_percent: 85
+    critical_percent: 90
+    cleanup_cooldown: 86400  # Once per 24 hours
+  
+  cron:
+    overdue_multiplier: 1.5  # Alert if job overdue by 1.5x expected interval
+    max_failures: 3          # Alert after 3 consecutive failures
+  
+  api:
+    rate_limit_percent: 80   # Alert at 80% of rate limit
+    timeout_ms: 5000         # 5 second timeout
+    max_retries: 5
+  
+  memory:
+    max_file_age_hours: 2    # Daily memory file should exist within 2h
+    max_uncommitted_files: 50
+  
+  state_files:
+    max_age_hours: 1         # State files should be recent
+    corruption_retry_count: 2
+  
+  obsidian:
+    max_extraction_gap_hours: 2
+    max_failures: 3
+  
+  stantontimes:
+    max_fetch_gap_minutes: 15
+    max_approval_age_hours: 48
+    max_post_gap_hours: 12
+  
+  bloom:
+    max_broken_branch_minutes: 15
+    max_pr_age_days: 7
+
+# Alert routing
+alerts:
+  discord:
+    webhook_url: null  # Set via environment variable
+    enabled: true
+  
+  sms:
+    enabled: false     # Enable when ready
+    phone: null
+  
+  digest:
+    enabled: true
+    time: "09:00"      # Daily digest at 9 AM
+
+# Self-healing settings
+healing:
+  enabled: true
+  max_attempts: 3
+  cooldown_seconds: 300  # 5 min cooldown between same heal type
+  
+  actions:
+    restart_gateway:
+      enabled: true
+      max_per_hour: 3
+    
+    clear_disk:
+      enabled: true
+      max_per_day: 1
+    
+    rotate_credentials:
+      enabled: true
+      proactive_days: 7  # Rotate 7 days before expiry
+    
+    restore_state:
+      enabled: true
+      backup_required: true
+
+# Monitoring settings
+monitoring:
+  loop_interval: 60      # Main loop runs every 60 seconds
+  metrics_retention: 7   # Keep detailed metrics for 7 days
+  logs_retention: 30     # Keep logs for 30 days
+  
+# Paths
+paths:
+  workspace: /Users/zachgonser/clawd
+  database: /Users/zachgonser/clawd/monitor/data/monitor.db
+  logs: /Users/zachgonser/clawd/monitor/logs
+  scripts: /Users/zachgonser/clawd/monitor/scripts
+
+# Cron jobs to monitor (from ~/.clawdbot/cron/jobs.json)
+cron_jobs:
+  - id: stantontimes-p0-monitor
+    interval: 900  # 15 minutes
+  - id: stantontimes-p1-monitor
+    interval: 1800  # 30 minutes
+  - id: stantontimes-engagement
+    interval: 3600  # 1 hour
+  - id: stantontimes-creator-watch
+    interval: 3600
+  - id: stantontimes-web-intel
+    interval: 3600
+  - id: stantontimes-approval-check
+    interval: 3600
+  - id: bloom-pr-monitor
+    interval: 3600
+  - id: bloom-ci-watch
+    interval: 1800
+  - id: weekly-bloom-digest
+    interval: 604800  # Weekly
+  - id: extraction-shooter-intel
+    interval: 86400   # Daily
+  - id: unity-tool-scout
+    interval: 86400
+  - id: morning-briefing
+    interval: 86400
+  - id: weekly-memory-synthesis
+    interval: 604800
+  - id: weekly-obsidian-cleanup
+    interval: 604800
+  - id: twitter-auth-refresh
+    interval: 86400
+
+# API endpoints to monitor
+apis:
+  - name: anthropic
+    url: https://api.anthropic.com/v1/messages
+    method: OPTIONS
+    timeout: 5000
+  
+  - name: discord
+    url: https://discord.com/api/v10/users/@me
+    method: GET
+    timeout: 3000
+  
+  - name: github
+    url: https://api.github.com
+    method: GET
+    timeout: 3000
