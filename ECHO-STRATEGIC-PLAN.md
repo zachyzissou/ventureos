@@ -242,8 +242,10 @@ Support physical and mental well-being
 | Email triage | P0 | Medium | High | 🔴 Not started | Phase 2 |
 | Calendar intel | P0 | Medium | High | 🔴 Not started | Phase 2 |
 | Project dashboard | P0 | Medium | High | 🔴 Not started | Phase 3 |
+| Job search tracking | P0 | High | High | 🔴 Not started | Phase 2.5 |
+| Application automation | P0 | High | High | 🔴 Not started | Phase 3.5 |
 | Memory synthesis | P1 | Low | Medium | 🟢 Working | Phase 1 |
-| Financial monitoring | P1 | Medium | Medium | 🔴 Not started | Phase 4 |
+| Financial monitoring | P0 | Medium | High | 🔴 Not started | Phase 4 |
 | Personal CRM | P1 | High | Medium | 🔴 Not started | Phase 2 |
 | Health tracking | P2 | Low | Low | 🔴 Not started | Phase 4 |
 | LM Studio routing | P2 | High | Medium | 🔴 Not started | Phase 4 |
@@ -279,8 +281,8 @@ Sensitive data stays local. Use LM Studio for private analysis. Never leak conte
 ## Success Metrics
 
 ### Daily
-- Morning briefing delivered by 8:00 AM
-- Email inbox at zero by 9:00 AM
+- Morning briefing delivered by 9:00 AM
+- Email inbox at zero by 10:00 AM (post-briefing triage)
 - No missed urgent communications
 - Evening review completed
 
@@ -358,14 +360,77 @@ Sensitive data stays local. Use LM Studio for private analysis. Never leak conte
 
 ---
 
-## Questions for Zach
+## Answers from Zach (2026-01-30)
 
-1. **What's the #1 pain point right now?** (Email? Calendar? Project tracking? Something else?)
-2. **Daily routine preferences?** (Morning briefing time? Evening review format?)
-3. **Communication style?** (Concise bullets? Detailed analysis? Mix based on topic?)
-4. **Financial monitoring scope?** (Just alerts? Full tracking? Integration with existing tools?)
-5. **Privacy boundaries?** (What should NEVER touch cloud APIs? Local-only processing needs?)
-6. **Interrupt policy?** (When is it OK to ping you proactively? Quiet hours?)
+1. **#1 pain point:** No specific blocker - proceed with phased approach ✅
+2. **Morning briefing:** 9:00 AM (adjusted from 8:00 AM) ✅
+3. **Financial monitoring:** Full tracking (not just alerts) ✅
+4. **Privacy boundaries:** *Needs clarification - see below*
+5. **Proactive messaging:** Always OK to ping ✅
+6. **Job search/applications:** Major capability to add (see new section below) 🆕
+
+### Privacy Boundaries - Need Your Input
+
+**Question:** What types of data/operations should NEVER use cloud APIs and must stay local-only?
+
+**Examples to consider:**
+- **Financial data:** Should transaction analysis use local LM Studio only? Or OK to use Claude if anonymized?
+- **Personal health info:** Exercise logs, sleep data - local only?
+- **Sensitive communications:** Certain email threads, DMs - process locally?
+- **Work-related IP:** Bloom code analysis - already using cloud, OK to continue?
+- **Credentials/passwords:** Never process (obviously), but what about password manager automation?
+
+**My default stance:** Anything truly sensitive (credentials, deeply personal) stays local. But I want YOUR definition of "sensitive" to guide the boundaries.
+
+---
+
+## 🆕 Job Search & Application Capability
+
+**Added:** 2026-01-30 per Zach request
+
+### Objectives
+- **Job discovery:** Monitor job boards, company sites, LinkedIn for relevant openings
+- **Application tracking:** Pipeline from discovery → applied → interview → offer/reject
+- **Resume/cover letter:** Tailored versions for each application
+- **Application automation:** Fill forms, submit applications (with review)
+- **Interview prep:** Company research, role analysis, practice questions
+- **Follow-up management:** Thank you notes, check-in timing, status tracking
+- **Offer evaluation:** Comp analysis, decision frameworks
+
+### Implementation Plan
+
+**Phase 2.5 (Week 4-5):** Job Search Foundation
+- [ ] Set up job board monitoring (LinkedIn, Indeed, Glassdoor, etc.)
+- [ ] Create application tracking database (Obsidian or dedicated system)
+- [ ] Build resume/cover letter templating system
+- [ ] Establish search criteria (roles, companies, location, comp range)
+
+**Phase 3.5 (Week 6-7):** Application Automation
+- [ ] Form-filling automation (browser control or API where available)
+- [ ] Tailored resume generation per application
+- [ ] Cover letter customization based on job description
+- [ ] Application submission workflow (draft → review → submit)
+
+**Phase 4+ (Ongoing):** Interview & Offer Support
+- [ ] Company research briefs (pre-interview)
+- [ ] Role analysis and preparation materials
+- [ ] Interview tracking and follow-up automation
+- [ ] Offer evaluation framework (comp, benefits, culture, growth)
+- [ ] Negotiation support (data-driven comp analysis)
+
+### Skills Needed
+- Job board scrapers/APIs
+- Resume/cover letter generation (AI-assisted)
+- Browser automation for application submission
+- Company research aggregation (Glassdoor, Blind, LinkedIn, Crunchbase)
+- Spreadsheet/database for pipeline tracking
+
+### Success Metrics
+- Applications submitted per week (target: TBD)
+- Time saved per application (target: 50%+ reduction)
+- Response rate tracking (quality of applications)
+- Interview conversion rate
+- Offer acceptance with optimized comp
 
 ---
 

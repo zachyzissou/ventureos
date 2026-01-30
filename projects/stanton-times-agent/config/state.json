@@ -1,7 +1,8 @@
 {
-  "last_check": "2026-01-29T18:46:00-06:00",
+  "last_check": "2026-01-30T10:30:00-06:00",
   "seen_tweet_ids": {
     "RobertsSpaceInd": [
+      "2017258326795374814",
       "2016965031146008833",
       "2016953127363055738",
       "2016907382987645426",
@@ -94,6 +95,12 @@
     ]
   },
   "posted_stories": [
+    {
+      "topic": "Clearing The Air Event FAQ",
+      "source": "RobertsSpaceInd",
+      "posted_at": "2026-01-30T10:40:00-06:00",
+      "tweet_id": "2017277038252499175"
+    },
     {
       "topic": "Bar Citizen World Tour 2026",
       "source": "RobertsSpaceInd",
