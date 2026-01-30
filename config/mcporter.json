@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "obsidian": {
+      "command": "npx @mauricio.wolff/mcp-obsidian@latest /Users/zachgonser/Obsidian/VaultZap"
+    }
+  },
+  "imports": []
+}
