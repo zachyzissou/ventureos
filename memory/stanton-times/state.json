@@ -133,5 +133,6 @@
     "mentions_found": 0,
     "replies_found": 0,
     "engagements_made": 0
-  }
+  },
+  "pendingApprovals": []
 }
