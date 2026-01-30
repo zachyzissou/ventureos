@@ -31,30 +31,31 @@ class GatewayDetector(InfrastructureDetector):
         """
         Single health check attempt.
         Returns (is_healthy, error_message)
+        
+        Uses process check instead of 'clawdbot status' which hangs in launchd.
         """
         try:
+            # Check if clawdbot-gateway process is running
             proc = await asyncio.create_subprocess_exec(
-                "/usr/local/bin/clawdbot", "status",
+                "pgrep", "-f", "clawdbot-gateway",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), 
-                timeout=self.timeout
+                proc.communicate(),
+                timeout=2.0  # Much shorter timeout for simple process check
             )
             
-            output = stdout.decode()
-            
-            # Check if output indicates gateway is running
-            if "Running" in output or "running" in output:
+            if proc.returncode == 0:
+                # Process is running
                 return (True, None)
             else:
-                return (False, f"Status check failed: {output}")
+                return (False, "Gateway process not running")
                 
         except asyncio.TimeoutError:
-            return (False, f"Status check timed out (>{self.timeout}s)")
+            return (False, f"Process check timed out")
         except Exception as e:
-            return (False, f"Status check error: {str(e)}")
+            return (False, f"Process check error: {str(e)}")
     
     async def check(self) -> Optional[Issue]:
         """

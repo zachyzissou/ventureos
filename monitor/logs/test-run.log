@@ -113,3 +113,4 @@ HTTP Request: POST https://discord.com/api/webhooks/1466893157827612941/lbJ4vBd5
 {'healer': 'git', 'issue_id': '20edf752', 'event': 'Healer on cooldown or max attempts reached', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:22:53.032787Z'}
 {'issue_id': '20edf752', 'event': 'No heal attempted, alerting', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:22:53.032831Z'}
 {'issue_id': '20edf752-a554-4662-bcd0-de64f2ccf4c1', 'severity': 'P3', 'escalation': False, 'event': 'attempting_discord_alert', 'logger': 'monitor.alerters.discord_alerter', 'level': 'info', 'timestamp': '2026-01-30T21:22:53.032876Z'}
+{'event': 'MonitorAgent stopped', 'logger': '__main__', 'level': 'info', 'timestamp': '2026-01-30T21:23:37.828563Z'}
