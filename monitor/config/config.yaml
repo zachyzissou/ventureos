@@ -120,38 +120,53 @@ paths:
   logs: /Users/zachgonser/clawd/monitor/logs
   scripts: /Users/zachgonser/clawd/monitor/scripts
 
-# Cron jobs to monitor (from ~/.clawdbot/cron/jobs.json)
+# Cron jobs to monitor (from clawdbot cron list)
 cron_jobs:
-  - id: stantontimes-p0-monitor
-    interval: 900  # 15 minutes
-  - id: stantontimes-p1-monitor
+  - id: b8f7127b-b27e-4660-8ad8-4d9030233e8d
+    name: StantonTimes P0 Monitor
     interval: 1800  # 30 minutes
-  - id: stantontimes-engagement
-    interval: 3600  # 1 hour
-  - id: stantontimes-creator-watch
-    interval: 3600
-  - id: stantontimes-web-intel
-    interval: 3600
-  - id: stantontimes-approval-check
-    interval: 3600
-  - id: bloom-pr-monitor
-    interval: 3600
-  - id: bloom-ci-watch
-    interval: 1800
-  - id: weekly-bloom-digest
+  - id: 42dc3da7-d6f6-4f63-a10b-5fc2cf3fd80f
+    name: StantonTimes P1 Keywords
+    interval: 7200  # 2 hours
+  - id: 0d214337-fcfc-4d1a-a9aa-ae75a127d269
+    name: StantonTimes Engagement
+    interval: 1800  # 30 minutes (runs 2x/hour)
+  - id: b5ac2a71-f1b2-4a8c-bcca-fcd254afe1b1
+    name: StantonTimes Creator Monitor
+    interval: 7200  # 2 hours
+  - id: 42661abf-198f-4d20-9943-4163e8e51c3d
+    name: StantonTimes Web RSS
+    interval: 7200  # 2 hours
+  - id: e9a4c0da-30c8-41ba-96a9-05ae564eedf5
+    name: StantonTimes Approval Check
+    interval: 300   # 5 minutes
+  - id: 36d25e5b-892f-4f87-b297-6c011bb21eae
+    name: Bloom PR Monitor
+    interval: 900   # 15 minutes
+  - id: 0b64b476-5e47-4d0a-ad4c-5b873623de91
+    name: Bloom CI Watch
+    interval: 1800  # 30 minutes
+  - id: ba5573be-91b7-46ad-a595-a6100a8e84a5
+    name: Weekly Bloom Digest
     interval: 604800  # Weekly
-  - id: extraction-shooter-intel
-    interval: 86400   # Daily
-  - id: unity-tool-scout
-    interval: 86400
-  - id: morning-briefing
-    interval: 86400
-  - id: weekly-memory-synthesis
-    interval: 604800
-  - id: weekly-obsidian-cleanup
-    interval: 604800
-  - id: twitter-auth-refresh
-    interval: 86400
+  - id: c4ee7575-5cb2-432e-87dd-c8e210b87f6b
+    name: Extraction Shooter Intel
+    interval: 259200  # Mon + Thu (3 days between)
+  - id: 17ee2b0c-93b5-4146-a0fa-54f9b8d1540b
+    name: Unity Tool Scout
+    interval: 259200  # Tue + Fri (3 days between)
+  - id: 657a6dbd-a850-4032-a558-73a2d4467e86
+    name: Fact Extraction
+    interval: 1800  # 30 minutes
+  - id: d4532a78-5273-4f83-9d10-4bca7bc9ced6
+    name: Morning Briefing
+    interval: 86400  # Daily
+  - id: 0df11fe6-5704-4f3a-98f7-da6471150c1f
+    name: Weekly Memory Synthesis
+    interval: 604800  # Weekly
+  - id: 743be99f-cdf5-435c-838d-becd428dcb79
+    name: Refresh Twitter Cookies
+    interval: 86400  # Daily
 
 # API endpoints to monitor
 apis:

@@ -45,16 +45,24 @@ class CronDetector(InfrastructureDetector):
                 cron_data = json.load(f)
             
             jobs = cron_data.get("jobs", [])
+            
+            # Try to find job by ID first, then by name (more flexible)
             job = next((j for j in jobs if j.get("id") == job_id), None)
+            if not job:
+                # Try matching by name (case-insensitive)
+                job_name = job_config.get("name", "")
+                if job_name:
+                    job = next((j for j in jobs 
+                               if j.get("name", "").lower() == job_name.lower()), None)
             
             if not job:
                 return Issue(
                     severity=Severity.P2,
                     category=Category.INFRASTRUCTURE,
                     system="cron",
-                    message=f"Cron job not found in config: {job_id}",
+                    message=f"Cron job not found: {job_id}",
                     can_auto_fix=False,
-                    metadata={"job_id": job_id}
+                    metadata={"job_id": job_id, "searched_name": job_config.get("name", "")}
                 )
             
             # Check if job is enabled
