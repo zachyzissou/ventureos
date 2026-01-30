@@ -316,6 +316,11 @@ class MonitorAgent:
 async def main():
     """Entry point for Monitor-Agent"""
     
+    import os
+    
+    # Load webhook URL from environment
+    discord_webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
+    
     # Default configuration
     config = {
         "database": {
@@ -329,7 +334,7 @@ async def main():
         "alerting": {
             "enabled": True,
             "discord": {
-                "webhook_url": "",  # Set via environment or config file
+                "webhook_url": discord_webhook,
                 "mention_user_id": "956203522624462918"
             },
             "deduplication_window_seconds": 300,
