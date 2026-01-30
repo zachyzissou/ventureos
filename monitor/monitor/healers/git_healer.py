@@ -108,6 +108,7 @@ class GitHealer(BaseHealer):
             logger.error("git_autocommit_timeout")
             return HealResult(
                 success=False,
+                action_taken="git commit (timeout)",
                 message="Git auto-commit timed out",
                 metadata={"error": "timeout"}
             )
@@ -115,6 +116,7 @@ class GitHealer(BaseHealer):
             logger.error("git_autocommit_exception", error=str(e))
             return HealResult(
                 success=False,
+                action_taken="git commit (exception)",
                 message=f"Git auto-commit failed: {str(e)}",
                 metadata={"error": str(e), "type": type(e).__name__}
             )
