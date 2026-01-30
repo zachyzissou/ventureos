@@ -2,20 +2,16 @@
 Obsidian Sync Validator
 Phase Zero Day 3: Data Validators
 
-Validates Obsidian vault syncing and fact extraction.
+Validates Obsidian vault sync status and fact extraction.
 """
 
 import time
 import json
-import sys
 from pathlib import Path
 from typing import Optional
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from validator import BaseValidator
-from models import Issue, Severity, Category
+from monitor.validator import BaseValidator
+from monitor.models import Issue, Severity, Category
 
 
 class ObsidianValidator(BaseValidator):

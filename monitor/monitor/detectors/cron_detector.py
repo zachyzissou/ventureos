@@ -7,15 +7,12 @@ Monitors cron job execution status and timing.
 
 import json
 import time
-import sys
-from pathlib import Path
 from typing import Optional, List
+from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from detector import InfrastructureDetector
-from models import Issue, HealthCheck, Severity, Category, Status
+from monitor.detector import InfrastructureDetector
+from monitor.models import Issue, HealthCheck, Severity, Category, Status
 
 
 class CronDetector(InfrastructureDetector):

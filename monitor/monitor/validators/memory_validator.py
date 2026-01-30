@@ -6,16 +6,12 @@ Validates daily memory files exist and are properly formatted.
 """
 
 import time
-import sys
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from validator import BaseValidator
-from models import Issue, Severity, Category
+from monitor.validator import BaseValidator
+from monitor.models import Issue, Severity, Category
 
 
 class MemoryValidator(BaseValidator):

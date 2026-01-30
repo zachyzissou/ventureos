@@ -7,15 +7,11 @@ Monitors disk space usage and alerts when thresholds exceeded.
 
 import asyncio
 import time
-import sys
-from pathlib import Path
 from typing import Optional
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from detector import InfrastructureDetector
-from models import Issue, HealthCheck, Severity, Category, Status
+from monitor.detector import InfrastructureDetector
+from monitor.models import Issue, HealthCheck, Severity, Category, Status
 
 
 class DiskDetector(InfrastructureDetector):

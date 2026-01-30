@@ -15,12 +15,6 @@ Monitors Clawdbot Gateway daemon status and health.
 import asyncio
 import time
 from typing import Optional
-import sys
-from pathlib import Path
-
-# Add parent directory to path for standalone execution
-if __name__ == "__main__":
-    sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from monitor.detector import InfrastructureDetector
 from monitor.models import Issue, HealthCheck, Severity, Category, Status

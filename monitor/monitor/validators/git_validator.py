@@ -1,20 +1,17 @@
 """
-Git Status Validator
+Git Repository Validator
 Phase Zero Day 3: Data Validators
 
-Validates git repository health (uncommitted changes, sync status).
+Validates git repository status (uncommitted changes, sync status).
 """
 
 import asyncio
-import sys
+import subprocess
 from pathlib import Path
 from typing import Optional
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from validator import BaseValidator
-from models import Issue, Severity, Category
+from monitor.validator import BaseValidator
+from monitor.models import Issue, Severity, Category
 
 
 class GitValidator(BaseValidator):
