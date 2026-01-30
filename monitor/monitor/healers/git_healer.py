@@ -49,6 +49,7 @@ class GitHealer(BaseHealer):
                 logger.error("git_status_failed", stderr=stderr.decode())
                 return HealResult(
                     success=False,
+                    action_taken="git status (failed)",
                     message=f"Git status failed: {stderr.decode()}",
                     metadata={"stderr": stderr.decode()}
                 )
@@ -58,6 +59,7 @@ class GitHealer(BaseHealer):
                 logger.info("no_uncommitted_changes")
                 return HealResult(
                     success=True,
+                    action_taken="git status (check)",
                     message="No uncommitted changes found",
                     metadata={"files": []}
                 )
@@ -85,6 +87,7 @@ class GitHealer(BaseHealer):
                 logger.info("git_autocommit_success", file_count=len(files))
                 return HealResult(
                     success=True,
+                    action_taken=f"git commit ({len(files)} files)",
                     message=f"Auto-committed {len(files)} file(s)",
                     metadata={
                         "file_count": len(files),
@@ -96,6 +99,7 @@ class GitHealer(BaseHealer):
                 logger.error("git_commit_failed", stderr=stderr.decode())
                 return HealResult(
                     success=False,
+                    action_taken="git commit (failed)",
                     message=f"Git commit failed: {stderr.decode()}",
                     metadata={"stderr": stderr.decode()}
                 )
