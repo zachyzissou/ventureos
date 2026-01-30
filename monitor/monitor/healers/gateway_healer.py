@@ -39,7 +39,7 @@ class GatewayHealer(BaseHealer):
             # First, try to stop gracefully
             logger.debug("stopping_gateway")
             stop_proc = await asyncio.create_subprocess_exec(
-                "clawdbot", "gateway", "stop",
+                "/usr/local/bin/clawdbot", "gateway", "stop",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
@@ -51,7 +51,7 @@ class GatewayHealer(BaseHealer):
             # Start the gateway
             logger.debug("starting_gateway")
             start_proc = await asyncio.create_subprocess_exec(
-                "clawdbot", "gateway", "start",
+                "/usr/local/bin/clawdbot", "gateway", "start",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
@@ -64,6 +64,7 @@ class GatewayHealer(BaseHealer):
                 logger.info("gateway_restart_success")
                 return HealResult(
                     success=True,
+                    action_taken="gateway restart",
                     message="Gateway restarted successfully",
                     metadata={"stdout": stdout.decode(), "stderr": stderr.decode()}
                 )
@@ -71,6 +72,7 @@ class GatewayHealer(BaseHealer):
                 logger.error("gateway_restart_failed", returncode=start_proc.returncode)
                 return HealResult(
                     success=False,
+                    action_taken="gateway restart (failed)",
                     message=f"Gateway start failed with code {start_proc.returncode}",
                     metadata={"stdout": stdout.decode(), "stderr": stderr.decode()}
                 )
@@ -79,6 +81,7 @@ class GatewayHealer(BaseHealer):
             logger.error("gateway_restart_timeout")
             return HealResult(
                 success=False,
+                action_taken="gateway restart (timeout)",
                 message="Gateway restart timed out (>30s)",
                 metadata={"error": "timeout"}
             )
@@ -86,6 +89,7 @@ class GatewayHealer(BaseHealer):
             logger.error("gateway_restart_exception", error=str(e))
             return HealResult(
                 success=False,
+                action_taken="gateway restart (exception)",
                 message=f"Gateway restart failed: {str(e)}",
                 metadata={"error": str(e), "type": type(e).__name__}
             )
