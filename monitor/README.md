@@ -61,15 +61,36 @@ monitor/
 - ✅ Can insert/query test data in monitor.db
 - ✅ Config loads successfully
 
-## Next Steps (Day 2)
+## Day 2 Progress ✅
 
-**Goal:** Implement core detectors
+**Completed:**
+- [x] Gateway health detector (`GatewayDetector`)
+- [x] Cron job detector (`CronDetector` - monitors 15 jobs)
+- [x] API health detector (`APIDetector` - Anthropic, Discord, GitHub)
+- [x] Disk space detector (`DiskDetector` - usage monitoring)
+- [x] Test suite (`test_detectors.py`)
+- [x] All detectors tested and working
 
-- [ ] Gateway health detector (`check_gateway_health()`)
-- [ ] Cron job detector (`check_cron_job()` for each job)
-- [ ] API health detector (`check_api_health()` for Anthropic, Discord, Twitter)
-- [ ] Disk space detector (`check_disk_space()`)
-- [ ] Unit tests for each detector
+**Test Results:**
+- ✅ Gateway: healthy (1563ms response time)
+- ✅ Cron: detects configuration issues correctly
+- ✅ API: detects connectivity and HTTP errors
+- ✅ Disk: healthy space monitoring
+
+**Acceptance Criteria:**
+- ✅ Gateway detector catches stopped daemon
+- ✅ Cron detector catches config issues
+- ✅ API detector catches connectivity failures
+- ✅ Disk detector catches high usage
+
+## Next Steps (Day 3)
+
+**Goal:** Implement data validators
+
+- [ ] Memory system validator (daily logs exist, format valid)
+- [ ] State file validator (JSON valid, schema compliance)
+- [ ] Obsidian sync validator (extractions working)
+- [ ] Git status validator (uncommitted changes)
 
 ## Running Monitor-Agent
 
