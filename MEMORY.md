@@ -44,6 +44,41 @@
   - 5 Bloom jobs (PR/CI monitoring, competitor intel, tool scout, weekly digest)
   - 3 Memory jobs (morning briefing, fact extraction, weekly synthesis)
 
+## Discord Context Management
+
+### Session File Size Performance Issue (2026-01-30)
+
+**Problem Discovered:** Discord session file reached **4.9MB** with **2,592 messages**, causing **42+ second delays** instead of <1 second response times.
+
+**Root Cause:**
+- One tool result contained **228KB git commit output** (venv creation listing 1,225 files)
+- Every Discord message processes the ENTIRE session history
+- Load 4.9MB → Parse 2,592 messages → Process context → Respond
+
+**Breakdown:**
+- 1,085 assistant messages (2.5MB)
+- 1,031 tool results (2.3MB) ← One was 228KB monster
+- 236 user messages (151KB)
+
+**Solution:**
+- Avoid massive tool outputs in Discord sessions
+- Use `| head -20` or `--limit` flags on large commands
+- Archive/rotate sessions before they hit 2-3MB
+- File-first workflow: write to files, reference them vs. including in context
+
+**Prevention:**
+- Monitor session size (check .clawd/sessions/*.json)
+- Rotate sessions every 1,000-1,500 messages
+- Never include full venv/node_modules listings in responses
+- Use compact formats for large outputs
+
+**Impact:**
+- 42s → <1s response time after understanding issue
+- Better user experience
+- Lower token costs (smaller context)
+
+---
+
 ## Critical Lessons Learned
 
 ### Phase Zero Monitor-Agent Development (2026-01-30)
