@@ -143,21 +143,5 @@
     "replies_found": 0,
     "engagements_made": 0
   },
-  "pendingApprovals": [
-    {
-      "id": "feb-preview-2026",
-      "created_at": "2026-01-30T22:19:00Z",
-      "source_tweet_id": "2017311271461257722",
-      "source_author": "BTV_Cast",
-      "topic": "February 2026 Preview",
-      "draft_tweet": "📅 February Preview: What's Coming to Star Citizen\n\n✨ Coramor celebrations\n🆓 Free Fly opportunities\n🐀 Red Festival returns (Year of the Rat)\n🎁 Referral Bonus + Monthly Bundle\n🚢 New ship reveal\n\nDetails on RSI comms-link\n\n(via @BTV_Cast coverage)\n\n#StarCitizen",
-      "character_count": 237,
-      "validation": {
-        "newsworthy": true,
-        "community_impact": true,
-        "factual": true,
-        "credited": true
-      }
-    }
-  ]
+  "pendingApprovals": []
 }
