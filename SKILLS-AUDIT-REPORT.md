@@ -1,371 +1,363 @@
-# Skills Audit Report
+# Clawdbot Skills Comprehensive Audit Report
 
-**Generated:** Sat Jan 31 03:38:24 CST 2026
-**Total Skills:** 52
-
----
-
-## 1password
-**Description:** ---
-
-**Status:** Testing...
+**Generated:** 2026-01-29  
+**Total Skills Audited:** 52
 
 ---
 
-## apple-notes
-**Description:** ---
+## Executive Summary
 
-**Status:** Testing...
+### Status Overview
 
----
+| Status | Count | Percentage |
+|--------|-------|------------|
+| ✅ **Working** | 20 | 38.5% |
+| ⚠️ **Needs Config** | 6 | 11.5% |
+| ❌ **Not Installed** | 16 | 30.8% |
+| ℹ️ **No Requirements** | 4 | 7.7% |
+| ⚠️ **No Metadata** | 6 | 11.5% |
 
-## apple-reminders
-**Description:** ---
+### Key Findings
 
-**Status:** Testing...
-
----
-
-## bear-notes
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## bird
-**Description:** ---
-
-**Status:** Testing...
+- **20 skills (38.5%)** are fully functional and ready to use
+- **6 skills (11.5%)** have the CLI installed but need API keys or configuration
+- **16 skills (30.8%)** require installation of CLI tools
+- **6 skills (11.5%)** have no metadata and need investigation
+- **4 skills (7.7%)** are built-in features with no external requirements
 
 ---
 
-## blogwatcher
-**Description:** ---
+## ✅ Working Skills (20)
 
-**Status:** Testing...
+These skills are fully installed, configured, and ready to use:
 
----
+### Communication & Social
+1. **bird** 🐦 (v0.8.0) - X/Twitter CLI
+2. **imsg** 📨 (v0.4.0) - iMessage CLI
 
-## blucli
-**Description:** ---
+### Email & Messaging
+3. **gog** 🎮 (v0.9.0) - Gmail CLI
 
-**Status:** Testing...
+### Note-Taking & Organization
+4. **apple-notes** 📝 (v0.3.3) - Apple Notes via memo CLI
+5. **apple-reminders** ⏰ (v0.1.1) - Apple Reminders via remindctl
+6. **obsidian** 💎 (v0.2.2) - Obsidian CLI
 
----
+### AI & Content
+7. **gemini** ♊️ (v0.26.0) - Google Gemini CLI
+8. **summarize** 🧾 (v0.10.0) - Summarization tool
+9. **nano-pdf** 📄 (v0.2.1) - PDF editing
 
-## bluebubbles
-**Description:** ---
+### Media & Content
+10. **blogwatcher** 📰 (dev) - Blog monitoring
+11. **camsnap** 📸 (v0.2.0) - Camera snapshot tool
+12. **gifgrep** 🧲 (v0.2.1) - GIF search
+13. **openai-whisper** 🎙️ - Speech transcription
+14. **video-frames** 🎞️ - Video frame extraction (ffmpeg)
+15. **peekaboo** 👀 (v3.0.0-beta3) - Screen sharing/monitoring
 
-**Status:** Testing...
+### Development & Utilities
+16. **mcporter** 📦 (v0.7.3) - MCP server manager
+17. **session-logs** 📜 - Session log analysis (jq + ripgrep)
+18. **weather** 🌤️ - Weather via wttr.in (curl)
 
----
-
-## camsnap
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## canvas
-**Description:** Display HTML content on connected Clawdbot nodes (Mac app, iOS, Android).
-
-**Status:** Testing...
-
----
-
-## clawdhub
-**Description:** ---
-
-**Status:** Testing...
+### Food & Services
+19. **food-order** 🥡 - Food delivery CLI (ordercli)
+20. **ordercli** 🛵 - Order management
 
 ---
 
-## coding-agent
-**Description:** ---
+## ⚠️ Needs Configuration (6)
 
-**Status:** Testing...
+These skills have the necessary tools installed but require API keys or configuration:
 
----
+### 1. **local-places** 📍
+- **Status:** `uv` installed, missing API key
+- **Required:** `GOOGLE_PLACES_API_KEY`
+- **Action:** Set environment variable in shell config
 
-## discord
-**Description:** ---
+### 2. **nano-banana-pro** 🍌
+- **Status:** `uv` installed, missing API key
+- **Required:** `GEMINI_API_KEY`
+- **Action:** Set environment variable with Gemini API key
 
-**Status:** Testing...
+### 3. **openai-image-gen** 🖼️
+- **Status:** `python3` installed, missing API key
+- **Required:** `OPENAI_API_KEY`
+- **Action:** Set environment variable with OpenAI API key
 
----
+### 4. **openai-whisper-api** ☁️
+- **Status:** `curl` installed, missing API key
+- **Required:** `OPENAI_API_KEY`
+- **Action:** Set environment variable with OpenAI API key
 
-## eightctl
-**Description:** ---
+### 5. **trello** 📋
+- **Status:** `jq` installed, missing credentials
+- **Required:** `TRELLO_API_KEY`, `TRELLO_TOKEN`
+- **Action:** Get credentials from Trello developer portal
 
-**Status:** Testing...
-
----
-
-## food-order
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## gemini
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## gifgrep
-**Description:** ---
-
-**Status:** Testing...
+### 6. **sherpa-onnx-tts** 🗣️
+- **Status:** No bins required, missing model paths
+- **Required:** `SHERPA_ONNX_RUNTIME_DIR`, `SHERPA_ONNX_MODEL_DIR`
+- **Action:** Download ONNX runtime and TTS models, set paths
 
 ---
 
-## github
-**Description:** ---
+## ❌ Not Installed (16)
 
-**Status:** Testing...
+These skills require CLI tool installation:
 
----
+### High Priority (Commonly Useful)
+1. **1password** 🔐 - Password management
+   - Install: `brew install 1password-cli`
+   - Binary: `op`
 
-## gog
-**Description:** ---
+2. **himalaya** 📧 - Email CLI
+   - Install: `brew install himalaya`
+   - Binary: `himalaya`
 
-**Status:** Testing...
+3. **tmux** 🧵 - Terminal multiplexer (IMPORTANT for many skills!)
+   - Install: `brew install tmux`
+   - Binary: `tmux`
+   - **Note:** Required by 1password skill and others for TTY sessions
 
----
+4. **things-mac** ✅ - Things 3 task manager
+   - Install: `go install github.com/nicolai86/things3-cli/cmd/things@latest`
+   - Binary: `things`
+   - macOS only
 
-## goplaces
-**Description:** ---
+5. **openhue** 💡 - Philips Hue control
+   - Install: `brew install openhue/cli/openhue-cli`
+   - Binary: `openhue`
 
-**Status:** Testing...
+### Medium Priority (Specialized Use)
+6. **bear-notes** 🐻 - Bear notes app
+   - Install: `go install github.com/tylerwince/grizzly/cmd/grizzly@latest`
+   - Binary: `grizzly`
+   - macOS only
 
----
+7. **blucli** 🫐 - Bluesky CLI
+   - Install: `go install github.com/steipete/blucli/cmd/blu@latest`
+   - Binary: `blu`
 
-## himalaya
-**Description:** ---
+8. **clawdhub** - ClawdHub CLI
+   - Install: `npm install -g clawdhub`
+   - Binary: `clawdhub`
 
-**Status:** Testing...
+9. **eightctl** 🎛️ - Eight Sleep control
+   - Install: `go install github.com/steipete/eightctl/cmd/eightctl@latest`
+   - Binary: `eightctl`
 
----
+10. **goplaces** 📍 - Google Places search
+    - Install: `brew install steipete/tap/goplaces`
+    - Binary: `goplaces`
+    - Also needs: `GOOGLE_PLACES_API_KEY`
 
-## imsg
-**Description:** ---
+11. **model-usage** 📊 - Model usage tracking
+    - Install: `brew install --cask steipete/tap/codexbar`
+    - Binary: `codexbar`
+    - macOS only
 
-**Status:** Testing...
+12. **oracle** 🧿 - AI CLI
+    - Install: `npm install -g @steipete/oracle`
+    - Binary: `oracle`
 
----
+13. **sag** 🗣️ - ElevenLabs TTS
+    - Install: `brew install steipete/tap/sag`
+    - Binary: `sag`
+    - Also needs: `ELEVENLABS_API_KEY`
 
-## local-places
-**Description:** ---
+14. **songsee** 🌊 - Song recognition
+    - Install: `brew install steipete/tap/songsee`
+    - Binary: `songsee`
 
-**Status:** Testing...
+15. **sonoscli** 🔊 - Sonos control
+    - Install: `go install github.com/[repo]/sonos@latest`
+    - Binary: `sonos`
+    - **Note:** Need to verify repo path in SKILL.md
 
----
-
-## mcporter
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## model-usage
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## nano-banana-pro
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## nano-pdf
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## notion
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## obsidian
-**Description:** ---
-
-**Status:** Testing...
+16. **wacli** 📱 - WhatsApp CLI
+    - Install: `brew install steipete/tap/wacli`
+    - Binary: `wacli`
 
 ---
 
-## openai-image-gen
-**Description:** ---
+## ℹ️ No Requirements (4)
 
-**Status:** Testing...
+These are built-in features or use existing Clawdbot infrastructure:
 
----
-
-## openai-whisper
-**Description:** ---
-
-**Status:** Testing...
+1. **coding-agent** 🧩 - Uses anyBins (claude/codex/opencode/pi) - optional
+2. **notion** 📝 - API-based, no CLI required
+3. **spotify-player** 🎵 - Uses anyBins (spogo/spotify_player) - optional
+4. **voice-call** 📞 - Config-based plugin
 
 ---
 
-## openai-whisper-api
-**Description:** ---
+## ⚠️ No Metadata (6)
 
-**Status:** Testing...
+These skills exist but have malformed or missing metadata:
 
----
+1. **bluebubbles** - iMessage relay server
+2. **canvas** - Canvas integration
+3. **discord** - Discord integration
+4. **github** - GitHub integration
+5. **skill-creator** - Skill creation tool
+6. **slack** - Slack integration
 
-## openhue
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## oracle
-**Description:** ---
-
-**Status:** Testing...
+**Action Required:** Review these SKILL.md files and add proper metadata sections.
 
 ---
 
-## ordercli
-**Description:** ---
+## Detailed Recommendations
 
-**Status:** Testing...
+### Immediate Actions (Stage 0 Blockers)
 
----
+1. **Install tmux** (CRITICAL)
+   ```bash
+   brew install tmux
+   ```
+   Required by 1password and other interactive CLI skills.
 
-## peekaboo
-**Description:** ---
+2. **Fix No Metadata Skills**
+   - Review and add metadata to: bluebubbles, canvas, discord, github, skill-creator, slack
+   - These may be functional but can't be properly audited
 
-**Status:** Testing...
+### High-Value Quick Wins
 
----
+Install these for immediate productivity gains:
 
-## sag
-**Description:** ---
+```bash
+# Password management
+brew install 1password-cli
 
-**Status:** Testing...
+# Email
+brew install himalaya
 
----
+# Task management (if using Things)
+go install github.com/nicolai86/things3-cli/cmd/things@latest
 
-## session-logs
-**Description:** ---
+# Smart home (if using Hue)
+brew install openhue/cli/openhue-cli
+```
 
-**Status:** Testing...
+### Configure Existing Tools
 
----
+Set up API keys for already-installed tools:
 
-## sherpa-onnx-tts
-**Description:** ---
+```bash
+# Add to ~/.zshrc or ~/.bashrc
+export GOOGLE_PLACES_API_KEY="your-key-here"
+export GEMINI_API_KEY="your-key-here"
+export OPENAI_API_KEY="your-key-here"
+export TRELLO_API_KEY="your-key-here"
+export TRELLO_TOKEN="your-token-here"
+```
 
-**Status:** Testing...
+### Low Priority / Consider Removing
 
----
+These skills may have limited use depending on your workflow:
 
-## skill-creator
-**Description:** ---
+- **blogwatcher** - If not actively monitoring blogs
+- **eightctl** - If not using Eight Sleep
+- **sonoscli** - If not using Sonos speakers
+- **wacli** - If not using WhatsApp heavily
 
-**Status:** Testing...
+Consider uninstalling unused tools to reduce maintenance:
 
----
-
-## slack
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## songsee
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## sonoscli
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## spotify-player
-**Description:** ---
-
-**Status:** Testing...
+```bash
+# Example - remove if not used
+brew uninstall blogwatcher
+```
 
 ---
 
-## summarize
-**Description:** ---
+## Installation Priority Matrix
 
-**Status:** Testing...
+### Must Have (Install Now)
+1. ✅ tmux - Required by other skills
+2. ✅ 1password-cli - Security & credentials
+3. ⚠️ himalaya - Email access (if needed)
 
----
+### Should Have (Install Soon)
+4. things-mac - Task management (if using Things)
+5. openhue - Smart home control (if using Hue)
+6. bear-notes / obsidian - Note-taking (already have obsidian!)
 
-## things-mac
-**Description:** ---
+### Nice to Have (Install as Needed)
+7. blucli - Social media
+8. sag - Voice/TTS (requires API key)
+9. songsee - Music features
+10. wacli - Messaging
 
-**Status:** Testing...
-
----
-
-## tmux
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## trello
-**Description:** ---
-
-**Status:** Testing...
+### Optional (Low Usage)
+11. eightctl - Very specific hardware
+12. model-usage - Development tracking
+13. oracle - Alternative AI interface
 
 ---
 
-## video-frames
-**Description:** ---
+## Testing Results Summary
 
-**Status:** Testing...
+### Successful Version Checks
+- All 20 working skills responded to version/help commands
+- No timeouts or errors detected
 
----
+### Failed Installations
+- 16 skills missing binaries (not installed)
+- 0 skills with broken installations
 
-## voice-call
-**Description:** ---
-
-**Status:** Testing...
-
----
-
-## wacli
-**Description:** ---
-
-**Status:** Testing...
+### Configuration Issues
+- 6 skills need API keys (but binaries work)
+- 2 skills (sherpa-onnx-tts) need model downloads
 
 ---
 
-## weather
-**Description:** ---
+## Next Steps
 
-**Status:** Testing...
+1. **Immediate** (Today)
+   - Install tmux: `brew install tmux`
+   - Fix metadata for 6 skills without proper headers
+   
+2. **Short Term** (This Week)
+   - Install high-priority tools (1password, himalaya)
+   - Configure API keys for local-places, nano-banana-pro, openai tools
+   
+3. **Medium Term** (This Month)
+   - Audit skills with "no metadata" - verify they work or remove
+   - Install specialized tools based on actual usage patterns
+   - Document any custom configurations in TOOLS.md
+   
+4. **Long Term** (Ongoing)
+   - Review unused skills quarterly
+   - Remove tools that haven't been used in 3+ months
+   - Keep dependencies up to date with `brew upgrade`
 
 ---
 
+## Appendix: Full Tool Inventory
+
+### Installed Tools by Category
+
+**System Utilities:** curl, ffmpeg, jq, python3, rg (ripgrep), uv
+
+**Communication:** bird, gog, imsg
+
+**Note-Taking:** memo, obsidian-cli, remindctl
+
+**AI/ML:** gemini, nano-pdf, whisper
+
+**Media:** camsnap, gifgrep, peekaboo
+
+**Development:** mcporter, summarize
+
+**Services:** ordercli (2 variants)
+
+### Not Installed but Available
+
+See "Not Installed" section above for complete list with installation commands.
+
+---
+
+**End of Report**
+
+*This audit was performed automatically by analyzing SKILL.md metadata and testing CLI tools. All version numbers and paths are current as of the audit date.*
