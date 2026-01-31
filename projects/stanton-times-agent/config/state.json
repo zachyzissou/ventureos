@@ -1,7 +1,8 @@
 {
-  "last_check": "2026-01-30T22:19:00Z",
+  "last_check": "2026-01-31T04:32:00Z",
   "seen_tweet_ids": {
     "RobertsSpaceInd": [
+      "2017355371413733831",
       "2017260817859719276",
       "2017258326795374814",
       "2016965031146008833",
@@ -59,6 +60,7 @@
       "1994004905892433942"
     ],
     "SpaceTomatoGG": [
+      "2017399887567196552",
       "2016932006316368102",
       "2016711463881392542",
       "2016703415322386910",
@@ -143,5 +145,13 @@
     "replies_found": 0,
     "engagements_made": 0
   },
-  "pendingApprovals": []
+  "pendingApprovals": [
+    {
+      "topic": "Hermes Size Creep Analysis",
+      "source": "SpaceTomatoGG",
+      "tweet_id": "2017399887567196552",
+      "submitted_at": "2026-01-30T22:03:00-06:00",
+      "draft": "**RSI Hermes Doubles in Size from Original Concept**\n\nSpace Tomato has revealed just how much the RSI Hermes has grown from its original Apollo/Hermes concept. According to his analysis with video evidence, the original concept was only about 4 meters longer than a MISC Freelancer.\n\nThe current implementation? Significantly larger. The video comparison shows the dramatic difference in scale, highlighting another case of Star Citizen's notorious ship size creep.\n\n🔗 https://twitter.com/SpaceTomatoGG/status/2017399887567196552"
+    }
+  ]
 }
