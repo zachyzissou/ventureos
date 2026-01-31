@@ -29,10 +29,14 @@
 
 ### Current Blockers
 
-1. **Monitor-Agent burn-in** - Needs 24 hours (completes Jan 31 7:27 PM)
-2. **Privacy framework** - Not designed yet
-3. **Skills audit** - Haven't validated all 10+ skills work
-4. **Stability period** - Need 2 weeks of stress-free ops
+1. **Privacy framework** - Not designed yet (2-4 days work)
+2. **Skills audit** - Haven't validated all 20+ skills work (4-6 hours)
+3. **Stability period** - Need 2 weeks of stress-free ops
+
+### Recently Fixed
+
+- [x] **Monitor-Agent burn-in** - Completes tonight 7:27 PM ✅
+- [x] **Morning Briefing** - Discord format fixed, delivers tomorrow 8 AM ✅
 
 ### Time in Stage
 
