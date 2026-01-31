@@ -2,6 +2,7 @@
   "last_check": "2026-01-31T08:03:00Z",
   "seen_tweet_ids": {
     "RobertsSpaceInd": [
+      "2017601317724725590",
       "2017355371413733831",
       "2017260817859719276",
       "2017258326795374814",
@@ -162,6 +163,20 @@
     "engagements_made": 0
   },
   "pendingApprovals": [
+    {
+      "id": "approval_february_preview_2026-01-31",
+      "topic": "February 2026 Monthly Preview",
+      "source": "RobertsSpaceInd",
+      "tweet_id": "2017601317724725590",
+      "submitted_at": "2026-01-31T08:31:00-06:00",
+      "draft": "**Star Citizen February 2026 Preview: Coramor, Free Fly & Red Festival**\n\nFebruary brings multiple events and celebrations to Star Citizen. The official announcement teases:\n\n- **Coramor Celebrations** - The romantic in-universe holiday returns\n- **Red Festival** - Free Fly opportunities for new players to experience the game\n- **Referral Bonus** - Additional rewards for the referral program\n- Plus more surprises to be announced\n\nFull details coming soon from CIG.\n\n🔗 https://twitter.com/RobertsSpaceInd/status/2017601317724725590",
+      "validation": {
+        "affects_community": true,
+        "verified_facts": true,
+        "newsworthy": "Official monthly preview with events",
+        "not_opinion": true
+      }
+    },
     {
       "topic": "Hermes Size Creep Analysis",
       "source": "SpaceTomatoGG",
