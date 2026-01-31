@@ -1,0 +1,27 @@
+[Unit]
+Description=Monitor-Agent Self-Healing System
+After=network.target
+
+[Service]
+Type=simple
+User=zachgonser
+WorkingDirectory=/Users/zachgonser/clawd/monitor
+ExecStart=/Users/zachgonser/clawd/monitor/venv/bin/python -m monitor.main_loop
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/Users/zachgonser/clawd/monitor/logs/monitor-agent.log
+StandardError=append:/Users/zachgonser/clawd/monitor/logs/monitor-agent-error.log
+
+# Environment
+Environment="PYTHONUNBUFFERED=1"
+
+# Resource limits (prevent runaway)
+MemoryMax=512M
+CPUQuota=50%
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target
