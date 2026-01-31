@@ -9,20 +9,21 @@
 
 **Stage 0 Status:** 🟡 IN PROGRESS (6/8 criteria met)
 
-**Can Progress to Stage 1:** ❌ NO (2 blockers + stability period needed)
+**Can Progress to Stage 1:** ❌ NO (3 blockers + stability period needed)
 
 ---
 
 ## Detailed Checklist
 
 ### ✅ 1. Monitor-Agent Operational
-**Status:** ❌ NOT RUNNING  
+**Status:** 🟡 IN BURN-IN (ON SCHEDULE)  
 **Evidence:**
-- Process search shows no running monitor-agent
-- PID 61886 not found
-- No monitor-agent.py found in expected location
+- Started: Jan 30, 7:27 PM CST
+- Burn-in period: 24 hours (completes tonight 7:27 PM)
+- Status: Baking, proving stability
+- Database found: `/Users/zachgonser/clawd/monitor/data/monitor.db`
 
-**Blocker:** Monitor-Agent deployment (Day 7) not completed
+**Not a blocker:** On track, completing tonight
 
 ---
 
@@ -192,17 +193,19 @@
 **Can we progress to Stage 1?** ❌ NO
 
 **Blockers:**
-1. **Critical:** Monitor-Agent deployment incomplete (Day 7 pending)
-2. **Critical:** Privacy framework missing
-3. **Important:** Morning Briefing not working
-4. **Important:** Skills audit incomplete
-5. **Required:** Need 2 weeks stability after fixes
+1. **Critical:** Privacy framework missing
+2. **Important:** Morning Briefing not working
+3. **Important:** Skills audit incomplete
+4. **Required:** Need 2 weeks stability after fixes
+
+**In Progress (on schedule):**
+- Monitor-Agent burn-in (completes tonight 7:27 PM)
 
 **Estimated time to Stage 1 readiness:** 2-3 weeks
 
 **Next actions (priority order):**
-1. Complete Monitor-Agent Day 7 deployment
-2. Fix Morning Briefing cron error
+1. Wait for Monitor-Agent burn-in completion (tonight 7:27 PM)
+2. Fix Morning Briefing cron error (5 min fix)
 3. Design + implement privacy framework (1-2 days work)
 4. Audit skills ecosystem (1 day work)
 5. Run for 2 weeks with no major issues
@@ -215,7 +218,7 @@
 | Metric | Target | Current | Status |
 |--------|--------|---------|--------|
 | Cron jobs healthy | 100% | 93.75% (15/16) | 🟡 |
-| Monitor-Agent uptime | 99%+ | 0% (not deployed) | ❌ |
+| Monitor-Agent uptime | 99%+ | In burn-in (due tonight) | 🟡 |
 | Morning briefing success | 100% | 0% (error) | ❌ |
 | Capacity multiplier | 3x | 1.7x | 🟡 |
 | Stress level | Zero | Moderate | 🟡 |
@@ -234,8 +237,10 @@
 - ✅ Most cron jobs stable
 - ✅ Daily operations flowing
 
+**What's in progress:**
+- 🟡 Monitor-Agent burn-in (completes tonight, on schedule)
+
 **What's not:**
-- ❌ Monitor-Agent (the centerpiece) not deployed
 - ❌ Privacy framework (critical for Stage 1) missing
 - ❌ Morning briefing broken
 - ❌ Skills not validated
@@ -252,7 +257,7 @@
 **Stay in Stage 0.**
 
 **Focus next 2-3 weeks:**
-1. Deploy Monitor-Agent (tonight)
+1. Monitor-Agent completes burn-in (tonight 7:27 PM - already in progress)
 2. Fix morning briefing (5 min)
 3. Build privacy framework (1-2 days)
 4. Audit skills (1 day)
