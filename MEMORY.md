@@ -202,4 +202,60 @@
 
 ---
 
-*Updated: 2026-01-30 (Phase Zero complete, Phase 1 planned)*
+## Model Orchestration Strategy (2026-01-31)
+
+### The Problem
+
+14 cron jobs running on Claude Sonnet costing ~$300/month. Need to optimize costs while maintaining quality.
+
+### The Solution: 4-Tier Local Model Strategy
+
+**Framework designed:** Multi-tier model routing using Ollama (local) + Claude (cloud fallback)
+
+**Tier System:**
+- **Tier 0:** Nano models (future, <2s) - Ultra-simple checks
+- **Tier 1:** Fast monitors (Qwen 8B/14B, <10s) - Simple monitoring, status checks
+- **Tier 2:** Analysts (Qwen 32B, <60s) - Structured extraction, classification
+- **Tier 3:** Deep thinkers (Claude Sonnet, future 70B) - Complex analysis, synthesis
+- **Tier 4:** Specialists (future) - Code, vision, domain-specific tasks
+
+**Testing Results (2026-01-31):**
+- Qwen3:32b vs Claude Haiku
+- Speed: Qwen 20x slower (17-60s vs 3s)
+- Quality: Qwen MORE thorough (4 facts extracted vs 2)
+- Cost: Qwen free vs Haiku $0.01/run
+- **Verdict:** Perfect for non-time-sensitive cron jobs
+
+**4-Phase Rollout Plan:**
+1. **Phase 0 (Weekend):** Test Qwen 8B/14B, validate tier rules
+2. **Phase 1 (Week 1):** Pilot 3 jobs on Ollama
+3. **Phase 2 (Week 2-3):** Migrate 9/14 jobs → **73% cost savings** ($300 → $80/mo)
+4. **Phase 4 (3-6 months):** Unraid server with 70B models → **95% savings** ($300 → $10-20/mo)
+
+**Business Units Mapped:**
+- StantonTimes: 6 jobs (Tier 1-2)
+- Bloom: 5 jobs (Tier 1-3)
+- System: 3 jobs (Tier 1-3)
+- Consulting (future): Tier 3 heavy
+- Talent (future): Tier 2-3
+
+**Models Strategy:**
+- **Download now:** `qwen3:14b`, `qwen3:8b` (Tier 1 testing)
+- **Keep:** `qwen3:32b` (Tier 2 proven)
+- **Future (Unraid):** `qwen3:72b`, `dolphin-2.2-70b`, `qwen2.5-coder-32b`
+- **Don't add:** Gemma (no tool support), nano models (quality too low)
+
+**Documentation:**
+- `MODEL-ORCHESTRATION-FRAMEWORK.md` (11KB) - Strategic architecture
+- `MODEL-ORCHESTRATION-IMPLEMENTATION-PLAN.md` (16KB) - Execution plan
+- Both saved to Obsidian: `life/areas/projects/`
+
+**Future State:**
+- Mac Studio: Tier 1-2 (Ollama local, fast response)
+- Unraid Server: Tier 3 (70B models, 120GB VRAM)
+- Claude: Emergency fallback only
+- **Result:** 95% cost reduction, 100% quality maintained
+
+---
+
+*Updated: 2026-01-31 (Model orchestration strategy complete, ready for testing)*
