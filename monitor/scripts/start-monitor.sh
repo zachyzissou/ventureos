@@ -16,10 +16,10 @@ if pgrep -f "python.*monitor.main_loop" > /dev/null; then
     exit 1
 fi
 
-# Activate venv and start
+# Activate venv and start (UNBUFFERED for real-time logging)
 cd "$MONITOR_DIR"
 source venv/bin/activate
-nohup python -m monitor.main_loop >> "$LOG_DIR/monitor-agent.log" 2>> "$LOG_DIR/monitor-agent-error.log" &
+nohup python -u -m monitor.main_loop >> "$LOG_DIR/monitor-agent.log" 2>> "$LOG_DIR/monitor-agent-error.log" &
 
 PID=$!
 echo $PID > "$LOG_DIR/monitor-agent.pid"

@@ -129,8 +129,15 @@ class MonitorAgent:
                     loop_duration = (datetime.now() - loop_start).total_seconds()
                     sleep_time = max(1, 60 - loop_duration)
                     
-                    logger.debug("Sleeping", seconds=sleep_time)
+                    logger.info("Cycle complete, sleeping", 
+                               loop=loop_count,
+                               sleep_seconds=sleep_time,
+                               running=self.running)
                     await asyncio.sleep(sleep_time)
+                    
+                    logger.info("Woke up from sleep", 
+                               loop=loop_count,
+                               running=self.running)
                     
                 except KeyboardInterrupt:
                     logger.info("Received interrupt signal, shutting down")
@@ -385,19 +392,21 @@ async def main():
     # Create and run agent
     agent = MonitorAgent(config)
     
-    # Handle shutdown signals
-    def signal_handler(sig, frame):
+    # Handle shutdown signals (async-friendly)
+    loop = asyncio.get_event_loop()
+    
+    def signal_handler(sig):
         logger.info("Received shutdown signal", signal=sig)
         agent.stop()
-    
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+        
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, lambda s=sig: signal_handler(s))
     
     # Run main loop
     try:
         await agent.run()
     except Exception as e:
-        logger.error("Fatal error in main", error=str(e))
+        logger.error("Fatal error in main", error=str(e), exc_info=True)
         raise
     finally:
         logger.info("MonitorAgent stopped")
