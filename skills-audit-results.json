@@ -1,0 +1,994 @@
+[
+  {
+    "skill": "1password",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udd10",
+    "requires": {
+      "bins": [
+        "op"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "op": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "apple-notes",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udcdd",
+    "requires": {
+      "bins": [
+        "memo"
+      ]
+    },
+    "os": [
+      "darwin"
+    ],
+    "bins_test": {
+      "memo": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/memo",
+        "version": "memo, version 0.3.3"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "apple-reminders",
+    "has_skill_md": true,
+    "emoji": "\u23f0",
+    "requires": {
+      "bins": [
+        "remindctl"
+      ]
+    },
+    "os": [
+      "darwin"
+    ],
+    "bins_test": {
+      "remindctl": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/remindctl",
+        "version": "0.1.1"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "bear-notes",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udc3b",
+    "requires": {
+      "bins": [
+        "grizzly"
+      ]
+    },
+    "os": [
+      "darwin"
+    ],
+    "bins_test": {
+      "grizzly": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "bird",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udc26",
+    "requires": {
+      "bins": [
+        "bird"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "bird": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/bird",
+        "version": "0.8.0 (d3dd4a0d)"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "blogwatcher",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udcf0",
+    "requires": {
+      "bins": [
+        "blogwatcher"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "blogwatcher": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/blogwatcher",
+        "version": "dev"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "blucli",
+    "has_skill_md": true,
+    "emoji": "\ud83e\uded0",
+    "requires": {
+      "bins": [
+        "blu"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "blu": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "bluebubbles",
+    "has_skill_md": true,
+    "status": "no_metadata"
+  },
+  {
+    "skill": "camsnap",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udcf8",
+    "requires": {
+      "bins": [
+        "camsnap"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "camsnap": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/camsnap",
+        "version": "0.2.0"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "canvas",
+    "has_skill_md": true,
+    "status": "no_metadata"
+  },
+  {
+    "skill": "clawdhub",
+    "has_skill_md": true,
+    "emoji": "",
+    "requires": {
+      "bins": [
+        "clawdhub"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "clawdhub": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "coding-agent",
+    "has_skill_md": true,
+    "emoji": "\ud83e\udde9",
+    "requires": {
+      "anyBins": [
+        "claude",
+        "codex",
+        "opencode",
+        "pi"
+      ]
+    },
+    "os": [],
+    "bins_test": {},
+    "env_test": {},
+    "status": "no_requirements"
+  },
+  {
+    "skill": "discord",
+    "has_skill_md": true,
+    "status": "no_metadata"
+  },
+  {
+    "skill": "eightctl",
+    "has_skill_md": true,
+    "emoji": "\ud83c\udf9b\ufe0f",
+    "requires": {
+      "bins": [
+        "eightctl"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "eightctl": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "food-order",
+    "has_skill_md": true,
+    "emoji": "\ud83e\udd61",
+    "requires": {
+      "bins": [
+        "ordercli"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "ordercli": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/ordercli",
+        "version": null
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "gemini",
+    "has_skill_md": true,
+    "emoji": "\u264a\ufe0f",
+    "requires": {
+      "bins": [
+        "gemini"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "gemini": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/gemini",
+        "version": "0.26.0"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "gifgrep",
+    "has_skill_md": true,
+    "emoji": "\ud83e\uddf2",
+    "requires": {
+      "bins": [
+        "gifgrep"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "gifgrep": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/gifgrep",
+        "version": "gifgrep 0.2.1"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "github",
+    "has_skill_md": true,
+    "status": "no_metadata"
+  },
+  {
+    "skill": "gog",
+    "has_skill_md": true,
+    "emoji": "\ud83c\udfae",
+    "requires": {
+      "bins": [
+        "gog"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "gog": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/gog",
+        "version": "v0.9.0 (99d9575 2026-01-22T04:15:12Z)"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "goplaces",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udccd",
+    "requires": {
+      "bins": [
+        "goplaces"
+      ],
+      "env": [
+        "GOOGLE_PLACES_API_KEY"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "goplaces": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {
+      "GOOGLE_PLACES_API_KEY": {
+        "status": "not_set"
+      }
+    },
+    "status": "not_installed"
+  },
+  {
+    "skill": "himalaya",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udce7",
+    "requires": {
+      "bins": [
+        "himalaya"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "himalaya": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "imsg",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udce8",
+    "requires": {
+      "bins": [
+        "imsg"
+      ]
+    },
+    "os": [
+      "darwin"
+    ],
+    "bins_test": {
+      "imsg": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/imsg",
+        "version": "0.4.0"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "local-places",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udccd",
+    "requires": {
+      "bins": [
+        "uv"
+      ],
+      "env": [
+        "GOOGLE_PLACES_API_KEY"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "uv": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/uv",
+        "version": "uv 0.9.28 (Homebrew 2026-01-29)"
+      }
+    },
+    "env_test": {
+      "GOOGLE_PLACES_API_KEY": {
+        "status": "not_set"
+      }
+    },
+    "status": "needs_config"
+  },
+  {
+    "skill": "mcporter",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udce6",
+    "requires": {
+      "bins": [
+        "mcporter"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "mcporter": {
+        "status": "installed",
+        "path": "/Users/zachgonser/.local/bin/mcporter",
+        "version": "0.7.3"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "model-usage",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udcca",
+    "requires": {
+      "bins": [
+        "codexbar"
+      ]
+    },
+    "os": [
+      "darwin"
+    ],
+    "bins_test": {
+      "codexbar": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "nano-banana-pro",
+    "has_skill_md": true,
+    "emoji": "\ud83c\udf4c",
+    "requires": {
+      "bins": [
+        "uv"
+      ],
+      "env": [
+        "GEMINI_API_KEY"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "uv": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/uv",
+        "version": "uv 0.9.28 (Homebrew 2026-01-29)"
+      }
+    },
+    "env_test": {
+      "GEMINI_API_KEY": {
+        "status": "not_set"
+      }
+    },
+    "status": "needs_config"
+  },
+  {
+    "skill": "nano-pdf",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udcc4",
+    "requires": {
+      "bins": [
+        "nano-pdf"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "nano-pdf": {
+        "status": "installed",
+        "path": "/Users/zachgonser/.local/bin/nano-pdf",
+        "version": "Nano PDF v0.2.1"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "notion",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udcdd",
+    "requires": {},
+    "os": [],
+    "bins_test": {},
+    "env_test": {},
+    "status": "no_requirements"
+  },
+  {
+    "skill": "obsidian",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udc8e",
+    "requires": {
+      "bins": [
+        "obsidian-cli"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "obsidian-cli": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/obsidian-cli",
+        "version": "obsidian-cli version v0.2.2"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "openai-image-gen",
+    "has_skill_md": true,
+    "emoji": "\ud83d\uddbc\ufe0f",
+    "requires": {
+      "bins": [
+        "python3"
+      ],
+      "env": [
+        "OPENAI_API_KEY"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "python3": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/python3",
+        "version": "Python 3.14.2"
+      }
+    },
+    "env_test": {
+      "OPENAI_API_KEY": {
+        "status": "not_set"
+      }
+    },
+    "status": "needs_config"
+  },
+  {
+    "skill": "openai-whisper",
+    "has_skill_md": true,
+    "emoji": "\ud83c\udf99\ufe0f",
+    "requires": {
+      "bins": [
+        "whisper"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "whisper": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/whisper",
+        "version": null
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "openai-whisper-api",
+    "has_skill_md": true,
+    "emoji": "\u2601\ufe0f",
+    "requires": {
+      "bins": [
+        "curl"
+      ],
+      "env": [
+        "OPENAI_API_KEY"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "curl": {
+        "status": "installed",
+        "path": "/usr/bin/curl",
+        "version": "curl 8.7.1 (x86_64-apple-darwin25.0) libcurl/8.7.1 (SecureTransport) LibreSSL/3.3.6 zlib/1.2.12 nght"
+      }
+    },
+    "env_test": {
+      "OPENAI_API_KEY": {
+        "status": "not_set"
+      }
+    },
+    "status": "needs_config"
+  },
+  {
+    "skill": "openhue",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udca1",
+    "requires": {
+      "bins": [
+        "openhue"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "openhue": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "oracle",
+    "has_skill_md": true,
+    "emoji": "\ud83e\uddff",
+    "requires": {
+      "bins": [
+        "oracle"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "oracle": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "ordercli",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udef5",
+    "requires": {
+      "bins": [
+        "ordercli"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "ordercli": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/ordercli",
+        "version": null
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "peekaboo",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udc40",
+    "requires": {
+      "bins": [
+        "peekaboo"
+      ]
+    },
+    "os": [
+      "darwin"
+    ],
+    "bins_test": {
+      "peekaboo": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/peekaboo",
+        "version": "Peekaboo 3.0.0-beta3 (main/69376fa4-dirty, built: 2025-12-29T22:26:53+00:00)"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "sag",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udde3\ufe0f",
+    "requires": {
+      "bins": [
+        "sag"
+      ],
+      "env": [
+        "ELEVENLABS_API_KEY"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "sag": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {
+      "ELEVENLABS_API_KEY": {
+        "status": "not_set"
+      }
+    },
+    "status": "not_installed"
+  },
+  {
+    "skill": "session-logs",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udcdc",
+    "requires": {
+      "bins": [
+        "jq",
+        "rg"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "jq": {
+        "status": "installed",
+        "path": "/usr/bin/jq",
+        "version": "jq-1.7.1-apple"
+      },
+      "rg": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/rg",
+        "version": "ripgrep 15.1.0"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "sherpa-onnx-tts",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udde3\ufe0f",
+    "requires": {
+      "env": [
+        "SHERPA_ONNX_RUNTIME_DIR",
+        "SHERPA_ONNX_MODEL_DIR"
+      ]
+    },
+    "os": [
+      "darwin",
+      "linux",
+      "win32"
+    ],
+    "bins_test": {},
+    "env_test": {
+      "SHERPA_ONNX_RUNTIME_DIR": {
+        "status": "not_set"
+      },
+      "SHERPA_ONNX_MODEL_DIR": {
+        "status": "not_set"
+      }
+    },
+    "status": "needs_config"
+  },
+  {
+    "skill": "skill-creator",
+    "has_skill_md": true,
+    "status": "no_metadata"
+  },
+  {
+    "skill": "slack",
+    "has_skill_md": true,
+    "status": "no_metadata"
+  },
+  {
+    "skill": "songsee",
+    "has_skill_md": true,
+    "emoji": "\ud83c\udf0a",
+    "requires": {
+      "bins": [
+        "songsee"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "songsee": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "sonoscli",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udd0a",
+    "requires": {
+      "bins": [
+        "sonos"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "sonos": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "spotify-player",
+    "has_skill_md": true,
+    "emoji": "\ud83c\udfb5",
+    "requires": {
+      "anyBins": [
+        "spogo",
+        "spotify_player"
+      ]
+    },
+    "os": [],
+    "bins_test": {},
+    "env_test": {},
+    "status": "no_requirements"
+  },
+  {
+    "skill": "summarize",
+    "has_skill_md": true,
+    "emoji": "\ud83e\uddfe",
+    "requires": {
+      "bins": [
+        "summarize"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "summarize": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/summarize",
+        "version": "0.10.0"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "things-mac",
+    "has_skill_md": true,
+    "emoji": "\u2705",
+    "requires": {
+      "bins": [
+        "things"
+      ]
+    },
+    "os": [
+      "darwin"
+    ],
+    "bins_test": {
+      "things": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "tmux",
+    "has_skill_md": true,
+    "emoji": "\ud83e\uddf5",
+    "requires": {
+      "bins": [
+        "tmux"
+      ]
+    },
+    "os": [
+      "darwin",
+      "linux"
+    ],
+    "bins_test": {
+      "tmux": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "trello",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udccb",
+    "requires": {
+      "bins": [
+        "jq"
+      ],
+      "env": [
+        "TRELLO_API_KEY",
+        "TRELLO_TOKEN"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "jq": {
+        "status": "installed",
+        "path": "/usr/bin/jq",
+        "version": "jq-1.7.1-apple"
+      }
+    },
+    "env_test": {
+      "TRELLO_API_KEY": {
+        "status": "not_set"
+      },
+      "TRELLO_TOKEN": {
+        "status": "not_set"
+      }
+    },
+    "status": "needs_config"
+  },
+  {
+    "skill": "video-frames",
+    "has_skill_md": true,
+    "emoji": "\ud83c\udf9e\ufe0f",
+    "requires": {
+      "bins": [
+        "ffmpeg"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "ffmpeg": {
+        "status": "installed",
+        "path": "/opt/homebrew/bin/ffmpeg",
+        "version": null
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  },
+  {
+    "skill": "voice-call",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udcde",
+    "requires": {
+      "config": [
+        "plugins.entries.voice-call.enabled"
+      ]
+    },
+    "os": [],
+    "bins_test": {},
+    "env_test": {},
+    "status": "no_requirements"
+  },
+  {
+    "skill": "wacli",
+    "has_skill_md": true,
+    "emoji": "\ud83d\udcf1",
+    "requires": {
+      "bins": [
+        "wacli"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "wacli": {
+        "status": "not_found",
+        "path": null
+      }
+    },
+    "env_test": {},
+    "status": "not_installed"
+  },
+  {
+    "skill": "weather",
+    "has_skill_md": true,
+    "emoji": "\ud83c\udf24\ufe0f",
+    "requires": {
+      "bins": [
+        "curl"
+      ]
+    },
+    "os": [],
+    "bins_test": {
+      "curl": {
+        "status": "installed",
+        "path": "/usr/bin/curl",
+        "version": "curl 8.7.1 (x86_64-apple-darwin25.0) libcurl/8.7.1 (SecureTransport) LibreSSL/3.3.6 zlib/1.2.12 nght"
+      }
+    },
+    "env_test": {},
+    "status": "working"
+  }
+]
