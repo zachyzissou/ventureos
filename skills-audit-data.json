@@ -1,0 +1,417 @@
+[
+  {
+    "skill": "1password",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "apple-notes",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "apple-reminders",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "bear-notes",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "bird",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "blogwatcher",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "blucli",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "bluebubbles",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "camsnap",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "canvas",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "clawdhub",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "coding-agent",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "discord",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "eightctl",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "food-order",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "gemini",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "gifgrep",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "github",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "gog",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "goplaces",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "himalaya",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "imsg",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "local-places",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "mcporter",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "model-usage",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "nano-banana-pro",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "nano-pdf",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "notion",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "obsidian",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "openai-image-gen",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "openai-whisper-api",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "openai-whisper",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "openhue",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "oracle",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "ordercli",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "peekaboo",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "sag",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "session-logs",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "sherpa-onnx-tts",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "skill-creator",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "slack",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "songsee",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "sonoscli",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "spotify-player",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "summarize",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "things-mac",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "tmux",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "trello",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "video-frames",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "voice-call",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "wacli",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+,
+  {
+    "skill": "weather",
+    "bins_required": "",
+    "bins_status": {
+      "none": "no bins required"
+    }
+  }
+]
