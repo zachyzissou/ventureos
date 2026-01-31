@@ -1,0 +1,663 @@
+{
+  "metadata": {
+    "created": "2026-01-31",
+    "version": "1.0",
+    "currency": "USD",
+    "methodology": "Conservative assumptions, realistic growth curves, documented risk factors"
+  },
+  "stantontimes": {
+    "assumptions": {
+      "twitter_blue_cost": 8,
+      "domain_hosting_cost": 5,
+      "tools_api_cost": 10,
+      "total_fixed_monthly": 23,
+      "payment_processing_rate": 0.03,
+      "sponsor_deliverable_cost": 50,
+      "content_tools_cost": 5,
+      "opportunity_cost_hourly": 50,
+      "newsletter_conversion_rate": 0.03,
+      "newsletter_churn_rate": 0.10,
+      "newsletter_price": 7,
+      "sponsor_avg_deal_size": 250,
+      "sponsor_close_rate": 0.05,
+      "email_collection_rate": 0.20
+    },
+    "scenarios": {
+      "realistic": {
+        "summary": {
+          "breakeven_month": 4,
+          "month_to_500": 6,
+          "total_revenue_year1": 5146,
+          "total_costs_year1": 1441,
+          "net_profit_year1": 3705,
+          "monthly_run_rate_m12": 820,
+          "roi_cash": 2.57,
+          "probability": 0.60
+        },
+        "monthly": [
+          {
+            "month": 1,
+            "twitter_followers": 150,
+            "newsletter_free": 30,
+            "newsletter_paid": 0,
+            "sponsors": 0,
+            "sponsor_revenue": 0,
+            "newsletter_revenue": 0,
+            "total_revenue": 0,
+            "total_costs": 23,
+            "net_profit": -23,
+            "cumulative_profit": -23,
+            "hours_per_week": 7
+          },
+          {
+            "month": 2,
+            "twitter_followers": 250,
+            "newsletter_free": 50,
+            "newsletter_paid": 1,
+            "sponsors": 0,
+            "sponsor_revenue": 0,
+            "newsletter_revenue": 0,
+            "total_revenue": 0,
+            "total_costs": 23,
+            "net_profit": -23,
+            "cumulative_profit": -46,
+            "hours_per_week": 7
+          },
+          {
+            "month": 3,
+            "twitter_followers": 400,
+            "newsletter_free": 80,
+            "newsletter_paid": 2,
+            "sponsors": 1,
+            "sponsor_revenue": 0,
+            "newsletter_revenue": 14,
+            "total_revenue": 14,
+            "total_costs": 78,
+            "net_profit": -64,
+            "cumulative_profit": -110,
+            "hours_per_week": 10
+          },
+          {
+            "month": 4,
+            "twitter_followers": 550,
+            "newsletter_free": 110,
+            "newsletter_paid": 3,
+            "sponsors": 1,
+            "sponsor_revenue": 250,
+            "newsletter_revenue": 21,
+            "total_revenue": 271,
+            "total_costs": 78,
+            "net_profit": 193,
+            "cumulative_profit": 83,
+            "hours_per_week": 10
+          },
+          {
+            "month": 5,
+            "twitter_followers": 700,
+            "newsletter_free": 140,
+            "newsletter_paid": 4,
+            "sponsors": 2,
+            "sponsor_revenue": 250,
+            "newsletter_revenue": 28,
+            "total_revenue": 278,
+            "total_costs": 133,
+            "net_profit": 145,
+            "cumulative_profit": 228,
+            "hours_per_week": 10
+          },
+          {
+            "month": 6,
+            "twitter_followers": 850,
+            "newsletter_free": 170,
+            "newsletter_paid": 5,
+            "sponsors": 2,
+            "sponsor_revenue": 500,
+            "newsletter_revenue": 35,
+            "total_revenue": 535,
+            "total_costs": 133,
+            "net_profit": 402,
+            "cumulative_profit": 630,
+            "hours_per_week": 12
+          },
+          {
+            "month": 7,
+            "twitter_followers": 1000,
+            "newsletter_free": 200,
+            "newsletter_paid": 6,
+            "sponsors": 2,
+            "sponsor_revenue": 500,
+            "newsletter_revenue": 42,
+            "total_revenue": 542,
+            "total_costs": 133,
+            "net_profit": 409,
+            "cumulative_profit": 1039,
+            "hours_per_week": 12
+          },
+          {
+            "month": 8,
+            "twitter_followers": 1150,
+            "newsletter_free": 230,
+            "newsletter_paid": 7,
+            "sponsors": 2,
+            "sponsor_revenue": 500,
+            "newsletter_revenue": 49,
+            "total_revenue": 549,
+            "total_costs": 133,
+            "net_profit": 416,
+            "cumulative_profit": 1455,
+            "hours_per_week": 12
+          },
+          {
+            "month": 9,
+            "twitter_followers": 1300,
+            "newsletter_free": 260,
+            "newsletter_paid": 8,
+            "sponsors": 3,
+            "sponsor_revenue": 500,
+            "newsletter_revenue": 56,
+            "total_revenue": 556,
+            "total_costs": 188,
+            "net_profit": 368,
+            "cumulative_profit": 1823,
+            "hours_per_week": 12
+          },
+          {
+            "month": 10,
+            "twitter_followers": 1450,
+            "newsletter_free": 290,
+            "newsletter_paid": 9,
+            "sponsors": 3,
+            "sponsor_revenue": 750,
+            "newsletter_revenue": 63,
+            "total_revenue": 813,
+            "total_costs": 188,
+            "net_profit": 625,
+            "cumulative_profit": 2448,
+            "hours_per_week": 12
+          },
+          {
+            "month": 11,
+            "twitter_followers": 1600,
+            "newsletter_free": 320,
+            "newsletter_paid": 9,
+            "sponsors": 3,
+            "sponsor_revenue": 750,
+            "newsletter_revenue": 63,
+            "total_revenue": 813,
+            "total_costs": 188,
+            "net_profit": 625,
+            "cumulative_profit": 3073,
+            "hours_per_week": 12
+          },
+          {
+            "month": 12,
+            "twitter_followers": 1750,
+            "newsletter_free": 350,
+            "newsletter_paid": 10,
+            "sponsors": 3,
+            "sponsor_revenue": 750,
+            "newsletter_revenue": 70,
+            "total_revenue": 820,
+            "total_costs": 188,
+            "net_profit": 632,
+            "cumulative_profit": 3705,
+            "hours_per_week": 12
+          }
+        ]
+      },
+      "best": {
+        "summary": {
+          "breakeven_month": 3,
+          "month_to_500": 4,
+          "total_revenue_year1": 16295,
+          "total_costs_year1": 4104,
+          "net_profit_year1": 12191,
+          "monthly_run_rate_m12": 3018,
+          "roi_cash": 12.19,
+          "probability": 0.15
+        },
+        "monthly": [
+          {"month": 1, "twitter_followers": 200, "sponsors": 0, "sponsor_revenue": 0, "newsletter_revenue": 0, "total_revenue": 0, "net_profit": -23, "cumulative_profit": -23},
+          {"month": 2, "twitter_followers": 350, "sponsors": 0, "sponsor_revenue": 0, "newsletter_revenue": 0, "total_revenue": 0, "net_profit": -23, "cumulative_profit": -46},
+          {"month": 3, "twitter_followers": 550, "sponsors": 2, "sponsor_revenue": 250, "newsletter_revenue": 21, "total_revenue": 271, "net_profit": 138, "cumulative_profit": 92},
+          {"month": 4, "twitter_followers": 800, "sponsors": 2, "sponsor_revenue": 500, "newsletter_revenue": 42, "total_revenue": 542, "net_profit": 409, "cumulative_profit": 501},
+          {"month": 5, "twitter_followers": 1100, "sponsors": 3, "sponsor_revenue": 750, "newsletter_revenue": 77, "total_revenue": 827, "net_profit": 584, "cumulative_profit": 1085},
+          {"month": 6, "twitter_followers": 1450, "sponsors": 3, "sponsor_revenue": 1000, "newsletter_revenue": 119, "total_revenue": 1119, "net_profit": 821, "cumulative_profit": 1906},
+          {"month": 7, "twitter_followers": 1850, "sponsors": 4, "sponsor_revenue": 1250, "newsletter_revenue": 168, "total_revenue": 1418, "net_profit": 1030, "cumulative_profit": 2936},
+          {"month": 8, "twitter_followers": 2300, "sponsors": 4, "sponsor_revenue": 1500, "newsletter_revenue": 224, "total_revenue": 1724, "net_profit": 1336, "cumulative_profit": 4272},
+          {"month": 9, "twitter_followers": 2800, "sponsors": 5, "sponsor_revenue": 1750, "newsletter_revenue": 287, "total_revenue": 2037, "net_profit": 1574, "cumulative_profit": 5846},
+          {"month": 10, "twitter_followers": 3350, "sponsors": 5, "sponsor_revenue": 2000, "newsletter_revenue": 357, "total_revenue": 2357, "net_profit": 1894, "cumulative_profit": 7740},
+          {"month": 11, "twitter_followers": 3950, "sponsors": 5, "sponsor_revenue": 2000, "newsletter_revenue": 434, "total_revenue": 2434, "net_profit": 1971, "cumulative_profit": 9711},
+          {"month": 12, "twitter_followers": 4600, "sponsors": 6, "sponsor_revenue": 2500, "newsletter_revenue": 518, "total_revenue": 3018, "net_profit": 2480, "cumulative_profit": 12191}
+        ]
+      },
+      "worst": {
+        "summary": {
+          "breakeven_month": 7,
+          "month_to_500": null,
+          "total_revenue_year1": 1892,
+          "total_costs_year1": 1126,
+          "net_profit_year1": 766,
+          "monthly_run_rate_m12": 342,
+          "roi_cash": 0.53,
+          "probability": 0.25
+        },
+        "monthly": [
+          {"month": 1, "twitter_followers": 120, "sponsors": 0, "sponsor_revenue": 0, "newsletter_revenue": 0, "total_revenue": 0, "net_profit": -23, "cumulative_profit": -23},
+          {"month": 2, "twitter_followers": 150, "sponsors": 0, "sponsor_revenue": 0, "newsletter_revenue": 0, "total_revenue": 0, "net_profit": -23, "cumulative_profit": -46},
+          {"month": 3, "twitter_followers": 190, "sponsors": 0, "sponsor_revenue": 0, "newsletter_revenue": 0, "total_revenue": 0, "net_profit": -23, "cumulative_profit": -69},
+          {"month": 4, "twitter_followers": 240, "sponsors": 0, "sponsor_revenue": 0, "newsletter_revenue": 0, "total_revenue": 0, "net_profit": -23, "cumulative_profit": -92},
+          {"month": 5, "twitter_followers": 300, "sponsors": 1, "sponsor_revenue": 0, "newsletter_revenue": 0, "total_revenue": 0, "net_profit": -23, "cumulative_profit": -115},
+          {"month": 6, "twitter_followers": 370, "sponsors": 1, "sponsor_revenue": 150, "newsletter_revenue": 0, "total_revenue": 150, "net_profit": 72, "cumulative_profit": -43},
+          {"month": 7, "twitter_followers": 450, "sponsors": 1, "sponsor_revenue": 150, "newsletter_revenue": 7, "total_revenue": 157, "net_profit": 79, "cumulative_profit": 36},
+          {"month": 8, "twitter_followers": 540, "sponsors": 1, "sponsor_revenue": 150, "newsletter_revenue": 14, "total_revenue": 164, "net_profit": 86, "cumulative_profit": 122},
+          {"month": 9, "twitter_followers": 650, "sponsors": 2, "sponsor_revenue": 150, "newsletter_revenue": 21, "total_revenue": 171, "net_profit": 38, "cumulative_profit": 160},
+          {"month": 10, "twitter_followers": 770, "sponsors": 2, "sponsor_revenue": 300, "newsletter_revenue": 28, "total_revenue": 328, "net_profit": 195, "cumulative_profit": 355},
+          {"month": 11, "twitter_followers": 900, "sponsors": 2, "sponsor_revenue": 300, "newsletter_revenue": 35, "total_revenue": 335, "net_profit": 202, "cumulative_profit": 557},
+          {"month": 12, "twitter_followers": 1050, "sponsors": 2, "sponsor_revenue": 300, "newsletter_revenue": 42, "total_revenue": 342, "net_profit": 209, "cumulative_profit": 766}
+        ]
+      }
+    },
+    "expected_value": {
+      "probability_weighted_profit": 4232,
+      "calculation": "(0.15 * 12191) + (0.60 * 3705) + (0.25 * 766)"
+    }
+  },
+  "consulting": {
+    "assumptions": {
+      "website_cost": 19,
+      "calendar_cost": 0,
+      "crm_cost": 0,
+      "email_cost": 0,
+      "zoom_cost": 15,
+      "total_fixed_monthly": 34,
+      "payment_processing_rate": 0.03,
+      "client_gift_cost": 20,
+      "legal_setup_onetime": 100,
+      "tier1_price": 500,
+      "tier1_hours": 6,
+      "tier2_price": 2000,
+      "tier2_hours": 22,
+      "tier3_price_monthly": 500,
+      "tier3_hours_monthly": 4,
+      "cac_organic": 0,
+      "cac_referral": 167
+    },
+    "scenarios": {
+      "realistic": {
+        "summary": {
+          "breakeven_month": 2,
+          "month_to_500": 2,
+          "month_to_3000": 6,
+          "total_revenue_year1": 41500,
+          "total_costs_year1": 2578,
+          "net_profit_year1": 38922,
+          "monthly_run_rate_m12": 7000,
+          "mrr_m12": 2500,
+          "roi_cash": 15.09,
+          "effective_hourly_rate": 21.62,
+          "total_hours_year1": 1800,
+          "probability": 0.60
+        },
+        "monthly": [
+          {
+            "month": 1,
+            "leads": 8,
+            "conversions": 1,
+            "tier1_audits": 1,
+            "tier2_implementations": 0,
+            "tier3_retainers": 0,
+            "revenue": 0,
+            "costs": 134,
+            "net_profit": -134,
+            "cumulative_profit": -134,
+            "hours_worked": 20
+          },
+          {
+            "month": 2,
+            "leads": 12,
+            "conversions": 2,
+            "tier1_audits": 2,
+            "tier2_implementations": 0,
+            "tier3_retainers": 0,
+            "revenue": 500,
+            "costs": 69,
+            "net_profit": 431,
+            "cumulative_profit": 297,
+            "hours_worked": 32
+          },
+          {
+            "month": 3,
+            "leads": 15,
+            "conversions": 3,
+            "tier1_audits": 2,
+            "tier2_implementations": 1,
+            "tier3_retainers": 0,
+            "revenue": 1000,
+            "costs": 104,
+            "net_profit": 896,
+            "cumulative_profit": 1193,
+            "hours_worked": 50
+          },
+          {
+            "month": 4,
+            "leads": 18,
+            "conversions": 3,
+            "tier1_audits": 3,
+            "tier2_implementations": 1,
+            "tier3_retainers": 0,
+            "revenue": 2000,
+            "costs": 139,
+            "net_profit": 1861,
+            "cumulative_profit": 3054,
+            "hours_worked": 56
+          },
+          {
+            "month": 5,
+            "leads": 20,
+            "conversions": 4,
+            "tier1_audits": 3,
+            "tier2_implementations": 1,
+            "tier3_retainers": 1,
+            "revenue": 2500,
+            "costs": 194,
+            "net_profit": 2306,
+            "cumulative_profit": 5360,
+            "hours_worked": 62
+          },
+          {
+            "month": 6,
+            "leads": 20,
+            "conversions": 4,
+            "tier1_audits": 3,
+            "tier2_implementations": 1,
+            "tier3_retainers": 2,
+            "revenue": 3000,
+            "costs": 234,
+            "net_profit": 2766,
+            "cumulative_profit": 8126,
+            "hours_worked": 68
+          },
+          {
+            "month": 7,
+            "leads": 22,
+            "conversions": 4,
+            "tier1_audits": 2,
+            "tier2_implementations": 2,
+            "tier3_retainers": 2,
+            "revenue": 4000,
+            "costs": 274,
+            "net_profit": 3726,
+            "cumulative_profit": 11852,
+            "hours_worked": 80
+          },
+          {
+            "month": 8,
+            "leads": 22,
+            "conversions": 4,
+            "tier1_audits": 3,
+            "tier2_implementations": 1,
+            "tier3_retainers": 3,
+            "revenue": 4000,
+            "costs": 294,
+            "net_profit": 3706,
+            "cumulative_profit": 15558,
+            "hours_worked": 78
+          },
+          {
+            "month": 9,
+            "leads": 25,
+            "conversions": 5,
+            "tier1_audits": 3,
+            "tier2_implementations": 2,
+            "tier3_retainers": 3,
+            "revenue": 5500,
+            "costs": 354,
+            "net_profit": 5146,
+            "cumulative_profit": 20704,
+            "hours_worked": 96
+          },
+          {
+            "month": 10,
+            "leads": 25,
+            "conversions": 5,
+            "tier1_audits": 3,
+            "tier2_implementations": 2,
+            "tier3_retainers": 4,
+            "revenue": 6000,
+            "costs": 394,
+            "net_profit": 5606,
+            "cumulative_profit": 26310,
+            "hours_worked": 100
+          },
+          {
+            "month": 11,
+            "leads": 28,
+            "conversions": 5,
+            "tier1_audits": 2,
+            "tier2_implementations": 2,
+            "tier3_retainers": 5,
+            "revenue": 6500,
+            "costs": 434,
+            "net_profit": 6066,
+            "cumulative_profit": 32376,
+            "hours_worked": 102
+          },
+          {
+            "month": 12,
+            "leads": 28,
+            "conversions": 5,
+            "tier1_audits": 3,
+            "tier2_implementations": 2,
+            "tier3_retainers": 5,
+            "revenue": 7000,
+            "costs": 454,
+            "net_profit": 6546,
+            "cumulative_profit": 38922,
+            "hours_worked": 106
+          }
+        ]
+      },
+      "best": {
+        "summary": {
+          "breakeven_month": 1,
+          "month_to_500": 1,
+          "month_to_3000": 3,
+          "total_revenue_year1": 114500,
+          "total_costs_year1": 4078,
+          "net_profit_year1": 110422,
+          "monthly_run_rate_m12": 17000,
+          "mrr_m12": 4500,
+          "roi_cash": 32.00,
+          "probability": 0.20
+        },
+        "monthly": [
+          {"month": 1, "leads": 10, "conversions": 2, "tier1": 2, "tier2": 0, "tier3": 0, "revenue": 500, "net_profit": 466, "cumulative_profit": 466},
+          {"month": 2, "leads": 15, "conversions": 4, "tier1": 3, "tier2": 1, "tier3": 0, "revenue": 2000, "net_profit": 1931, "cumulative_profit": 2397},
+          {"month": 3, "leads": 20, "conversions": 6, "tier1": 4, "tier2": 2, "tier3": 0, "revenue": 4000, "net_profit": 3876, "cumulative_profit": 6273},
+          {"month": 4, "leads": 25, "conversions": 7, "tier1": 3, "tier2": 3, "tier3": 1, "revenue": 6500, "net_profit": 6281, "cumulative_profit": 12554},
+          {"month": 5, "leads": 30, "conversions": 8, "tier1": 4, "tier2": 3, "tier3": 2, "revenue": 8000, "net_profit": 7726, "cumulative_profit": 20280},
+          {"month": 6, "leads": 30, "conversions": 8, "tier1": 4, "tier2": 3, "tier3": 3, "revenue": 9500, "net_profit": 9166, "cumulative_profit": 29446},
+          {"month": 7, "leads": 35, "conversions": 9, "tier1": 3, "tier2": 4, "tier3": 4, "revenue": 11000, "net_profit": 10606, "cumulative_profit": 40052},
+          {"month": 8, "leads": 35, "conversions": 9, "tier1": 4, "tier2": 4, "tier3": 5, "revenue": 12500, "net_profit": 12046, "cumulative_profit": 52098},
+          {"month": 9, "leads": 40, "conversions": 10, "tier1": 4, "tier2": 4, "tier3": 6, "revenue": 13000, "net_profit": 12526, "cumulative_profit": 64624},
+          {"month": 10, "leads": 40, "conversions": 10, "tier1": 3, "tier2": 5, "tier3": 7, "revenue": 14500, "net_profit": 13986, "cumulative_profit": 78610},
+          {"month": 11, "leads": 45, "conversions": 11, "tier1": 4, "tier2": 5, "tier3": 8, "revenue": 16000, "net_profit": 15426, "cumulative_profit": 94036},
+          {"month": 12, "leads": 45, "conversions": 11, "tier1": 4, "tier2": 5, "tier3": 9, "revenue": 17000, "net_profit": 16386, "cumulative_profit": 110422}
+        ]
+      },
+      "worst": {
+        "summary": {
+          "breakeven_month": 3,
+          "month_to_500": 3,
+          "month_to_3000": 9,
+          "total_revenue_year1": 21500,
+          "total_costs_year1": 1523,
+          "net_profit_year1": 19977,
+          "monthly_run_rate_m12": 3500,
+          "mrr_m12": 1000,
+          "roi_cash": 5.82,
+          "probability": 0.20
+        },
+        "monthly": [
+          {"month": 1, "leads": 5, "conversions": 0, "tier1": 0, "tier2": 0, "tier3": 0, "revenue": 0, "net_profit": -134, "cumulative_profit": -134},
+          {"month": 2, "leads": 6, "conversions": 1, "tier1": 1, "tier2": 0, "tier3": 0, "revenue": 0, "net_profit": -34, "cumulative_profit": -168},
+          {"month": 3, "leads": 8, "conversions": 1, "tier1": 1, "tier2": 0, "tier3": 0, "revenue": 500, "net_profit": 466, "cumulative_profit": 298},
+          {"month": 4, "leads": 10, "conversions": 1, "tier1": 1, "tier2": 0, "tier3": 0, "revenue": 500, "net_profit": 466, "cumulative_profit": 764},
+          {"month": 5, "leads": 12, "conversions": 2, "tier1": 1, "tier2": 1, "tier3": 0, "revenue": 1000, "net_profit": 931, "cumulative_profit": 1695},
+          {"month": 6, "leads": 12, "conversions": 2, "tier1": 2, "tier2": 0, "tier3": 1, "revenue": 2000, "net_profit": 1926, "cumulative_profit": 3621},
+          {"month": 7, "leads": 15, "conversions": 2, "tier1": 1, "tier2": 1, "tier3": 1, "revenue": 2500, "net_profit": 2406, "cumulative_profit": 6027},
+          {"month": 8, "leads": 15, "conversions": 2, "tier1": 2, "tier2": 0, "tier3": 1, "revenue": 1500, "net_profit": 1446, "cumulative_profit": 7473},
+          {"month": 9, "leads": 18, "conversions": 3, "tier1": 2, "tier2": 1, "tier3": 1, "revenue": 3000, "net_profit": 2886, "cumulative_profit": 10359},
+          {"month": 10, "leads": 18, "conversions": 3, "tier1": 2, "tier2": 1, "tier3": 2, "revenue": 3500, "net_profit": 3366, "cumulative_profit": 13725},
+          {"month": 11, "leads": 20, "conversions": 3, "tier1": 1, "tier2": 1, "tier3": 2, "revenue": 3000, "net_profit": 2886, "cumulative_profit": 16611},
+          {"month": 12, "leads": 20, "conversions": 3, "tier1": 2, "tier2": 1, "tier3": 2, "revenue": 3500, "net_profit": 3366, "cumulative_profit": 19977}
+        ]
+      }
+    },
+    "expected_value": {
+      "probability_weighted_profit": 49429,
+      "calculation": "(0.20 * 110422) + (0.60 * 38922) + (0.20 * 19977)"
+    }
+  },
+  "comparison": {
+    "side_by_side": {
+      "breakeven_month": {
+        "stantontimes": 4,
+        "consulting": 2,
+        "winner": "consulting"
+      },
+      "time_to_500_monthly": {
+        "stantontimes": 6,
+        "consulting": 2,
+        "winner": "consulting"
+      },
+      "year1_revenue": {
+        "stantontimes": 5146,
+        "consulting": 41500,
+        "winner": "consulting",
+        "multiplier": 8.06
+      },
+      "year1_profit": {
+        "stantontimes": 3705,
+        "consulting": 38922,
+        "winner": "consulting",
+        "multiplier": 10.5
+      },
+      "monthly_run_rate_m12": {
+        "stantontimes": 820,
+        "consulting": 7000,
+        "winner": "consulting",
+        "multiplier": 8.54
+      },
+      "cash_roi": {
+        "stantontimes": 2.57,
+        "consulting": 15.09,
+        "winner": "consulting"
+      },
+      "startup_costs": {
+        "stantontimes": 276,
+        "consulting": 408,
+        "winner": "stantontimes"
+      },
+      "weekly_hours_avg": {
+        "stantontimes": 10,
+        "consulting": 35,
+        "winner": "stantontimes"
+      },
+      "passive_income_percentage": {
+        "stantontimes": 60,
+        "consulting": 20,
+        "winner": "stantontimes"
+      },
+      "scalability_year2_3": {
+        "stantontimes": "high",
+        "consulting": "medium",
+        "winner": "stantontimes"
+      },
+      "expected_value": {
+        "stantontimes": 4232,
+        "consulting": 49429,
+        "winner": "consulting",
+        "multiplier": 11.68
+      }
+    },
+    "risk_assessment": {
+      "stantontimes": {
+        "overall_risk": "medium-high",
+        "risks": [
+          {"risk": "cant_grow_audience", "probability": 0.30, "impact": "high", "severity": "critical"},
+          {"risk": "no_sponsor_interest", "probability": 0.25, "impact": "high", "severity": "critical"},
+          {"risk": "twitter_algo_change", "probability": 0.15, "impact": "medium", "severity": "medium"},
+          {"risk": "star_citizen_news_slows", "probability": 0.20, "impact": "medium", "severity": "medium"},
+          {"risk": "newsletter_churn_high", "probability": 0.40, "impact": "low", "severity": "low"},
+          {"risk": "auth_issues", "probability": 0.50, "impact": "low", "severity": "low"}
+        ]
+      },
+      "consulting": {
+        "overall_risk": "medium",
+        "risks": [
+          {"risk": "cant_find_clients", "probability": 0.20, "impact": "high", "severity": "medium"},
+          {"risk": "cant_deliver_value", "probability": 0.15, "impact": "high", "severity": "medium"},
+          {"risk": "doesnt_scale", "probability": 0.80, "impact": "medium", "severity": "medium"},
+          {"risk": "burnout", "probability": 0.40, "impact": "medium", "severity": "medium"},
+          {"risk": "low_conversion_rate", "probability": 0.30, "impact": "low", "severity": "low"},
+          {"risk": "retainer_churn", "probability": 0.50, "impact": "low", "severity": "low"}
+        ]
+      }
+    },
+    "decision_matrix": {
+      "quantitative_score": {
+        "consulting": 65,
+        "stantontimes": 35,
+        "winner": "consulting"
+      },
+      "factors": [
+        {"factor": "year1_profit", "weight": 30, "consulting_wins": true},
+        {"factor": "time_to_500", "weight": 20, "consulting_wins": true},
+        {"factor": "risk_level", "weight": 15, "consulting_wins": true},
+        {"factor": "time_investment", "weight": 15, "consulting_wins": false},
+        {"factor": "scalability_y2_3", "weight": 10, "consulting_wins": false},
+        {"factor": "upfront_capital", "weight": 5, "consulting_wins": false},
+        {"factor": "passive_income_pct", "weight": 5, "consulting_wins": false}
+      ]
+    },
+    "recommendation": {
+      "stage_1_choice": "consulting",
+      "reasoning": [
+        "10× higher Year 1 profit ($38,922 vs $3,705)",
+        "Faster validation (2 months vs 6 months to revenue)",
+        "Lower risk (direct client feedback vs algorithm dependency)",
+        "Proves Echo's value (every client is a case study)",
+        "Generates capital (fund StantonTimes in Year 2)",
+        "Faster learning (20 clients = 20 experiments)"
+      ],
+      "stage_2_recommendation": "Add StantonTimes in Year 2, funded by consulting profits",
+      "hybrid_approach": "Not recommended for Stage 1 due to split focus (40-50h/week combined)"
+    }
+  },
+  "time_analysis": {
+    "stantontimes": {
+      "year1_total_hours": 520,
+      "avg_hours_per_week": 10,
+      "effective_hourly_rate": 7.13,
+      "opportunity_cost_total": 26000,
+      "phases": [
+        {"months": "1-2", "hours_per_week": 7},
+        {"months": "3-6", "hours_per_week": 10},
+        {"months": "7-12", "hours_per_week": 12}
+      ]
+    },
+    "consulting": {
+      "year1_total_hours": 1800,
+      "avg_hours_per_week": 35,
+      "effective_hourly_rate": 21.62,
+      "opportunity_cost_total": 90000,
+      "phases": [
+        {"months": "1", "hours_per_week": 20},
+        {"months": "2-3", "hours_per_week": 30},
+        {"months": "4-12", "hours_per_week": 35-40}
+      ]
+    }
+  }
+}
