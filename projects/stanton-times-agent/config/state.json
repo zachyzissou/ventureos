@@ -1,5 +1,5 @@
 {
-  "last_check": "2026-01-31T04:32:00Z",
+  "last_check": "2026-01-31T06:03:00Z",
   "seen_tweet_ids": {
     "RobertsSpaceInd": [
       "2017355371413733831",
@@ -29,6 +29,8 @@
       "2015767541814120577"
     ],
     "starcitizenbot": [
+      "2017418139969974467",
+      "2017055835357155362",
       "2016904251633446925",
       "2016693508405448812",
       "2016632446108721608",
@@ -152,6 +154,20 @@
       "tweet_id": "2017399887567196552",
       "submitted_at": "2026-01-30T22:03:00-06:00",
       "draft": "**RSI Hermes Doubles in Size from Original Concept**\n\nSpace Tomato has revealed just how much the RSI Hermes has grown from its original Apollo/Hermes concept. According to his analysis with video evidence, the original concept was only about 4 meters longer than a MISC Freelancer.\n\nThe current implementation? Significantly larger. The video comparison shows the dramatic difference in scale, highlighting another case of Star Citizen's notorious ship size creep.\n\n🔗 https://twitter.com/SpaceTomatoGG/status/2017399887567196552"
+    },
+    {
+      "id": "approval_hermes_paint_2026-01-31",
+      "topic": "Hermes Paint Compatibility Confusion",
+      "source": "starcitizenbot",
+      "tweet_id": "2017418139969974467",
+      "submitted_at": "2026-01-31T00:03:00-06:00",
+      "draft": "**RSI Hermes Paint Drama: 'Separate Chassis' Still Says Triage**\n\nCommunity confusion over the RSI Hermes continues. Despite CIG stating the Hermes is a \"separate chassis\" from the Apollo (meaning Apollo paints aren't compatible), players have discovered the ship still displays \"Triage\" branding inside.\n\nThis inconsistency is sparking debate about whether the Hermes truly is a separate variant or simply a rebranded Apollo variant. The visual evidence contradicts CIG's official stance on paint compatibility.\n\nSource: Top post from r/starcitizen by u/Empire-\n\n🔗 https://twitter.com/starcitizenbot/status/2017418139969974467",
+      "validation": {
+        "affects_community": true,
+        "verified_facts": true,
+        "newsworthy": "Ship variant confusion with visual evidence",
+        "not_opinion": true
+      }
     }
   ]
 }
