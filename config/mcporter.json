@@ -2,6 +2,14 @@
   "mcpServers": {
     "obsidian": {
       "command": "npx @mauricio.wolff/mcp-obsidian@latest /Users/zachgonser/Obsidian/VaultZap"
+    },
+    "plane": {
+      "command": "uvx",
+      "env": {
+        "PLANE_API_KEY": "plane_api_e255c8aa75314f1da33f64cba2808e28",
+        "PLANE_WORKSPACE_SLUG": "slurpnet",
+        "PLANE_BASE_URL": "http://192.168.225.149:7210"
+      }
     }
   },
   "imports": []

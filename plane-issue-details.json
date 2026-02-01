@@ -1,0 +1,11 @@
+{
+  "CLAWDBOTAU-1": "Epic: Phase 0.5 Validation Loops. Implement FIND -> VALIDATE -> FIX -> VERIFY across cron jobs using a reusable validation-wrapper.js template, with initial rollout to 5/14 jobs and a plan to extend to the remaining 9/14 plus 7-day monitoring and tuning.",
+  "CLAWDBOTAU-2": "Task: Create validation-wrapper.js reusable template for cron job validation loops.\nAcceptance criteria:\n- validation-wrapper.js exists and documents the FIND -> VALIDATE -> FIX -> VERIFY flow\n- Template is reusable across cron jobs\n- At least one cron job can run through the wrapper without manual edits",
+  "CLAWDBOTAU-3": "Task: Apply validation loops to the initial 5 jobs (StantonTimes P0 Monitor, Fact Extraction, Bloom PR Monitor, Morning Briefing, Bloom CI Watch).\nAcceptance criteria:\n- All five jobs updated to include the validation pattern\n- Each job uses the wrapper or equivalent FIND/VALIDATE/FIX/VERIFY flow\n- Rollout is documented in maintenance notes",
+  "CLAWDBOTAU-4": "Task: Plan remaining 9/14 job rollout and 7-day heartbeat effectiveness monitoring.\nAcceptance criteria:\n- Remaining jobs list documented\n- 7-day monitoring plan defined\n- Check frequencies tuned based on observed failure rates",
+  "CLAWDBOTAU-5": "Epic: Phase 1 Proactive Heartbeat System. Establish HEARTBEAT.md routines for system health checks, memory maintenance, StantonTimes health, and Bloom monitoring, with quiet hours policy (23:00-08:00 CST).",
+  "CLAWDBOTAU-6": "Epic: Phase 2 Heartbeat Rotation State. Maintain heartbeat-state.json to track last check timestamps and support rotation scheduling.",
+  "CLAWDBOTAU-7": "Epic: Phase 3 Git Integration for Memory Tracking. Initialize repo in /Users/zachgonser/clawd, capture memory/scripts/configs, and auto-commit on significant memory changes.",
+  "CLAWDBOTAU-8": "Epic: Phase 4 Operating Principles. Enforce auto-fix before escalating, phase tracking, proactive checks, and context management to keep memory lean.",
+  "CLAWDBOTAU-9": "Epic: Phase 5 Plane Project Tracking. Move epics and work items into the self-hosted Plane instance for detailed task management while keeping this document as an overview."
+}
