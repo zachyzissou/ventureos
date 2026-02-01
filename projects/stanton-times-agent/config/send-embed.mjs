@@ -16,6 +16,7 @@
  *   --image        Large image URL
  *   --url          Title link URL
  *   --fields       JSON array of {name, value, inline} objects
+ *   --thread       JSON array of tweet strings for thread display
  *   --json         Full embed JSON object
  *   --ping         User ID to ping (optional)
  */
@@ -83,6 +84,24 @@ if (jsonArg) {
   if (getArg('thumbnail')) embed.thumbnail = { url: getArg('thumbnail') };
   if (getArg('image')) embed.image = { url: getArg('image') };
   if (getArg('url')) embed.url = getArg('url');
+  
+  // Thread support - format as description with tweet numbering
+  const threadArg = getArg('thread');
+  if (threadArg) {
+    const threadTweets = JSON.parse(threadArg);
+    if (Array.isArray(threadTweets) && threadTweets.length > 1) {
+      const threadIcon = threadTweets.length > 5 ? '🧵⚠️' : '🧵';
+      embed.description = `${threadIcon} **Thread (${threadTweets.length} tweets)**\n\n`;
+      threadTweets.forEach((tweet, i) => {
+        embed.description += `**[${i + 1}/${threadTweets.length}]** ${unescape(tweet)}\n\n`;
+      });
+      embed.description = embed.description.trim();
+    } else if (Array.isArray(threadTweets) && threadTweets.length === 1) {
+      // Single tweet thread - just use as description
+      embed.description = unescape(threadTweets[0]);
+    }
+  }
+  
   if (getArg('fields')) {
     embed.fields = JSON.parse(getArg('fields')).map(f => ({
       ...f,
