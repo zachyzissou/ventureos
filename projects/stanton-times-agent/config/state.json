@@ -1,7 +1,8 @@
 {
-  "last_check": "2026-01-31T08:03:00Z",
+  "last_check": "2026-01-31T23:00:00Z",
   "seen_tweet_ids": {
     "RobertsSpaceInd": [
+      "2017619034024427946",
       "2017601317724725590",
       "2017355371413733831",
       "2017260817859719276",
@@ -10,7 +11,8 @@
       "2016953127363055738",
       "2016907382987645426",
       "2016889282342908289",
-      "2016631232461746360"
+      "2016631232461746360",
+      "2017664328271360175"
     ],
     "CloudImperium": [
       "2001729980217377206",
@@ -45,6 +47,7 @@
       "2016608412792951234"
     ],
     "BoredGamerUK": [
+      "2017301007579955354",
       "2017251926014820619",
       "2017005864071073861",
       "2016920813090296152",
@@ -55,6 +58,7 @@
       "2016215603028148648"
     ],
     "Morphologis": [
+      "2017646464214962463",
       "2014178142576095446",
       "2013438425781936577",
       "2013064977783853368"
@@ -65,6 +69,9 @@
       "1994004905892433942"
     ],
     "SpaceTomatoGG": [
+      "2017697994808905820",
+      "2017651212364222689",
+      "2017651209826599151",
       "2017399888951316619",
       "2017399887567196552",
       "2016932006316368102",
@@ -80,6 +87,7 @@
       "2015786625238790381"
     ],
     "BTV_Cast": [
+      "2017617013598720490",
       "2017351301265305793",
       "2017313552122474745",
       "2017311271461257722",
@@ -96,6 +104,9 @@
       "2016616263619912021"
     ],
     "TheRubenSaurus": [
+      "2017681742711140660",
+      "2017650508144558548",
+      "2017612561303105847",
       "2017355170741391706",
       "2017347190235025886",
       "2017335604317434202",
@@ -196,6 +207,21 @@
         "verified_facts": true,
         "newsworthy": "Ship variant confusion with visual evidence",
         "not_opinion": true
+      }
+    },
+    {
+      "id": "approval_morphologis_event_bugs_2026-01-31",
+      "topic": "Morphologis Reports Severe Event Bugs",
+      "source": "Morphologis",
+      "tweet_id": "2017646464214962463",
+      "submitted_at": "2026-01-31T16:02:00-06:00",
+      "draft": "**Major Creator Reports Serious Issues with Clearing The Air Event**\n\nMorphologis has publicly called out severe technical problems plaguing the Clearing The Air event, directly tagging @RobertsSpaceInd:\n\n**Reported Issues:**\n- External cargo lifts deleting mission cargo\n- Ships being stored multiple times while trying to leave\n- Cargo needing to be placed on lifts one-by-one or the system breaks\n\n\"Event has been extremely difficult to complete. Numerous issues with the game... it's just so frustrating,\" Morphologis wrote. \"I hope that we can get a lot more focus on fixing game breaking issues like these in 2026.\"\n\nThe criticism comes from one of SC's most prominent architectural content creators, highlighting the gap between new features and core stability.\n\n🔗 https://twitter.com/Morphologis/status/2017646464214962463",
+      "validation": {
+        "affects_community": true,
+        "verified_facts": true,
+        "newsworthy": "Major creator publicly criticizing event technical issues",
+        "not_opinion": false,
+        "note": "Constructive criticism with specific examples, not just drama"
       }
     }
   ]
