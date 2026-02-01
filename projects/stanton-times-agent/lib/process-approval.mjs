@@ -39,6 +39,7 @@ function processApproval(approvalId, action) {
     console.log(`\n✅ Processing approval: ${approval.topic}`);
     
     // Check if it's a thread or single tweet
+    // Backward compatibility: 'draft' field from old format
     if (approval.thread && Array.isArray(approval.thread)) {
       // Post thread
       console.log(`📝 Posting thread (${approval.thread.length} tweets)...`);
@@ -67,15 +68,16 @@ function processApproval(approvalId, action) {
         process.exit(1);
       }
       
-    } else if (approval.tweet) {
-      // Post single tweet
+    } else if (approval.tweet || approval.draft) {
+      // Post single tweet (new format: 'tweet', old format: 'draft')
+      const tweetContent = approval.tweet || approval.draft;
       console.log(`📝 Posting single tweet...`);
       
       const postTweetScript = join(__dirname, '../config/post-tweet.mjs');
       
       try {
         const result = execSync(
-          `node "${postTweetScript}" "${approval.tweet.replace(/"/g, '\\"')}"`,
+          `node "${postTweetScript}" "${tweetContent.replace(/"/g, '\\"')}"`,
           { encoding: 'utf8' }
         );
         console.log(result);
@@ -94,7 +96,7 @@ function processApproval(approvalId, action) {
       }
       
     } else {
-      console.error(`❌ Approval has neither 'thread' nor 'tweet' field`);
+      console.error(`❌ Approval has no valid content field ('thread', 'tweet', or 'draft')`);
       process.exit(1);
     }
     
