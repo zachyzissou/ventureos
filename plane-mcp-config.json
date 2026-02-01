@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "plane": {
+      "command": "/Users/zachgonser/clawd/plane-mcp-server/.venv/bin/plane-mcp-server",
+      "args": ["stdio"],
+      "env": {
+        "PLANE_API_KEY": "plane_api_292d5a7b1b214f57b94e6e1835ae45eb",
+        "PLANE_WORKSPACE_SLUG": "slurpnet", 
+        "PLANE_BASE_URL": "http://192.168.225.149:7210"
+      }
+    }
+  }
+}
