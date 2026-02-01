@@ -6,6 +6,5 @@
     "bloom": 1769933000
   },
   "lastProactive": 1769933000,
-  "quietHours": { "start": "23:00", "end": "08:00" },
-  "alerts": ["Bloom CI Failures"]
+  "quietHours": { "start": "23:00", "end": "08:00" }
 }
