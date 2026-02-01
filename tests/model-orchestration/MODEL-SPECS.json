@@ -1,0 +1,45 @@
+{
+  "models": {
+    "qwen3:8b": {
+      "trained_context": 32768,
+      "safe_context": 8192,
+      "max_context": 16384,
+      "tier": 1,
+      "notes": "Trained on 32K but performance degrades above 16K"
+    },
+    "qwen3:14b": {
+      "trained_context": 32768,
+      "safe_context": 8192,
+      "max_context": 16384,
+      "tier": 1,
+      "notes": "Same as 8B, slightly better quality"
+    },
+    "qwen3:32b": {
+      "trained_context": 32768,
+      "safe_context": 16384,
+      "max_context": 32768,
+      "tier": 2,
+      "notes": "Can handle full 32K context"
+    },
+    "claude-3-5-haiku": {
+      "trained_context": 200000,
+      "safe_context": 8192,
+      "max_context": 200000,
+      "tier": 1,
+      "notes": "Fallback for Tier 1, supports huge contexts"
+    },
+    "claude-sonnet-4-5": {
+      "trained_context": 200000,
+      "safe_context": 16384,
+      "max_context": 200000,
+      "tier": 3,
+      "notes": "Primary for deep reasoning"
+    }
+  },
+  "validation_rules": {
+    "never_exceed_trained_context": true,
+    "warn_above_safe_context": true,
+    "auto_reduce_on_failure": true,
+    "log_all_context_errors": true
+  }
+}
