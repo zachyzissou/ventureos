@@ -1,13 +1,11 @@
 {
   "lastChecks": {
-    "system": 1769921561,
-    "memory": 1769921250,
-    "stanton": 1769921561,
-    "bloom": 1769906375
+    "system": 1769933000,
+    "memory": 1769933000,
+    "stanton": 1769933000,
+    "bloom": 1769933000
   },
-  "lastProactive": 1769907955,
-  "quietHours": {
-    "start": "23:00",
-    "end": "08:00"
-  }
+  "lastProactive": 1769933000,
+  "quietHours": { "start": "23:00", "end": "08:00" },
+  "alerts": ["Bloom CI Failures"]
 }
