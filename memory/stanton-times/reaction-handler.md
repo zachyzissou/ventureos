@@ -35,7 +35,7 @@ node reaction-confirm.mjs "❌" "zap" "1234567890" "Rejected: needs sources"
 
 When you receive a system event like:
 ```
-Discord reaction added: ✅ by 956203522624462918 on stanton-server #the-stanton-times msg 1234567890 from Moltbot#7753
+Discord reaction added: ✅ by 956203522624462918 on stanton-server #the-stanton-times msg 1234567890 from OpenClaw#7753
 ```
 
 1. Parse: emoji=✅, user=956203522624462918 (zap), msgId=1234567890

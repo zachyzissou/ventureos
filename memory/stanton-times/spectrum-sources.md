@@ -109,7 +109,7 @@ Check periodically if CIG adds:
 | Source | Strength | Weakness |
 |--------|----------|----------|
 | **Spectrum** | Detailed dev responses, official info first | Requires auth, no API |
-| **Twitter** | Easy monitoring, quick alerts | Often echoes Spectrum |
+| **Twitter** | Easy monitoring, quick alerts | Often openclawes Spectrum |
 | **Reddit** | Community analysis, memes | Speculation mixed with news |
 
 **Strategy:** Spectrum for verification and detail, Twitter for speed alerts.
