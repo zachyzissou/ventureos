@@ -40,4 +40,37 @@
 - Integration enables programmatic project management across different development environments
 - Total Available Tools: 96+
 
+### Recent Configuration Notes (2026-02-01)
+- MCP Server Configuration
+  * Standardized API key management
+  * Stdio transport method configured
+  * Base URL set to `http://192.168.225.149:7210`
+  * Workspace Slug: `slurpnet`
+
+### StantonTimes Workflow Update
+- Pending Tweets Approval Mechanism
+  * Manual review process in place
+  * Discord integration for tweet approvals
+  * Tracking system for pending tweets
+  * Automated tracking of tweet statuses
+
+### Plane Issue Creation Policy (2026-02-01)
+**Discord is signal, not a task-creation trigger.** Use logic to decide when to create issues.
+
+**Create a Plane issue when:**
+- It’s a **repeatable task**, **blocker**, or **multi-step project work**
+- It spans **>1 session** or needs tracking over days
+- It affects **core systems** (StantonTimes, Bloom, Clawdbot infra)
+
+**Do NOT create an issue when:**
+- It’s a **one-off quick request**
+- It’s just **brainstorming**, info, or a fleeting thought
+- It’s sensitive (P1+) unless explicitly confirmed
+
+**When uncertain:**
+- Ask a quick “Track this?” confirmation.
+
+**Default routing:**
+- Auto-issues go to **Clawdbot Autonomy Infrastructure** unless otherwise specified.
+
 [Rest of the previous MEMORY.md content remains unchanged]

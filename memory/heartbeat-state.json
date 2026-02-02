@@ -1,10 +1,15 @@
 {
   "lastChecks": {
-    "system": 1769933000,
+    "system": 1769981554,
     "memory": 1769933000,
     "stanton": 1769933000,
-    "bloom": 1769933000
+    "bloom": 1769933000,
+    "bloomPRMonitor": 1769993112.319421
   },
   "lastProactive": 1769933000,
-  "quietHours": { "start": "23:00", "end": "08:00" }
+  "quietHours": {
+    "start": "23:00",
+    "end": "08:00"
+  },
+  "bloomPRMonitorDetails": "No open PRs found"
 }
