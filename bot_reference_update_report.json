@@ -1,0 +1,12 @@
+{
+  "files_processed": 19716,
+  "files_modified": 445,
+  "total_replacements": {
+    "echo": 381,
+    "Echo": 110,
+    "clawdbot": 3,
+    "Clawdbot": 5,
+    "moltbot": 1,
+    "Moltbot": 2
+  }
+}
