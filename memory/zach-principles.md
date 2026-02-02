@@ -187,7 +187,7 @@ He wants:
 
 ---
 
-## 7. Actionable Principles for Echo
+## 7. Actionable Principles for OpenClaw
 
 ### When Making Decisions FOR Zach
 1. **Choose the cutting-edge option** unless there's a compelling reason not to

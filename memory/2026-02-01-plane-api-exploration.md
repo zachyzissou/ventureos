@@ -3,11 +3,11 @@
 ## Instance Details
 - **URL:** http://192.168.225.149:7210/
 - **Workspace:** SlurpNet
-- **Project:** Clawdbot Autonomy Infrastructure (ID: ee9b9bdb-0300-4b7e-a8f8-e7da904a62aa)
+- **Project:** OpenClaw Autonomy Infrastructure (ID: ee9b9bdb-0300-4b7e-a8f8-e7da904a62aa)
 
 ## API Access
 - **Personal Access Tokens:** Available at `/slurpnet/settings/account/api-tokens/`
-- Two tokens already exist: "Clawdbot" and "Clawdbot 2" (both active, never expire)
+- Two tokens already exist: "OpenClaw" and "OpenClaw 2" (both active, never expire)
 - To create new token: Settings → Account → Developer → Personal Access Tokens
 
 ## API Endpoints (to explore)

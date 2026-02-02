@@ -29,7 +29,7 @@
   - Fixed 72-hour execution limit
   - Auto-restart on crash
   - Runs without desktop session
-  - Service name: ClawdbotNode
+  - Service name: OpenClawNode
 - **Mac Studio:** Now primary gateway
 - **Total cron jobs:** 14 (6 StantonTimes + 5 Bloom + 3 Memory)
 

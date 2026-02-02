@@ -5,7 +5,7 @@
 Based on config analysis and system examination:
 
 ### Active Components
-- **SQLite Database:** `~/.clawdbot/memory/main.sqlite` (48MB active)
+- **SQLite Database:** `~/.openclaw/memory/main.sqlite` (48MB active)
 - **Vector Embeddings:** Enabled and operational  
 - **Provider:** Local (embeddinggemma-300M-Q8_0.gguf)
 - **Sources:** `memory` + `sessions` folders

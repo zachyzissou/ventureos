@@ -1,7 +1,7 @@
-# 2026-01-29 - Echo Migration: Windows → Mac Studio
+# 2026-01-29 - OpenClaw Migration: Windows → Mac Studio
 
 ## What Happened
-Migrated Echo (Clawdbot) from Zach's Windows PC to his Mac Studio.
+Migrated OpenClaw (OpenClaw) from Zach's Windows PC to his Mac Studio.
 
 ## Files Imported
 - **Workspace root**: AGENTS.md, SOUL.md, IDENTITY.md, TOOLS.md, USER.md, HEARTBEAT.md
@@ -21,12 +21,12 @@ Migrated Echo (Clawdbot) from Zach's Windows PC to his Mac Studio.
 
 ## Notes
 - Original export had Windows backslash paths that needed cleanup
-- Used cleaner export from `/Users/zachgonser/Downloads/echo-mac-setup/`
-- `clawdbot doctor` was needed after manual config edits
+- Used cleaner export from `/Users/zachgonser/Downloads/openclaw-mac-setup/`
+- `openclaw doctor` was needed after manual config edits
 - Proper DM config: `channels.discord.dm.policy` + `dm.allowFrom`
 
 ## Identity
-- **Name**: Echo 🔮
+- **Name**: OpenClaw 🔮
 - **Role**: CEO orchestrator - manages all of Zach's projects
 - **Home**: Now running on Mac Studio (was Windows PC)
 
@@ -35,14 +35,14 @@ Successfully paired Windows GamingPC as a remote node to Mac gateway.
 
 ### Steps
 1. Set Mac gateway: `bind: lan`, `auth.mode: token`
-2. On Windows: `$env:CLAWDBOT_GATEWAY_TOKEN = "<token>"` then `clawdbot node run`
-3. Approved pending device: `clawdbot devices approve <requestId>`
+2. On Windows: `$env:CLAWDBOT_GATEWAY_TOKEN = "<token>"` then `openclaw node run`
+3. Approved pending device: `openclaw devices approve <requestId>`
 4. Node connected with capabilities: browser proxy, system.run, system.which
 
 ### Key Learnings
-- Node pairing uses `clawdbot devices approve` (not `nodes approve`)
+- Node pairing uses `openclaw devices approve` (not `nodes approve`)
 - Gateway token required via env var `CLAWDBOT_GATEWAY_TOKEN` on node
-- Pending requests visible in `~/.clawdbot/devices/pending.json` even when CLI doesn't show them
+- Pending requests visible in `~/.openclaw/devices/pending.json` even when CLI doesn't show them
 - Discord message target format: `user:<id>` not raw ID
 
 ### Final Setup

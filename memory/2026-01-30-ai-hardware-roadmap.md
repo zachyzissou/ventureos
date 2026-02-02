@@ -2,7 +2,7 @@
 
 ## Current Setup (Mac Studio M2 Ultra)
 - **RAM:** 48GB unified memory
-- **Status:** Active, running Clawdbot + local models
+- **Status:** Active, running OpenClaw + local models
 - **Models downloaded today:**
   - ✅ Qwen 2.5 32B (18.78 GB) - Smart daily driver
   - ✅ Dolphin 2.2 70B (38.87 GB) - Massive uncensored beast (just completed)
@@ -39,7 +39,7 @@
 - 🔥 **Multi-modal powerhouse** - Vision + text + code simultaneously
 
 ## Architecture Strategy
-- **Mac Studio:** Daily driver, mobile workstation, Clawdbot host
+- **Mac Studio:** Daily driver, mobile workstation, OpenClaw host
 - **Unraid Server:** AI research lab, model serving, heavy computation
 - **Integration:** API gateway from Mac to server for heavy workloads
 - **Tools:** vLLM for maximum performance, LM Studio for Mac models

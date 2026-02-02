@@ -119,5 +119,5 @@ Or append programmatically:
 jq . /Users/zachgonser/clawd/config/jobs.json
 
 # Restart gateway to pick up changes:
-clawdbot gateway restart
+openclaw gateway restart
 ```

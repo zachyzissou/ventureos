@@ -61,9 +61,9 @@ docker run -d \
 ## Setup Complete ✅
 **Plane instance running** at `http://192.168.225.149:7210/`
 - Workspace: SlurpNet
-- User: clawdbot@slurp.net
+- User: openclaw@slurp.net
 
-### Project Created: Clawdbot Autonomy Infrastructure
+### Project Created: OpenClaw Autonomy Infrastructure
 **9 work items created:**
 1. CLAWDBOTAU-1: [Epic] Phase 0.5: Validation Loops
 2. CLAWDBOTAU-2: Validate CI/CD health at heartbeats (auto-fix before escalating)

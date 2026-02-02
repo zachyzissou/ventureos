@@ -58,10 +58,10 @@ user: GatewayRestart:
   "ts": 1769755442219,
   "sessionKey": "agent:main:main",
   "message": null,
-  "doctorHint": "Run: clawdbot doctor --non-interactive",
+  "doctorHint": "Run: openclaw doctor --non-interactive",
   "stats": {
     "mode": "config.patch",
-    "root": "/Users/zachgonser/.clawdbot/clawdbot.json"
+    "root": "/Users/zachgonser/.openclaw/openclaw.json"
   }
 }
 user: [Discord slurpzap user id:956203522624462918 +23s 2026-01-30 00:45 CST] are we back?
