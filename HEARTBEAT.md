@@ -14,7 +14,7 @@ memory/heartbeat-state.json: { "lastChecks": { "system": timestamp } }
 ```
 - Check all 14 cron jobs - any failures in last 4 hours?
 - Check disk space: `df -h /Users/zachgonser`
-- Check Windows node connectivity: `clawdbot nodes status`
+- Check Windows node connectivity: `echo nodes status`
 - Verify LM Studio daemon: `lms daemon status`
 - If issues found → auto-fix or alert
 
