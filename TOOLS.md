@@ -5,11 +5,18 @@
 - Transport: Local Stdio
 - Base URL: http://192.168.225.149:7210/slurpnet/api
 - Workspace Slug: slurpnet
-- Note: Using local MCP server from GitHub repository
+- Note: Using local MCP server with dedicated virtual environment
 - Local server path: `/Users/zachgonser/clawd/plane-mcp-server`
-- Requires Python 3.10+ with uv
+- Requires Python 3.10+ 
+- Virtual Environment: `/Users/zachgonser/clawd/.venv/mcp-server`
+- Setup Script: `/Users/zachgonser/clawd/mcp-setup.sh`
 - API key: zach-personal-api-key
-- Server command: `.venv/bin/plane-mcp-server stdio`
+- Server command: `.venv/mcp-server/bin/plane-mcp-server stdio`
+
+### Dependency Management
+- Use `mcp-setup.sh` to create/reset virtual environment
+- Always activate virtual environment before running MCP tools
+- Isolates dependencies to prevent system-wide conflicts
 
 Skills define *how* tools work. This file is for *your* specifics — the stuff that's unique to your setup.
 
