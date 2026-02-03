@@ -1,15 +1,10 @@
 {
   "lastChecks": {
-    "system": 1770013707,
-    "memory": 1770023056,
-    "stanton": 1770012000,
-    "bloom": 1770012000
+    "system": 1738308900,
+    "memory": 1738308900,
+    "stanton": 1738308900,
+    "bloom": 1738308900
   },
-  "lastProactive": 1770013707,
-  "quietHours": {
-    "start": "23:00",
-    "end": "08:00"
-  },
-  "lastMemoryAudit": 1770013707,
-  "memoryAuditNotes": "Full audit completed 2026-02-02. All systems operational."
+  "lastProactive": 1738308900,
+  "quietHours": { "start": "23:00", "end": "08:00" }
 }
