@@ -11,7 +11,7 @@
 
 ### The Incident (15:11:34 CST)
 
-Monitor-Agent **restarted the Clawdbot gateway** at 15:11:52 CST:
+Monitor-Agent **restarted the OpenClaw gateway** at 15:11:52 CST:
 ```
 'event': 'gateway_restart_success'
 'timestamp': '2026-01-30T21:11:52.801105Z'
@@ -188,6 +188,6 @@ Zach's concern was 100% valid. The safety features existed but weren't active be
 
 ---
 
-**Fixed by:** Echo  
+**Fixed by:** OpenClaw  
 **Reviewed by:** (awaiting verification)  
 **Deployed:** (pending testing)

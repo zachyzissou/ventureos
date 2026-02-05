@@ -1,7 +1,7 @@
-# Clawdbot Skills Audit - Executive Summary
+# OpenClaw Skills Audit - Executive Summary
 
 **Date:** 2026-01-29  
-**Auditor:** Clawdbot Subagent  
+**Auditor:** OpenClaw Subagent  
 **Total Skills:** 52
 
 ---
@@ -135,8 +135,8 @@ brew install 1password-cli
 brew install himalaya
 
 # Set API keys
-echo 'export OPENAI_API_KEY="sk-..."' >> ~/.zshrc
-echo 'export GEMINI_API_KEY="..."' >> ~/.zshrc
+openclaw 'export OPENAI_API_KEY="sk-..."' >> ~/.zshrc
+openclaw 'export GEMINI_API_KEY="..."' >> ~/.zshrc
 source ~/.zshrc
 ```
 

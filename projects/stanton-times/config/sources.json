@@ -1,0 +1,24 @@
+{
+    "rss_sources": [
+        {
+            "name": "Technology News",
+            "url": "https://techcrunch.com/feed/",
+            "category": "tech",
+            "enabled": true
+        },
+        {
+            "name": "Science News",
+            "url": "https://www.sciencenews.org/feed",
+            "category": "science", 
+            "enabled": true
+        }
+    ],
+    "web_sources": [
+        {
+            "name": "Hacker News",
+            "url": "https://news.ycombinator.com/",
+            "scraping_method": "advanced",
+            "enabled": true
+        }
+    ]
+}

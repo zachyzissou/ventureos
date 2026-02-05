@@ -1,0 +1,4 @@
+asyncio==3.4.3
+dataclasses==0.8; python_version < '3.7'
+typing-extensions==4.5.0
+redis==4.5.4  # Optional, for distributed state management

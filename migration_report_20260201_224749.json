@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-02-01T22:47:49.043436",
+  "components": [
+    {
+      "name": "Stanton Times Agent",
+      "sources": [
+        "/Users/zachgonser/stanton-times-agent",
+        "/Volumes/WindowsBackup/Users/Zachg/clawd/stanton-times-agent"
+      ],
+      "destination": "/Users/zachgonser/clawd/projects/stanton-times-agent",
+      "priority": "critical",
+      "success": false
+    },
+    {
+      "name": "Knowledge Graph",
+      "sources": [
+        "/Users/zachgonser/life/areas",
+        "/Volumes/WindowsBackup/Users/Zachg/clawd/life/areas"
+      ],
+      "destination": "/Users/zachgonser/clawd/life/areas",
+      "priority": "important",
+      "success": false
+    },
+    {
+      "name": "Google MCP Credentials",
+      "sources": [
+        "/Users/zachgonser/.openclaw/google-mcp",
+        "/Volumes/WindowsBackup/Users/Zachg/.openclaw/google-mcp"
+      ],
+      "destination": "/Users/zachgonser/.openclaw/google-mcp",
+      "priority": "high",
+      "success": false
+    },
+    {
+      "name": "Cron Jobs Configuration",
+      "sources": [
+        "/Users/zachgonser/.openclaw/cron",
+        "/Volumes/WindowsBackup/Users/Zachg/.openclaw/cron"
+      ],
+      "destination": "/Users/zachgonser/.openclaw/cron",
+      "priority": "medium",
+      "success": false
+    }
+  ],
+  "credentials": []
+}

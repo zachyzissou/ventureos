@@ -1,4 +1,4 @@
-# Echo Stage-Based Roadmap
+# OpenClaw Stage-Based Roadmap
 
 **Created:** 2026-01-31  
 **Approach:** Maturity gates, not timelines  
@@ -109,7 +109,7 @@ If you did Consulting first:
 ---
 
 ### Stage 3: Platform Extraction
-**Goal:** Turn Echo into a product others can use
+**Goal:** Turn OpenClaw into a product others can use
 
 **Prerequisites:**
 - 2+ business units running successfully
@@ -119,7 +119,7 @@ If you did Consulting first:
 **What This Stage Looks Like:**
 
 #### Phase A: Open Source Launch
-- Extract core Clawdbot framework from Echo
+- Extract core OpenClaw framework from OpenClaw
 - Clean up for public consumption
 - Write documentation
 - Launch on GitHub with good README

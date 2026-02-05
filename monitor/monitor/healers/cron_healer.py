@@ -21,7 +21,7 @@ class CronHealer(BaseHealer):
         if config is None:
             config = {"healing": {"enabled": True, "max_attempts": 3, "cooldown_seconds": 600}}
         super().__init__(config)
-        self.jobs_path = Path.home() / ".clawdbot" / "cron" / "jobs.json"
+        self.jobs_path = Path.home() / ".openclaw" / "cron" / "jobs.json"
         
     async def can_heal_issue(self, issue: Issue) -> bool:
         """Check if this healer can fix the issue type"""

@@ -1,0 +1,14 @@
+2026-02-01 22:47:25,776 - WARNING: Cron location not found: /Users/zachgonser/.echo/cron
+2026-02-01 22:47:25,776 - WARNING: Cron location not found: /usr/local/etc/cron.d
+2026-02-01 22:47:25,777 - WARNING: Cron location not found: /etc/cron.d
+2026-02-01 22:47:25,782 - ERROR: Failed to reload cron jobs: Command '['launchctl', 'stop', 'com.vix.cron']' returned non-zero exit status 3.
+2026-02-01 22:47:25,782 - INFO: Cron job update complete. Report saved to /Users/zachgonser/clawd/cron_job_update_report.json
+2026-02-01 22:47:58,640 - WARNING: Cron location not found: /Users/zachgonser/.echo/cron
+2026-02-01 22:47:58,640 - WARNING: Cron location not found: /usr/local/etc/cron.d
+2026-02-01 22:47:58,640 - WARNING: Cron location not found: /etc/cron.d
+2026-02-01 22:47:58,644 - ERROR: Failed to reload cron jobs: Command '['launchctl', 'stop', 'com.vix.cron']' returned non-zero exit status 3.
+2026-02-01 22:47:58,647 - INFO: Cron job update complete. Report saved to /Users/zachgonser/clawd/cron_job_update_report.json
+2026-02-01 23:58:34,719 - WARNING: Cron location not found: /usr/local/etc/cron.d
+2026-02-01 23:58:34,719 - WARNING: Cron location not found: /etc/cron.d
+2026-02-01 23:58:34,730 - ERROR: Failed to reload cron jobs: Command '['launchctl', 'stop', 'com.vix.cron']' returned non-zero exit status 3.
+2026-02-01 23:58:34,730 - INFO: Cron job update complete. Report saved to /Users/zachgonser/clawd/cron_job_update_report.json

@@ -2,12 +2,12 @@
 # Update StantonTimes cron jobs to use bird-auth.sh
 set -e
 
-JOBS_FILE="$HOME/.clawdbot/cron/jobs.json"
-BACKUP_FILE="$HOME/.clawdbot/cron/jobs.json.backup-manual"
+JOBS_FILE="$HOME/.openclaw/cron/jobs.json"
+BACKUP_FILE="$HOME/.openclaw/cron/jobs.json.backup-manual"
 
 # Backup
 cp "$JOBS_FILE" "$BACKUP_FILE"
-echo "✅ Backup created: $BACKUP_FILE"
+openclaw "✅ Backup created: $BACKUP_FILE"
 
 # Update bird commands to bird-auth.sh in all StantonTimes jobs
 cat "$JOBS_FILE" | jq '
@@ -38,9 +38,9 @@ cat "$JOBS_FILE" | jq '
 # Replace original
 mv "$JOBS_FILE.tmp" "$JOBS_FILE"
 
-echo "✅ Updated StantonTimes jobs to use bird-auth.sh"
-echo "📋 Jobs updated:"
+openclaw "✅ Updated StantonTimes jobs to use bird-auth.sh"
+openclaw "📋 Jobs updated:"
 jq -r '.jobs[] | select(.name | contains("StantonTimes")) | "  - \(.name)"' "$JOBS_FILE"
 
-echo ""
-echo "🔄 Restart gateway to reload: clawdbot gateway restart"
+openclaw ""
+openclaw "🔄 Restart gateway to reload: openclaw gateway restart"

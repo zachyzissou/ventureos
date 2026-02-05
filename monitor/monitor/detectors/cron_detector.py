@@ -21,7 +21,7 @@ class CronDetector(InfrastructureDetector):
     def __init__(self, config: dict):
         super().__init__(config)
         self.cron_jobs = config.get("cron_jobs", [])
-        self.cron_config_path = Path.home() / ".clawdbot" / "cron" / "jobs.json"
+        self.cron_config_path = Path.home() / ".openclaw" / "cron" / "jobs.json"
     
     async def check_job(self, job_config: dict) -> Optional[Issue]:
         """Check if a specific cron job is healthy"""
@@ -29,7 +29,7 @@ class CronDetector(InfrastructureDetector):
         job_id = job_config.get("id")
         expected_interval = job_config.get("interval", 3600)
         
-        # Load actual cron jobs from Clawdbot config
+        # Load actual cron jobs from OpenClaw config
         try:
             if not self.cron_config_path.exists():
                 return Issue(

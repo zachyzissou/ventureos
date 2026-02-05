@@ -230,7 +230,7 @@ node context-validator.js recommend new-model:7b monitoring
 
 ## Future Enhancements
 
-1. **Runtime validation** - Hook into Clawdbot to validate ALL model calls
+1. **Runtime validation** - Hook into OpenClaw to validate ALL model calls
 2. **Auto-detection** - Parse model info from `ollama show <model>` 
 3. **Performance tracking** - Log actual response times vs context size
 4. **Dynamic adjustment** - Auto-reduce context if model is slow

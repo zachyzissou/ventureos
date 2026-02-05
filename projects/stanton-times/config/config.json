@@ -1,0 +1,16 @@
+{
+    "project_name": "Stanton Times",
+    "version": "0.1.0",
+    "sources": {
+        "rss": [],
+        "web_scrapers": []
+    },
+    "discord": {
+        "webhook_url": "",
+        "channel_id": ""
+    },
+    "logging": {
+        "level": "INFO",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    }
+}

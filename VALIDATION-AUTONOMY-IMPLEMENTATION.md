@@ -139,7 +139,7 @@ Jobs should auto-fix common issues:
 ```
 
 #### 3.3 Proactive Work (No Human Prompt)
-During heartbeats, Echo should:
+During heartbeats, OpenClaw should:
 - **Organize memory files** (move completed work to archives/)
 - **Update MEMORY.md** (distill daily logs into long-term memory)
 - **Commit changes** (git add/commit memory updates)
@@ -227,11 +227,11 @@ Populate with realistic checks and track state properly.
 
 ### Autonomy ✅
 - [ ] Heartbeats perform productive background work
-- [ ] Echo organizes memory files without prompting
-- [ ] Echo updates MEMORY.md from daily logs
-- [ ] Echo commits memory changes to git
-- [ ] Echo monitors system health and reports issues
-- [ ] Echo pre-generates briefings before human wakes
+- [ ] OpenClaw organizes memory files without prompting
+- [ ] OpenClaw updates MEMORY.md from daily logs
+- [ ] OpenClaw commits memory changes to git
+- [ ] OpenClaw monitors system health and reports issues
+- [ ] OpenClaw pre-generates briefings before human wakes
 
 ### Self-Healing ✅
 - [ ] Jobs auto-retry on transient failures

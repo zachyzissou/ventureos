@@ -84,7 +84,7 @@
 **Expected Completion:** By morning (~7-8 AM)
 
 **Sub-agent task:**
-- Test all 52 Clawdbot skills
+- Test all 52 OpenClaw skills
 - Document: ✅ Working | ⚠️ Needs Config | ❌ Broken | ℹ️ Not Installed
 - Create comprehensive SKILLS-AUDIT-REPORT.md
 

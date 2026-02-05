@@ -15,10 +15,10 @@ long_description = readme_file.read_text() if readme_file.exists() else ""
 setup(
     name="monitor-agent",
     version="0.1.0",
-    description="Self-healing validation system for Echo",
+    description="Self-healing validation system for OpenClaw",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author="Echo",
+    author="OpenClaw",
     packages=find_packages(),
     python_requires=">=3.9",
     install_requires=[

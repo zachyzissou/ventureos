@@ -93,7 +93,7 @@ If ANY healing action causes problems:
 **Rollback command:**
 ```bash
 cd /Users/zachgonser/clawd/monitor
-echo "dry_run: true" >> config/config.yaml  # Emergency disable
+openclaw "dry_run: true" >> config/config.yaml  # Emergency disable
 ./manage.sh restart
 ```
 

@@ -200,7 +200,7 @@ Your Phase Zero Execution Plan is ready. Complete, concrete, actionable.
 **✅ All available, no blockers:**
 - Python 3.12+ (installed)
 - SQLite3 (installed)
-- clawdbot CLI (available)
+- openclaw CLI (available)
 - bird CLI for Twitter (available)
 - Discord webhook (can set up)
 - Git access (available)

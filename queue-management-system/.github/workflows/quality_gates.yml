@@ -1,0 +1,54 @@
+name: Quality Gates
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  code_quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.9'
+    
+    - name: Run Linter
+      run: |
+        pip install flake8
+        flake8 .
+    
+    - name: Run Unit Tests
+      run: |
+        pip install pytest
+        pytest tests/
+
+    - name: Code Coverage
+      run: |
+        pip install coverage
+        coverage run -m pytest
+        coverage report --fail-under=80
+
+  security_scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run Bandit Security Scan
+      run: |
+        pip install bandit
+        bandit -r .
+
+  dependency_check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check Dependencies
+      run: |
+        pip install safety
+        safety check

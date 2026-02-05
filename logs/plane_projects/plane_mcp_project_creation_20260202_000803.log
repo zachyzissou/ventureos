@@ -1,0 +1,10 @@
+2026-02-02 00:08:03,798 - INFO: MCP POST request successful: api/workspaces/slurpnet/projects
+2026-02-02 00:08:03,799 - ERROR: MCP command error: Expecting value: line 1 column 1 (char 0)
+2026-02-02 00:08:03,799 - ERROR: Project creation failed: External Inspiration - Ryan Carson Tweet
+2026-02-02 00:08:03,824 - INFO: MCP POST request successful: api/workspaces/slurpnet/projects
+2026-02-02 00:08:03,824 - ERROR: MCP command error: Expecting value: line 1 column 1 (char 0)
+2026-02-02 00:08:03,824 - ERROR: Project creation failed: Tech Exploration - PB Teja Tweet
+2026-02-02 00:08:03,841 - INFO: MCP POST request successful: api/workspaces/slurpnet/projects
+2026-02-02 00:08:03,841 - ERROR: MCP command error: Expecting value: line 1 column 1 (char 0)
+2026-02-02 00:08:03,841 - ERROR: Project creation failed: Innovation Tracking - Ganim Corey Tweet
+2026-02-02 00:08:03,841 - INFO: Project creation report saved: /Users/zachgonser/clawd/logs/plane_projects/project_creation_report_20260202_000803.json

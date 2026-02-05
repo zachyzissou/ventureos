@@ -1,0 +1,12 @@
+{
+    "added_keys": [],
+    "modified_keys": [],
+    "preserved_keys": [
+        "commands.restart",
+        "commands.native",
+        "tools.web.search.apiKey",
+        "meta.lastTouchedVersion",
+        "auth.profiles.anthropic:default.mode",
+        "auth.profiles.anthropic:default.provider"
+    ]
+}

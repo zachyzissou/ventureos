@@ -58,14 +58,14 @@ class GatewayHealer(BaseHealer):
                 success=True,
                 action_taken="gateway restart (dry-run)",
                 message="DRY RUN: Would have restarted gateway",
-                metadata={"dry_run": True, "would_execute": "clawdbot gateway stop && clawdbot gateway start"}
+                metadata={"dry_run": True, "would_execute": "openclaw gateway stop && openclaw gateway start"}
             )
         
         try:
             # First, try to stop gracefully
             logger.debug("stopping_gateway")
             stop_proc = await asyncio.create_subprocess_exec(
-                "/usr/local/bin/clawdbot", "gateway", "stop",
+                "/usr/local/bin/openclaw", "gateway", "stop",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
@@ -77,7 +77,7 @@ class GatewayHealer(BaseHealer):
             # Start the gateway
             logger.debug("starting_gateway")
             start_proc = await asyncio.create_subprocess_exec(
-                "/usr/local/bin/clawdbot", "gateway", "start",
+                "/usr/local/bin/openclaw", "gateway", "start",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )

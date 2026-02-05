@@ -1,0 +1,19 @@
+{
+    "name": "",
+    "version": "0.1.0",
+    "description": "",
+    "status": "in-progress",
+    "tags": [],
+    "maintainers": [],
+    "links": {
+        "repository": "",
+        "documentation": "",
+        "tracking": ""
+    },
+    "dependencies": [],
+    "development": {
+        "language": "",
+        "framework": "",
+        "environment": ""
+    }
+}

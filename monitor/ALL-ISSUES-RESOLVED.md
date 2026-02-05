@@ -22,16 +22,16 @@ Last monitoring cycle (21:53:31):
 ## Issues Fixed (5 total)
 
 ### 1. Gateway Detector (P0) - FALSE POSITIVE ✅
-**Problem:** `clawdbot status` hangs when called from launchd context  
+**Problem:** `openclaw status` hangs when called from launchd context  
 **Root Cause:** Process management difference in daemon mode  
-**Fix:** Use `pgrep -f clawdbot-gateway` instead  
+**Fix:** Use `pgrep -f openclaw-gateway` instead  
 **Files:** `monitor/detectors/gateway_detector.py`
 
 ### 2. Cron Detector (P2) - FALSE POSITIVE ✅
 **Problem:** Looking for non-existent job IDs  
 **Root Cause:** Config had placeholder IDs, detector only searched by ID  
 **Fix #1:** Search by both ID and name (fallback to name matching)  
-**Fix #2:** Updated all 15 cron job IDs to correct UUIDs from `clawdbot cron list`  
+**Fix #2:** Updated all 15 cron job IDs to correct UUIDs from `openclaw cron list`  
 **Files:** `monitor/detectors/cron_detector.py`, `monitor/config/config.yaml`
 
 ### 3. API Detector (P1) - REMOVED (NOT NEEDED) ✅

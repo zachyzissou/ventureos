@@ -1,7 +1,7 @@
 # Stage 0 Validation Report
 
 **Generated:** 2026-01-31 12:41 AM CST  
-**Validator:** Echo (automated check)
+**Validator:** OpenClaw (automated check)
 
 ---
 
@@ -131,7 +131,7 @@
 
 ## Capacity Check
 
-### Baseline Capacity (Pre-Echo)
+### Baseline Capacity (Pre-OpenClaw)
 **Estimate from context:**
 - Manual system maintenance: 30+ min/day
 - Email/calendar triage: 20 min/day
@@ -139,7 +139,7 @@
 - Context switching overhead: 1+ hour/day
 - **Total overhead:** ~2 hours/day minimum
 
-### Current Capacity (With Echo)
+### Current Capacity (With OpenClaw)
 **What's automated:**
 - ✅ Morning briefing (when fixed): 15 min saved
 - ✅ Cron health monitoring: 10 min saved

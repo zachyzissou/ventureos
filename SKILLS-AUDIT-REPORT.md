@@ -1,4 +1,4 @@
-# Clawdbot Skills Comprehensive Audit Report
+# OpenClaw Skills Comprehensive Audit Report
 
 **Generated:** 2026-01-29  
 **Total Skills Audited:** 52
@@ -184,7 +184,7 @@ These skills require CLI tool installation:
 
 ## ℹ️ No Requirements (4)
 
-These are built-in features or use existing Clawdbot infrastructure:
+These are built-in features or use existing OpenClaw infrastructure:
 
 1. **coding-agent** 🧩 - Uses anyBins (claude/codex/opencode/pi) - optional
 2. **notion** 📝 - API-based, no CLI required

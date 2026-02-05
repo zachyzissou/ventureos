@@ -5,7 +5,7 @@
 
 ### 1. Claude (Anthropic) - $200/mo
 ```bash
-# Direct via Clawdbot
+# Direct via OpenClaw
 /model claude-opus-4-5        # Most powerful
 /model claude-sonnet-4-5      # Balanced
 /model claude-3-5-haiku-latest # Fast & cheap
@@ -16,7 +16,7 @@ claude "Your prompt"
 
 ### 2. OpenAI GPT - $20/mo
 ```bash
-# Via Clawdbot + Codex CLI
+# Via OpenClaw + Codex CLI
 /model gpt-5.2-codex@openai-codex:codex-cli
 /model gpt-5.1@openai-codex:codex-cli
 
@@ -26,7 +26,7 @@ codex exec "Your prompt"
 
 ### 3. Google Gemini - $20/mo
 ```bash
-# Via Clawdbot
+# Via OpenClaw
 /model gemini-2.5-pro@google-gemini-cli
 /model gemini-3-pro-preview@google-gemini-cli
 
@@ -46,7 +46,7 @@ agent -H "Custom: Value" "Your prompt"
 
 ### 5. Local Models - FREE
 ```bash
-# Via Clawdbot
+# Via OpenClaw
 /model ollama/qwen3:32b  # 16K context
 /model ollama/qwen3:14b  # 8K context
 /model ollama/qwen3:8b   # 8K context

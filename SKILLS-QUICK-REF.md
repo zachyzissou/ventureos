@@ -1,4 +1,4 @@
-# Clawdbot Skills - Quick Reference Card
+# OpenClaw Skills - Quick Reference Card
 
 **🚨 CRITICAL:** tmux not installed → `brew install tmux`
 

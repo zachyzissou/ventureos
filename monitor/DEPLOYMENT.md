@@ -4,7 +4,7 @@
 
 ### 1. Configure Discord Webhook
 
-Edit `com.clawdbot.monitor-agent.plist` and set your Discord webhook URL:
+Edit `com.openclaw.monitor-agent.plist` and set your Discord webhook URL:
 
 ```xml
 <key>DISCORD_WEBHOOK_URL</key>
@@ -62,9 +62,9 @@ Shows:
 
 ## Service Details
 
-**Service Name:** `com.clawdbot.monitor-agent`
+**Service Name:** `com.openclaw.monitor-agent`
 
-**launchd Plist:** `~/Library/LaunchAgents/com.clawdbot.monitor-agent.plist`
+**launchd Plist:** `~/Library/LaunchAgents/com.openclaw.monitor-agent.plist`
 
 **Auto-Start:** Yes (runs at login)
 
@@ -87,16 +87,16 @@ If you prefer to use launchd directly:
 
 ```bash
 # Load (start) service
-launchctl load ~/Library/LaunchAgents/com.clawdbot.monitor-agent.plist
+launchctl load ~/Library/LaunchAgents/com.openclaw.monitor-agent.plist
 
 # Unload (stop) service
-launchctl unload ~/Library/LaunchAgents/com.clawdbot.monitor-agent.plist
+launchctl unload ~/Library/LaunchAgents/com.openclaw.monitor-agent.plist
 
 # Check status
 launchctl list | grep monitor-agent
 
 # View service info
-launchctl list com.clawdbot.monitor-agent
+launchctl list com.openclaw.monitor-agent
 ```
 
 ---
@@ -136,7 +136,7 @@ launchctl list com.clawdbot.monitor-agent
 ./manage.sh stop
 
 # Remove plist
-rm ~/Library/LaunchAgents/com.clawdbot.monitor-agent.plist
+rm ~/Library/LaunchAgents/com.openclaw.monitor-agent.plist
 
 # Optional: Remove logs and database
 rm -rf logs/ monitor.db

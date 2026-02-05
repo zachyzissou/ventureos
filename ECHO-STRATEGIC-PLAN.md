@@ -1,15 +1,15 @@
-# Echo Strategic Capability Plan
+# OpenClaw Strategic Capability Plan
 
 **Created:** 2026-01-30  
 **Owner:** Zach Gonser  
-**Agent:** Echo (AI Orchestrator)  
+**Agent:** OpenClaw (AI Orchestrator)  
 **Status:** Draft v1.0
 
 ---
 
 ## Executive Summary
 
-Transform Echo from reactive task-executor to proactive AI orchestrator - a true second brain and right-hand assistant managing all aspects of Zach's digital life.
+Transform OpenClaw from reactive task-executor to proactive AI orchestrator - a true second brain and right-hand assistant managing all aspects of Zach's digital life.
 
 **Current State:** Basic monitoring (StantonTimes, Bloom), heartbeats, reactive command execution  
 **Target State:** Autonomous orchestrator managing projects, communications, planning, and strategic decisions  
@@ -19,7 +19,7 @@ Transform Echo from reactive task-executor to proactive AI orchestrator - a true
 
 ## Vision Statement
 
-**Echo should be the AI equivalent of a world-class Chief of Staff:**
+**OpenClaw should be the AI equivalent of a world-class Chief of Staff:**
 - Manages the portfolio of projects without needing constant direction
 - Protects time and attention by filtering signal from noise
 - Extends memory and recall infinitely
@@ -340,7 +340,7 @@ Support physical and mental well-being
   - Travel time calculations
   - Conflict detection
 - [ ] Cross-channel monitoring
-  - Discord DMs → Echo triage
+  - Discord DMs → OpenClaw triage
   - Twitter mentions → Consolidated view
   - SMS → Important message surfacing
 - [ ] Personal CRM setup
@@ -495,7 +495,7 @@ Sensitive data stays local. Use LM Studio for private analysis. Never leak conte
 - **Scope creep:** Phase-gated rollout, validate before expanding, security review for new capabilities
 - **User friction:** Regular check-ins, iterate on workflows, adapt to feedback
 - **Capability gaps:** Skill creation pipeline, identify blockers early
-- **Dependency on Echo:** Document all automations, ensure manual fallbacks exist, never single point of failure
+- **Dependency on OpenClaw:** Document all automations, ensure manual fallbacks exist, never single point of failure
 
 ---
 
@@ -504,7 +504,7 @@ Sensitive data stays local. Use LM Studio for private analysis. Never leak conte
 ### Infrastructure
 - ✅ Mac Studio (always-on orchestration hub)
 - ✅ Windows node (remote system capability)
-- ✅ Clawdbot gateway running 24/7
+- ✅ OpenClaw gateway running 24/7
 - ✅ Obsidian vault (knowledge management)
 - 🟡 LM Studio configured but not wired
 - 🔴 Gmail API access (needs OAuth setup)

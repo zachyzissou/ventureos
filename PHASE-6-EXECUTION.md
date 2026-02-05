@@ -705,7 +705,7 @@
     - Ch 8: AI-Assisted Creation (Bloom game development)
     - Ch 9: Knowledge Productization (consulting, courses)
   - **Part 4: The Platform**
-    - Ch 10: From Personal to Platform (Clawdbot evolution)
+    - Ch 10: From Personal to Platform (OpenClaw evolution)
     - Ch 11: Enterprise Sales Motion (bootstrapping to $500K)
     - Ch 12: Scaling the Ecosystem (portfolio expansion)
   - **Part 5: The Future**
@@ -943,7 +943,7 @@
 
 - [ ] **Evaluation Framework (Scorecard)**
   - **Market Fit (1-10):** Is there clear demand? Can we reach customers?
-  - **AI Leverage (1-10):** Can Echo/agents execute autonomously?
+  - **AI Leverage (1-10):** Can OpenClaw/agents execute autonomously?
   - **Capital Efficiency (1-10):** Low investment, high ROI potential?
   - **Strategic Fit (1-10):** Complements existing portfolio?
   - **Risk Level (1-10):** Downside limited? Reversible decision?
@@ -1385,7 +1385,7 @@
 ## Weekly Cadence (Typical Week in 2028)
 
 ### Monday (Strategy & Planning)
-- **9:00 AM:** Morning briefing (Echo comprehensive update)
+- **9:00 AM:** Morning briefing (OpenClaw comprehensive update)
 - **10:00 AM:** Weekly strategy review (all sub-agents)
   - Enterprise pipeline review (Sales-Agent)
   - Speaking/marketing updates (Marketing-Agent)
@@ -1418,7 +1418,7 @@
 
 ### Friday (Review, Admin, Relationships)
 - **9:00 AM:** Daily briefing
-- **10:00 AM:** Weekly review (Echo comprehensive report)
+- **10:00 AM:** Weekly review (OpenClaw comprehensive report)
   - Results vs. targets (revenue, pipeline, progress)
   - Lessons learned (iterate on what works)
   - Next week priorities
@@ -1511,7 +1511,7 @@
    - Score: ____ / 10
 
 2. **AI Leverage**
-   - Can Echo/agents execute autonomously?
+   - Can OpenClaw/agents execute autonomously?
    - Or is it too labor-intensive?
    - Score: ____ / 10
 

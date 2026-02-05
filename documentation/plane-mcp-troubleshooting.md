@@ -59,7 +59,7 @@ docker compose -f docker-compose.yaml --env-file plane.env up -d
 }
 ```
 
-## 🤖 Clawdbot MCP Integration Startup Flow
+## 🤖 OpenClaw MCP Integration Startup Flow
 
 1. Read global MCP config
 2. Spawn process: `uvx plane-mcp-server stdio`

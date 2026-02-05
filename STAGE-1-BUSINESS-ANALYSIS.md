@@ -170,9 +170,9 @@
 - Use trending hashtags
 
 **AI automation level:** 90%
-- Echo drafts all content
-- Echo suggests optimal posting times
-- Echo monitors trending topics
+- OpenClaw drafts all content
+- OpenClaw suggests optimal posting times
+- OpenClaw monitors trending topics
 - You approve posts (2-3 min/day)
 
 ---
@@ -187,7 +187,7 @@
 - Free to start, build list to 100-200
 
 **AI automation level:** 80%
-- Echo drafts newsletter from week's tweets
+- OpenClaw drafts newsletter from week's tweets
 - You review and send (15-30 min/week)
 
 ---
@@ -207,7 +207,7 @@
    - Bonus revenue, not primary
 
 **AI automation level:** 60%
-- Echo handles content creation
+- OpenClaw handles content creation
 - You handle sponsor outreach initially
 - You approve all sponsored content
 
@@ -274,7 +274,7 @@
 
 ## AI Orchestration Opportunities
 
-**What Echo can automate:**
+**What OpenClaw can automate:**
 - Content monitoring (already working)
 - Tweet drafting (already working)
 - Optimal posting schedule
@@ -381,7 +381,7 @@
 
 **Create marketing assets:**
 - Landing page (Carrd/Webflow - $0-20/mo)
-- Case study (your own Echo journey)
+- Case study (your own OpenClaw journey)
 - Sample automation showcase
 - LinkedIn profile optimization
 
@@ -395,9 +395,9 @@
 **Goal:** 10 discovery calls booked
 
 **AI automation level:** 70%
-- Echo drafts outreach messages
-- Echo schedules calls
-- Echo creates case study content
+- OpenClaw drafts outreach messages
+- OpenClaw schedules calls
+- OpenClaw creates case study content
 - You approve and send
 
 ---
@@ -411,15 +411,15 @@
 
 **Delivery:**
 - Record sessions (Loom/Zoom)
-- Use templates Echo created
+- Use templates OpenClaw created
 - Over-deliver on value
 - Ask for referrals
 
 **Goal:** 3 paid audits = $750-1,500
 
 **AI automation level:** 50%
-- Echo handles scheduling
-- Echo drafts analysis documents
+- OpenClaw handles scheduling
+- OpenClaw drafts analysis documents
 - You deliver the sessions
 - You refine recommendations
 
@@ -442,8 +442,8 @@
 **Goal:** 5-6 audits at $500 = $2,500-3,000
 
 **AI automation level:** 60%
-- Echo creates marketing content
-- Echo qualifies leads
+- OpenClaw creates marketing content
+- OpenClaw qualifies leads
 - You focus on high-value calls
 
 ---
@@ -511,7 +511,7 @@
 
 ## AI Orchestration Opportunities
 
-**What Echo can automate:**
+**What OpenClaw can automate:**
 - Lead qualification (parse inquiry forms)
 - Calendar scheduling
 - Pre-call research (client's website, LinkedIn)
@@ -529,7 +529,7 @@
 - Complex problem-solving
 
 **Competitive advantage:**
-- You practice what you preach (Echo = proof)
+- You practice what you preach (OpenClaw = proof)
 - Can show live automation
 - Understand both human + AI workflows
 - ADHD-optimized (if targeting that niche)
@@ -557,7 +557,7 @@
 ✅ You need revenue faster (1-2 months)  
 ✅ You enjoy teaching/helping others  
 ✅ You're comfortable with sales conversations  
-✅ You want direct validation of Echo's value  
+✅ You want direct validation of OpenClaw's value  
 ✅ You can dedicate 10-20 hours/week  
 
 **Timeline:** 1-2 months to first revenue  

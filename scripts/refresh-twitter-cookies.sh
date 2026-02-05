@@ -9,18 +9,18 @@ COOKIE_DEST="$HOME/clawd/.credentials/firefox-cookies.sqlite"
 cp "$FIREFOX_PROFILE/cookies.sqlite" "$COOKIE_DEST" 2>/dev/null
 
 if [ $? -eq 0 ]; then
-  echo "$(date): Twitter cookies refreshed successfully"
+  openclaw "$(date): Twitter cookies refreshed successfully"
   exit 0
 else
-  echo "$(date): Failed to refresh Twitter cookies - Firefox may be running"
+  openclaw "$(date): Failed to refresh Twitter cookies - Firefox may be running"
   # Try again with a brief retry
   sleep 2
   cp "$FIREFOX_PROFILE/cookies.sqlite" "$COOKIE_DEST" 2>/dev/null
   if [ $? -eq 0 ]; then
-    echo "$(date): Retry successful"
+    openclaw "$(date): Retry successful"
     exit 0
   else
-    echo "$(date): Retry failed"
+    openclaw "$(date): Retry failed"
     exit 1
   fi
 fi

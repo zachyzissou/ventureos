@@ -88,7 +88,7 @@ This methodology provides complete validation, detection, and self-healing for a
 # Validation
 DAILY_LOG="memory/$(date +%Y-%m-%d).md"
 if [ ! -f "$DAILY_LOG" ]; then
-    echo "FAIL: Daily log missing: $DAILY_LOG"
+    openclaw "FAIL: Daily log missing: $DAILY_LOG"
     exit 1
 fi
 ```
@@ -107,9 +107,9 @@ FIRST_LINE=$(head -n 1 "$DAILY_LOG")
 EXPECTED="# $(date +%Y-%m-%d)"
 
 if [ "$FIRST_LINE" != "$EXPECTED" ]; then
-    echo "FAIL: Invalid header in $DAILY_LOG"
-    echo "Expected: $EXPECTED"
-    echo "Got: $FIRST_LINE"
+    openclaw "FAIL: Invalid header in $DAILY_LOG"
+    openclaw "Expected: $EXPECTED"
+    openclaw "Got: $FIRST_LINE"
     exit 1
 fi
 ```
@@ -128,7 +128,7 @@ SIZE=$(stat -f%z "$DAILY_LOG" 2>/dev/null || stat -c%s "$DAILY_LOG" 2>/dev/null)
 MAX_SIZE=51200  # 50KB
 
 if [ "$SIZE" -gt "$MAX_SIZE" ]; then
-    echo "WARN: Daily log too large: $SIZE bytes (max $MAX_SIZE)"
+    openclaw "WARN: Daily log too large: $SIZE bytes (max $MAX_SIZE)"
     exit 1
 fi
 ```
@@ -149,12 +149,12 @@ UNCOMMITTED=$(git status --porcelain memory/ | wc -l)
 
 if [ "$UNCOMMITTED" -gt 0 ]; then
     # Check age of changes
-    LAST_COMMIT=$(git log -1 --format=%ct memory/ 2>/dev/null || echo 0)
+    LAST_COMMIT=$(git log -1 --format=%ct memory/ 2>/dev/null || openclaw 0)
     NOW=$(date +%s)
     AGE=$((NOW - LAST_COMMIT))
     
     if [ "$AGE" -gt 3600 ]; then
-        echo "FAIL: Uncommitted memory changes >1 hour old"
+        openclaw "FAIL: Uncommitted memory changes >1 hour old"
         exit 1
     fi
 fi
@@ -173,13 +173,13 @@ DAILY_LOG="memory/$(date +%Y-%m-%d).md"
 
 # Check UTF-8 validity
 if ! iconv -f UTF-8 -t UTF-8 "$DAILY_LOG" > /dev/null 2>&1; then
-    echo "FAIL: File encoding corrupted: $DAILY_LOG"
+    openclaw "FAIL: File encoding corrupted: $DAILY_LOG"
     exit 1
 fi
 
 # Check for null bytes (corruption indicator)
 if grep -q $'\0' "$DAILY_LOG"; then
-    echo "FAIL: Null bytes detected in $DAILY_LOG"
+    openclaw "FAIL: Null bytes detected in $DAILY_LOG"
     exit 1
 fi
 ```
@@ -220,7 +220,7 @@ fi
 find memory/ -name "*.md" -type f -exec shasum -a 256 {} \; > memory/.checksums
 
 # Verify checksums
-shasum -c memory/.checksums || echo "Corruption detected!"
+shasum -c memory/.checksums || openclaw "Corruption detected!"
 ```
 
 #### Structure Testing
@@ -229,12 +229,12 @@ shasum -c memory/.checksums || echo "Corruption detected!"
 for file in memory/*.md; do
     # Must have at least one header
     if ! grep -q "^#" "$file"; then
-        echo "Invalid structure: $file (no headers)"
+        openclaw "Invalid structure: $file (no headers)"
     fi
     
     # Must not have >10 consecutive blank lines (likely corruption)
     if awk '/^$/{n++}n>10{exit 1}' "$file"; then
-        echo "Suspicious blank lines: $file"
+        openclaw "Suspicious blank lines: $file"
     fi
 done
 ```
@@ -246,12 +246,12 @@ DAILY_LOG="memory/$(date +%Y-%m-%d).md"
 
 # Should contain at least one timestamp today
 if ! grep -q "$(date +%Y-%m-%d)" "$DAILY_LOG"; then
-    echo "No activity logged today"
+    openclaw "No activity logged today"
 fi
 
 # Should not contain binary data
 if file "$DAILY_LOG" | grep -qv "text"; then
-    echo "Binary data detected in text file"
+    openclaw "Binary data detected in text file"
 fi
 ```
 
@@ -277,11 +277,11 @@ if [ -f "$SYNC_FILE" ]; then
     SYNC_AGE=$((NOW - LAST_SYNC))
     
     if [ "$SYNC_AGE" -gt 1800 ]; then
-        echo "FAIL: Vault not synced in 30+ minutes"
+        openclaw "FAIL: Vault not synced in 30+ minutes"
         exit 1
     fi
 else
-    echo "WARN: Sync status file missing"
+    openclaw "WARN: Sync status file missing"
 fi
 ```
 
@@ -299,14 +299,14 @@ EXTRACTION_PATH="$VAULT_PATH/life/extractions"
 
 # Check if extractions directory exists
 if [ ! -d "$EXTRACTION_PATH" ]; then
-    echo "FAIL: Extractions directory missing"
+    openclaw "FAIL: Extractions directory missing"
     exit 1
 fi
 
 # Check for recent extraction files
 RECENT=$(find "$EXTRACTION_PATH" -name "*.md" -mtime -1 | wc -l)
 if [ "$RECENT" -eq 0 ]; then
-    echo "WARN: No extractions in last 24 hours"
+    openclaw "WARN: No extractions in last 24 hours"
 fi
 ```
 
@@ -325,13 +325,13 @@ VAULT_PATH="/Users/zachgonser/Obsidian/VaultZap"
 find "$VAULT_PATH" -name "*.md" -type f | while read file; do
     # Check UTF-8 validity
     if ! iconv -f UTF-8 -t UTF-8 "$file" > /dev/null 2>&1; then
-        echo "FAIL: Corrupted file: $file"
+        openclaw "FAIL: Corrupted file: $file"
         exit 1
     fi
     
     # Check for null bytes
     if grep -q $'\0' "$file"; then
-        echo "FAIL: Null bytes in: $file"
+        openclaw "FAIL: Null bytes in: $file"
         exit 1
     fi
 done
@@ -354,15 +354,15 @@ CURRENT_SIZE=$(du -sk "$VAULT_PATH" | awk '{print $1}')
 # Load previous size
 if [ -f "$STATE_FILE" ]; then
     PREV_SIZE=$(jq -r '.size' "$STATE_FILE")
-    GROWTH=$(echo "scale=2; ($CURRENT_SIZE - $PREV_SIZE) / $PREV_SIZE * 100" | bc)
+    GROWTH=$(openclaw "scale=2; ($CURRENT_SIZE - $PREV_SIZE) / $PREV_SIZE * 100" | bc)
     
-    if (( $(echo "$GROWTH > 10" | bc -l) )); then
-        echo "WARN: Vault grew ${GROWTH}% (investigating...)"
+    if (( $(openclaw "$GROWTH > 10" | bc -l) )); then
+        openclaw "WARN: Vault grew ${GROWTH}% (investigating...)"
     fi
 fi
 
 # Update state
-echo "{\"size\": $CURRENT_SIZE, \"timestamp\": $(date +%s)}" > "$STATE_FILE"
+openclaw "{\"size\": $CURRENT_SIZE, \"timestamp\": $(date +%s)}" > "$STATE_FILE"
 ```
 
 **Auto-Heal:** Alert for investigation, check for bulk imports
@@ -381,7 +381,7 @@ CRITICAL_PLUGINS=("obsidian-git" "dataview" "templater")
 
 for plugin in "${CRITICAL_PLUGINS[@]}"; do
     if ! jq -e ".[] | select(. == \"$plugin\")" "$PLUGINS_FILE" > /dev/null; then
-        echo "FAIL: Critical plugin disabled: $plugin"
+        openclaw "FAIL: Critical plugin disabled: $plugin"
         exit 1
     fi
 done
@@ -435,7 +435,7 @@ STATE_FILES=(
 for file in "${STATE_FILES[@]}"; do
     if [ -f "$file" ]; then
         if ! jq empty "$file" 2>/dev/null; then
-            echo "FAIL: Invalid JSON in $file"
+            openclaw "FAIL: Invalid JSON in $file"
             exit 1
         fi
     fi
@@ -456,13 +456,13 @@ STATE_FILE="memory/heartbeat-state.json"
 if [ -f "$STATE_FILE" ]; then
     # Check required fields
     if ! jq -e '.lastChecks' "$STATE_FILE" > /dev/null; then
-        echo "FAIL: Missing 'lastChecks' in $STATE_FILE"
+        openclaw "FAIL: Missing 'lastChecks' in $STATE_FILE"
         exit 1
     fi
     
     # Validate field types
     if ! jq -e '.lastChecks | type == "object"' "$STATE_FILE" > /dev/null; then
-        echo "FAIL: 'lastChecks' must be object in $STATE_FILE"
+        openclaw "FAIL: 'lastChecks' must be object in $STATE_FILE"
         exit 1
     fi
 fi
@@ -484,7 +484,7 @@ for file in state.json memory/heartbeat-state.json; do
         SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
         
         if [ "$SIZE" -gt "$MAX_SIZE" ]; then
-            echo "FAIL: State file too large: $file ($SIZE bytes)"
+            openclaw "FAIL: State file too large: $file ($SIZE bytes)"
             exit 1
         fi
     fi
@@ -510,7 +510,7 @@ if [ -f "$STATE_FILE" ]; then
             AGE=$((NOW - value))
             
             if [ "$AGE" -gt 604800 ]; then
-                echo "WARN: Stale timestamp for $key (>7 days)"
+                openclaw "WARN: Stale timestamp for $key (>7 days)"
             fi
         fi
     done
@@ -533,7 +533,7 @@ if [ -f "$STATE_FILE" ]; then
     INVALID=$(jq -r '.lastChecks | to_entries[] | select(.value != null and (.value | type != "number")) | .key' "$STATE_FILE")
     
     if [ -n "$INVALID" ]; then
-        echo "FAIL: Invalid timestamp types in $STATE_FILE: $INVALID"
+        openclaw "FAIL: Invalid timestamp types in $STATE_FILE: $INVALID"
         exit 1
     fi
 fi
@@ -593,7 +593,7 @@ if [ ! -f "$BACKUP_FILE" ]; then
     # Check if today's backup should exist (after 1 AM)
     HOUR=$(date +%H)
     if [ "$HOUR" -ge 1 ]; then
-        echo "FAIL: Daily backup missing: $BACKUP_FILE"
+        openclaw "FAIL: Daily backup missing: $BACKUP_FILE"
         exit 1
     fi
 fi
@@ -620,7 +620,7 @@ REQUIRED_PATHS=(
 if [ -f "$BACKUP_FILE" ]; then
     for path in "${REQUIRED_PATHS[@]}"; do
         if ! tar -tzf "$BACKUP_FILE" | grep -q "$path"; then
-            echo "FAIL: Backup missing path: $path"
+            openclaw "FAIL: Backup missing path: $path"
             exit 1
         fi
     done
@@ -641,14 +641,14 @@ BACKUP_FILE="$HOME/backups/clawd/clawd-$(date +%Y-%m-%d).tar.gz"
 if [ -f "$BACKUP_FILE" ]; then
     # Test archive integrity
     if ! gzip -t "$BACKUP_FILE" 2>/dev/null; then
-        echo "FAIL: Backup archive corrupted: $BACKUP_FILE"
+        openclaw "FAIL: Backup archive corrupted: $BACKUP_FILE"
         exit 1
     fi
     
     # Test extraction (to temp dir)
     TEMP_DIR=$(mktemp -d)
     if ! tar -xzf "$BACKUP_FILE" -C "$TEMP_DIR" 2>/dev/null; then
-        echo "FAIL: Cannot extract backup: $BACKUP_FILE"
+        openclaw "FAIL: Cannot extract backup: $BACKUP_FILE"
         rm -rf "$TEMP_DIR"
         exit 1
     fi
@@ -672,11 +672,11 @@ if [ -n "$LATEST_BACKUP" ]; then
     BACKUP_AGE=$(( $(date +%s) - $(stat -f%m "$LATEST_BACKUP" 2>/dev/null || stat -c%Y "$LATEST_BACKUP" 2>/dev/null) ))
     
     if [ "$BACKUP_AGE" -gt 86400 ]; then
-        echo "FAIL: Last backup is >24 hours old"
+        openclaw "FAIL: Last backup is >24 hours old"
         exit 1
     fi
 else
-    echo "FAIL: No backups found"
+    openclaw "FAIL: No backups found"
     exit 1
 fi
 ```
@@ -702,7 +702,7 @@ if [ -n "$TEST_BACKUP" ]; then
     # Validate critical files exist
     for file in memory MEMORY.md state.json; do
         if [ ! -e "$TEMP_DIR/$file" ]; then
-            echo "FAIL: Backup missing critical file: $file"
+            openclaw "FAIL: Backup missing critical file: $file"
             rm -rf "$TEMP_DIR"
             exit 1
         fi
@@ -710,9 +710,9 @@ if [ -n "$TEST_BACKUP" ]; then
     
     # Cleanup
     rm -rf "$TEMP_DIR"
-    echo "SUCCESS: Backup restoration test passed"
+    openclaw "SUCCESS: Backup restoration test passed"
 else
-    echo "FAIL: No backup to test"
+    openclaw "FAIL: No backup to test"
     exit 1
 fi
 ```
@@ -760,13 +760,13 @@ UNCOMMITTED=$(git status --porcelain | wc -l)
 if [ "$UNCOMMITTED" -gt 0 ]; then
     # Get oldest uncommitted file
     OLDEST_MODIFIED=$(git status --porcelain | awk '{print $2}' | head -n 1)
-    LAST_COMMIT=$(git log -1 --format=%ct -- "$OLDEST_MODIFIED" 2>/dev/null || echo 0)
+    LAST_COMMIT=$(git log -1 --format=%ct -- "$OLDEST_MODIFIED" 2>/dev/null || openclaw 0)
     NOW=$(date +%s)
     AGE=$((NOW - LAST_COMMIT))
     
     if [ "$AGE" -gt 3600 ]; then
-        echo "FAIL: Uncommitted changes >1 hour old"
-        echo "Uncommitted files: $UNCOMMITTED"
+        openclaw "FAIL: Uncommitted changes >1 hour old"
+        openclaw "Uncommitted files: $UNCOMMITTED"
         exit 1
     fi
 fi
@@ -784,7 +784,7 @@ fi
 cd /Users/zachgonser/clawd
 
 # Check if local is ahead of remote
-AHEAD=$(git rev-list @{u}..HEAD --count 2>/dev/null || echo 0)
+AHEAD=$(git rev-list @{u}..HEAD --count 2>/dev/null || openclaw 0)
 
 if [ "$AHEAD" -gt 0 ]; then
     # Get age of oldest unpushed commit
@@ -794,8 +794,8 @@ if [ "$AHEAD" -gt 0 ]; then
     AGE=$((NOW - COMMIT_TIME))
     
     if [ "$AGE" -gt 7200 ]; then
-        echo "FAIL: Unpushed commits >2 hours old"
-        echo "Commits ahead: $AHEAD"
+        openclaw "FAIL: Unpushed commits >2 hours old"
+        openclaw "Commits ahead: $AHEAD"
         exit 1
     fi
 fi
@@ -815,12 +815,12 @@ cd /Users/zachgonser/clawd
 BRANCH=$(git branch --show-current)
 
 if [ -z "$BRANCH" ]; then
-    echo "FAIL: Detached HEAD state"
+    openclaw "FAIL: Detached HEAD state"
     exit 1
 fi
 
 if [[ "$BRANCH" != "main" && "$BRANCH" != "master" ]]; then
-    echo "WARN: On non-main branch: $BRANCH"
+    openclaw "WARN: On non-main branch: $BRANCH"
 fi
 ```
 
@@ -838,8 +838,8 @@ cd /Users/zachgonser/clawd
 # Check for corruption
 if ! git fsck --full --no-progress 2>&1 | grep -q "^$"; then
     ERRORS=$(git fsck --full --no-progress 2>&1)
-    echo "FAIL: Git repository corruption detected"
-    echo "$ERRORS"
+    openclaw "FAIL: Git repository corruption detected"
+    openclaw "$ERRORS"
     exit 1
 fi
 ```
@@ -856,7 +856,7 @@ fi
 cd /Users/zachgonser/clawd
 
 if ! git fetch --dry-run 2>&1 | grep -q "^$"; then
-    echo "FAIL: Cannot connect to git remote"
+    openclaw "FAIL: Cannot connect to git remote"
     exit 1
 fi
 ```
@@ -905,7 +905,7 @@ if [ "$UNCOMMITTED" -gt 0 ]; then
     git add memory/
     git commit -m "Auto-commit: Memory updates $(date +%Y-%m-%d\ %H:%M:%S)"
     
-    echo "Auto-committed $UNCOMMITTED file(s)"
+    openclaw "Auto-committed $UNCOMMITTED file(s)"
     
     # Trigger push if needed
     ./validation/scripts/auto-push.sh
@@ -924,19 +924,19 @@ fi
 STATE_FILE="$1"
 
 if [ ! -f "$STATE_FILE" ]; then
-    echo "File not found: $STATE_FILE"
+    openclaw "File not found: $STATE_FILE"
     exit 1
 fi
 
 # Test if JSON is valid
 if ! jq empty "$STATE_FILE" 2>/dev/null; then
-    echo "Invalid JSON detected in $STATE_FILE"
+    openclaw "Invalid JSON detected in $STATE_FILE"
     
     # Try to restore from git
     if git show HEAD:"$STATE_FILE" > /tmp/restored.json 2>/dev/null; then
         if jq empty /tmp/restored.json 2>/dev/null; then
             cp /tmp/restored.json "$STATE_FILE"
-            echo "Restored from git HEAD"
+            openclaw "Restored from git HEAD"
             exit 0
         fi
     fi
@@ -947,14 +947,14 @@ if ! jq empty "$STATE_FILE" 2>/dev/null; then
         tar -xzOf "$BACKUP" "$STATE_FILE" > /tmp/restored.json 2>/dev/null
         if jq empty /tmp/restored.json 2>/dev/null; then
             cp /tmp/restored.json "$STATE_FILE"
-            echo "Restored from backup"
+            openclaw "Restored from backup"
             exit 0
         fi
     fi
     
     # Last resort: create valid empty structure
-    echo '{"lastUpdate": '$(date +%s)', "data": {}}' > "$STATE_FILE"
-    echo "Created new valid structure"
+    openclaw '{"lastUpdate": '$(date +%s)', "data": {}}' > "$STATE_FILE"
+    openclaw "Created new valid structure"
 fi
 ```
 
@@ -981,7 +981,7 @@ if [ ! -f "$DAILY_LOG" ]; then
 
 EOF
     
-    echo "Created daily log: $DAILY_LOG"
+    openclaw "Created daily log: $DAILY_LOG"
     
     # Auto-commit
     cd /Users/zachgonser/clawd
@@ -1007,7 +1007,7 @@ BACKUP_FILE="$BACKUP_DIR/clawd-$TODAY.tar.gz"
 
 # Check if today's backup already exists
 if [ -f "$BACKUP_FILE" ]; then
-    echo "Backup already exists: $BACKUP_FILE"
+    openclaw "Backup already exists: $BACKUP_FILE"
     exit 0
 fi
 
@@ -1025,12 +1025,12 @@ tar -czf "$BACKUP_FILE" \
 
 # Verify backup
 if ! gzip -t "$BACKUP_FILE" 2>/dev/null; then
-    echo "Backup verification failed, removing corrupted file"
+    openclaw "Backup verification failed, removing corrupted file"
     rm -f "$BACKUP_FILE"
     exit 1
 fi
 
-echo "Backup created: $BACKUP_FILE"
+openclaw "Backup created: $BACKUP_FILE"
 
 # Cleanup old backups (keep last 30 days)
 find "$BACKUP_DIR" -name "clawd-*.tar.gz" -mtime +30 -delete
@@ -1038,7 +1038,7 @@ find "$BACKUP_DIR" -name "clawd-*.tar.gz" -mtime +30 -delete
 # Count removed
 REMOVED=$(find "$BACKUP_DIR" -name "clawd-*.tar.gz" -mtime +30 | wc -l)
 if [ "$REMOVED" -gt 0 ]; then
-    echo "Removed $REMOVED old backup(s)"
+    openclaw "Removed $REMOVED old backup(s)"
 fi
 ```
 
@@ -1054,20 +1054,20 @@ fi
 cd /Users/zachgonser/clawd
 
 # Check if we have commits to push
-AHEAD=$(git rev-list @{u}..HEAD --count 2>/dev/null || echo 0)
+AHEAD=$(git rev-list @{u}..HEAD --count 2>/dev/null || openclaw 0)
 
 if [ "$AHEAD" -gt 0 ]; then
-    echo "Pushing $AHEAD commit(s) to remote..."
+    openclaw "Pushing $AHEAD commit(s) to remote..."
     
     # Try to push
     if git push 2>&1; then
-        echo "Successfully pushed to remote"
+        openclaw "Successfully pushed to remote"
     else
-        echo "Push failed, will retry later"
+        openclaw "Push failed, will retry later"
         exit 1
     fi
 else
-    echo "No commits to push"
+    openclaw "No commits to push"
 fi
 ```
 
@@ -1084,7 +1084,7 @@ VAULT_PATH="/Users/zachgonser/Obsidian/VaultZap"
 
 # Check if Obsidian is running
 if ! pgrep -x "Obsidian" > /dev/null; then
-    echo "Obsidian not running, cannot sync"
+    openclaw "Obsidian not running, cannot sync"
     exit 1
 fi
 
@@ -1103,7 +1103,7 @@ tell application "System Events"
 end tell
 EOF
 
-echo "Triggered Obsidian sync"
+openclaw "Triggered Obsidian sync"
 ```
 
 ---
@@ -1224,9 +1224,9 @@ mkdir -p "$LOG_DIR"
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 LOG_FILE="$LOG_DIR/validation-$TIMESTAMP.log"
 
-echo "=== Data Integrity Validation ===" | tee -a "$LOG_FILE"
-echo "Started: $(date)" | tee -a "$LOG_FILE"
-echo "" | tee -a "$LOG_FILE"
+openclaw "=== Data Integrity Validation ===" | tee -a "$LOG_FILE"
+openclaw "Started: $(date)" | tee -a "$LOG_FILE"
+openclaw "" | tee -a "$LOG_FILE"
 
 TOTAL=0
 PASSED=0
@@ -1238,71 +1238,71 @@ run_check() {
     local script="$2"
     
     TOTAL=$((TOTAL + 1))
-    echo -n "[$TOTAL] $name... " | tee -a "$LOG_FILE"
+    openclaw -n "[$TOTAL] $name... " | tee -a "$LOG_FILE"
     
     if "$script" >> "$LOG_FILE" 2>&1; then
-        echo "✓ PASS" | tee -a "$LOG_FILE"
+        openclaw "✓ PASS" | tee -a "$LOG_FILE"
         PASSED=$((PASSED + 1))
     else
-        echo "✗ FAIL" | tee -a "$LOG_FILE"
+        openclaw "✗ FAIL" | tee -a "$LOG_FILE"
         FAILED=$((FAILED + 1))
     fi
 }
 
 # Memory System Checks
-echo "## Memory System" | tee -a "$LOG_FILE"
+openclaw "## Memory System" | tee -a "$LOG_FILE"
 run_check "Daily log exists" "$SCRIPT_DIR/validate-daily-log-exists.sh"
 run_check "Daily log format" "$SCRIPT_DIR/validate-daily-log-format.sh"
 run_check "Memory file size" "$SCRIPT_DIR/validate-memory-size.sh"
 run_check "Git commit status" "$SCRIPT_DIR/validate-git-commits.sh"
 run_check "File corruption" "$SCRIPT_DIR/validate-file-corruption.sh"
-echo "" | tee -a "$LOG_FILE"
+openclaw "" | tee -a "$LOG_FILE"
 
 # State File Checks
-echo "## State Files" | tee -a "$LOG_FILE"
+openclaw "## State Files" | tee -a "$LOG_FILE"
 run_check "JSON syntax" "$SCRIPT_DIR/validate-json-syntax.sh"
 run_check "Schema compliance" "$SCRIPT_DIR/validate-schema.sh"
 run_check "Size limits" "$SCRIPT_DIR/validate-state-size.sh"
 run_check "Timestamp freshness" "$SCRIPT_DIR/validate-timestamps.sh"
-echo "" | tee -a "$LOG_FILE"
+openclaw "" | tee -a "$LOG_FILE"
 
 # Git Repository Checks
-echo "## Git Repository" | tee -a "$LOG_FILE"
+openclaw "## Git Repository" | tee -a "$LOG_FILE"
 run_check "Uncommitted changes" "$SCRIPT_DIR/validate-uncommitted.sh"
 run_check "Push status" "$SCRIPT_DIR/validate-push-status.sh"
 run_check "Branch health" "$SCRIPT_DIR/validate-branch.sh"
 run_check "Remote connectivity" "$SCRIPT_DIR/validate-remote.sh"
-echo "" | tee -a "$LOG_FILE"
+openclaw "" | tee -a "$LOG_FILE"
 
 # Backup Checks
-echo "## Backups" | tee -a "$LOG_FILE"
+openclaw "## Backups" | tee -a "$LOG_FILE"
 run_check "Backup exists" "$SCRIPT_DIR/validate-backup-exists.sh"
 run_check "Backup integrity" "$SCRIPT_DIR/validate-backup-integrity.sh"
 run_check "Backup recency" "$SCRIPT_DIR/validate-backup-recency.sh"
-echo "" | tee -a "$LOG_FILE"
+openclaw "" | tee -a "$LOG_FILE"
 
 # Obsidian Checks
-echo "## Obsidian Vault" | tee -a "$LOG_FILE"
+openclaw "## Obsidian Vault" | tee -a "$LOG_FILE"
 run_check "Sync status" "$SCRIPT_DIR/validate-obsidian-sync.sh"
 run_check "Extraction files" "$SCRIPT_DIR/validate-extractions.sh"
 run_check "Vault corruption" "$SCRIPT_DIR/validate-vault-corruption.sh"
-echo "" | tee -a "$LOG_FILE"
+openclaw "" | tee -a "$LOG_FILE"
 
 # Summary
-echo "=== Summary ===" | tee -a "$LOG_FILE"
-echo "Total checks: $TOTAL" | tee -a "$LOG_FILE"
-echo "Passed: $PASSED" | tee -a "$LOG_FILE"
-echo "Failed: $FAILED" | tee -a "$LOG_FILE"
-echo "Completed: $(date)" | tee -a "$LOG_FILE"
+openclaw "=== Summary ===" | tee -a "$LOG_FILE"
+openclaw "Total checks: $TOTAL" | tee -a "$LOG_FILE"
+openclaw "Passed: $PASSED" | tee -a "$LOG_FILE"
+openclaw "Failed: $FAILED" | tee -a "$LOG_FILE"
+openclaw "Completed: $(date)" | tee -a "$LOG_FILE"
 
 if [ "$FAILED" -gt 0 ]; then
-    echo "" | tee -a "$LOG_FILE"
-    echo "⚠️  Some checks failed. Running auto-heal..." | tee -a "$LOG_FILE"
+    openclaw "" | tee -a "$LOG_FILE"
+    openclaw "⚠️  Some checks failed. Running auto-heal..." | tee -a "$LOG_FILE"
     "$SCRIPT_DIR/auto-heal-all.sh" 2>&1 | tee -a "$LOG_FILE"
     exit 1
 else
-    echo "" | tee -a "$LOG_FILE"
-    echo "✓ All checks passed!" | tee -a "$LOG_FILE"
+    openclaw "" | tee -a "$LOG_FILE"
+    openclaw "✓ All checks passed!" | tee -a "$LOG_FILE"
     exit 0
 fi
 ```
@@ -1319,34 +1319,34 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="$SCRIPT_DIR/../logs/auto-heal-$(date +%Y-%m-%d_%H-%M-%S).log"
 
-echo "=== Auto-Heal Started ===" | tee -a "$LOG_FILE"
-echo "Timestamp: $(date)" | tee -a "$LOG_FILE"
-echo "" | tee -a "$LOG_FILE"
+openclaw "=== Auto-Heal Started ===" | tee -a "$LOG_FILE"
+openclaw "Timestamp: $(date)" | tee -a "$LOG_FILE"
+openclaw "" | tee -a "$LOG_FILE"
 
 # Memory System Healing
 if [ ! -f "memory/$(date +%Y-%m-%d).md" ]; then
-    echo "Creating missing daily log..." | tee -a "$LOG_FILE"
+    openclaw "Creating missing daily log..." | tee -a "$LOG_FILE"
     "$SCRIPT_DIR/auto-create-daily-log.sh" 2>&1 | tee -a "$LOG_FILE"
 fi
 
 # Git Healing
 UNCOMMITTED=$(cd /Users/zachgonser/clawd && git status --porcelain memory/ | wc -l)
 if [ "$UNCOMMITTED" -gt 0 ]; then
-    echo "Auto-committing memory changes..." | tee -a "$LOG_FILE"
+    openclaw "Auto-committing memory changes..." | tee -a "$LOG_FILE"
     "$SCRIPT_DIR/auto-commit-memory.sh" 2>&1 | tee -a "$LOG_FILE"
 fi
 
 # Check push status
-AHEAD=$(cd /Users/zachgonser/clawd && git rev-list @{u}..HEAD --count 2>/dev/null || echo 0)
+AHEAD=$(cd /Users/zachgonser/clawd && git rev-list @{u}..HEAD --count 2>/dev/null || openclaw 0)
 if [ "$AHEAD" -gt 0 ]; then
-    echo "Auto-pushing commits..." | tee -a "$LOG_FILE"
+    openclaw "Auto-pushing commits..." | tee -a "$LOG_FILE"
     "$SCRIPT_DIR/auto-push.sh" 2>&1 | tee -a "$LOG_FILE"
 fi
 
 # State File Healing
 for state_file in state.json memory/heartbeat-state.json; do
     if [ -f "$state_file" ] && ! jq empty "$state_file" 2>/dev/null; then
-        echo "Fixing malformed JSON: $state_file" | tee -a "$LOG_FILE"
+        openclaw "Fixing malformed JSON: $state_file" | tee -a "$LOG_FILE"
         "$SCRIPT_DIR/auto-fix-json.sh" "$state_file" 2>&1 | tee -a "$LOG_FILE"
     fi
 done
@@ -1354,12 +1354,12 @@ done
 # Backup Healing
 LATEST_BACKUP=$(ls -t "$HOME/backups/clawd"/clawd-*.tar.gz 2>/dev/null | head -n 1)
 if [ -z "$LATEST_BACKUP" ] || [ $(( $(date +%s) - $(stat -f%m "$LATEST_BACKUP" 2>/dev/null || stat -c%Y "$LATEST_BACKUP") )) -gt 86400 ]; then
-    echo "Creating backup..." | tee -a "$LOG_FILE"
+    openclaw "Creating backup..." | tee -a "$LOG_FILE"
     "$SCRIPT_DIR/auto-backup.sh" 2>&1 | tee -a "$LOG_FILE"
 fi
 
-echo "" | tee -a "$LOG_FILE"
-echo "=== Auto-Heal Completed ===" | tee -a "$LOG_FILE"
+openclaw "" | tee -a "$LOG_FILE"
+openclaw "=== Auto-Heal Completed ===" | tee -a "$LOG_FILE"
 ```
 
 ### Individual Validation Scripts
@@ -1371,7 +1371,7 @@ echo "=== Auto-Heal Completed ===" | tee -a "$LOG_FILE"
 DAILY_LOG="memory/$(date +%Y-%m-%d).md"
 
 if [ ! -f "/Users/zachgonser/clawd/$DAILY_LOG" ]; then
-    echo "FAIL: Daily log missing: $DAILY_LOG"
+    openclaw "FAIL: Daily log missing: $DAILY_LOG"
     exit 1
 fi
 
@@ -1393,7 +1393,7 @@ STATE_FILES=(
 for file in "${STATE_FILES[@]}"; do
     if [ -f "$file" ]; then
         if ! jq empty "$file" 2>/dev/null; then
-            echo "FAIL: Invalid JSON in $file"
+            openclaw "FAIL: Invalid JSON in $file"
             exit 1
         fi
     fi
@@ -1410,14 +1410,14 @@ BACKUP_DIR="$HOME/backups/clawd"
 LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/clawd-*.tar.gz 2>/dev/null | head -n 1)
 
 if [ -z "$LATEST_BACKUP" ]; then
-    echo "FAIL: No backups found"
+    openclaw "FAIL: No backups found"
     exit 1
 fi
 
 BACKUP_AGE=$(( $(date +%s) - $(stat -f%m "$LATEST_BACKUP" 2>/dev/null || stat -c%Y "$LATEST_BACKUP") ))
 
 if [ "$BACKUP_AGE" -gt 86400 ]; then
-    echo "FAIL: Last backup is >24 hours old ($BACKUP_AGE seconds)"
+    openclaw "FAIL: Last backup is >24 hours old ($BACKUP_AGE seconds)"
     exit 1
 fi
 

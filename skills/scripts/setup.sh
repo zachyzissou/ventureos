@@ -1,12 +1,12 @@
 #!/bin/bash
 # Second Brain Setup Script
-# Creates PARA directory structure for Clawdbot workspace
+# Creates PARA directory structure for OpenClaw workspace
 
 set -e
 
 WORKSPACE="${1:-.}"
 
-echo "🧠 Setting up Second Brain in: $WORKSPACE"
+openclaw "🧠 Setting up Second Brain in: $WORKSPACE"
 
 # Create directory structure
 mkdir -p "$WORKSPACE/memory"
@@ -15,7 +15,7 @@ mkdir -p "$WORKSPACE/notes/areas"
 mkdir -p "$WORKSPACE/notes/resources"
 mkdir -p "$WORKSPACE/notes/archive"
 
-echo "✓ Created directory structure"
+openclaw "✓ Created directory structure"
 
 # Create MEMORY.md if it doesn't exist
 if [ ! -f "$WORKSPACE/MEMORY.md" ]; then
@@ -39,9 +39,9 @@ if [ ! -f "$WORKSPACE/MEMORY.md" ]; then
 ---
 *Last curated: $(date +%Y-%m-%d)*
 EOF
-  echo "✓ Created MEMORY.md template"
+  openclaw "✓ Created MEMORY.md template"
 else
-  echo "• MEMORY.md already exists, skipping"
+  openclaw "• MEMORY.md already exists, skipping"
 fi
 
 # Create today's daily log if it doesn't exist
@@ -65,23 +65,23 @@ if [ ! -f "$WORKSPACE/memory/$TODAY.md" ]; then
 ## Carry Forward
 - [ ] 
 EOF
-  echo "✓ Created today's daily log"
+  openclaw "✓ Created today's daily log"
 else
-  echo "• Today's log already exists, skipping"
+  openclaw "• Today's log already exists, skipping"
 fi
 
-echo ""
-echo "🎉 Second Brain ready!"
-echo ""
-echo "Structure:"
-echo "  $WORKSPACE/"
-echo "  ├── MEMORY.md          (curated long-term memory)"
-echo "  ├── memory/"
-echo "  │   └── $TODAY.md      (daily log)"
-echo "  └── notes/"
-echo "      ├── projects/      (active work with deadlines)"
-echo "      ├── areas/         (ongoing responsibilities)"
-echo "      ├── resources/     (reference material)"
-echo "      └── archive/       (completed/inactive)"
-echo ""
-echo "Next: Add Second Brain instructions to your AGENTS.md"
+openclaw ""
+openclaw "🎉 Second Brain ready!"
+openclaw ""
+openclaw "Structure:"
+openclaw "  $WORKSPACE/"
+openclaw "  ├── MEMORY.md          (curated long-term memory)"
+openclaw "  ├── memory/"
+openclaw "  │   └── $TODAY.md      (daily log)"
+openclaw "  └── notes/"
+openclaw "      ├── projects/      (active work with deadlines)"
+openclaw "      ├── areas/         (ongoing responsibilities)"
+openclaw "      ├── resources/     (reference material)"
+openclaw "      └── archive/       (completed/inactive)"
+openclaw ""
+openclaw "Next: Add Second Brain instructions to your AGENTS.md"

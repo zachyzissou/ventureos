@@ -28,7 +28,7 @@ Confirm:
 ### Log Review
 ```bash
 # Check recent logs for issues
-tail -100 /tmp/clawdbot/*.log | grep -i "error\|fail\|warn"
+tail -100 /tmp/openclaw/*.log | grep -i "error\|fail\|warn"
 ```
 
 Look for:

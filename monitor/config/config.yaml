@@ -120,7 +120,7 @@ paths:
   logs: /Users/zachgonser/clawd/monitor/logs
   scripts: /Users/zachgonser/clawd/monitor/scripts
 
-# Cron jobs to monitor (from clawdbot cron list)
+# Cron jobs to monitor (from openclaw cron list)
 cron_jobs:
   - id: b8f7127b-b27e-4660-8ad8-4d9030233e8d
     name: StantonTimes P0 Monitor

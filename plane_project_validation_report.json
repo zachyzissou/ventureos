@@ -1,0 +1,62 @@
+{
+  "timestamp": "2026-02-01T22:43:06.309295",
+  "project_id": "b7824695-65e5-4da6-ba57-3f7ac172266d",
+  "checks": {
+    "states": {
+      "total_count": 15,
+      "missing_items": [],
+      "extra_items": [
+        "ready for deployment",
+        "code review",
+        "archived",
+        "ready",
+        "testing",
+        "refined",
+        "deployed"
+      ],
+      "is_valid": true
+    },
+    "work_item_types": {
+      "total_count": 1,
+      "missing_items": [
+        "epic",
+        "research",
+        "feature",
+        "bug",
+        "chore"
+      ],
+      "extra_items": [
+        "error calling tool 'list_work_item_types': http 404: not found\n"
+      ],
+      "is_valid": false
+    },
+    "project_features": {
+      "feature_status": {
+        "time_tracking": false,
+        "issue_types": false,
+        "modules": false,
+        "intake": false
+      },
+      "is_valid": false
+    },
+    "project_views": {
+      "total_count": 1,
+      "missing_items": [
+        "this sprint",
+        "overdue",
+        "blocked",
+        "high priority"
+      ],
+      "extra_items": [
+        "unknown tool: list_project_pages"
+      ],
+      "is_valid": false
+    }
+  },
+  "recommendations": [
+    "Add missing work item types: epic, research, feature, bug, chore",
+    "Enable features: time_tracking, issue_types, modules, intake",
+    "Create missing views: this sprint, overdue, blocked, high priority"
+  ],
+  "is_valid": false
+}

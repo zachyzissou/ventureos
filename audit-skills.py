@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive Clawdbot Skills Audit
+Comprehensive OpenClaw Skills Audit
 Reads each SKILL.md, extracts metadata, tests CLI tools
 """
 
@@ -10,7 +10,7 @@ import subprocess
 import re
 from pathlib import Path
 
-SKILLS_DIR = Path("/Users/zachgonser/.npm-global/lib/node_modules/clawdbot/skills")
+SKILLS_DIR = Path("/Users/zachgonser/.npm-global/lib/node_modules/openclaw/skills")
 
 def extract_metadata(skill_md_path):
     """Extract metadata from SKILL.md frontmatter"""
@@ -34,7 +34,7 @@ def extract_metadata(skill_md_path):
         metadata_json = metadata_match.group(1)
         metadata = json.loads(metadata_json)
         
-        return metadata.get('clawdbot', {})
+        return metadata.get('openclaw', {})
     except Exception as e:
         return {'error': str(e)}
 

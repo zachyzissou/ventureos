@@ -19,7 +19,7 @@
 - ✅ Logging infrastructure (structlog)
 
 ### Day 2: Core Detectors (Complete)
-- ✅ GatewayDetector - Monitors Clawdbot daemon status
+- ✅ GatewayDetector - Monitors OpenClaw daemon status
 - ✅ CronDetector - Monitors all 15 cron jobs
 - ✅ APIDetector - Monitors external APIs (Anthropic, Discord, GitHub)
 - ✅ DiskDetector - Monitors disk space usage
@@ -111,7 +111,7 @@
 ### What's Actually Running?
 
 **Active Systems:**
-1. **Clawdbot Gateway** - Running as normal (no Monitor-Agent validation yet)
+1. **OpenClaw Gateway** - Running as normal (no Monitor-Agent validation yet)
 2. **15 Cron Jobs** - Running (but no Monitor-Agent watching them yet)
 3. **HEARTBEAT.md Checks** - Manual checks via heartbeats (not automated Monitor-Agent)
 
@@ -173,7 +173,7 @@
 **Continue to Days 5-7 NOW** using Codex/Cursor agents for acceleration:
 
 1. **Day 5 (Alerter):** Use `cursor-agent` to generate alerter module
-2. **Day 6 (Main Loop):** Use `codex` for boilerplate, Echo integrates
+2. **Day 6 (Main Loop):** Use `codex` for boilerplate, OpenClaw integrates
 3. **Day 7 (Deploy):** Manual deployment and validation
 
 **Rationale:**

@@ -161,5 +161,5 @@ sqlite3 data/monitor.db "SELECT datetime(attempted_at, 'unixepoch'), action, suc
 - loop_interval: 60s ✅
 
 **Deployment timestamp:** 2026-01-30 18:51 CST  
-**Deployed by:** Echo (autonomous)  
+**Deployed by:** OpenClaw (autonomous)  
 **Supervised by:** Zach Gonser

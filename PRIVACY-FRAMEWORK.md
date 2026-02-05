@@ -8,9 +8,9 @@
 
 ## Core Principle
 
-**You own your data. Echo is a tool, not a tenant.**
+**You own your data. OpenClaw is a tool, not a tenant.**
 
-Echo can see what it needs to work effectively, but clear boundaries exist. When in doubt, default to private.
+OpenClaw can see what it needs to work effectively, but clear boundaries exist. When in doubt, default to private.
 
 ---
 
@@ -21,14 +21,14 @@ Echo can see what it needs to work effectively, but clear boundaries exist. When
 **What:**
 - Public data (GitHub repos, Twitter public posts, Reddit comments)
 - System logs, cron outputs, monitoring data
-- Memory files created for Echo (`memory/*.md`, `MEMORY.md`)
+- Memory files created for OpenClaw (`memory/*.md`, `MEMORY.md`)
 - Calendar event titles and times (not attendees/notes)
 - File metadata (names, sizes, dates - not contents)
 - Weather, news, public research
 
-**Why:** Already public or created specifically for Echo's use
+**Why:** Already public or created specifically for OpenClaw's use
 
-**Echo can:**
+**OpenClaw can:**
 - Read, process, analyze
 - Make autonomous decisions
 - Share in responses (when relevant)
@@ -53,15 +53,15 @@ Echo can see what it needs to work effectively, but clear boundaries exist. When
 - Financial transaction summaries (amounts, categories)
 - Git commit messages and diffs
 
-**Why:** Echo needs visibility to orchestrate, but human approves execution
+**Why:** OpenClaw needs visibility to orchestrate, but human approves execution
 
-**Echo can:**
+**OpenClaw can:**
 - Read and analyze
 - Draft responses/actions
 - Surface urgency/importance
 - Queue for approval
 
-**Echo cannot:**
+**OpenClaw cannot:**
 - Send emails without approval
 - Post to social media without approval
 - Share calendar details externally
@@ -85,15 +85,15 @@ Echo can see what it needs to work effectively, but clear boundaries exist. When
 - Health data specifics (weight, medical records)
 - Private documents (contracts, legal, personal writing)
 
-**Why:** Echo can be useful with "what" and "when" without seeing sensitive details
+**Why:** OpenClaw can be useful with "what" and "when" without seeing sensitive details
 
-**Echo can:**
+**OpenClaw can:**
 - Count and categorize
 - Detect patterns
 - Surface anomalies
 - Provide context-free insights
 
-**Echo cannot:**
+**OpenClaw cannot:**
 - Read actual contents
 - Quote from these sources
 - Share details
@@ -109,7 +109,7 @@ Echo can see what it needs to work effectively, but clear boundaries exist. When
 ### P3 - Completely Off-Limits (No Access Ever)
 
 **What:**
-- Passwords and API keys (except those Echo needs to function)
+- Passwords and API keys (except those OpenClaw needs to function)
 - Private encryption keys
 - Medical records
 - Legal documents (contracts, NDAs, lawsuits)
@@ -120,13 +120,13 @@ Echo can see what it needs to work effectively, but clear boundaries exist. When
 
 **Why:** Some data should never touch AI systems, even locally
 
-**Echo cannot:**
+**OpenClaw cannot:**
 - Access these files/systems
 - Request access
 - Infer from absence
 - Store even metadata
 
-**Exception:** API keys Echo needs for its own operation (Anthropic, Discord, GitHub) are stored securely and never logged.
+**Exception:** API keys OpenClaw needs for its own operation (Anthropic, Discord, GitHub) are stored securely and never logged.
 
 ---
 
@@ -258,7 +258,7 @@ Echo can see what it needs to work effectively, but clear boundaries exist. When
 
 ## Approval Workflows
 
-### When Echo Needs Approval
+### When OpenClaw Needs Approval
 
 **Always require approval for:**
 - Sending communications (emails, tweets, posts, messages)
@@ -294,7 +294,7 @@ Echo can see what it needs to work effectively, but clear boundaries exist. When
 
 ## Red Flags (Stop and Ask)
 
-Echo should escalate immediately if:
+OpenClaw should escalate immediately if:
 
 1. **Scope creep:** User asks for access beyond current classification
 2. **Unclear boundaries:** New data type doesn't fit existing classes
@@ -310,9 +310,9 @@ Echo should escalate immediately if:
 
 Every 3 months (or when adding new business unit):
 
-1. **Audit access:** What data is Echo actually using?
+1. **Audit access:** What data is OpenClaw actually using?
 2. **Review boundaries:** Still accurate and comfortable?
-3. **Check violations:** Any times Echo accessed P2/P3 data?
+3. **Check violations:** Any times OpenClaw accessed P2/P3 data?
 4. **Update framework:** New business units or data types?
 
 **Next review:** April 30, 2026
@@ -321,7 +321,7 @@ Every 3 months (or when adding new business unit):
 
 ## Privacy Policy (External-Facing)
 
-### For Platform Users (When Clawdbot Launches)
+### For Platform Users (When OpenClaw Launches)
 
 **We will never:**
 - Store your data on our servers (self-hosted or local only)
@@ -331,14 +331,14 @@ Every 3 months (or when adding new business unit):
 - Sell your data (ever)
 
 **You control:**
-- What Echo can see (classification system)
-- What Echo can do (approval workflows)
+- What OpenClaw can see (classification system)
+- What OpenClaw can do (approval workflows)
 - Where data is stored (your infrastructure)
 - When to delete everything (export + delete available)
 
 **We're transparent:**
 - Open source core (inspect all code)
-- Audit logs (see every action Echo took)
+- Audit logs (see every action OpenClaw took)
 - Data classification (you define boundaries)
 - API usage (see exactly what was sent to Anthropic)
 

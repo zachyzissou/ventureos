@@ -1,0 +1,10 @@
+2026-02-02 00:08:25,965 - ERROR: MCP request failed: /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/Users/zachgonser/clawd/plane-mcp-server/plane_mcp_server.py': [Errno 2] No such file or directory
+
+2026-02-02 00:08:25,966 - ERROR: Project creation failed: External Inspiration - Ryan Carson Tweet
+2026-02-02 00:08:25,981 - ERROR: MCP request failed: /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/Users/zachgonser/clawd/plane-mcp-server/plane_mcp_server.py': [Errno 2] No such file or directory
+
+2026-02-02 00:08:25,981 - ERROR: Project creation failed: Tech Exploration - PB Teja Tweet
+2026-02-02 00:08:25,994 - ERROR: MCP request failed: /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/Users/zachgonser/clawd/plane-mcp-server/plane_mcp_server.py': [Errno 2] No such file or directory
+
+2026-02-02 00:08:25,995 - ERROR: Project creation failed: Innovation Tracking - Ganim Corey Tweet
+2026-02-02 00:08:25,995 - INFO: Project creation report saved: /Users/zachgonser/clawd/logs/plane_projects/project_creation_report_20260202_000825.json

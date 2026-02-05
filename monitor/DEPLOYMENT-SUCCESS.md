@@ -93,4 +93,4 @@ tail -f logs/monitor-agent-error.log | grep -E "(loop|Cycle|Woke|heal)"
 
 - `monitor/monitor/main_loop.py` - Fixed signal handling + added sleep/wake logging
 - `monitor/scripts/start-monitor.sh` - Added `-u` unbuffered flag
-- `~/Library/LaunchAgents/com.clawdbot.gateway.plist` - Added `--no-deprecation` flag
+- `~/Library/LaunchAgents/com.openclaw.gateway.plist` - Added `--no-deprecation` flag

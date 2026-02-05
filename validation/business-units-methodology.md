@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document defines the **complete validation methodology** for business units within Echo. Each business unit represents a revenue stream or value creation engine. Downtime = lost money. Quality issues = reputation damage. This methodology ensures:
+This document defines the **complete validation methodology** for business units within OpenClaw. Each business unit represents a revenue stream or value creation engine. Downtime = lost money. Quality issues = reputation damage. This methodology ensures:
 
 - **99.9% uptime** for all business-critical operations
 - **Zero undetected failures** (catch issues within 5 minutes)
@@ -117,8 +117,8 @@ def validate_stantontimes_cron_health():
 - **Trigger:** Job hasn't run in 2x expected interval
 - **Implementation:**
   ```bash
-  clawdbot cron disable "stantontimes-p0-monitor"
-  clawdbot cron enable "stantontimes-p0-monitor"
+  openclaw cron disable "stantontimes-p0-monitor"
+  openclaw cron enable "stantontimes-p0-monitor"
   ```
 - **Fallback:** If restart fails 3x, alert P0
 
@@ -467,7 +467,7 @@ def validate_stantontimes_engagement():
 - **Implementation:**
   ```bash
   # Manually trigger metrics update
-  clawdbot cron run "stantontimes-metrics-sync" --force
+  openclaw cron run "stantontimes-metrics-sync" --force
   ```
 
 #### 6. Twitter Authentication Validation (Every 6 hours)
@@ -1331,7 +1331,7 @@ def alert_pr_review_delay(pr_number):
 QUOTA_PERCENT=$(get_lfs_quota_percent)
 
 if [ "$QUOTA_PERCENT" -gt 80 ]; then
-    echo "LFS quota at ${QUOTA_PERCENT}%, cleaning old files..."
+    openclaw "LFS quota at ${QUOTA_PERCENT}%, cleaning old files..."
     
     cd /path/to/bloom
     
@@ -1346,7 +1346,7 @@ if [ "$QUOTA_PERCENT" -gt 80 ]; then
     
     # Report results
     NEW_QUOTA=$(get_lfs_quota_percent)
-    echo "LFS quota after cleanup: ${NEW_QUOTA}%"
+    openclaw "LFS quota after cleanup: ${NEW_QUOTA}%"
     
     if [ "$NEW_QUOTA" -lt 80 ]; then
         log "LFS cleanup successful: ${QUOTA_PERCENT}% → ${NEW_QUOTA}%"
@@ -1367,18 +1367,18 @@ fi
 JOB_NAME=$1
 
 # Disable job
-clawdbot cron disable "$JOB_NAME"
+openclaw cron disable "$JOB_NAME"
 
 # Wait 5 seconds
 sleep 5
 
 # Re-enable job
-clawdbot cron enable "$JOB_NAME"
+openclaw cron enable "$JOB_NAME"
 
 # Verify it runs within expected interval
 sleep 300  # Wait 5 minutes
 
-LAST_RUN=$(clawdbot cron status "$JOB_NAME" | grep "last_run")
+LAST_RUN=$(openclaw cron status "$JOB_NAME" | grep "last_run")
 if [ -z "$LAST_RUN" ]; then
     alert "P0" "Failed to restart cron job: $JOB_NAME"
 else

@@ -205,7 +205,7 @@ Synthesized from existing architecture documents into concrete implementation:
 - API credentials (Anthropic, Discord, Twitter, GitHub)
 
 **System Dependencies:**
-- Access to clawdbot CLI
+- Access to openclaw CLI
 - Access to bird CLI (Twitter)
 - Read/write access to /Users/zachgonser/clawd/
 - Git access for memory commits

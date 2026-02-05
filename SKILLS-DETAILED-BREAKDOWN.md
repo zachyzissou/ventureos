@@ -1,4 +1,4 @@
-# Clawdbot Skills - Detailed Breakdown
+# OpenClaw Skills - Detailed Breakdown
 
 Complete skill-by-skill analysis with installation paths, versions, and specific notes.
 
@@ -359,7 +359,7 @@ Complete skill-by-skill analysis with installation paths, versions, and specific
 - **Status:** ✅ Working
 - **Binaries:** `jq` → `/usr/bin/jq`, `rg` → `/opt/homebrew/bin/rg`
 - **Versions:** jq-1.7.1-apple, ripgrep 15.1.0
-- **Purpose:** Parse and search Clawdbot session logs
+- **Purpose:** Parse and search OpenClaw session logs
 - **Notes:** Both tools system-installed, works perfectly
 
 ---
@@ -375,7 +375,7 @@ Complete skill-by-skill analysis with installation paths, versions, and specific
 
 ## skill-creator
 - **Status:** ⚠️ No Metadata
-- **Purpose:** Create new Clawdbot skills
+- **Purpose:** Create new OpenClaw skills
 - **Notes:** SKILL.md exists but has no metadata section. Developer tool.
 
 ---
@@ -466,7 +466,7 @@ Complete skill-by-skill analysis with installation paths, versions, and specific
 ## voice-call 📞
 - **Status:** ℹ️ No Requirements
 - **Purpose:** Voice calling integration
-- **Notes:** Config-based plugin in Clawdbot settings
+- **Notes:** Config-based plugin in OpenClaw settings
 
 ---
 

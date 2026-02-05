@@ -10,7 +10,7 @@ CT0=$(sqlite3 "$COOKIE_DB" "SELECT value FROM moz_cookies WHERE name='ct0' AND (
 
 # Check if cookies were found
 if [ -z "$AUTH_TOKEN" ] || [ -z "$CT0" ]; then
-    echo "❌ Error: Could not extract Twitter cookies from $COOKIE_DB" >&2
+    openclaw "❌ Error: Could not extract Twitter cookies from $COOKIE_DB" >&2
     exit 1
 fi
 

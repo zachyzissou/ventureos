@@ -1,0 +1,36 @@
+Distributed Queue Management System - Architecture Visualization
+
++-----------------------------------------------------------+
+|                   API Gateway / Ingress                   |
++-----------------------------------------------------------+
+           |               |               |
++----------v-------+ +------v--------+ +----v-----------+
+| Queue Orchestrator| | Task Routing  | | Agent Management|
+| - Task Queuing    | | - Matching    | | - Registration |
+| - Priority Mgmt   | | - Load Balance| | - Capabilities |
++----------+--------+ +-------+--------+ +------+--------+
+           |                 |                  |
++----------v-----------------v------------------v-------+
+|              Message Broker (Apache Kafka)           |
++--------------------------------------------------------+
+           |                 |                  |
++----------v-------+ +------v--------+ +----v-----------+
+| Distributed Cache| | Monitoring    | | Logging Service |
+| (Redis)          | | (Prometheus)  | | (ELK Stack)     |
++------------------+ +--------------+ +------------------+
+
+Component Interactions:
+1. API Gateway: Authentication, request routing
+2. Queue Orchestrator: Manages task lifecycle
+3. Task Routing: Intelligent agent matching
+4. Agent Management: Dynamic agent pool tracking
+5. Message Broker: Event-driven communication
+6. Distributed Cache: State management
+7. Monitoring & Logging: System observability
+
+Key Design Principles:
+- Decoupled microservices
+- Event-driven architecture
+- Dynamic resource allocation
+- Horizontal scalability
+- Fault tolerance

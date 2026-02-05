@@ -24,7 +24,7 @@ There's another popular [second-brain skill](https://clawdhub.com/christinetyip/
 | **Storage** | Local files in your workspace | Cloud API (Ensue) |
 | **Cost** | Free, self-hosted | Requires Ensue API key |
 | **Best for** | Work context, agent continuity, project tracking | Evergreen knowledge base, semantic queries |
-| **Search** | Clawdbot's `memory_search` | Ensue's vector search |
+| **Search** | OpenClaw's `memory_search` | Ensue's vector search |
 | **Structure** | PARA (Projects/Areas/Resources/Archive) | Namespaces (concepts/toolbox/patterns) |
 | **Use case** | "What did we decide yesterday?" | "How does recursion work?" |
 
@@ -329,7 +329,7 @@ Daily logs are your journal. MEMORY.md is your wisdom.
 
 ## Integration with Memory Search
 
-This structure works perfectly with Clawdbot's `memory_search`:
+This structure works perfectly with OpenClaw's `memory_search`:
 - Searches MEMORY.md + memory/*.md automatically
 - Returns relevant snippets with file path + line numbers
 - Use `memory_get` to pull specific sections

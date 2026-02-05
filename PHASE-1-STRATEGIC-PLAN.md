@@ -5,7 +5,7 @@
 
 ## Vision Statement
 
-**Transform Echo from reactive detector to proactive orchestrator** with:
+**Transform OpenClaw from reactive detector to proactive orchestrator** with:
 - Daily briefings that anticipate needs
 - Privacy-first data handling
 - Accelerated development velocity
@@ -71,7 +71,7 @@
 
 **Thu 2/3:**
 - [ ] Evening: Discord webhook integration (1 hour)
-  - Create private #echo-alerts channel
+  - Create private #openclaw-alerts channel
   - Configure webhook URL in Monitor-Agent
   - Test P0/P1/P2/P3 alert routing
   - Verify no sensitive data in alerts
@@ -266,7 +266,7 @@
 - 15 cron jobs (StantonTimes, Bloom, Memory)
 - Obsidian MCP integration
 - LM Studio (local models)
-- All Clawdbot skills
+- All OpenClaw skills
 
 **To Build:**
 - Morning briefing generator

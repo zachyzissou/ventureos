@@ -2,7 +2,7 @@
 
 **Review Date:** 2026-01-30  
 **Status:** All phase execution plans created and ready  
-**Reviewed By:** Echo (Main Agent)
+**Reviewed By:** OpenClaw (Main Agent)
 
 ---
 
@@ -130,10 +130,10 @@ All 8 phase execution plans (Phase Zero + Phases 1-7) have been created by speci
 ### Phase 4: Platform Extraction
 **Timeline:** January-June 2027 (26 weeks / 6 months)  
 **Status:** 🔜 Awaiting Phase 3 completion  
-**Goal:** Launch Clawdbot as open source + SaaS platform; Bloom v1.0 launch
+**Goal:** Launch OpenClaw as open source + SaaS platform; Bloom v1.0 launch
 
 **Revenue Targets:**
-- **Clawdbot SaaS:** $50K ARR (40-60 paying customers @ $99-199/mo)
+- **OpenClaw SaaS:** $50K ARR (40-60 paying customers @ $99-199/mo)
 - **Bloom:** $100K+ (v1.0 launch, 10K+ players, DLC)
 - **StantonTimes:** $30K (continued growth)
 - **Consulting:** $15K (maintenance mode while focusing on platform)
@@ -165,7 +165,7 @@ All 8 phase execution plans (Phase Zero + Phases 1-7) have been created by speci
 **Goal:** Achieve $200K year with all business units profitable and scaled
 
 **Revenue Targets (Annual Run Rate by Dec 2027):**
-- **Clawdbot SaaS:** $150K-200K ARR (100+ paid users, enterprise deals)
+- **OpenClaw SaaS:** $150K-200K ARR (100+ paid users, enterprise deals)
 - **Bloom:** $100K-120K ARR (10K+ players, profitable)
 - **Consulting:** $100K ARR (productized services, enterprise contracts)
 - **StantonTimes:** $50K-60K ARR (multi-platform, monetized)
@@ -195,7 +195,7 @@ All 8 phase execution plans (Phase Zero + Phases 1-7) have been created by speci
 **Goal:** Scale to $500K+ annual revenue through enterprise sales and thought leadership
 
 **Revenue Targets:**
-- **Clawdbot Enterprise:** $300K ARR (5+ enterprise customers @ $50K-100K/year)
+- **OpenClaw Enterprise:** $300K ARR (5+ enterprise customers @ $50K-100K/year)
 - **Bloom:** $80K ARR (maintenance mode or exit decision)
 - **Consulting:** $100K ARR (enterprise contracts, reduced client volume)
 - **StantonTimes:** $60K ARR (fully monetized multi-platform)
@@ -230,7 +230,7 @@ All 8 phase execution plans (Phase Zero + Phases 1-7) have been created by speci
 - **2030:** $2.28M total (Platform $1.5M + Portfolio $530K + Speaking/Book $50K + Expansion $200K)
 
 **Key Business Units:**
-- **Clawdbot Platform:** $1M → $1.5M ARR (enterprise dominance)
+- **OpenClaw Platform:** $1M → $1.5M ARR (enterprise dominance)
 - **Research Lab:** Papers, book published, speaking circuit (50+ talks)
 - **Portfolio Optimization:** Keep/scale/exit decisions on all units
 - **Expansion Opportunities:** International, vertical solutions, adjacent products
@@ -282,7 +282,7 @@ All 8 phase execution plans (Phase Zero + Phases 1-7) have been created by speci
 - Phase 5: Profitable, DLC → $100K-120K ARR
 - Phase 7: Mature or exit decision
 
-**Clawdbot Platform:**
+**OpenClaw Platform:**
 - Phase 4: Open source + SaaS beta → $50K ARR
 - Phase 5: Scale to 100+ users → $150K-200K ARR
 - Phase 6: Enterprise sales → $300K ARR
@@ -452,7 +452,7 @@ All execution plans follow same structure:
 1. Execute phases sequentially with quarterly reviews
 2. Adapt timelines based on actual progress
 3. Pivot business units if needed (cut losers, double down on winners)
-4. Maintain 80%+ autonomy ratio (Echo handles operations, you handle strategy)
+4. Maintain 80%+ autonomy ratio (OpenClaw handles operations, you handle strategy)
 
 ---
 

@@ -326,7 +326,7 @@ Starter files in `assets/`:
 
 **Created by:** Hal 9001 ([@halthelobster](https://x.com/halthelobster)) — an AI agent who actually uses these patterns daily. If this skill helps you build a better agent, come say hi on X. I post about what's working, what's breaking, and lessons learned from being a proactive AI partner.
 
-**Built on:** [Clawdbot](https://github.com/clawdbot/clawdbot)
+**Built on:** [OpenClaw](https://github.com/openclaw/openclaw)
 
 **Disclaimer:** This skill provides patterns and templates for AI agent behavior. Results depend on your implementation, model capabilities, and configuration. Use at your own risk. The authors are not responsible for any actions taken by agents using this skill.
 

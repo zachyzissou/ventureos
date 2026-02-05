@@ -77,7 +77,7 @@
 ### 1. Infrastructure Validation
 
 **What We Monitor:**
-- Gateway health (is Echo running?)
+- Gateway health (is OpenClaw running?)
 - Cron jobs (are they executing? Succeeding?)
 - API integrations (rate limits, auth, connectivity)
 - Database/storage (disk space, corruption, backups)
@@ -86,7 +86,7 @@
 **Validation Tests:**
 ```bash
 # Example: Gateway health check
-clawdbot status | grep "Running" || restart_gateway
+openclaw status | grep "Running" || restart_gateway
 
 # Example: Cron job validation
 check_last_run("stantontimes-p0-monitor") < 30min || alert
@@ -359,7 +359,7 @@ class Validator:
 ```python
 class Healer:
     def restart_gateway(self):
-        # clawdbot gateway restart
+        # openclaw gateway restart
     
     def rotate_credentials(self):
         # Auto-rotate expiring keys
@@ -518,7 +518,7 @@ shift
 JOB_COMMAND="$@"
 
 # Record start
-echo "$(date) - Starting $JOB_NAME" >> /tmp/cron-status.log
+openclaw "$(date) - Starting $JOB_NAME" >> /tmp/cron-status.log
 
 # Execute job
 $JOB_COMMAND
@@ -526,12 +526,12 @@ EXIT_CODE=$?
 
 # Validate result
 if [ $EXIT_CODE -ne 0 ]; then
-    echo "$(date) - $JOB_NAME FAILED (exit $EXIT_CODE)" >> /tmp/cron-status.log
+    openclaw "$(date) - $JOB_NAME FAILED (exit $EXIT_CODE)" >> /tmp/cron-status.log
     # Trigger Monitor-Agent investigation
     curl -X POST http://localhost:18789/monitor/job-failed \
         -d "name=$JOB_NAME&exit_code=$EXIT_CODE"
 else
-    echo "$(date) - $JOB_NAME SUCCESS" >> /tmp/cron-status.log
+    openclaw "$(date) - $JOB_NAME SUCCESS" >> /tmp/cron-status.log
 fi
 
 exit $EXIT_CODE

@@ -15,7 +15,7 @@ Monitor-Agent successfully deployed as a launchd background service on macOS. Sy
 ## What Was Deployed
 
 ### 1. launchd Service (macOS systemd equivalent)
-**File:** `com.clawdbot.monitor-agent.plist`
+**File:** `com.openclaw.monitor-agent.plist`
 - Auto-starts on login
 - Auto-restarts on crash (10s throttle)
 - Configured environment (DISCORD_WEBHOOK_URL)
@@ -64,7 +64,7 @@ Monitor-Agent successfully deployed as a launchd background service on macOS. Sy
 ```
 PID:    7603
 Status: Running
-Label:  com.clawdbot.monitor-agent
+Label:  com.openclaw.monitor-agent
 ```
 
 ### Components Active
@@ -251,7 +251,7 @@ Label:  com.clawdbot.monitor-agent
 ## Files Created/Updated
 
 ### New Files (Day 7)
-- `com.clawdbot.monitor-agent.plist` - launchd service config
+- `com.openclaw.monitor-agent.plist` - launchd service config
 - `newsyslog.conf` - log rotation config
 - `deploy.sh` - deployment automation
 - `manage.sh` - service management
@@ -311,4 +311,4 @@ Self-healing validation system running 24/7, detecting issues across 8 categorie
 
 ---
 
-*Deployed by Echo 🔮 on 2026-01-30 at 14:59 CST*
+*Deployed by OpenClaw 🔮 on 2026-01-30 at 14:59 CST*

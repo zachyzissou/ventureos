@@ -2,7 +2,7 @@
 
 **Timeline:** January-June 2027 (26 weeks)  
 **Status:** 🔜 Upcoming (starts after Phase 3 complete)  
-**Goal:** Transform Clawdbot from personal tool to platform; launch SaaS beta; Bloom Early Access success
+**Goal:** Transform OpenClaw from personal tool to platform; launch SaaS beta; Bloom Early Access success
 
 ---
 
@@ -11,7 +11,7 @@
 **Mission:** Extract and productize the AI orchestration platform that powers your AI-augmented conglomerate. Open source the core, launch SaaS for 20-50 early adopters, and successfully launch Bloom game on Steam Early Access.
 
 **Key Transitions:**
-- Clawdbot: Personal tool → Open source + SaaS platform
+- OpenClaw: Personal tool → Open source + SaaS platform
 - Bloom: Development → Live game with paying customers
 - Business Model: Consulting + media → Platform revenue
 - Organization: Solo operator → Platform company with customers
@@ -37,7 +37,7 @@
 - ✅ Multi-business operations stable
 
 ### Pre-Phase 4 Requirements (December 2026 Prep):
-- [ ] Clawdbot codebase audit (security, privacy, IP review)
+- [ ] OpenClaw codebase audit (security, privacy, IP review)
 - [ ] Legal consultation (open source licensing strategy)
 - [ ] Platform market research (competitors, pricing, positioning)
 - [ ] Multi-tenant architecture design complete
@@ -51,13 +51,13 @@
 ### Track 1: Open Source Launch 🌍
 **Timeline:** January-March 2027 (12 weeks)  
 **Owner:** Zach + Research-Agent  
-**Goal:** Launch Clawdbot open source with thriving community
+**Goal:** Launch OpenClaw open source with thriving community
 
 #### Weeks 1-4 (January 2027): Preparation & Code Cleanup
 
 **Week 1: Codebase Audit & Licensing**
 - [ ] **Code Review**
-  - Audit entire Clawdbot codebase for sensitive data, credentials, personal info
+  - Audit entire OpenClaw codebase for sensitive data, credentials, personal info
   - Remove proprietary integrations (anything tied to personal accounts)
   - Identify core vs. custom skills (what to open source vs. keep private)
   - Security review (no vulnerabilities, no hardcoded secrets)
@@ -69,7 +69,7 @@
   - Apply license to all files (headers, LICENSE file)
   
 - [ ] **Legal Protection**
-  - Trademark "Clawdbot" (USPTO filing, ~$350)
+  - Trademark "OpenClaw" (USPTO filing, ~$350)
   - Contributor License Agreement (CLA) template
   - Terms of Service and Privacy Policy for platform
   - Consult IP lawyer ($1K-2K for package review)
@@ -110,7 +110,7 @@
   - "Developer productivity" (code review, PR management, docs)
   
 - [ ] **Video Walkthroughs**
-  - 3-minute "What is Clawdbot?" explainer
+  - 3-minute "What is OpenClaw?" explainer
   - 10-minute setup tutorial
   - 20-minute deep dive (architecture, customization)
   - Record and publish to YouTube, embed in docs
@@ -128,13 +128,13 @@
   - Moderators recruited (3-5 trusted early users)
   
 - [ ] **Website & Branding**
-  - Landing page: clawdbot.dev or clawdbot.io
+  - Landing page: openclaw.dev or openclaw.io
   - Key sections: Features, Docs, Community, Blog, SaaS signup
   - Brand assets: Logo, color scheme, design system
   - SEO optimization (keywords: AI assistant, multi-agent, ADHD productivity)
   
 - [ ] **Content Marketing Prep**
-  - Blog post: "Why We're Open Sourcing Clawdbot"
+  - Blog post: "Why We're Open Sourcing OpenClaw"
   - Technical deep dive: "Building a Privacy-First AI Orchestrator"
   - Case study: "How I Built a $200K/Year Business with AI Agents"
   - Video content ready (demos, tutorials)
@@ -159,7 +159,7 @@
 **Week 5: Public Launch 🚀**
 - [ ] **Launch Day Execution**
   - **8:00 AM:** Publish GitHub repository (make public)
-  - **9:00 AM:** Website goes live (clawdbot.dev)
+  - **9:00 AM:** Website goes live (openclaw.dev)
   - **10:00 AM:** Blog post published + HackerNews submission
   - **11:00 AM:** Twitter announcement (thread explaining vision)
   - **12:00 PM:** ProductHunt launch (prepared page, ask community to upvote)
@@ -197,7 +197,7 @@
   
 - [ ] **Content Flywheel**
   - Blog post: "Week 1 Recap - What We Learned"
-  - Video: "Top 5 Clawdbot Use Cases from the Community"
+  - Video: "Top 5 OpenClaw Use Cases from the Community"
   - Twitter threads: Share interesting implementations
   - Discord AMAs: Weekly Q&A sessions with the community
 
@@ -215,7 +215,7 @@
   
 - [ ] **Developer Outreach**
   - Contribute to related projects (good citizen, build reputation)
-  - Speak at local meetups (show & tell Clawdbot)
+  - Speak at local meetups (show & tell OpenClaw)
   - Write guest posts (dev.to, Hashnode, Medium)
 
 **Week 8: Consolidation**
@@ -256,7 +256,7 @@
 
 **Week 9: Skills Marketplace Foundation**
 - [ ] **Marketplace Design**
-  - Skills repository structure (GitHub org: clawdbot-skills)
+  - Skills repository structure (GitHub org: openclaw-skills)
   - Submission process (PR-based, reviewed by maintainers)
   - Quality standards (documentation, testing, security review)
   - Discovery mechanism (website catalog, CLI search)
@@ -267,7 +267,7 @@
   - Featured skills: Email, Calendar, Finance, Social, Health
   
 - [ ] **Installation Flow**
-  - One-command skill install: `clawdbot install @skills/email-orchestration`
+  - One-command skill install: `openclaw install @skills/email-orchestration`
   - Dependency management (auto-install required packages)
   - Version management (updates, rollbacks)
 
@@ -279,8 +279,8 @@
   - Backup and disaster recovery
   
 - [ ] **Enterprise Showcases**
-  - Case study: "How a 5-Person Startup Runs on Clawdbot"
-  - Webinar: "Deploying Clawdbot for Your Team"
+  - Case study: "How a 5-Person Startup Runs on OpenClaw"
+  - Webinar: "Deploying OpenClaw for Your Team"
   - White paper: "Privacy-First AI for Enterprise"
 
 **Week 11: Governance & Sustainability**
@@ -292,7 +292,7 @@
 - [ ] **Funding Model (Optional)**
   - GitHub Sponsors page (recurring donations)
   - OpenCollective account (transparent finances)
-  - Corporate sponsorship outreach (companies using Clawdbot)
+  - Corporate sponsorship outreach (companies using OpenClaw)
   - Target: $2K-5K/month in sponsorships
 
 **Week 12: V1.0 Release & Celebration**
@@ -305,7 +305,7 @@
   - Virtual launch party (Discord event)
   - Swag giveaway (t-shirts, stickers for top contributors)
   - Contributor hall of fame (website feature)
-  - "State of Clawdbot" blog post (metrics, future vision)
+  - "State of OpenClaw" blog post (metrics, future vision)
 
 **Success Metrics (Week 12):**
 - GitHub stars: 2,000+
@@ -549,7 +549,7 @@
 - [ ] **Launch Day**
   - Open signups to public
   - ProductHunt launch (again, SaaS-focused)
-  - Blog post: "Clawdbot SaaS is Now Available"
+  - Blog post: "OpenClaw SaaS is Now Available"
   - Email to open source community (upgrade path)
   - Social media blitz (Twitter, LinkedIn, Reddit)
   
@@ -568,7 +568,7 @@
   - Automated setup flow (minimal support needed)
   - In-app guides (tooltips, checklists)
   - Email drip campaign (onboarding tips over 14 days)
-  - Webinar series ("Getting Started with Clawdbot SaaS")
+  - Webinar series ("Getting Started with OpenClaw SaaS")
   
 - [ ] **Conversion Optimization**
   - Free trial (14 days, no credit card required)
@@ -820,7 +820,7 @@
 - [ ] **Future Planning**
   - Bloom's long-term roadmap (sequel? expansion? new game?)
   - Low Noise Studios growth (hire? stay solo?)
-  - Cross-promotion with Clawdbot (gaming community overlap?)
+  - Cross-promotion with OpenClaw (gaming community overlap?)
 
 **Success Metrics (Week 26):**
 - Total sales: 12,000-15,000 (lifetime)
@@ -844,14 +844,14 @@
 
 ### Track 4: Business Operations & Integration 🔧
 **Timeline:** January-June 2027 (26 weeks, ongoing)  
-**Owner:** Echo + Finance-Agent + Zach  
+**Owner:** OpenClaw + Finance-Agent + Zach  
 **Goal:** Smooth operations across all business units
 
 #### Ongoing (All 26 Weeks):
 
 **Weekly Operations Cadence:**
 - [ ] **Monday: Strategy Review**
-  - Week planning (Echo + Zach + sub-agents)
+  - Week planning (OpenClaw + Zach + sub-agents)
   - Resource allocation (time, money, focus)
   - Blockers and escalations (what needs decisions?)
   - Priorities (top 3-5 goals for the week)
@@ -901,7 +901,7 @@
   - Finance-Agent: Auto-categorize expenses, flag anomalies
   - Platform-Agent: Monitor SaaS metrics, auto-respond to common issues
   - LowNoise-Agent: Track Bloom KPIs, community sentiment analysis
-  - Echo: Cross-business insights (e.g., "SaaS customers might like Bloom")
+  - OpenClaw: Cross-business insights (e.g., "SaaS customers might like Bloom")
 
 **Success Metrics (Ongoing):**
 - Weekly planning adherence: 90%+ (execute on planned priorities)
@@ -923,7 +923,7 @@
 ### Team & Contractors
 
 #### Sub-Agents (AI):
-- **Echo (Chief Orchestrator):** Coordinates all agents, surfaces insights, weekly reviews
+- **OpenClaw (Chief Orchestrator):** Coordinates all agents, surfaces insights, weekly reviews
 - **Platform-Agent (NEW):** Manages SaaS operations, customer onboarding, support triage
 - **LowNoise-Agent:** Bloom development, community management, content updates
 - **StantonTimes-Agent:** Autonomous media operations (mostly hands-off in Phase 4)
@@ -1185,7 +1185,7 @@
 - ✅ **Burnout Risk:** Low (sustainable pace, delegation working)
 
 ### Strategic
-- ✅ **Platform Validation:** Proven that Clawdbot can be productized
+- ✅ **Platform Validation:** Proven that OpenClaw can be productized
 - ✅ **Community:** Engaged open source + SaaS communities
 - ✅ **Reputation:** Known in AI orchestration space (blog, talks, media)
 - ✅ **Optionality:** Enterprise pipeline forming, expansion opportunities identified
@@ -1264,7 +1264,7 @@
 **Risk:** Burn out managing 4 business units  
 **Mitigation:**
 - Sub-agents handle execution (you handle strategy only)
-- Weekly energy check-ins (Echo monitors stress)
+- Weekly energy check-ins (OpenClaw monitors stress)
 - Delegate more (hire customer success, marketing)
 - Drop lowest ROI activities (consulting scaled down)
 - Adjust timelines (Phase 4 can extend if needed)
@@ -1473,4 +1473,4 @@
 
 ---
 
-**Let's turn Clawdbot into a platform and prove the world wants AI orchestration. 🚀**
+**Let's turn OpenClaw into a platform and prove the world wants AI orchestration. 🚀**

@@ -91,7 +91,7 @@ source /Users/zachgonser/clawd/venv/bin/activate
 python /Users/zachgonser/clawd/queue/queue_system_executor.py
 
 # Log results
-echo "Validation Run completed at $(date)" >> /Users/zachgonser/clawd/queue/validation_log.txt
+openclaw "Validation Run completed at $(date)" >> /Users/zachgonser/clawd/queue/validation_log.txt
 ```
 
 ### Cron Configuration

@@ -12,7 +12,7 @@ mkdir -p "$LOG_DIR"
 
 # Check if already running
 if pgrep -f "python.*monitor.main_loop" > /dev/null; then
-    echo "Monitor-Agent already running"
+    openclaw "Monitor-Agent already running"
     exit 1
 fi
 
@@ -22,6 +22,6 @@ source venv/bin/activate
 nohup python -u -m monitor.main_loop >> "$LOG_DIR/monitor-agent.log" 2>> "$LOG_DIR/monitor-agent-error.log" &
 
 PID=$!
-echo $PID > "$LOG_DIR/monitor-agent.pid"
-echo "Monitor-Agent started (PID: $PID)"
-echo "Logs: $LOG_DIR/monitor-agent.log"
+openclaw $PID > "$LOG_DIR/monitor-agent.pid"
+openclaw "Monitor-Agent started (PID: $PID)"
+openclaw "Logs: $LOG_DIR/monitor-agent.log"

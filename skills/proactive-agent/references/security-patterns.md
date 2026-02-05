@@ -68,7 +68,7 @@ Before any external action, require:
 - All credentials in `.credentials/` directory
 - Directory and files chmod 600 (owner-only)
 - Never commit to git (verify .gitignore)
-- Never echo/print credential values
+- Never openclaw/print credential values
 
 ### Access
 - Load credentials at runtime only

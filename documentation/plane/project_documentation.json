@@ -1,0 +1,55 @@
+{
+  "metadata": {
+    "generated_at": "2026-02-01T22:43:06.367401",
+    "project_id": "b7824695-65e5-4da6-ba57-3f7ac172266d"
+  },
+  "workflow": {
+    "states": [
+      {
+        "name": "Backlog",
+        "description": "Initial collection of potential work items, awaiting prioritization",
+        "purpose": "Capture and organize new ideas and requirements"
+      },
+      {
+        "name": "Refined",
+        "description": "Work items with clear requirements, ready for estimation",
+        "purpose": "Prepare work items for sprint planning"
+      }
+    ],
+    "work_item_types": [
+      {
+        "name": "Feature",
+        "description": "New product capability",
+        "documentation_guidelines": [
+          "Provide clear user story",
+          "Define acceptance criteria"
+        ]
+      },
+      {
+        "name": "Bug",
+        "description": "Defect requiring resolution",
+        "documentation_guidelines": [
+          "Provide reproducible steps",
+          "Include environment details"
+        ]
+      }
+    ]
+  },
+  "guidelines": {
+    "development_process": [
+      {
+        "section": "Code Quality",
+        "guidelines": [
+          "Follow SOLID principles",
+          "Maintain clean, readable code"
+        ]
+      }
+    ],
+    "quality_standards": [
+      {
+        "metric": "Test Coverage",
+        "minimum_threshold": "80%"
+      }
+    ]
+  }
+}

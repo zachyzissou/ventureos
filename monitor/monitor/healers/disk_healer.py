@@ -53,8 +53,8 @@ class DiskHealer(BaseHealer):
             cleaned_bytes = 0
             actions = []
             
-            # 1. Clean up old logs in ~/.clawdbot/logs (>7 days)
-            logs_dir = Path.home() / ".clawdbot" / "logs"
+            # 1. Clean up old logs in ~/.openclaw/logs (>7 days)
+            logs_dir = Path.home() / ".openclaw" / "logs"
             if logs_dir.exists():
                 logger.debug("cleaning_old_logs")
                 find_proc = await asyncio.create_subprocess_exec(
@@ -72,7 +72,7 @@ class DiskHealer(BaseHealer):
             temp_dir = Path("/tmp")
             logger.debug("cleaning_temp_files")
             find_proc = await asyncio.create_subprocess_exec(
-                "find", str(temp_dir), "-name", "clawdbot-*", "-mtime", "+1", "-delete", "-print",
+                "find", str(temp_dir), "-name", "openclaw-*", "-mtime", "+1", "-delete", "-print",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )

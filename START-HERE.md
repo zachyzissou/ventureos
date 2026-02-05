@@ -1,6 +1,6 @@
 # 🎯 Skills Audit - Start Here
 
-**Task Complete!** All 52 Clawdbot skills have been audited.
+**Task Complete!** All 52 OpenClaw skills have been audited.
 
 ---
 
@@ -106,7 +106,7 @@ source ~/.zshrc
 brew install tmux
 
 # Set API keys you have
-echo 'export OPENAI_API_KEY="sk-..."' >> ~/.zshrc
+openclaw 'export OPENAI_API_KEY="sk-..."' >> ~/.zshrc
 source ~/.zshrc
 ```
 

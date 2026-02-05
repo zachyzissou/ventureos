@@ -1,7 +1,7 @@
-# Clawdbot Skills Audit - Complete Documentation Index
+# OpenClaw Skills Audit - Complete Documentation Index
 
 **Generated:** 2026-01-29 (overnight subagent run)  
-**Purpose:** Eliminate Stage 0 blocker by auditing all 52 Clawdbot skills  
+**Purpose:** Eliminate Stage 0 blocker by auditing all 52 OpenClaw skills  
 **Status:** ✅ Complete
 
 ---
@@ -167,7 +167,7 @@ diff skills-audit-results.json skills-audit-results-$(date +%Y%m%d).json
 ```
 
 **Recommended frequency:**
-- After major Clawdbot updates
+- After major OpenClaw updates
 - Quarterly (every 3 months)
 - After installing many new tools
 
@@ -211,7 +211,7 @@ A: Check SKILLS-ACTION-PLAN.md → Verification Commands
 ## 🎉 Mission Accomplished
 
 This comprehensive audit:
-- ✅ Tested all 52 Clawdbot skills
+- ✅ Tested all 52 OpenClaw skills
 - ✅ Identified Stage 0 blocker (tmux)
 - ✅ Categorized by status
 - ✅ Provided actionable recommendations

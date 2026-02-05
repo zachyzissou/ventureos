@@ -193,7 +193,7 @@
 
 ### Track 2: AI Consulting Launch 🧠
 **Timeline:** May-September 2026 (5 months)  
-**Owner:** Zach (you) + Echo coordination  
+**Owner:** Zach (you) + OpenClaw coordination  
 **Revenue Target:** $10K-15K in 5 months
 
 #### Pre-Launch (April 2026)
@@ -206,11 +206,11 @@
 - [ ] **Thought Leadership Content**
   - Write 3-5 blog posts on AI orchestration (publish on Medium, LinkedIn, personal site)
   - Topics: "Building an AI Chief of Staff," "ADHD + AI," "Multi-Agent Systems for Solopreneurs"
-  - Share learnings from Echo development (case study)
+  - Share learnings from OpenClaw development (case study)
   - Create Twitter threads showcasing capabilities
 
 - [ ] **Portfolio Building**
-  - Document Echo setup (before/after, capabilities, results)
+  - Document OpenClaw setup (before/after, capabilities, results)
   - Create demo videos (screen recordings of workflows)
   - Write case studies (your own productivity gains)
   - Build simple website (Carrd, Webflow, or custom)
@@ -222,7 +222,7 @@
     - Tool recommendations
     - Follow-up Q&A via email
   - **Package 2: Setup Sprint** ($2,000, 1 week)
-    - Full AI assistant setup (Clawdbot or similar)
+    - Full AI assistant setup (OpenClaw or similar)
     - Skill configuration (email, calendar, tasks, etc.)
     - Training session (how to use effectively)
     - 30-day support
@@ -611,7 +611,7 @@ Hiring via: Fiverr, Upwork, indie game dev communities (r/gameDevClassifieds, Tw
   - Expense tracking and categorization
   - Revenue/profit reporting (weekly updates)
   - Tax planning (quarterly estimated payments)
-- **Echo (Central Orchestrator):**
+- **OpenClaw (Central Orchestrator):**
   - Coordinate all sub-agents
   - Surface blockers and opportunities
   - Weekly strategy reviews with Zach
@@ -668,7 +668,7 @@ Hiring via: Fiverr, Upwork, indie game dev communities (r/gameDevClassifieds, Tw
 
 **Risk:** Burnout from too much at once  
 **Mitigation:**
-- Weekly check-ins (Echo monitors stress signals)
+- Weekly check-ins (OpenClaw monitors stress signals)
 - Drop lowest ROI activities if overwhelmed
 - Adjust timelines (Phase 2 can extend if needed)
 - Health tracking (sleep, exercise, downtime)
@@ -714,8 +714,8 @@ Hiring via: Fiverr, Upwork, indie game dev communities (r/gameDevClassifieds, Tw
 ## Weekly Cadence
 
 ### Monday (Planning)
-- **9:00 AM:** Morning briefing (Echo)
-- **10:00 AM:** Weekly strategy review (Zach + Echo + sub-agents)
+- **9:00 AM:** Morning briefing (OpenClaw)
+- **10:00 AM:** Weekly strategy review (Zach + OpenClaw + sub-agents)
   - Review last week's results
   - Surface blockers and decisions needed
   - Set priorities for the week
@@ -735,7 +735,7 @@ Hiring via: Fiverr, Upwork, indie game dev communities (r/gameDevClassifieds, Tw
 
 ### Friday (Review & Admin)
 - **9:00 AM:** Morning briefing
-- **10:00 AM:** Weekly review (Zach + Echo)
+- **10:00 AM:** Weekly review (Zach + OpenClaw)
   - Results vs. targets (revenue, growth, progress)
   - Lessons learned (what worked, what didn't)
   - Adjust next week's priorities

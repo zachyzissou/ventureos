@@ -1,7 +1,7 @@
 # Phase Zero Quality Review Report
 
 **Date:** 2026-01-30 14:00 CST  
-**Reviewer:** Echo (autonomous review)  
+**Reviewer:** OpenClaw (autonomous review)  
 **Scope:** Days 1-5 complete work + Days 6-7 readiness
 
 ---
@@ -45,7 +45,7 @@
 **Location:** `/Users/zachgonser/clawd/monitor/detectors/` ← OLD LOCATION
 
 **Components:**
-- `gateway_detector.py` - Monitors Clawdbot daemon
+- `gateway_detector.py` - Monitors OpenClaw daemon
 - `cron_detector.py` - Monitors 15 cron jobs
 - `api_detector.py` - Monitors external APIs (also in monitor/monitor/detectors/)
 - `disk_detector.py` - Monitors disk space

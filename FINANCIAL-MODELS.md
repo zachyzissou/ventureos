@@ -751,7 +751,7 @@
 - You need income NOW (within 2 months)
 - You enjoy teaching and helping others
 - You're comfortable with sales/client work
-- You want fast validation of Echo's value
+- You want fast validation of OpenClaw's value
 - You can commit 30-40 hours/week
 - You need cash to fund other ventures
 
@@ -802,7 +802,7 @@
 1. **10× higher Year 1 profit** ($38,922 vs $3,705)
 2. **Faster validation** (2 months vs 6 months to revenue)
 3. **Lower risk** (direct client feedback vs algorithm dependency)
-4. **Proves Echo's value** (every client is a case study)
+4. **Proves OpenClaw's value** (every client is a case study)
 5. **Generates capital** (fund StantonTimes in Year 2)
 6. **Faster learning** (20 clients = 20 experiments)
 

@@ -34,7 +34,7 @@
 - Both need 10-20 hours/week to grow
 - Total: 20-40 hours/week commitment
 - Risk: Burnout, dropping quality
-- Mitigation: 80/20 each business, Echo handles automation
+- Mitigation: 80/20 each business, OpenClaw handles automation
 
 **4. Revenue Timeline Mismatch**
 - Consulting: Fast revenue (1-2 months)
@@ -58,12 +58,12 @@
 **Monday-Tuesday-Wednesday: Consulting Days**
 - 5 hours/day × 3 days = 15 hours
 - Client calls, audits, delivery work
-- Echo handles: Scheduling, note-taking, follow-ups, CRM
+- OpenClaw handles: Scheduling, note-taking, follow-ups, CRM
 
 **Thursday-Friday: StantonTimes Days**
 - 5 hours/day × 2 days = 10 hours
 - Content strategy, sponsor outreach, newsletter
-- Echo handles: Tweet drafting, monitoring, analytics
+- OpenClaw handles: Tweet drafting, monitoring, analytics
 
 **Saturday: Flex Day**
 - Work on whichever needs more attention
@@ -156,7 +156,7 @@
 - **Hard boundaries:** Mon-Tue-Wed = Consulting ONLY
 - **Context switching rules:** No consulting on StantonTimes days
 - **Separate workspaces:** Different browser profiles, different Slack channels
-- **Echo enforcement:** "It's Thursday, consulting work is paused until Monday"
+- **OpenClaw enforcement:** "It's Thursday, consulting work is paused until Monday"
 
 **Early warning signs:**
 - Both businesses missing goals
@@ -174,7 +174,7 @@
 
 **Mitigation:**
 - **80/20 rule:** Focus on highest-leverage activities only
-- **Echo automation:** 60-70% of work automated
+- **OpenClaw automation:** 60-70% of work automated
 - **Delegation budget:** Use consulting revenue to hire VAs ($500-1,000/mo)
 - **Mandatory rest:** Sunday off, no exceptions
 
@@ -219,11 +219,11 @@
 
 ---
 
-## Echo's Role (Critical for Success)
+## OpenClaw's Role (Critical for Success)
 
 ### Consulting Automation (60% automated)
 
-**Echo handles:**
+**OpenClaw handles:**
 - Lead qualification (parse inquiry forms)
 - Calendar scheduling (Cal.com integration)
 - Pre-call research (client's website, LinkedIn)
@@ -245,7 +245,7 @@
 
 ### StantonTimes Automation (90% automated)
 
-**Echo handles:**
+**OpenClaw handles:**
 - Content monitoring (already working)
 - Tweet drafting (already working)
 - Optimal posting schedule
@@ -266,11 +266,11 @@
 
 ### Combined Impact
 
-**Total time with Echo:** 25-30 hours/week  
-**Total time without Echo:** 45-60 hours/week  
-**Echo effectiveness:** 40-55% time reduction
+**Total time with OpenClaw:** 25-30 hours/week  
+**Total time without OpenClaw:** 45-60 hours/week  
+**OpenClaw effectiveness:** 40-55% time reduction
 
-**This is only viable BECAUSE of Echo.**
+**This is only viable BECAUSE of OpenClaw.**
 
 ---
 
@@ -279,16 +279,16 @@
 ### Monday (Consulting Day 1)
 
 **Morning (3 hours):**
-- Review week's client calls (Echo prepared agendas)
+- Review week's client calls (OpenClaw prepared agendas)
 - First discovery call or audit delivery
 - Client follow-ups
 
 **Afternoon (2 hours):**
-- Marketing/outreach (Echo drafted messages)
-- CRM updates (Echo automates most)
+- Marketing/outreach (OpenClaw drafted messages)
+- CRM updates (OpenClaw automates most)
 - Content creation for consulting
 
-**Echo tasks running:**
+**OpenClaw tasks running:**
 - Monitor inquiry forms
 - Schedule this week's calls
 - Research tomorrow's clients
@@ -299,14 +299,14 @@
 
 **Morning (3 hours):**
 - Client calls (2-3 back-to-back)
-- Echo takes notes in real-time
+- OpenClaw takes notes in real-time
 
 **Afternoon (2 hours):**
-- Draft analysis documents (Echo templates)
+- Draft analysis documents (OpenClaw templates)
 - Follow-up sequences
 - Proposal creation
 
-**Echo tasks running:**
+**OpenClaw tasks running:**
 - Compile session notes into deliverables
 - Queue follow-up emails
 - Update project tracker
@@ -322,10 +322,10 @@
 
 **Afternoon (2 hours):**
 - Admin cleanup
-- Invoice generation (Echo drafts)
+- Invoice generation (OpenClaw drafts)
 - Week-ahead prep
 
-**Echo tasks running:**
+**OpenClaw tasks running:**
 - Generate weekly consulting report
 - Identify upsell opportunities
 - Track revenue metrics
@@ -335,16 +335,16 @@
 ### Thursday (StantonTimes Day 1)
 
 **Morning (3 hours):**
-- Review Echo's drafted tweets (approve/edit batch)
-- Newsletter writing (Echo compiled draft from tweets)
-- Sponsor outreach (Echo drafted emails)
+- Review OpenClaw's drafted tweets (approve/edit batch)
+- Newsletter writing (OpenClaw compiled draft from tweets)
+- Sponsor outreach (OpenClaw drafted emails)
 
 **Afternoon (2 hours):**
 - Community engagement (reply to comments)
 - Content calendar planning
-- Analytics review (Echo prepared report)
+- Analytics review (OpenClaw prepared report)
 
-**Echo tasks running:**
+**OpenClaw tasks running:**
 - Monitor SC news 24/7
 - Draft tomorrow's tweets
 - Track follower growth
@@ -363,7 +363,7 @@
 - Cross-promotion work
 - Week-ahead content planning
 
-**Echo tasks running:**
+**OpenClaw tasks running:**
 - Analyze this week's engagement
 - Identify trending topics for next week
 - Queue newsletter for Monday send
@@ -376,7 +376,7 @@
 **Option B:** Work on whichever needs attention (3-5 hours max)  
 **Option C:** Strategic work (neither business, just planning)
 
-**Echo tasks running:**
+**OpenClaw tasks running:**
 - Generate week's metrics for both businesses
 - Prepare Sunday review materials
 
@@ -393,7 +393,7 @@
 
 **Afternoon:** OFF (mandatory rest)
 
-**Echo prepares:**
+**OpenClaw prepares:**
 - Weekly summary report (both businesses)
 - Next week's priorities
 - Resource allocation recommendations
@@ -483,7 +483,7 @@
 
 ✅ **Different skill sets:** Content creation ≠ client delivery (variety prevents burnout)  
 ✅ **Different days:** Hard context boundaries reduce mental overhead  
-✅ **Echo automation:** 40-55% time savings makes dual-track viable  
+✅ **OpenClaw automation:** 40-55% time savings makes dual-track viable  
 ✅ **Cash flow synergy:** Consulting funds StantonTimes growth  
 ✅ **Risk diversification:** If one fails, the other might succeed  
 
@@ -507,13 +507,13 @@
 - Monthly honest reviews (no lying to yourself)
 - Willingness to pause one if it's not working
 
-**From Echo:**
+**From OpenClaw:**
 - Maximum automation on both businesses
 - Strict enforcement of day boundaries
 - Weekly metrics reports
 - Proactive problem identification
 
-**Reality check:** This is ambitious. Most people fail at dual-tracking. But with Echo + structured approach + honest reviews, it's doable.
+**Reality check:** This is ambitious. Most people fail at dual-tracking. But with OpenClaw + structured approach + honest reviews, it's doable.
 
 ---
 
@@ -546,7 +546,7 @@
 **Months 1-3:** Consulting only (15h/week)
 - Get to $5K/month revenue
 - Build cash reserves
-- Validate Echo's value
+- Validate OpenClaw's value
 
 **Months 4-6:** Add StantonTimes (now 10h/week)
 - Funded by consulting profits

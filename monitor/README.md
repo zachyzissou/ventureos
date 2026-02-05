@@ -5,7 +5,7 @@
 
 ## What is Monitor-Agent?
 
-A self-healing validation system that continuously monitors all Echo systems (infrastructure, data integrity, business units), automatically detects issues, attempts self-healing, and escalates only when necessary.
+A self-healing validation system that continuously monitors all OpenClaw systems (infrastructure, data integrity, business units), automatically detects issues, attempts self-healing, and escalates only when necessary.
 
 **Goal:** 99.9% uptime with 95%+ auto-healing rate and <1 manual intervention per week.
 

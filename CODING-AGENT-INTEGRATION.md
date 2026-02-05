@@ -110,7 +110,7 @@ npx codex exec --sandbox workspace-write \
    It should monitor failed authentication attempts and auto-rotate credentials."
 ```
 
-**When Echo uses this:**
+**When OpenClaw uses this:**
 - Creating new detectors/validators/healers that follow established patterns
 - Generating configuration schemas
 - Creating new API endpoints
@@ -128,7 +128,7 @@ git diff | npx codex review
 npx codex review monitor/monitor/healers/new_healer.py
 ```
 
-**When Echo uses this:**
+**When OpenClaw uses this:**
 - Before committing major changes
 - After implementing a new feature
 - When quality score needs validation
@@ -142,7 +142,7 @@ cursor-agent --mode plan --print --output-format json \
   "Review the Phase Zero architecture and identify potential issues"
 ```
 
-**When Echo uses this:**
+**When OpenClaw uses this:**
 - Before starting a new phase
 - When stuck on architectural decisions
 - For deep code reviews (like we did today)
@@ -157,7 +157,7 @@ npx codex exec --full-auto \
    Use pytest and follow the pattern in test_healers.py"
 ```
 
-**When Echo uses this:**
+**When OpenClaw uses this:**
 - After implementing new modules
 - When test coverage is incomplete
 - For generating edge case tests
@@ -172,7 +172,7 @@ cursor-agent --print --output-format json \
    following Google style guide"
 ```
 
-**When Echo uses this:**
+**When OpenClaw uses this:**
 - After completing a module
 - Before marking a phase complete
 - When documentation is lacking
@@ -183,24 +183,24 @@ cursor-agent --print --output-format json \
 
 ### Current Workflow (Without Coding Agents)
 ```
-1. Echo analyzes requirement
-2. Echo writes code directly
-3. Echo writes tests
-4. Echo runs tests
-5. Echo commits
+1. OpenClaw analyzes requirement
+2. OpenClaw writes code directly
+3. OpenClaw writes tests
+4. OpenClaw runs tests
+5. OpenClaw commits
 ```
 
 ### Enhanced Workflow (With Coding Agents)
 
 ```
-1. Echo analyzes requirement
-2. **Echo uses Cursor Agent (plan mode) to validate approach**
-3. Echo generates boilerplate with Codex
-4. Echo customizes the generated code
-5. **Echo uses Codex to generate test suite**
-6. Echo runs tests
-7. **Echo uses Codex review before committing**
-8. Echo commits
+1. OpenClaw analyzes requirement
+2. **OpenClaw uses Cursor Agent (plan mode) to validate approach**
+3. OpenClaw generates boilerplate with Codex
+4. OpenClaw customizes the generated code
+5. **OpenClaw uses Codex to generate test suite**
+6. OpenClaw runs tests
+7. **OpenClaw uses Codex review before committing**
+8. OpenClaw commits
 ```
 
 ### Sub-Agent Delegation Pattern
@@ -218,7 +218,7 @@ cursor-agent --workspace /Users/zachgonser/clawd/monitor \
 cursor-agent --continue
 ```
 
-**Echo monitors the session and integrates results** rather than doing all the work.
+**OpenClaw monitors the session and integrates results** rather than doing all the work.
 
 ---
 
@@ -258,7 +258,7 @@ export CURSOR_API_KEY="your-key-here"
 
 ### What We Did Manually
 ```python
-# Echo wrote GatewayHealer directly (3.2KB, 10 minutes)
+# OpenClaw wrote GatewayHealer directly (3.2KB, 10 minutes)
 class GatewayHealer(BaseHealer):
     async def heal(self, issue: Issue) -> HealResult:
         # ... implementation ...
@@ -269,7 +269,7 @@ class GatewayHealer(BaseHealer):
 # Generate the entire healer in 30 seconds
 npx codex exec --sandbox workspace-write \
   "Create a GatewayHealer class that inherits from BaseHealer. \
-   It should restart the gateway daemon using 'clawdbot gateway stop/start'. \
+   It should restart the gateway daemon using 'openclaw gateway stop/start'. \
    Include comprehensive error handling, logging, and a 30s timeout. \
    Follow the same pattern as the BaseHealer in monitor/healer.py"
 

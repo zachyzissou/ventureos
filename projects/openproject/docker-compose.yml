@@ -1,0 +1,41 @@
+# version removed
+services:
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=openproject
+      - POSTGRES_USER=openproject
+      - POSTGRES_PASSWORD=openproject
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  cache:
+    image: redis:alpine
+    restart: unless-stopped
+    command: --maxmemory 256mb
+    volumes:
+      - redis_data:/data
+
+  openproject:
+    image: openproject/community:13
+    environment:
+      - DATABASE_URL=postgres://openproject:openproject@db/openproject
+      - RAILS_CACHE_STORE=redis://cache:6379/0
+      - SECRET_KEY_BASE=e74400d337ba5039b66f5f06930298bc83d8dceee80faeaa7eb646750deb25168473c6ebe9b0072376f821ff59f8873d46dc07a8c516fbd8ebb8c85b79fed3c7
+      - OPENPROJECT_HTTPS=false
+      - OPENPROJECT_HOST__NAME=localhost
+      - OPENPROJECT_PORT=7211
+    ports:
+      - "127.0.0.1::80"
+    volumes:
+      - assets:/var/openproject/assets
+    depends_on:
+      - db
+      - cache
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  redis_data:
+  assets:

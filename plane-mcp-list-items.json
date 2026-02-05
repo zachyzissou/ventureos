@@ -1,0 +1,29 @@
+{
+  "workspace_id": "b831c877-ea93-4fda-8324-a6c9fbf6334a",
+  "projects": [
+    {
+      "name": "Plane Platform Improvements",
+      "project_id": "b7824695-65e5-4da6-ba57-3f7ac172266d"
+    },
+    {
+      "name": "7-inch Dashboard", 
+      "project_id": "3ba363f7-0d24-43e8-b2a4-d40009a91287"
+    },
+    {
+      "name": "CLI Agent Capabilities",
+      "project_id": "50f92be3-a93b-42eb-8a75-6cc8de49a2e4"
+    },
+    {
+      "name": "Queue Management System",
+      "project_id": "3fde0f58-175e-4235-9f3f-933ec7776937"
+    },
+    {
+      "name": "SlurpNet Ops & Knowledge",
+      "project_id": "d9864c6c-4878-4439-8822-bbb8d1f07364"
+    },
+    {
+      "name": "OpenClaw Autonomy Infrastructure",
+      "project_id": "ee9b9bdb-0300-4b7e-a8f8-e7da904a62aa"
+    }
+  ]
+}

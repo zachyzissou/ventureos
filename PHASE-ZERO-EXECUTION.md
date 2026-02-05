@@ -123,7 +123,7 @@ Build robust orchestration system for Codex/Cursor instead of manual prompts.
 ### Integration Strategy
 
 **Parallel Execution:**
-- Echo continues Days 6-7 manually (~1-1.5 hours)
+- OpenClaw continues Days 6-7 manually (~1-1.5 hours)
 - Sub-agent builds framework (1-2 weeks)
 - Framework ready for Phase 1+ development
 
@@ -151,7 +151,7 @@ Three validation layers synthesized from existing architecture:
 ### Layer 1: Infrastructure Validation
 
 **What We Monitor:**
-- Gateway health (Echo daemon status, API responsiveness)
+- Gateway health (OpenClaw daemon status, API responsiveness)
 - Cron jobs (execution status, success/failure, timing)
 - API integrations (Anthropic, Discord, Twitter, GitHub)
 - Storage & memory (disk space, file integrity, git status)
@@ -161,8 +161,8 @@ Three validation layers synthesized from existing architecture:
 ```yaml
 gateway_health:
   frequency: 60s
-  test: "clawdbot status | grep 'Running'"
-  auto_fix: "clawdbot gateway restart"
+  test: "openclaw status | grep 'Running'"
+  auto_fix: "openclaw gateway restart"
   escalate: P0 if restart fails
 
 cron_job_health:
@@ -396,7 +396,7 @@ class Detector:
     async def check_gateway_health(self) -> Issue | None:
         """Test gateway RPC endpoint, response time"""
         try:
-            result = await run_cmd("clawdbot status")
+            result = await run_cmd("openclaw status")
             if "Running" not in result:
                 return Issue(
                     severity="P0",
@@ -496,11 +496,11 @@ class Healer:
     async def restart_gateway(self, issue: Issue) -> HealResult:
         """Restart the Gateway daemon"""
         try:
-            await run_cmd("clawdbot gateway restart")
+            await run_cmd("openclaw gateway restart")
             await asyncio.sleep(5)
             
             # Verify fix
-            result = await run_cmd("clawdbot status")
+            result = await run_cmd("openclaw status")
             if "Running" in result:
                 return HealResult(
                     success=True,
@@ -899,7 +899,7 @@ sqlite3 "$MONITOR_DB" "
 
 # Log result
 if [ $EXIT_CODE -ne 0 ]; then
-    echo "$(date) - $JOB_NAME FAILED (exit $EXIT_CODE)" >> /tmp/cron-failures.log
+    openclaw "$(date) - $JOB_NAME FAILED (exit $EXIT_CODE)" >> /tmp/cron-failures.log
 fi
 
 exit $EXIT_CODE

@@ -5,9 +5,9 @@
 # Don't exit on error - we want to complete all checks
 set +e
 
-echo "🔒 Proactive Agent Security Audit"
-echo "=================================="
-echo ""
+openclaw "🔒 Proactive Agent Security Audit"
+openclaw "=================================="
+openclaw ""
 
 ISSUES=0
 WARNINGS=0
@@ -19,21 +19,21 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 warn() {
-    echo -e "${YELLOW}⚠️  WARNING: $1${NC}"
+    openclaw -e "${YELLOW}⚠️  WARNING: $1${NC}"
     ((WARNINGS++))
 }
 
 fail() {
-    echo -e "${RED}❌ ISSUE: $1${NC}"
+    openclaw -e "${RED}❌ ISSUE: $1${NC}"
     ((ISSUES++))
 }
 
 pass() {
-    echo -e "${GREEN}✅ $1${NC}"
+    openclaw -e "${GREEN}✅ $1${NC}"
 }
 
 # 1. Check credential file permissions
-echo "📁 Checking credential files..."
+openclaw "📁 Checking credential files..."
 if [ -d ".credentials" ]; then
     for f in .credentials/*; do
         if [ -f "$f" ]; then
@@ -46,12 +46,12 @@ if [ -d ".credentials" ]; then
         fi
     done
 else
-    echo "   No .credentials directory found"
+    openclaw "   No .credentials directory found"
 fi
-echo ""
+openclaw ""
 
 # 2. Check for exposed secrets in common files
-echo "🔍 Scanning for exposed secrets..."
+openclaw "🔍 Scanning for exposed secrets..."
 SECRET_PATTERNS="(api[_-]?key|apikey|secret|password|token|auth).*[=:].{10,}"
 for f in $(ls *.md *.json *.yaml *.yml .env* 2>/dev/null || true); do
     if [ -f "$f" ]; then
@@ -62,11 +62,11 @@ for f in $(ls *.md *.json *.yaml *.yml .env* 2>/dev/null || true); do
     fi
 done
 pass "Secret scan complete"
-echo ""
+openclaw ""
 
-# 3. Check gateway security (if clawdbot config exists)
-echo "🌐 Checking gateway configuration..."
-CONFIG_FILE="$HOME/.clawdbot/clawdbot.json"
+# 3. Check gateway security (if openclaw config exists)
+openclaw "🌐 Checking gateway configuration..."
+CONFIG_FILE="$HOME/.openclaw/openclaw.json"
 if [ -f "$CONFIG_FILE" ]; then
     # Check if gateway is bound to loopback
     if grep -q '"bind".*"loopback"' "$CONFIG_FILE"; then
@@ -80,12 +80,12 @@ if [ -f "$CONFIG_FILE" ]; then
         pass "Telegram DM policy uses pairing"
     fi
 else
-    echo "   No clawdbot config found"
+    openclaw "   No openclaw config found"
 fi
-echo ""
+openclaw ""
 
 # 4. Check AGENTS.md for security rules
-echo "📋 Checking AGENTS.md for security rules..."
+openclaw "📋 Checking AGENTS.md for security rules..."
 if [ -f "AGENTS.md" ]; then
     if grep -qi "injection\|external content\|never execute" "AGENTS.md"; then
         pass "AGENTS.md contains injection defense rules"
@@ -101,22 +101,22 @@ if [ -f "AGENTS.md" ]; then
 else
     warn "No AGENTS.md found"
 fi
-echo ""
+openclaw ""
 
 # 5. Check for skills from untrusted sources
-echo "📦 Checking installed skills..."
+openclaw "📦 Checking installed skills..."
 SKILL_DIR="skills"
 if [ -d "$SKILL_DIR" ]; then
     skill_count=$(find "$SKILL_DIR" -maxdepth 1 -type d | wc -l)
-    echo "   Found $((skill_count - 1)) installed skills"
+    openclaw "   Found $((skill_count - 1)) installed skills"
     pass "Review skills manually for trustworthiness"
 else
-    echo "   No skills directory found"
+    openclaw "   No skills directory found"
 fi
-echo ""
+openclaw ""
 
 # 6. Check .gitignore
-echo "📄 Checking .gitignore..."
+openclaw "📄 Checking .gitignore..."
 if [ -f ".gitignore" ]; then
     if grep -q "\.credentials" ".gitignore"; then
         pass ".credentials is gitignored"
@@ -132,18 +132,18 @@ if [ -f ".gitignore" ]; then
 else
     warn "No .gitignore found"
 fi
-echo ""
+openclaw ""
 
 # Summary
-echo "=================================="
-echo "📊 Summary"
-echo "=================================="
+openclaw "=================================="
+openclaw "📊 Summary"
+openclaw "=================================="
 if [ $ISSUES -eq 0 ] && [ $WARNINGS -eq 0 ]; then
-    echo -e "${GREEN}All checks passed!${NC}"
+    openclaw -e "${GREEN}All checks passed!${NC}"
 elif [ $ISSUES -eq 0 ]; then
-    echo -e "${YELLOW}$WARNINGS warning(s), 0 issues${NC}"
+    openclaw -e "${YELLOW}$WARNINGS warning(s), 0 issues${NC}"
 else
-    echo -e "${RED}$ISSUES issue(s), $WARNINGS warning(s)${NC}"
+    openclaw -e "${RED}$ISSUES issue(s), $WARNINGS warning(s)${NC}"
 fi
-echo ""
-echo "Run this audit periodically to maintain security."
+openclaw ""
+openclaw "Run this audit periodically to maintain security."

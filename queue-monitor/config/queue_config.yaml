@@ -1,0 +1,42 @@
+queues:
+  - name: order_queue
+    type: redis
+    connection:
+      host: localhost
+      port: 6379
+    monitoring:
+      enabled: true
+      metrics:
+        - size
+        - processing_time
+    alerts:
+      size_threshold: 500
+      processing_time_threshold: 30
+
+  - name: payment_queue
+    type: redis
+    connection:
+      host: localhost
+      port: 6379
+    monitoring:
+      enabled: true
+      metrics:
+        - size
+        - error_rate
+    alerts:
+      size_threshold: 200
+      error_rate_threshold: 0.05
+
+  - name: shipping_queue
+    type: redis
+    connection:
+      host: localhost
+      port: 6379
+    monitoring:
+      enabled: true
+      metrics:
+        - size
+        - latency
+    alerts:
+      size_threshold: 300
+      latency_threshold: 45

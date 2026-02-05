@@ -26,7 +26,7 @@
 
 ### 1.1 What to Monitor
 
-**Clawdbot Gateway Daemon:**
+**OpenClaw Gateway Daemon:**
 - Process running status
 - RPC endpoint responsiveness
 - WebSocket connection health
@@ -39,7 +39,7 @@
 #### Test 1: Process Health Check
 ```bash
 # Check if gateway is running
-clawdbot gateway status
+openclaw gateway status
 
 # Expected output contains: "Running" or "Active"
 # Exit code: 0 = healthy, non-zero = unhealthy
@@ -81,7 +81,7 @@ curl -X POST http://localhost:18789/rpc \
 #### Test 4: Resource Usage
 ```bash
 # Check gateway memory/CPU usage
-ps aux | grep clawdbot | grep -v grep | awk '{print "CPU: "$3"% MEM: "$4"%"}'
+ps aux | grep openclaw | grep -v grep | awk '{print "CPU: "$3"% MEM: "$4"%"}'
 
 # Expected: CPU <50%, Memory <1GB (varies by workload)
 ```
@@ -93,7 +93,7 @@ ps aux | grep clawdbot | grep -v grep | awk '{print "CPU: "$3"% MEM: "$4"%"}'
 #### Test 5: Error Log Analysis
 ```bash
 # Check for critical errors in logs (last 5 minutes)
-tail -n 500 ~/.clawdbot/logs/gateway.log | grep -i "ERROR\|FATAL\|CRASH" | tail -20
+tail -n 500 ~/.openclaw/logs/gateway.log | grep -i "ERROR\|FATAL\|CRASH" | tail -20
 
 # Expected: No FATAL/CRASH messages
 ```
@@ -126,29 +126,29 @@ tail -n 500 ~/.clawdbot/logs/gateway.log | grep -i "ERROR\|FATAL\|CRASH" | tail 
 #!/bin/bash
 # soft_restart_gateway.sh
 
-echo "[$(date)] Starting soft restart of gateway..."
+openclaw "[$(date)] Starting soft restart of gateway..."
 
 # Stop gracefully
-clawdbot gateway stop
+openclaw gateway stop
 sleep 5
 
 # Verify stopped
-if pgrep -f clawdbot > /dev/null; then
-    echo "[$(date)] Gateway still running, forcing kill..."
-    pkill -9 -f clawdbot
+if pgrep -f openclaw > /dev/null; then
+    openclaw "[$(date)] Gateway still running, forcing kill..."
+    pkill -9 -f openclaw
     sleep 2
 fi
 
 # Start gateway
-clawdbot gateway start
+openclaw gateway start
 
 # Verify started
 sleep 10
-if clawdbot gateway status | grep -q "Running"; then
-    echo "[$(date)] Gateway restarted successfully"
+if openclaw gateway status | grep -q "Running"; then
+    openclaw "[$(date)] Gateway restarted successfully"
     exit 0
 else
-    echo "[$(date)] Gateway restart FAILED"
+    openclaw "[$(date)] Gateway restart FAILED"
     exit 1
 fi
 ```
@@ -161,25 +161,25 @@ fi
 #!/bin/bash
 # full_reset_gateway.sh
 
-echo "[$(date)] FULL RESET - Gateway unresponsive after soft restart"
+openclaw "[$(date)] FULL RESET - Gateway unresponsive after soft restart"
 
-# Kill all clawdbot processes
-pkill -9 -f clawdbot
+# Kill all openclaw processes
+pkill -9 -f openclaw
 
 # Clear potentially corrupted state
-rm -f ~/.clawdbot/state/*.lock
-rm -f /tmp/clawdbot-*.sock
+rm -f ~/.openclaw/state/*.lock
+rm -f /tmp/openclaw-*.sock
 
 # Restart
-clawdbot gateway start
+openclaw gateway start
 
 # Extended verification (30s)
 sleep 30
-if clawdbot gateway status | grep -q "Running"; then
-    echo "[$(date)] Full reset successful"
+if openclaw gateway status | grep -q "Running"; then
+    openclaw "[$(date)] Full reset successful"
     exit 0
 else
-    echo "[$(date)] CRITICAL: Full reset FAILED - MANUAL INTERVENTION REQUIRED"
+    openclaw "[$(date)] CRITICAL: Full reset FAILED - MANUAL INTERVENTION REQUIRED"
     exit 1
 fi
 ```
@@ -328,7 +328,7 @@ STATUS_FILE="/tmp/cron-status.log"
 
 # Get last run timestamp
 LAST_RUN=$(grep "$JOB_ID" "$STATUS_FILE" | tail -1 | awk '{print $1" "$2}')
-LAST_RUN_EPOCH=$(date -d "$LAST_RUN" +%s 2>/dev/null || echo 0)
+LAST_RUN_EPOCH=$(date -d "$LAST_RUN" +%s 2>/dev/null || openclaw 0)
 NOW_EPOCH=$(date +%s)
 MINUTES_SINCE=$((($NOW_EPOCH - $LAST_RUN_EPOCH) / 60))
 
@@ -337,10 +337,10 @@ EXPECTED_INTERVAL=$(jq -r ".cron_jobs[] | select(.id==\"$JOB_ID\") | .expected_i
 
 # Check if overdue
 if [ $MINUTES_SINCE -gt $((EXPECTED_INTERVAL + 5)) ]; then
-    echo "OVERDUE: $JOB_ID last ran $MINUTES_SINCE minutes ago (expected every $EXPECTED_INTERVAL min)"
+    openclaw "OVERDUE: $JOB_ID last ran $MINUTES_SINCE minutes ago (expected every $EXPECTED_INTERVAL min)"
     exit 1
 else
-    echo "OK: $JOB_ID ran $MINUTES_SINCE minutes ago"
+    openclaw "OK: $JOB_ID ran $MINUTES_SINCE minutes ago"
     exit 0
 fi
 ```
@@ -365,17 +365,17 @@ FAILURES=$(grep "$JOB_ID FAILED" /tmp/cron-status.log | \
 
 TOTAL=$((SUCCESSES + FAILURES))
 if [ $TOTAL -eq 0 ]; then
-    echo "NO EXECUTIONS in last $HOURS hours"
+    openclaw "NO EXECUTIONS in last $HOURS hours"
     exit 1
 fi
 
 SUCCESS_RATE=$((SUCCESSES * 100 / TOTAL))
 
 if [ $SUCCESS_RATE -lt 90 ]; then
-    echo "LOW SUCCESS RATE: $SUCCESS_RATE% ($SUCCESSES/$TOTAL) in last $HOURS hours"
+    openclaw "LOW SUCCESS RATE: $SUCCESS_RATE% ($SUCCESSES/$TOTAL) in last $HOURS hours"
     exit 1
 else
-    echo "OK: $SUCCESS_RATE% success rate ($SUCCESSES/$TOTAL)"
+    openclaw "OK: $SUCCESS_RATE% success rate ($SUCCESSES/$TOTAL)"
     exit 0
 fi
 ```
@@ -400,18 +400,18 @@ LAST_DURATION=$(grep "$JOB_ID" "$LOG_FILE" | tail -1 | awk '{print $3}')
 TIMEOUT=$(jq -r ".cron_jobs[] | select(.id==\"$JOB_ID\") | .timeout_min" /path/to/job-config.json)
 
 # Check if last run exceeded timeout
-if [ $(echo "$LAST_DURATION > $TIMEOUT" | bc) -eq 1 ]; then
-    echo "TIMEOUT: $JOB_ID took ${LAST_DURATION}min (timeout: ${TIMEOUT}min)"
+if [ $(openclaw "$LAST_DURATION > $TIMEOUT" | bc) -eq 1 ]; then
+    openclaw "TIMEOUT: $JOB_ID took ${LAST_DURATION}min (timeout: ${TIMEOUT}min)"
     exit 1
 fi
 
 # Check if last run was 3x average (performance degradation)
-if [ $(echo "$LAST_DURATION > ($AVG_DURATION * 3)" | bc) -eq 1 ]; then
-    echo "SLOW: $JOB_ID took ${LAST_DURATION}min (avg: ${AVG_DURATION}min)"
+if [ $(openclaw "$LAST_DURATION > ($AVG_DURATION * 3)" | bc) -eq 1 ]; then
+    openclaw "SLOW: $JOB_ID took ${LAST_DURATION}min (avg: ${AVG_DURATION}min)"
     exit 1
 fi
 
-echo "OK: Duration ${LAST_DURATION}min (avg: ${AVG_DURATION}min)"
+openclaw "OK: Duration ${LAST_DURATION}min (avg: ${AVG_DURATION}min)"
 exit 0
 ```
 
@@ -438,7 +438,7 @@ ERROR_LOG="/tmp/cron-errors.log"
 START_TIME=$(date +%s)
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
-echo "[$TIMESTAMP] Starting $JOB_ID" >> "$STATUS_LOG"
+openclaw "[$TIMESTAMP] Starting $JOB_ID" >> "$STATUS_LOG"
 
 # Execute command, capture output
 OUTPUT_FILE=$(mktemp)
@@ -454,11 +454,11 @@ END_TIME=$(date +%s)
 DURATION=$(((END_TIME - START_TIME) / 60))
 
 # Log results
-echo "[$TIMESTAMP] $JOB_ID $STATUS (exit $EXIT_CODE, ${DURATION}min)" >> "$STATUS_LOG"
-echo "[$TIMESTAMP] $JOB_ID $DURATION" >> "$DURATION_LOG"
+openclaw "[$TIMESTAMP] $JOB_ID $STATUS (exit $EXIT_CODE, ${DURATION}min)" >> "$STATUS_LOG"
+openclaw "[$TIMESTAMP] $JOB_ID $DURATION" >> "$DURATION_LOG"
 
 if [ $EXIT_CODE -ne 0 ]; then
-    echo "[$TIMESTAMP] $JOB_ID ERROR:" >> "$ERROR_LOG"
+    openclaw "[$TIMESTAMP] $JOB_ID ERROR:" >> "$ERROR_LOG"
     tail -50 "$OUTPUT_FILE" >> "$ERROR_LOG"
     
     # Notify monitor agent
@@ -489,16 +489,16 @@ exit $EXIT_CODE
 
 JOB_ID=$1
 
-echo "[$(date)] Attempting to re-enable $JOB_ID..."
+openclaw "[$(date)] Attempting to re-enable $JOB_ID..."
 
 # Check if job is disabled in crontab
 if crontab -l | grep -q "^#.*$JOB_ID"; then
     # Uncomment the job
     crontab -l | sed "s/^#\(.*$JOB_ID.*\)/\1/" | crontab -
-    echo "[$(date)] Re-enabled $JOB_ID in crontab"
+    openclaw "[$(date)] Re-enabled $JOB_ID in crontab"
     exit 0
 else
-    echo "[$(date)] $JOB_ID not found or already enabled"
+    openclaw "[$(date)] $JOB_ID not found or already enabled"
     exit 1
 fi
 ```
@@ -513,7 +513,7 @@ fi
 
 JOB_ID=$1
 
-echo "[$(date)] Force executing $JOB_ID..."
+openclaw "[$(date)] Force executing $JOB_ID..."
 
 # Get job command from config
 COMMAND=$(jq -r ".cron_jobs[] | select(.id==\"$JOB_ID\") | .command" /path/to/job-config.json)
@@ -521,7 +521,7 @@ COMMAND=$(jq -r ".cron_jobs[] | select(.id==\"$JOB_ID\") | .command" /path/to/jo
 # Execute with wrapper
 /path/to/cron-wrapper.sh "$JOB_ID" "$COMMAND" &
 
-echo "[$(date)] $JOB_ID triggered manually (PID: $!)"
+openclaw "[$(date)] $JOB_ID triggered manually (PID: $!)"
 ```
 
 **Trigger:** Job overdue >30 min for critical jobs, >2 hours for non-critical  
@@ -534,19 +534,19 @@ echo "[$(date)] $JOB_ID triggered manually (PID: $!)"
 
 JOB_ID=$1
 
-echo "[$(date)] Killing hung job: $JOB_ID..."
+openclaw "[$(date)] Killing hung job: $JOB_ID..."
 
 # Find PIDs running this job
 PIDS=$(ps aux | grep "$JOB_ID" | grep -v grep | awk '{print $2}')
 
 if [ -z "$PIDS" ]; then
-    echo "[$(date)] No running processes found for $JOB_ID"
+    openclaw "[$(date)] No running processes found for $JOB_ID"
     exit 1
 fi
 
 # Kill gracefully first
 for PID in $PIDS; do
-    echo "[$(date)] Sending SIGTERM to PID $PID..."
+    openclaw "[$(date)] Sending SIGTERM to PID $PID..."
     kill $PID
 done
 
@@ -555,12 +555,12 @@ sleep 10
 # Force kill if still running
 for PID in $PIDS; do
     if ps -p $PID > /dev/null; then
-        echo "[$(date)] Force killing PID $PID..."
+        openclaw "[$(date)] Force killing PID $PID..."
         kill -9 $PID
     fi
 done
 
-echo "[$(date)] Killed hung job: $JOB_ID"
+openclaw "[$(date)] Killed hung job: $JOB_ID"
 ```
 
 **Trigger:** Job duration > 2x timeout threshold  
@@ -587,7 +587,7 @@ echo "[$(date)] Killed hung job: $JOB_ID"
 #!/bin/bash
 # test_anthropic_auth.sh
 
-API_KEY=$(cat ~/.clawdbot/credentials/anthropic.key)
+API_KEY=$(cat ~/.openclaw/credentials/anthropic.key)
 
 RESPONSE=$(curl -s -w "\n%{http_code}" \
     -X POST https://api.anthropic.com/v1/messages \
@@ -600,20 +600,20 @@ RESPONSE=$(curl -s -w "\n%{http_code}" \
         "messages": [{"role": "user", "content": "ping"}]
     }')
 
-HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-BODY=$(echo "$RESPONSE" | head -n -1)
+HTTP_CODE=$(openclaw "$RESPONSE" | tail -1)
+BODY=$(openclaw "$RESPONSE" | head -n -1)
 
 if [ "$HTTP_CODE" = "200" ]; then
-    echo "OK: Anthropic API responding"
+    openclaw "OK: Anthropic API responding"
     exit 0
 elif [ "$HTTP_CODE" = "401" ]; then
-    echo "AUTH FAILURE: Invalid API key"
+    openclaw "AUTH FAILURE: Invalid API key"
     exit 2
 elif [ "$HTTP_CODE" = "429" ]; then
-    echo "RATE LIMITED: $BODY"
+    openclaw "RATE LIMITED: $BODY"
     exit 3
 else
-    echo "ERROR: HTTP $HTTP_CODE - $BODY"
+    openclaw "ERROR: HTTP $HTTP_CODE - $BODY"
     exit 1
 fi
 ```
@@ -638,13 +638,13 @@ REMAINING=$(curl -s -I -X POST https://api.anthropic.com/v1/messages \
 
 USAGE_PERCENT=$((100 - (REMAINING * 100 / LIMIT)))
 
-echo "Anthropic API: $REMAINING/$LIMIT requests remaining ($USAGE_PERCENT% used)"
+openclaw "Anthropic API: $REMAINING/$LIMIT requests remaining ($USAGE_PERCENT% used)"
 
 if [ $USAGE_PERCENT -gt 90 ]; then
-    echo "WARNING: 90%+ rate limit used"
+    openclaw "WARNING: 90%+ rate limit used"
     exit 1
 elif [ $USAGE_PERCENT -gt 80 ]; then
-    echo "CAUTION: 80%+ rate limit used"
+    openclaw "CAUTION: 80%+ rate limit used"
     exit 0
 else
     exit 0
@@ -675,13 +675,13 @@ RESPONSE=$(curl -s -X POST https://api.anthropic.com/v1/messages \
 END=$(date +%s%3N)
 LATENCY=$((END - START))
 
-echo "Anthropic API latency: ${LATENCY}ms"
+openclaw "Anthropic API latency: ${LATENCY}ms"
 
 if [ $LATENCY -gt 10000 ]; then
-    echo "SLOW: >10s response time"
+    openclaw "SLOW: >10s response time"
     exit 1
 elif [ $LATENCY -gt 5000 ]; then
-    echo "WARNING: >5s response time"
+    openclaw "WARNING: >5s response time"
     exit 0
 else
     exit 0
@@ -699,27 +699,27 @@ fi
 #!/bin/bash
 # test_twitter_auth.sh
 
-BEARER_TOKEN=$(cat ~/.clawdbot/credentials/twitter-bearer.token)
+BEARER_TOKEN=$(cat ~/.openclaw/credentials/twitter-bearer.token)
 
 RESPONSE=$(curl -s -w "\n%{http_code}" \
     -X GET "https://api.twitter.com/2/users/me" \
     -H "Authorization: Bearer $BEARER_TOKEN")
 
-HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-BODY=$(echo "$RESPONSE" | head -n -1)
+HTTP_CODE=$(openclaw "$RESPONSE" | tail -1)
+BODY=$(openclaw "$RESPONSE" | head -n -1)
 
 if [ "$HTTP_CODE" = "200" ]; then
-    echo "OK: Twitter API authenticated"
+    openclaw "OK: Twitter API authenticated"
     exit 0
 elif [ "$HTTP_CODE" = "401" ]; then
-    echo "AUTH FAILURE: Invalid bearer token"
+    openclaw "AUTH FAILURE: Invalid bearer token"
     exit 2
 elif [ "$HTTP_CODE" = "429" ]; then
-    RESET=$(echo "$BODY" | jq -r '.reset')
-    echo "RATE LIMITED: Resets at $RESET"
+    RESET=$(openclaw "$BODY" | jq -r '.reset')
+    openclaw "RATE LIMITED: Resets at $RESET"
     exit 3
 else
-    echo "ERROR: HTTP $HTTP_CODE - $BODY"
+    openclaw "ERROR: HTTP $HTTP_CODE - $BODY"
     exit 1
 fi
 ```
@@ -736,7 +736,7 @@ fi
 #!/bin/bash
 # check_twitter_rate_limits.sh
 
-BEARER_TOKEN=$(cat ~/.clawdbot/credentials/twitter-bearer.token)
+BEARER_TOKEN=$(cat ~/.openclaw/credentials/twitter-bearer.token)
 
 # Get rate limit status for key endpoints
 LIMITS=$(curl -s -X GET \
@@ -744,18 +744,18 @@ LIMITS=$(curl -s -X GET \
     -H "Authorization: Bearer $BEARER_TOKEN")
 
 # Parse critical endpoints
-TWEET_LIMIT=$(echo "$LIMITS" | jq '.resources.tweets."/tweets/:id".remaining')
-SEARCH_LIMIT=$(echo "$LIMITS" | jq '.resources.search."/search/tweets".remaining')
-USER_LIMIT=$(echo "$LIMITS" | jq '.resources.users."/users/:id".remaining')
+TWEET_LIMIT=$(openclaw "$LIMITS" | jq '.resources.tweets."/tweets/:id".remaining')
+SEARCH_LIMIT=$(openclaw "$LIMITS" | jq '.resources.search."/search/tweets".remaining')
+USER_LIMIT=$(openclaw "$LIMITS" | jq '.resources.users."/users/:id".remaining')
 
-echo "Twitter Rate Limits:"
-echo "  Tweets: $TWEET_LIMIT remaining"
-echo "  Search: $SEARCH_LIMIT remaining"
-echo "  Users: $USER_LIMIT remaining"
+openclaw "Twitter Rate Limits:"
+openclaw "  Tweets: $TWEET_LIMIT remaining"
+openclaw "  Search: $SEARCH_LIMIT remaining"
+openclaw "  Users: $USER_LIMIT remaining"
 
 # Check if any critical endpoint is low
 if [ $TWEET_LIMIT -lt 10 ] || [ $SEARCH_LIMIT -lt 10 ]; then
-    echo "WARNING: Critical rate limit low"
+    openclaw "WARNING: Critical rate limit low"
     exit 1
 else
     exit 0
@@ -773,23 +773,23 @@ fi
 #!/bin/bash
 # test_github_auth.sh
 
-GITHUB_TOKEN=$(cat ~/.clawdbot/credentials/github.token)
+GITHUB_TOKEN=$(cat ~/.openclaw/credentials/github.token)
 
 RESPONSE=$(curl -s -w "\n%{http_code}" \
     -X GET "https://api.github.com/user" \
     -H "Authorization: token $GITHUB_TOKEN" \
     -H "Accept: application/vnd.github.v3+json")
 
-HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+HTTP_CODE=$(openclaw "$RESPONSE" | tail -1)
 
 if [ "$HTTP_CODE" = "200" ]; then
-    echo "OK: GitHub API authenticated"
+    openclaw "OK: GitHub API authenticated"
     exit 0
 elif [ "$HTTP_CODE" = "401" ]; then
-    echo "AUTH FAILURE: Invalid GitHub token"
+    openclaw "AUTH FAILURE: Invalid GitHub token"
     exit 2
 else
-    echo "ERROR: HTTP $HTTP_CODE"
+    openclaw "ERROR: HTTP $HTTP_CODE"
     exit 1
 fi
 ```
@@ -803,19 +803,19 @@ fi
 #!/bin/bash
 # check_github_rate_limits.sh
 
-GITHUB_TOKEN=$(cat ~/.clawdbot/credentials/github.token)
+GITHUB_TOKEN=$(cat ~/.openclaw/credentials/github.token)
 
 LIMITS=$(curl -s -X GET "https://api.github.com/rate_limit" \
     -H "Authorization: token $GITHUB_TOKEN")
 
-CORE_REMAINING=$(echo "$LIMITS" | jq '.resources.core.remaining')
-CORE_LIMIT=$(echo "$LIMITS" | jq '.resources.core.limit')
+CORE_REMAINING=$(openclaw "$LIMITS" | jq '.resources.core.remaining')
+CORE_LIMIT=$(openclaw "$LIMITS" | jq '.resources.core.limit')
 USAGE_PERCENT=$((100 - (CORE_REMAINING * 100 / CORE_LIMIT)))
 
-echo "GitHub API: $CORE_REMAINING/$CORE_LIMIT requests remaining ($USAGE_PERCENT% used)"
+openclaw "GitHub API: $CORE_REMAINING/$CORE_LIMIT requests remaining ($USAGE_PERCENT% used)"
 
 if [ $USAGE_PERCENT -gt 90 ]; then
-    echo "WARNING: 90%+ rate limit used"
+    openclaw "WARNING: 90%+ rate limit used"
     exit 1
 else
     exit 0
@@ -833,23 +833,23 @@ fi
 #!/bin/bash
 # test_discord_gateway.sh
 
-DISCORD_TOKEN=$(cat ~/.clawdbot/credentials/discord.token)
+DISCORD_TOKEN=$(cat ~/.openclaw/credentials/discord.token)
 
 # Test REST API
 RESPONSE=$(curl -s -w "\n%{http_code}" \
     -X GET "https://discord.com/api/v10/users/@me" \
     -H "Authorization: Bot $DISCORD_TOKEN")
 
-HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+HTTP_CODE=$(openclaw "$RESPONSE" | tail -1)
 
 if [ "$HTTP_CODE" = "200" ]; then
-    echo "OK: Discord API authenticated"
+    openclaw "OK: Discord API authenticated"
     exit 0
 elif [ "$HTTP_CODE" = "401" ]; then
-    echo "AUTH FAILURE: Invalid Discord token"
+    openclaw "AUTH FAILURE: Invalid Discord token"
     exit 2
 else
-    echo "ERROR: HTTP $HTTP_CODE"
+    openclaw "ERROR: HTTP $HTTP_CODE"
     exit 1
 fi
 ```
@@ -866,39 +866,39 @@ fi
 # rotate_api_credential.sh <service>
 
 SERVICE=$1
-CRED_DIR=~/.clawdbot/credentials
+CRED_DIR=~/.openclaw/credentials
 
 case $SERVICE in
     anthropic)
-        echo "[$(date)] Rotating Anthropic API key..."
+        openclaw "[$(date)] Rotating Anthropic API key..."
         # Move old key to backup
         mv "$CRED_DIR/anthropic.key" "$CRED_DIR/anthropic.key.bak"
         # Get new key from secret manager or manual input
-        echo "NEW_API_KEY_HERE" > "$CRED_DIR/anthropic.key"
+        openclaw "NEW_API_KEY_HERE" > "$CRED_DIR/anthropic.key"
         # Test new key
         if ./test_anthropic_auth.sh; then
-            echo "[$(date)] Anthropic key rotated successfully"
+            openclaw "[$(date)] Anthropic key rotated successfully"
             exit 0
         else
             # Rollback
             mv "$CRED_DIR/anthropic.key.bak" "$CRED_DIR/anthropic.key"
-            echo "[$(date)] Rotation failed, rolled back"
+            openclaw "[$(date)] Rotation failed, rolled back"
             exit 1
         fi
         ;;
     twitter)
-        echo "[$(date)] Refreshing Twitter OAuth token..."
+        openclaw "[$(date)] Refreshing Twitter OAuth token..."
         # Re-authenticate using refresh token
         # (Implementation depends on OAuth flow)
         exit 0
         ;;
     github)
-        echo "[$(date)] Rotating GitHub token..."
+        openclaw "[$(date)] Rotating GitHub token..."
         # Similar to Anthropic
         exit 0
         ;;
     discord)
-        echo "[$(date)] Rotating Discord token..."
+        openclaw "[$(date)] Rotating Discord token..."
         # Similar to Anthropic
         exit 0
         ;;
@@ -920,22 +920,22 @@ RETRY=0
 DELAY=1
 
 while [ $RETRY -lt $MAX_RETRIES ]; do
-    echo "[$(date)] Attempt $((RETRY+1))/$MAX_RETRIES for $API..."
+    openclaw "[$(date)] Attempt $((RETRY+1))/$MAX_RETRIES for $API..."
     
     if eval "$COMMAND"; then
-        echo "[$(date)] Success on attempt $((RETRY+1))"
+        openclaw "[$(date)] Success on attempt $((RETRY+1))"
         exit 0
     fi
     
     RETRY=$((RETRY+1))
     if [ $RETRY -lt $MAX_RETRIES ]; then
-        echo "[$(date)] Failed, retrying in ${DELAY}s..."
+        openclaw "[$(date)] Failed, retrying in ${DELAY}s..."
         sleep $DELAY
         DELAY=$((DELAY * 2))  # Exponential backoff
     fi
 done
 
-echo "[$(date)] All retries exhausted for $API"
+openclaw "[$(date)] All retries exhausted for $API"
 exit 1
 ```
 
@@ -951,11 +951,11 @@ API=$1
 DURATION=$2
 THROTTLE_FILE="/tmp/api-throttle-$API.lock"
 
-echo "[$(date)] Throttling $API for $DURATION minutes..."
-echo "$(date -d "+$DURATION minutes" +%s)" > "$THROTTLE_FILE"
+openclaw "[$(date)] Throttling $API for $DURATION minutes..."
+openclaw "$(date -d "+$DURATION minutes" +%s)" > "$THROTTLE_FILE"
 
 # Monitor-Agent checks this file before making non-critical API calls
-echo "[$(date)] $API throttled until $(date -d "+$DURATION minutes")"
+openclaw "[$(date)] $API throttled until $(date -d "+$DURATION minutes")"
 ```
 
 **Trigger:** Rate limit >85% OR sustained 429 errors  
@@ -989,16 +989,16 @@ echo "[$(date)] $API throttled until $(date -d "+$DURATION minutes")"
 # Get disk usage percentage
 USAGE=$(df -h / | tail -1 | awk '{print $5}' | sed 's/%//')
 
-echo "Disk usage: $USAGE%"
+openclaw "Disk usage: $USAGE%"
 
 if [ $USAGE -gt 95 ]; then
-    echo "CRITICAL: Disk >95% full"
+    openclaw "CRITICAL: Disk >95% full"
     exit 2
 elif [ $USAGE -gt 90 ]; then
-    echo "WARNING: Disk >90% full"
+    openclaw "WARNING: Disk >90% full"
     exit 1
 elif [ $USAGE -gt 80 ]; then
-    echo "CAUTION: Disk >80% full"
+    openclaw "CAUTION: Disk >80% full"
     exit 0
 else
     exit 0
@@ -1016,19 +1016,19 @@ fi
 
 CRITICAL_DIRS=(
     "/Users/zachgonser/clawd"
-    "/Users/zachgonser/.clawdbot"
+    "/Users/zachgonser/.openclaw"
     "/Users/zachgonser/Obsidian"
     "/tmp"
 )
 
 for DIR in "${CRITICAL_DIRS[@]}"; do
     SIZE=$(du -sh "$DIR" 2>/dev/null | awk '{print $1}')
-    echo "$DIR: $SIZE"
+    openclaw "$DIR: $SIZE"
     
     # Check if >10GB (adjust thresholds per directory)
     SIZE_MB=$(du -sm "$DIR" 2>/dev/null | awk '{print $1}')
     if [ $SIZE_MB -gt 10240 ]; then
-        echo "WARNING: $DIR exceeds 10GB"
+        openclaw "WARNING: $DIR exceeds 10GB"
     fi
 done
 ```
@@ -1047,20 +1047,20 @@ BACKUP_LOG="$BACKUP_DIR/backup.log"
 
 # Check last backup timestamp
 LAST_BACKUP=$(tail -1 "$BACKUP_LOG" | awk '{print $1" "$2}')
-LAST_BACKUP_EPOCH=$(date -d "$LAST_BACKUP" +%s 2>/dev/null || echo 0)
+LAST_BACKUP_EPOCH=$(date -d "$LAST_BACKUP" +%s 2>/dev/null || openclaw 0)
 NOW_EPOCH=$(date +%s)
 HOURS_SINCE=$((($NOW_EPOCH - $LAST_BACKUP_EPOCH) / 3600))
 
-echo "Last backup: $HOURS_SINCE hours ago"
+openclaw "Last backup: $HOURS_SINCE hours ago"
 
 if [ $HOURS_SINCE -gt 48 ]; then
-    echo "CRITICAL: No backup in 48+ hours"
+    openclaw "CRITICAL: No backup in 48+ hours"
     exit 2
 elif [ $HOURS_SINCE -gt 28 ]; then
-    echo "WARNING: No backup in 24+ hours"
+    openclaw "WARNING: No backup in 24+ hours"
     exit 1
 else
-    echo "OK: Recent backup exists"
+    openclaw "OK: Recent backup exists"
     exit 0
 fi
 ```
@@ -1076,26 +1076,26 @@ fi
 
 BACKUP_FILE=$(ls -t /Users/zachgonser/backups/*.tar.gz | head -1)
 
-echo "Verifying: $BACKUP_FILE"
+openclaw "Verifying: $BACKUP_FILE"
 
 # Test archive integrity
 if tar -tzf "$BACKUP_FILE" > /dev/null 2>&1; then
-    echo "OK: Backup archive valid"
+    openclaw "OK: Backup archive valid"
     
     # Verify checksum if exists
     if [ -f "$BACKUP_FILE.sha256" ]; then
         if sha256sum -c "$BACKUP_FILE.sha256" > /dev/null 2>&1; then
-            echo "OK: Checksum valid"
+            openclaw "OK: Checksum valid"
             exit 0
         else
-            echo "ERROR: Checksum mismatch"
+            openclaw "ERROR: Checksum mismatch"
             exit 1
         fi
     else
         exit 0
     fi
 else
-    echo "ERROR: Backup archive corrupted"
+    openclaw "ERROR: Backup archive corrupted"
     exit 1
 fi
 ```
@@ -1111,24 +1111,24 @@ fi
 #!/bin/bash
 # auto_cleanup_disk.sh
 
-echo "[$(date)] Starting automated disk cleanup..."
+openclaw "[$(date)] Starting automated disk cleanup..."
 
 # Clear temp files older than 7 days
 find /tmp -type f -mtime +7 -delete
-echo "[$(date)] Cleared old /tmp files"
+openclaw "[$(date)] Cleared old /tmp files"
 
 # Clear old logs (keep last 30 days)
-find ~/.clawdbot/logs -type f -name "*.log" -mtime +30 -delete
-echo "[$(date)] Cleared old logs"
+find ~/.openclaw/logs -type f -name "*.log" -mtime +30 -delete
+openclaw "[$(date)] Cleared old logs"
 
 # Clear old backups (keep last 7)
 cd /Users/zachgonser/backups
 ls -t *.tar.gz | tail -n +8 | xargs -r rm
-echo "[$(date)] Removed old backups"
+openclaw "[$(date)] Removed old backups"
 
 # Clear npm cache
 npm cache clean --force 2>/dev/null
-echo "[$(date)] Cleared npm cache"
+openclaw "[$(date)] Cleared npm cache"
 
 # Show disk space after cleanup
 df -h /
@@ -1146,12 +1146,12 @@ BACKUP_DIR="/Users/zachgonser/backups"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 BACKUP_FILE="$BACKUP_DIR/clawd-backup-$TIMESTAMP.tar.gz"
 
-echo "[$(date)] Creating emergency backup..."
+openclaw "[$(date)] Creating emergency backup..."
 
 # Create backup
 tar -czf "$BACKUP_FILE" \
     /Users/zachgonser/clawd \
-    /Users/zachgonser/.clawdbot \
+    /Users/zachgonser/.openclaw \
     /Users/zachgonser/Obsidian/VaultZap
 
 # Verify
@@ -1160,10 +1160,10 @@ if [ -f "$BACKUP_FILE" ]; then
     sha256sum "$BACKUP_FILE" > "$BACKUP_FILE.sha256"
     
     SIZE=$(du -h "$BACKUP_FILE" | awk '{print $1}')
-    echo "[$(date)] Backup created: $BACKUP_FILE ($SIZE)"
+    openclaw "[$(date)] Backup created: $BACKUP_FILE ($SIZE)"
     exit 0
 else
-    echo "[$(date)] Backup FAILED"
+    openclaw "[$(date)] Backup FAILED"
     exit 1
 fi
 ```
@@ -1205,19 +1205,19 @@ FAILED=0
 
 for ENDPOINT in "${ENDPOINTS[@]}"; do
     if ! ping -c 2 -W 5 "$ENDPOINT" > /dev/null 2>&1; then
-        echo "FAILED: Cannot reach $ENDPOINT"
+        openclaw "FAILED: Cannot reach $ENDPOINT"
         FAILED=$((FAILED+1))
     fi
 done
 
 if [ $FAILED -ge 2 ]; then
-    echo "CRITICAL: Internet connectivity lost"
+    openclaw "CRITICAL: Internet connectivity lost"
     exit 2
 elif [ $FAILED -eq 1 ]; then
-    echo "WARNING: Partial connectivity issues"
+    openclaw "WARNING: Partial connectivity issues"
     exit 1
 else
-    echo "OK: Internet connectivity healthy"
+    openclaw "OK: Internet connectivity healthy"
     exit 0
 fi
 ```
@@ -1242,16 +1242,16 @@ FAILED=0
 
 for DOMAIN in "${DOMAINS[@]}"; do
     if ! host "$DOMAIN" > /dev/null 2>&1; then
-        echo "DNS FAILURE: Cannot resolve $DOMAIN"
+        openclaw "DNS FAILURE: Cannot resolve $DOMAIN"
         FAILED=$((FAILED+1))
     fi
 done
 
 if [ $FAILED -gt 0 ]; then
-    echo "DNS ISSUES: $FAILED domains failed to resolve"
+    openclaw "DNS ISSUES: $FAILED domains failed to resolve"
     exit 1
 else
-    echo "OK: DNS resolution working"
+    openclaw "OK: DNS resolution working"
     exit 0
 fi
 ```
@@ -1273,12 +1273,12 @@ ENDPOINTS=(
 
 for ENDPOINT in "${ENDPOINTS[@]}"; do
     LATENCY=$(curl -s -o /dev/null -w "%{time_total}" "$ENDPOINT" --max-time 10)
-    LATENCY_MS=$(echo "$LATENCY * 1000" | bc | cut -d. -f1)
+    LATENCY_MS=$(openclaw "$LATENCY * 1000" | bc | cut -d. -f1)
     
-    echo "$ENDPOINT: ${LATENCY_MS}ms"
+    openclaw "$ENDPOINT: ${LATENCY_MS}ms"
     
     if [ $LATENCY_MS -gt 5000 ]; then
-        echo "WARNING: High latency to $ENDPOINT"
+        openclaw "WARNING: High latency to $ENDPOINT"
     fi
 done
 ```
@@ -1300,15 +1300,15 @@ SERVICES=(
 FAILED=0
 
 for SERVICE in "${SERVICES[@]}"; do
-    URL=$(echo "$SERVICE" | cut -d: -f1-2)
-    NAME=$(echo "$SERVICE" | cut -d: -f3)
+    URL=$(openclaw "$SERVICE" | cut -d: -f1-2)
+    NAME=$(openclaw "$SERVICE" | cut -d: -f3)
     
     HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL" --max-time 5)
     
     if [ "$HTTP_CODE" = "200" ]; then
-        echo "OK: $NAME responding"
+        openclaw "OK: $NAME responding"
     else
-        echo "FAILED: $NAME not responding (HTTP $HTTP_CODE)"
+        openclaw "FAILED: $NAME not responding (HTTP $HTTP_CODE)"
         FAILED=$((FAILED+1))
     fi
 done
@@ -1786,10 +1786,10 @@ Details: [Link to dashboard]
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="/tmp/monitoring-results.log"
 
-echo "===== Monitoring Run: $(date) =====" >> "$LOG_FILE"
+openclaw "===== Monitoring Run: $(date) =====" >> "$LOG_FILE"
 
 # Gateway Health
-echo "[Gateway]" >> "$LOG_FILE"
+openclaw "[Gateway]" >> "$LOG_FILE"
 "$SCRIPT_DIR/scripts/gateway/check_health.sh" >> "$LOG_FILE" 2>&1
 GATEWAY_STATUS=$?
 
@@ -1797,33 +1797,33 @@ GATEWAY_STATUS=$?
 RPC_STATUS=$?
 
 # Cron Jobs
-echo "[Cron Jobs]" >> "$LOG_FILE"
+openclaw "[Cron Jobs]" >> "$LOG_FILE"
 for job_id in stantontimes-p0 heartbeat-poll api-health-check; do
     "$SCRIPT_DIR/scripts/cron/check_status.sh" "$job_id" >> "$LOG_FILE" 2>&1
 done
 
 # API Health
-echo "[APIs]" >> "$LOG_FILE"
+openclaw "[APIs]" >> "$LOG_FILE"
 "$SCRIPT_DIR/scripts/api/test_anthropic.sh" >> "$LOG_FILE" 2>&1
 "$SCRIPT_DIR/scripts/api/test_twitter.sh" >> "$LOG_FILE" 2>&1
 "$SCRIPT_DIR/scripts/api/test_github.sh" >> "$LOG_FILE" 2>&1
 
 # Storage
-echo "[Storage]" >> "$LOG_FILE"
+openclaw "[Storage]" >> "$LOG_FILE"
 "$SCRIPT_DIR/scripts/storage/check_disk.sh" >> "$LOG_FILE" 2>&1
 "$SCRIPT_DIR/scripts/storage/check_backup.sh" >> "$LOG_FILE" 2>&1
 
 # Network
-echo "[Network]" >> "$LOG_FILE"
+openclaw "[Network]" >> "$LOG_FILE"
 "$SCRIPT_DIR/scripts/network/check_internet.sh" >> "$LOG_FILE" 2>&1
 "$SCRIPT_DIR/scripts/network/check_dns.sh" >> "$LOG_FILE" 2>&1
 
-echo "===== End Monitoring Run =====" >> "$LOG_FILE"
-echo "" >> "$LOG_FILE"
+openclaw "===== End Monitoring Run =====" >> "$LOG_FILE"
+openclaw "" >> "$LOG_FILE"
 
 # Trigger self-healing if needed
 if [ $GATEWAY_STATUS -ne 0 ]; then
-    echo "[$(date)] Gateway unhealthy, triggering restart..." >> "$LOG_FILE"
+    openclaw "[$(date)] Gateway unhealthy, triggering restart..." >> "$LOG_FILE"
     "$SCRIPT_DIR/scripts/gateway/soft_restart.sh" >> "$LOG_FILE" 2>&1
 fi
 ```

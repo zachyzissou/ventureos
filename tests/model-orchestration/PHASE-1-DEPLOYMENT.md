@@ -114,7 +114,7 @@
 
 **CLI command:**
 ```bash
-clawdbot cron update 36d25e5b-892f-4f87-b297-6c011bb21eae \
+openclaw cron update 36d25e5b-892f-4f87-b297-6c011bb21eae \
   --patch '{"payload": {"model": "ollama/qwen3:8b"}}'
 ```
 
@@ -141,7 +141,7 @@ clawdbot cron update 36d25e5b-892f-4f87-b297-6c011bb21eae \
 
 **CLI command:**
 ```bash
-clawdbot cron update 657a6dbd-a850-4032-a558-73a2d4467e86 \
+openclaw cron update 657a6dbd-a850-4032-a558-73a2d4467e86 \
   --patch '{"payload": {"model": "ollama/qwen3:32b"}}'
 ```
 
@@ -168,7 +168,7 @@ clawdbot cron update 657a6dbd-a850-4032-a558-73a2d4467e86 \
 
 **CLI command:**
 ```bash
-clawdbot cron update 1aa99924-c284-421f-8747-7516c66c5360 \
+openclaw cron update 1aa99924-c284-421f-8747-7516c66c5360 \
   --patch '{"payload": {"model": "ollama/qwen3:8b"}}'
 ```
 
@@ -178,7 +178,7 @@ clawdbot cron update 1aa99924-c284-421f-8747-7516c66c5360 \
 
 ### 1. Update Ollama Provider Config
 ```bash
-clawdbot gateway config.patch '{
+openclaw gateway config.patch '{
   "models": {
     "providers": {
       "ollama": {
@@ -262,8 +262,8 @@ Use the `cron` tool to update each job's payload:
 
 ### 3. Verify Changes
 ```bash
-clawdbot cron list
-clawdbot models list --provider ollama
+openclaw cron list
+openclaw models list --provider ollama
 ```
 
 ### 4. Monitor First Runs

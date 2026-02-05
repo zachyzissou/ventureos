@@ -4,7 +4,7 @@ description: "Stop wasting tokens. Auto-detect task complexity and route to the 
 author: "小安 Ann Agent — Taiwan 台灣"
 homepage: https://github.com/peterann/save-money
 metadata:
-  clawdbot:
+  openclaw:
     emoji: "🧠"
 ---
 

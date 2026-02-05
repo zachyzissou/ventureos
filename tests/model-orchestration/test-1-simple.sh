@@ -20,24 +20,24 @@ Respond with ONLY this JSON (no explanation):
   "severity": "none/low/medium/high"
 }'
 
-echo "=== TEST 1: Tier 1 Monitoring ==="
-echo "Testing response speed and accuracy for simple boolean task"
-echo ""
+openclaw "=== TEST 1: Tier 1 Monitoring ==="
+openclaw "Testing response speed and accuracy for simple boolean task"
+openclaw ""
 
 # Test each model
 for MODEL in "qwen3:8b" "qwen3:14b" "qwen3:32b"; do
-    echo "Testing $MODEL..."
+    openclaw "Testing $MODEL..."
     START=$(date +%s)
     RESPONSE=$(ollama run $MODEL "$TEST_PROMPT" 2>&1)
     END=$(date +%s)
     DURATION=$((END - START))
     
-    echo "Duration: ${DURATION}s"
-    echo "Response:"
-    echo "$RESPONSE"
-    echo ""
-    echo "---"
-    echo ""
+    openclaw "Duration: ${DURATION}s"
+    openclaw "Response:"
+    openclaw "$RESPONSE"
+    openclaw ""
+    openclaw "---"
+    openclaw ""
 done
 
-echo "Test complete. Review responses for accuracy."
+openclaw "Test complete. Review responses for accuracy."

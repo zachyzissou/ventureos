@@ -313,7 +313,7 @@
 **Recommended fix:**
 - Correct the file path in the cron job
 - Investigate why cron tool calls are timing out
-- Check gateway logs: `/tmp/clawdbot/clawdbot-2026-01-30.log`
+- Check gateway logs: `/tmp/openclaw/openclaw-2026-01-30.log`
 
 **Priority:** P2 - Not blocking Phase 1 work, but should be addressed
 

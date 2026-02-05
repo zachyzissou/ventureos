@@ -346,7 +346,7 @@ Create `cost-tracker.json`:
 
 **Software Stack:**
 - vLLM (high-performance inference)
-- Ollama remote endpoint (for Clawdbot integration)
+- Ollama remote endpoint (for OpenClaw integration)
 - Model serving via OpenAI-compatible API
 
 #### Model Strategy
@@ -395,7 +395,7 @@ Create `cost-tracker.json`:
 ### Config Structure
 
 ```yaml
-# ~/.clawdbot/model-orchestration.yaml
+# ~/.openclaw/model-orchestration.yaml
 
 providers:
   ollama_local:
@@ -456,16 +456,16 @@ fallback_rules:
 #!/bin/bash
 # monitor-models.sh
 
-echo "=== Model Health Check ==="
-echo "Ollama Status:"
+openclaw "=== Model Health Check ==="
+openclaw "Ollama Status:"
 curl -s http://127.0.0.1:11434/api/ps | jq '.models[] | {name, size_gb: (.size_vram/1024/1024/1024|floor)}'
 
-echo ""
-echo "Today's Usage:"
+openclaw ""
+openclaw "Today's Usage:"
 jq -r '.["2026-02"] | "Tier 1: \(.ollama.tier1_requests) | Tier 2: \(.ollama.tier2_requests) | Cost: $\(.total_cost)"' cost-tracker.json
 
-echo ""
-echo "Fallback Rate:"
+openclaw ""
+openclaw "Fallback Rate:"
 grep "fallback" logs/model-fallbacks.log | wc -l
 ```
 

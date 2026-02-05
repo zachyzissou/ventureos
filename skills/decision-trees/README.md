@@ -148,7 +148,7 @@ They've been used since the 1960s for structured decision-making under uncertain
 
 ## 🤝 Contributing
 
-This is an AgentSkill for Clawdbot. Improvements welcome:
+This is an AgentSkill for OpenClaw. Improvements welcome:
 - Additional examples
 - Better visualization
 - Enhanced calculator features
@@ -167,7 +167,7 @@ MIT License — free to use and modify.
 
 ---
 
-**Created for Clawdbot** — the AI-powered CLI assistant.
+**Created for OpenClaw** — the AI-powered CLI assistant.
 
 Install via ClawdHub:
 ```bash

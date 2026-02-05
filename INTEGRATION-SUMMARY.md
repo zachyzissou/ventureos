@@ -36,7 +36,7 @@
 **Status:** Ready for parallel execution
 
 **Execution plan:**
-- Echo finishes Days 6-7 manually (~1-1.5 hours)
+- OpenClaw finishes Days 6-7 manually (~1-1.5 hours)
 - Sub-agent builds framework in parallel (1-2 weeks)
 - Framework ready when Phase Zero complete
 
@@ -76,7 +76,7 @@
 **What happens next:**
 
 ### Step 1: Finish Phase Zero Days 6-7 (Today)
-**Owner:** Echo (me)  
+**Owner:** OpenClaw (me)  
 **Timeline:** Next 1-1.5 hours  
 **Deliverables:**
 - Day 6: Main orchestration loop
@@ -93,7 +93,7 @@
 - Week 4: Feedback loop + optimization
 
 ### Step 3: Use Framework Starting Phase 1 (Next Week)
-**Owner:** Echo + sub-agents  
+**Owner:** OpenClaw + sub-agents  
 **Timeline:** Ongoing  
 **Impact:** 
 - Every new component: 28 min → 2 min
@@ -120,14 +120,14 @@
 - [ ] Extract as standalone product
 - [ ] Open source core
 - [ ] SaaS offering ($49-499/mo)
-- [ ] Part of Clawdbot Enterprise suite
+- [ ] Part of OpenClaw Enterprise suite
 
 ---
 
 ## Risk Mitigation
 
 **Risk:** Sub-agent builds framework incorrectly  
-**Mitigation:** Clear spec in AI-DEV-FRAMEWORK-PROPOSAL.md, Echo reviews milestones
+**Mitigation:** Clear spec in AI-DEV-FRAMEWORK-PROPOSAL.md, OpenClaw reviews milestones
 
 **Risk:** Framework doesn't integrate well  
 **Mitigation:** Test on Phase 1 work, iterate based on real usage
@@ -145,7 +145,7 @@
 **Immediate (next 5 min):**
 1. ✅ Integration complete (this document)
 2. ⏳ Zach approves execution plan
-3. ⏳ Echo proceeds to Day 6 (Main Loop)
+3. ⏳ OpenClaw proceeds to Day 6 (Main Loop)
 
 **Today:**
 - Finish Days 6-7 (self-healing system LIVE)
@@ -168,7 +168,7 @@
 
 Before executing, confirm:
 
-1. **Parallel approach approved?** (Echo does Day 6-7, sub-agent builds framework)
+1. **Parallel approach approved?** (OpenClaw does Day 6-7, sub-agent builds framework)
 2. **Priority correct?** (Finish Phase Zero first, framework in parallel)
 3. **Timeline acceptable?** (Framework ready in 1-2 weeks)
 4. **Anything to adjust?** (Components, timeline, approach)

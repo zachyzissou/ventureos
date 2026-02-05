@@ -1,14 +1,21 @@
 {
   "mcpServers": {
-    "plane": {
-      "command": "/opt/homebrew/bin/uvx",
-      "args": ["plane-mcp-server", "stdio"],
+    "openproject": {
+      "command": "/Users/zachgonser/clawd/plane-mcp-server/openproject-mcp/.venv/bin/python",
+      "args": ["/Users/zachgonser/clawd/plane-mcp-server/openproject-mcp/openproject_mcp.py"],
       "env": {
-        "PLANE_API_KEY": "plane_api_292d5a7b1b214f57b94e6e1835ae45eb",
-        "PLANE_WORKSPACE_SLUG": "slurpnet", 
-        "PLANE_BASE_URL": "http://192.168.225.149:7210",
-        "PATH": "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin"
-      }
+        "OPENPROJECT_URL": "http://localhost:59002",
+        "OPENPROJECT_API_KEY": "bd537315328f9a7ceae72161dd55fa28711a7b7840d0c5357aa8d11163c672a6"
+      },
+      "status": "active"
     }
+  },
+  "authentication": {
+    "method": "API_KEY",
+    "transport": "stdio"
+  },
+  "connectionOptions": {
+    "timeout": 30,
+    "retryAttempts": 3
   }
 }

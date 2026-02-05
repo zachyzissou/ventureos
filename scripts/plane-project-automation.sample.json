@@ -1,0 +1,37 @@
+{
+  "mcp": {
+    "command": "uvx",
+    "args": ["plane-mcp-server", "stdio"],
+    "env": {
+      "PLANE_BASE_URL": "http://localhost:7210",
+      "PLANE_API_KEY": "YOUR_PLANE_API_KEY",
+      "PLANE_WORKSPACE_SLUG": "your-workspace"
+    },
+    "timeout": 30
+  },
+  "projects": [
+    {
+      "identifier": "CORE"
+    },
+    {
+      "name": "OpenClaw Autonomy Infrastructure"
+    }
+  ],
+  "features": {
+    "enable_time_tracking": true,
+    "enable_issue_types": true
+  },
+  "automations": {
+    "auto_move_on_assign": true,
+    "auto_flag_overdue": true,
+    "auto_close_on_subtasks": true
+  },
+  "rules": {
+    "in_progress_state_name": "In Progress",
+    "done_state_name": "Done",
+    "overdue_label_name": "Overdue",
+    "overdue_label_color": "#e11d48"
+  },
+  "dry_run": false,
+  "log_file": "logs/plane-automation.log"
+}

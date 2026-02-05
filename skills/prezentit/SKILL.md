@@ -4,7 +4,7 @@ description: Generate beautiful AI-powered presentations instantly. Create profe
 homepage: https://prezentit.net
 emoji: "👽"
 metadata:
-  clawdbot:
+  openclaw:
     emoji: "👽"
     skillKey: prezentit
     homepage: https://prezentit.net
@@ -16,7 +16,7 @@ metadata:
         - name: PREZENTIT_API_KEY
           description: Your Prezentit API key. Get one at https://prezentit.net/api-keys (requires account)
       example: |
-        # Add to your environment or Clawdbot config
+        # Add to your environment or OpenClaw config
         export PREZENTIT_API_KEY=pk_your_api_key_here
 ---
 
@@ -84,7 +84,7 @@ POST /presentations/generate
 You can provide your own outline to skip AI outline generation. This is useful when:
 - You have specific content requirements
 - You want to save credits
-- An external AI (like Clawdbot) generates the outline
+- An external AI (like OpenClaw) generates the outline
 
 **Get the exact format requirements**:
 ```bash
@@ -153,7 +153,7 @@ When outline validation fails, you'll receive detailed errors:
 | 402 | Insufficient credits |
 | 429 | Rate limited (retry after 60s) |
 
-## Best Practices for Clawdbot
+## Best Practices for OpenClaw
 
 1. **Always check credits first** before generating
 2. **Search themes** when user requests a specific style

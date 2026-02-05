@@ -18,7 +18,7 @@
 - Overall: Multiple experiments → Profitable business portfolio
 
 **Revenue Targets (Annual Run Rate by Dec 2027):**
-- Platform (Clawdbot SaaS): $50K+ ARR
+- Platform (OpenClaw SaaS): $50K+ ARR
 - Bloom: $60K+ ARR (10K+ players, avg $6 per player)
 - Consulting: $100K+ ARR
 - StantonTimes: $120K+ ARR ($10K/month)
@@ -32,7 +32,7 @@
 ## Dependencies (Must Complete Before Starting)
 
 ### From Phase 4:
-- ✅ Clawdbot core open sourced and community launched
+- ✅ OpenClaw core open sourced and community launched
 - ✅ Multi-tenant SaaS architecture deployed
 - ✅ Beta customers onboarded (20-50 users)
 - ✅ Bloom launched in Early Access (1,000+ players)
@@ -157,13 +157,13 @@
 
 ## Execution Tracks
 
-### Track 1: Platform Scale (Clawdbot SaaS) 🚀
+### Track 1: Platform Scale (OpenClaw SaaS) 🚀
 **Timeline:** July-December 2027 (6 months)  
 **Owner:** Platform-Agent (new sub-agent) + Zach (strategy)  
 **Revenue Target:** $50K+ ARR by December 2027
 
 **Starting Point (June 2027):**
-- Open source Clawdbot live (GitHub stars: 500+)
+- Open source OpenClaw live (GitHub stars: 500+)
 - Beta SaaS launched (20-50 paying customers, $10K ARR)
 - Product-market fit validated (NPS 40+, churn <5%/month)
 - Core features shipped (multi-agent orchestration, skills marketplace, memory system)
@@ -405,7 +405,7 @@
 **Strategic Partnerships:**
 - [ ] **Consulting Firms & Agencies**
   - Partner with ADHD coaches (offer as client tool)
-  - Agencies use Clawdbot for operations (case studies)
+  - Agencies use OpenClaw for operations (case studies)
   - Referral agreements (20% recurring commission)
   - Co-branded offerings (their service + our platform)
   - Target: 3-5 strategic partners, 10+ referrals
@@ -761,7 +761,7 @@
 
 - [ ] **Tier 2: Done-For-You Setup ($10K)**
   - 2-week sprint (full setup + training)
-  - AI assistant built from scratch (Clawdbot or custom)
+  - AI assistant built from scratch (OpenClaw or custom)
   - Skill configuration (email, calendar, tasks, domain-specific)
   - Team training (2-hour workshop)
   - 60-day support (optimization, troubleshooting)
@@ -1177,7 +1177,7 @@
 
 ### Track 5: Operations & Infrastructure 🏗️
 **Timeline:** July-December 2027 (ongoing)  
-**Owner:** Echo (orchestrator) + Finance-Agent + Operations-Agent (new)  
+**Owner:** OpenClaw (orchestrator) + Finance-Agent + Operations-Agent (new)  
 **Purpose:** Support all business units with solid infrastructure
 
 ---
@@ -1301,7 +1301,7 @@
 
 | Business Unit | 6-Month Revenue | ARR (Dec 2027) | Notes |
 |---------------|-----------------|----------------|-------|
-| **Platform (Clawdbot)** | $25K-40K | $50K-80K | 100+ paid users, 5+ enterprise |
+| **Platform (OpenClaw)** | $25K-40K | $50K-80K | 100+ paid users, 5+ enterprise |
 | **Bloom** | $60K-80K | $60K-100K | 10K+ players, DLC launched |
 | **Consulting** | $100K-120K | $200K+ | Enterprise contracts, bootcamps, courses |
 | **StantonTimes** | $30K-40K | $60K-80K | Multi-platform (Twitter, YouTube, podcast) |
@@ -1385,7 +1385,7 @@
 - Hire proactively (before you're overwhelmed)
 - Say no to distractions (focus on core 5 units)
 - Energy management (ADHD-friendly schedules, breaks)
-- Mental health check-ins (weekly review with Echo)
+- Mental health check-ins (weekly review with OpenClaw)
 
 ### Market Risks
 
@@ -1415,8 +1415,8 @@
 ## Weekly Cadence (Scale Mode)
 
 ### Monday (Strategy & Planning)
-- **9:00 AM:** Morning briefing (Echo)
-- **10:00 AM:** Weekly strategy review (Zach + Echo + all sub-agents)
+- **9:00 AM:** Morning briefing (OpenClaw)
+- **10:00 AM:** Weekly strategy review (Zach + OpenClaw + all sub-agents)
   - Review last week (revenue, metrics, wins, issues)
   - Surface decisions needed (blockers, opportunities)
   - Set priorities for week (top 3 per business unit)
@@ -1437,7 +1437,7 @@
 
 ### Friday (Review & Admin)
 - **9:00 AM:** Morning briefing
-- **10:00 AM:** Weekly business review (Zach + Echo)
+- **10:00 AM:** Weekly business review (Zach + OpenClaw)
   - Financials: Revenue, expenses, cash flow per unit
   - Metrics: User growth, sales, engagement, churn
   - Lessons: What worked, what didn't, adjustments

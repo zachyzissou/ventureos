@@ -2,7 +2,7 @@
 Gateway Health Detector
 Phase Zero Day 2: Core Detectors + Safety Features
 
-Monitors Clawdbot Gateway daemon status and health.
+Monitors OpenClaw Gateway daemon status and health.
 Includes retry logic to prevent false positives.
 """
 
@@ -32,12 +32,12 @@ class GatewayDetector(InfrastructureDetector):
         Single health check attempt.
         Returns (is_healthy, error_message)
         
-        Uses process check instead of 'clawdbot status' which hangs in launchd.
+        Uses process check instead of 'openclaw status' which hangs in launchd.
         """
         try:
-            # Check if clawdbot-gateway process is running
+            # Check if openclaw-gateway process is running
             proc = await asyncio.create_subprocess_exec(
-                "pgrep", "-f", "clawdbot-gateway",
+                "pgrep", "-f", "openclaw-gateway",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )

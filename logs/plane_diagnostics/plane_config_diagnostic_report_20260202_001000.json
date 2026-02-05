@@ -1,0 +1,100 @@
+{
+  "timestamp": "2026-02-02T00:10:00.857455",
+  "config_files": [
+    {
+      "path": "/Users/zachgonser/clawd/plane-mcp-config.json",
+      "config": {
+        "mcpServers": {
+          "plane": {
+            "command": "uvx",
+            "args": [
+              "plane-mcp-server",
+              "stdio"
+            ],
+            "env": {
+              "PLANE_BASE_URL": "http://192.168.225.149:7210",
+              "PLANE_API_KEY": "plane_api_292d5a7b1b214f57b94e6e1835ae45eb",
+              "PLANE_WORKSPACE_SLUG": "slurpnet",
+              "PLANE_ACCESS_TOKEN": null
+            },
+            "status": "active"
+          }
+        },
+        "authentication": {
+          "method": "API_KEY",
+          "transport": "stdio"
+        },
+        "connectionOptions": {
+          "timeout": 30,
+          "retryAttempts": 3
+        },
+        "project_id": "b7824695-65e5-4da6-ba57-3f7ac172266d",
+        "workspace_slug": "slurpnet"
+      }
+    }
+  ],
+  "server_tests": [
+    {
+      "server": {
+        "base_url": "http://192.168.225.149:7210/api",
+        "workspace_slug": "slurpnet"
+      },
+      "auth_method": {
+        "type": "Bearer Token",
+        "token": "plane_api_292d5a7b1b214f57b94e6e1835ae45eb"
+      },
+      "connection_test": {
+        "url": "http://192.168.225.149:7210/api",
+        "workspace": "slurpnet",
+        "status_code": 401,
+        "response_text": "{\"detail\":\"Authentication credentials were not provided.\"}"
+      }
+    },
+    {
+      "server": {
+        "base_url": "http://192.168.225.149:7210/api",
+        "workspace_slug": "slurpnet"
+      },
+      "auth_method": {
+        "type": "Environment Variable",
+        "token": null
+      },
+      "connection_test": {
+        "url": "http://192.168.225.149:7210/api",
+        "workspace": "slurpnet",
+        "status_code": 401,
+        "response_text": "{\"detail\":\"Authentication credentials were not provided.\"}"
+      }
+    },
+    {
+      "server": {
+        "base_url": "https://plane.slurpnet.com/api",
+        "workspace_slug": "slurpnet"
+      },
+      "auth_method": {
+        "type": "Bearer Token",
+        "token": "plane_api_292d5a7b1b214f57b94e6e1835ae45eb"
+      },
+      "connection_test": {
+        "url": "https://plane.slurpnet.com/api",
+        "workspace": "slurpnet",
+        "error": "HTTPSConnectionPool(host='plane.slurpnet.com', port=443): Max retries exceeded with url: /api/workspaces/slurpnet (Caused by NameResolutionError(\"HTTPSConnection(host='plane.slurpnet.com', port=443): Failed to resolve 'plane.slurpnet.com' ([Errno 8] nodename nor servname provided, or not known)\"))"
+      }
+    },
+    {
+      "server": {
+        "base_url": "https://plane.slurpnet.com/api",
+        "workspace_slug": "slurpnet"
+      },
+      "auth_method": {
+        "type": "Environment Variable",
+        "token": null
+      },
+      "connection_test": {
+        "url": "https://plane.slurpnet.com/api",
+        "workspace": "slurpnet",
+        "error": "HTTPSConnectionPool(host='plane.slurpnet.com', port=443): Max retries exceeded with url: /api/workspaces/slurpnet (Caused by NameResolutionError(\"HTTPSConnection(host='plane.slurpnet.com', port=443): Failed to resolve 'plane.slurpnet.com' ([Errno 8] nodename nor servname provided, or not known)\"))"
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.venv
+
+# IDE settings
+.vscode/
+.idea/
+
+# Mac system files
+.DS_Store
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Compiled files
+*.pyc
+*.pyo
+*.pyd

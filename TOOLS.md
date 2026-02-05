@@ -52,3 +52,37 @@ Skills are shared. Your setup is yours. Keeping them apart means you can update 
 ---
 
 Add whatever helps you do your job. This is your cheat sheet.
+
+## Plane MCP Usage Guide
+
+### Project Creation
+```bash
+# Activate virtual environment
+source .venv/mcp-server/bin/activate
+
+# Create Project
+mcporter call 'plane.create_project({
+    "name": "Project Name", 
+    "identifier": "PROJ", 
+    "description": "Project description"
+})'
+```
+
+### Work Item Management
+```bash
+# Create Work Item
+mcporter call 'plane.create_work_item("project_uuid", {
+    "name": "Task Title",
+    "description_html": "Task details",
+    "priority": "high"
+})'
+
+# List Work Items
+mcporter call 'plane.list_work_items("project_uuid")'
+```
+
+### Key Reminders
+- Always use JSON-style parameter passing
+- Use quotes carefully
+- Activate MCP server virtual environment first
+- Use project UUIDs from previous operations

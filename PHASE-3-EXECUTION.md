@@ -302,7 +302,7 @@
 
 ### Track 3: Consulting Product Suite 🧠
 **Timeline:** October-December 2026 (3 months)  
-**Owner:** Zach + Echo  
+**Owner:** Zach + OpenClaw  
 **Revenue Target:** Scale from $3K/month to $5K-10K/month
 
 #### Month 1 (October): Online Course Launch
@@ -311,7 +311,7 @@
   - Title: "Building Your AI Chief of Staff"
   - Modules:
     1. Introduction: Why AI Orchestration? (15 min)
-    2. Choosing Your Tools (30 min - Clawdbot, Zapier, etc.)
+    2. Choosing Your Tools (30 min - OpenClaw, Zapier, etc.)
     3. Email & Calendar Mastery (45 min)
     4. Task & Project Management (45 min)
     5. Knowledge Management (PARA method, 30 min)
@@ -359,14 +359,14 @@
   - Value: Office hours, templates, networking, early access to new content
 
 - [ ] **Community Features**
-  - Weekly live Q&A (Zach + Echo)
+  - Weekly live Q&A (Zach + OpenClaw)
   - Monthly masterclasses (guest experts)
   - Template library (workflows, scripts, prompts)
   - Peer support (members helping members)
   - Showcase channel (wins, case studies)
 
 - [ ] **Engagement Strategy**
-  - Daily activity (Echo monitors, answers common questions)
+  - Daily activity (OpenClaw monitors, answers common questions)
   - Weekly challenges (implement a new skill, share results)
   - Monthly spotlight (feature a member's setup)
   - Exclusive perks (early course access, discounts on 1-on-1)
@@ -523,7 +523,7 @@
 
 #### Objectives
 - Establish expertise in AI orchestration
-- Document Echo development learnings
+- Document OpenClaw development learnings
 - Build audience for future opportunities (speaking, consulting, book deal)
 
 #### Month 1 (October): Blog Setup & First Posts
@@ -535,7 +535,7 @@
 
 - [ ] **Content Calendar**
   - Weekly posts (every Tuesday, consistency)
-  - Topics from Echo development:
+  - Topics from OpenClaw development:
     - "Building a Multi-Agent System from Scratch"
     - "ADHD-Optimized AI Workflows: What I Learned"
     - "How I Built an AI Chief of Staff in 6 Months"
@@ -544,7 +544,7 @@
 
 - [ ] **First 4 Posts**
   - Post 1: Introduction (who, why, what to expect)
-  - Post 2: Case study (Echo's impact on productivity)
+  - Post 2: Case study (OpenClaw's impact on productivity)
   - Post 3: Technical deep dive (sub-agent coordination)
   - Post 4: ADHD + AI (executive function augmentation)
 
@@ -603,7 +603,7 @@
 - **Book Deal:** Compile posts into "Building AI-Augmented Organizations" (2028+)
 - **Speaking:** Conference invitations based on research (2027+)
 - **Consulting Leads:** Inbound from blog readers
-- **Platform Marketing:** Content for Clawdbot launch (Phase 4)
+- **Platform Marketing:** Content for OpenClaw launch (Phase 4)
 
 **Total Track 5 Investment:** $10  
 **Expected Revenue:** $0 (Phase 3), future value = reputation + leads
@@ -642,7 +642,7 @@
 - **Career-Agent:** Talent matching service (60%), personal job support if needed (40%)
 - **Research-Agent:** Blog writing (50%), audience growth (30%), content distribution (20%)
 - **Finance-Agent:** Revenue tracking, invoicing, expense management (20% time across all businesses)
-- **Echo (Central):** Coordination (30%), strategic planning (30%), briefings/reviews (40%)
+- **OpenClaw (Central):** Coordination (30%), strategic planning (30%), briefings/reviews (40%)
 
 ---
 
@@ -665,7 +665,7 @@
 - **Portfolio Validated:** 4 business units operational, proving multi-business model
 - **Sub-Agent Autonomy:** 85%+ of operations handled without Zach's direct involvement
 - **Reputation:** Known in AI orchestration niche (blog, Twitter, speaking inquiries)
-- **Platform Prep:** Learnings from Echo ready for extraction in Phase 4
+- **Platform Prep:** Learnings from OpenClaw ready for extraction in Phase 4
 
 ---
 
@@ -728,8 +728,8 @@
 ## Weekly Cadence
 
 ### Monday
-- **9:00 AM:** Morning briefing (Echo)
-- **10:00 AM:** Weekly strategy review (Zach + Echo + all sub-agents)
+- **9:00 AM:** Morning briefing (OpenClaw)
+- **10:00 AM:** Weekly strategy review (Zach + OpenClaw + all sub-agents)
   - Review last week (revenue, growth, blockers)
   - This week's priorities (top 3 per business unit)
   - Resource allocation (who needs help?)
@@ -760,7 +760,7 @@
 
 ### Friday
 - **9:00 AM:** Morning briefing
-- **10:00 AM:** Weekly review (Zach + Echo)
+- **10:00 AM:** Weekly review (Zach + OpenClaw)
   - Results vs. targets (revenue, metrics, progress)
   - Wins to celebrate
   - Lessons learned
@@ -813,10 +813,10 @@
 - Consulting products validated (course + community + cohort)
 - Talent Matching alpha complete (learnings documented)
 - Research blog established (1,000+ subscribers, consistent publishing)
-- Platform extraction ready (Echo capabilities productized)
+- Platform extraction ready (OpenClaw capabilities productized)
 
 **Phase 4 Preview (Q1-Q2 2027):**
-- **Clawdbot Open Source Launch** (extract Echo → community platform)
+- **OpenClaw Open Source Launch** (extract OpenClaw → community platform)
 - **SaaS Beta** (multi-tenant platform, 20-50 early adopters)
 - **Bloom Growth** (content updates, DLC planning, marketing push)
 - **Talent Matching B2B** (recruit employers, two-sided marketplace)

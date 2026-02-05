@@ -1,0 +1,4 @@
+2026-02-02 00:12:32,994 - ERROR: Error creating project External Inspiration - Ryan Carson Tweet: [Errno 2] No such file or directory: 'plane'
+2026-02-02 00:12:32,996 - ERROR: Error creating project Tech Exploration - PB Teja Tweet: [Errno 2] No such file or directory: 'plane'
+2026-02-02 00:12:32,998 - ERROR: Error creating project Innovation Tracking - Ganim Corey Tweet: [Errno 2] No such file or directory: 'plane'
+2026-02-02 00:12:32,998 - INFO: Project creation report saved: /Users/zachgonser/clawd/logs/plane_projects/project_creation_report_20260202_001232.json

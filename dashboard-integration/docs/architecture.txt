@@ -1,0 +1,32 @@
+OpenClaw Dashboard Integration Architecture
+=========================================
+
+[Providers]
+|
+v
+[OpenTelemetry Collector]
+|
++-- Metrics Collection
++-- Tracing
++-- Logging
+|
+v
+[Redis Pub/Sub]
+|
++-- Queue Metrics
++-- Job Statuses
++-- Cost Tracking
+|
+v
+[Dashboard Microservice]
+|
++-- WebSocket Server
++-- REST API
++-- Data Aggregation
+|
+v
+[7" Dashboard Display]
+    |
+    +-- Real-time Widgets
+    +-- Historical Views
+    +-- Alerting

@@ -1,0 +1,29 @@
+{
+    "twitter": {
+        "bearer_token": "",
+        "consumer_key": "",
+        "consumer_secret": "",
+        "access_token": "",
+        "access_token_secret": ""
+    },
+    "monitored_accounts": [
+        "RobertsSpaceInd",
+        "starcitizenbot", 
+        "TheRubenSaurus",
+        "CloudImperium",
+        "squadron_42"
+    ],
+    "discord": {
+        "verification_channel_id": "",
+        "webhook_url": ""
+    },
+    "content_intelligence": {
+        "draft_threshold": 0.7,
+        "scoring_weights": {
+            "developer_credibility": 0.4,
+            "community_engagement": 0.3,
+            "information_novelty": 0.2,
+            "technical_depth": 0.1
+        }
+    }
+}

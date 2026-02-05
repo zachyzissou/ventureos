@@ -1,0 +1,21 @@
+{
+  "name": "stanton-times",
+  "version": "1.0.0",
+  "description": "Autonomous content monitoring and publishing system for Star Citizen news.",
+  "type": "module",
+  "scripts": {
+    "test": "node send-embed.mjs --title 'Test' --description 'Test Description'"
+  },
+  "dependencies": {
+    "discord.js": "^14.25.1",
+    "minimist": "^1.2.8",
+    "node-fetch": "^3.3.2"
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

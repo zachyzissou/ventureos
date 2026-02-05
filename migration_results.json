@@ -1,0 +1,742 @@
+[
+  {
+    "_type": "Project",
+    "id": 3,
+    "identifier": "stanton",
+    "name": "Stanton Times",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "Autonomous content monitoring and publishing system for Star Citizen news",
+      "html": "<p class=\"op-uc-p\">Autonomous content monitoring and publishing system for Star Citizen news</p>"
+    },
+    "createdAt": "2026-02-03T00:57:56.795Z",
+    "updatedAt": "2026-02-03T00:57:56.795Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/3",
+        "title": "Stanton Times"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/3/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/3/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/3/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/3/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/3/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%223%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/3/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/3/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/3",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/3",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%223%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  },
+  {
+    "_type": "Project",
+    "id": 4,
+    "identifier": "ganim",
+    "name": "Innovation Tracking - Ganim Corey",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "Monitoring emerging trends and innovative ideas highlighted in Ganim Corey's tweet. Needs comprehensive research and strategic assessment.\n\nSource: https://x.com/GanimCorey/status/2017959821111083068",
+      "html": "<p class=\"op-uc-p\">Monitoring emerging trends and innovative ideas highlighted in Ganim Corey's tweet. Needs comprehensive research and strategic assessment.</p>\n<p class=\"op-uc-p\">Source: <a href=\"https://x.com/GanimCorey/status/2017959821111083068\" class=\"op-uc-link\">https://x.com/GanimCorey/status/2017959821111083068</a></p>"
+    },
+    "createdAt": "2026-02-03T00:57:56.873Z",
+    "updatedAt": "2026-02-03T00:57:56.883Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/4",
+        "title": "Innovation Tracking - Ganim Corey"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/4/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/4/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/4/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/4/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/4/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%224%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/4/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/4/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/4",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/4",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%224%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  },
+  {
+    "_type": "Project",
+    "id": 5,
+    "identifier": "pbtej",
+    "name": "Tech Exploration - PB Teja",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "Investigating technological concepts and potential applications from PB Teja's tweet. Requires deep dive and analysis.\n\nSource: https://x.com/pbteja1998/status/2017662163540971756",
+      "html": "<p class=\"op-uc-p\">Investigating technological concepts and potential applications from PB Teja's tweet. Requires deep dive and analysis.</p>\n<p class=\"op-uc-p\">Source: <a href=\"https://x.com/pbteja1998/status/2017662163540971756\" class=\"op-uc-link\">https://x.com/pbteja1998/status/2017662163540971756</a></p>"
+    },
+    "createdAt": "2026-02-03T00:57:56.907Z",
+    "updatedAt": "2026-02-03T00:57:56.907Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/5",
+        "title": "Tech Exploration - PB Teja"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/5/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/5/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/5/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/5/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/5/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%225%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/5/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/5/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/5",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/5",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%225%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  },
+  {
+    "_type": "Project",
+    "id": 6,
+    "identifier": "ryanc",
+    "name": "External Inspiration - Ryan Carson",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "Exploring innovative insights from Ryan Carson's tweet. Requires further investigation and potential strategic implementation.\n\nSource: https://x.com/ryancarson/status/2016520542723924279",
+      "html": "<p class=\"op-uc-p\">Exploring innovative insights from Ryan Carson's tweet. Requires further investigation and potential strategic implementation.</p>\n<p class=\"op-uc-p\">Source: <a href=\"https://x.com/ryancarson/status/2016520542723924279\" class=\"op-uc-link\">https://x.com/ryancarson/status/2016520542723924279</a></p>"
+    },
+    "createdAt": "2026-02-03T00:57:56.947Z",
+    "updatedAt": "2026-02-03T00:57:56.956Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/6",
+        "title": "External Inspiration - Ryan Carson"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/6/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/6/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/6/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/6/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/6/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%226%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/6/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/6/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/6",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/6",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%226%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  },
+  {
+    "_type": "Project",
+    "id": 7,
+    "identifier": "plane",
+    "name": "Plane Platform Improvements",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "Feature enablement + workflow standardization across the Plane instance.",
+      "html": "<p class=\"op-uc-p\">Feature enablement + workflow standardization across the Plane instance.</p>"
+    },
+    "createdAt": "2026-02-03T00:57:56.981Z",
+    "updatedAt": "2026-02-03T00:57:56.989Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/7",
+        "title": "Plane Platform Improvements"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/7/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/7/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/7/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/7/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/7/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%227%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/7/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/7/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/7",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/7",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%227%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  },
+  {
+    "_type": "Project",
+    "id": 8,
+    "identifier": "dash",
+    "name": "7-inch Dashboard",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "7-inch monitor dashboard (TUI + app-style concepts). Real-time status, alerts, and glanceable metrics.",
+      "html": "<p class=\"op-uc-p\">7-inch monitor dashboard (TUI + app-style concepts). Real-time status, alerts, and glanceable metrics.</p>"
+    },
+    "createdAt": "2026-02-03T00:57:57.014Z",
+    "updatedAt": "2026-02-03T00:57:57.023Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/8",
+        "title": "7-inch Dashboard"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/8/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/8/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/8/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/8/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/8/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%228%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/8/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/8/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/8",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/8",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%228%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  },
+  {
+    "_type": "Project",
+    "id": 9,
+    "identifier": "cli",
+    "name": "CLI Agent Capabilities",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "Expand CLI agent capabilities across Codex/Gemini/Cursor: terminal interaction, capability matrix, routing policy, and workflow library.",
+      "html": "<p class=\"op-uc-p\">Expand CLI agent capabilities across Codex/Gemini/Cursor: terminal interaction, capability matrix, routing policy, and workflow library.</p>"
+    },
+    "createdAt": "2026-02-03T00:57:57.049Z",
+    "updatedAt": "2026-02-03T00:57:57.057Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/9",
+        "title": "CLI Agent Capabilities"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/9/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/9/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/9/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/9/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/9/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%229%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/9/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/9/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/9",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/9",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%229%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  },
+  {
+    "_type": "Project",
+    "id": 10,
+    "identifier": "qms",
+    "name": "Queue Management System",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "Build a scalable, resilient distributed queue management system with multi-agent support. Phases: (1) Foundation: core queue manager, error handling, agent registry. (2) Advanced Routing: intelligent job routing, prioritization, performance tracking. (3) Distributed Infrastructure: persistence, cross-node coordination, exactly-once processing. (4) Advanced Features: ML optimization, observability, security. Next steps: finalize specs, set up env, PoC, start Phase 1.",
+      "html": "<p class=\"op-uc-p\">Build a scalable, resilient distributed queue management system with multi-agent support. Phases: (1) Foundation: core queue manager, error handling, agent registry. (2) Advanced Routing: intelligent job routing, prioritization, performance tracking. (3) Distributed Infrastructure: persistence, cross-node coordination, exactly-once processing. (4) Advanced Features: ML optimization, observability, security. Next steps: finalize specs, set up env, PoC, start Phase 1.</p>"
+    },
+    "createdAt": "2026-02-03T00:57:57.088Z",
+    "updatedAt": "2026-02-03T00:57:57.101Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/10",
+        "title": "Queue Management System"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/10/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/10/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/10/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/10/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/10/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%2210%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/10/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/10/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/10",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/10",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%2210%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  },
+  {
+    "_type": "Project",
+    "id": 11,
+    "identifier": "slurp",
+    "name": "SlurpNet Ops & Knowledge",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "Operations + knowledge base for Unraid/SlurpNet. Track infrastructure, automation, monitoring, and documentation.",
+      "html": "<p class=\"op-uc-p\">Operations + knowledge base for Unraid/SlurpNet. Track infrastructure, automation, monitoring, and documentation.</p>"
+    },
+    "createdAt": "2026-02-03T00:57:57.131Z",
+    "updatedAt": "2026-02-03T00:57:57.140Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/11",
+        "title": "SlurpNet Ops & Knowledge"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/11/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/11/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/11/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/11/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/11/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%2211%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/11/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/11/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/11",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/11",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%2211%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  },
+  {
+    "_type": "Project",
+    "id": 12,
+    "identifier": "clawdbotau",
+    "name": "Clawdbot Autonomy Infrastructure",
+    "active": true,
+    "public": false,
+    "description": {
+      "format": "markdown",
+      "raw": "Validation loops and infrastructure components for Clawdbot system. Auto-fix before escalating, phase tracking, proactive monitoring.",
+      "html": "<p class=\"op-uc-p\">Validation loops and infrastructure components for Clawdbot system. Auto-fix before escalating, phase tracking, proactive monitoring.</p>"
+    },
+    "createdAt": "2026-02-03T00:57:57.191Z",
+    "updatedAt": "2026-02-03T00:57:57.202Z",
+    "statusExplanation": {
+      "format": "markdown",
+      "raw": "",
+      "html": ""
+    },
+    "_links": {
+      "self": {
+        "href": "/api/v3/projects/12",
+        "title": "Clawdbot Autonomy Infrastructure"
+      },
+      "createWorkPackage": {
+        "href": "/api/v3/projects/12/work_packages/form",
+        "method": "post"
+      },
+      "createWorkPackageImmediately": {
+        "href": "/api/v3/projects/12/work_packages",
+        "method": "post"
+      },
+      "workPackages": {
+        "href": "/api/v3/projects/12/work_packages"
+      },
+      "categories": {
+        "href": "/api/v3/projects/12/categories"
+      },
+      "versions": {
+        "href": "/api/v3/projects/12/versions"
+      },
+      "memberships": {
+        "href": "/api/v3/memberships?filters=%5B%7B%22project%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%2212%22%5D%7D%7D%5D"
+      },
+      "types": {
+        "href": "/api/v3/projects/12/types"
+      },
+      "update": {
+        "href": "/api/v3/projects/12/form",
+        "method": "post"
+      },
+      "updateImmediately": {
+        "href": "/api/v3/projects/12",
+        "method": "patch"
+      },
+      "delete": {
+        "href": "/api/v3/projects/12",
+        "method": "delete"
+      },
+      "schema": {
+        "href": "/api/v3/projects/schema"
+      },
+      "status": {
+        "href": null
+      },
+      "ancestors": [],
+      "projectStorages": {
+        "href": "/api/v3/project_storages?filters=%5B%7B%22projectId%22%3A%7B%22operator%22%3A%22%3D%22%2C%22values%22%3A%5B%2212%22%5D%7D%7D%5D"
+      },
+      "parent": {
+        "href": null
+      }
+    }
+  }
+]

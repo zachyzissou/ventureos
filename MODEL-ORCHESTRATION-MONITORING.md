@@ -43,7 +43,7 @@
 ## Daily Monitoring Tasks
 
 ### Automated (via cron logs)
-- Check `~/.clawdbot/cron/runs/` for failures
+- Check `~/.openclaw/cron/runs/` for failures
 - Track execution times
 - Count fallback occurrences
 
@@ -129,12 +129,12 @@
 
 **Check recent runs:**
 ```bash
-ls -lt ~/.clawdbot/cron/runs/ | head -20
+ls -lt ~/.openclaw/cron/runs/ | head -20
 ```
 
 **Check for failures:**
 ```bash
-grep -r "error" ~/.clawdbot/cron/runs/ | tail -20
+grep -r "error" ~/.openclaw/cron/runs/ | tail -20
 ```
 
 **Check Ollama status:**

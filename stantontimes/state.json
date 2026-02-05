@@ -1,0 +1,14 @@
+{
+    "pendingTweets": [
+        {
+            "title": "Hermes Paint Drama",
+            "status": "pending_approval",
+            "timestamp": "2026-02-01T21:05:34"
+        },
+        {
+            "title": "Hermes Size Creep", 
+            "status": "pending_approval",
+            "timestamp": "2026-02-01T21:05:34"
+        }
+    ]
+}

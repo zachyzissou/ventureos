@@ -1,0 +1,59 @@
+{
+  "seen_tweet_ids": [
+    "2016613136845922449", 
+    "2017601317724725590", 
+    "2001729797710303511", 
+    "2018701015210496332",
+    "2018701015210496332",
+    "2018449331381019005"
+  ],
+  "posted_stories": [],
+  "last_check": "2026-02-04T01:34:00-06:00",
+  "pendingApprovals": [
+    {
+      "id": "20260202-01",
+      "source_tweet_id": "2016613136845922449",
+      "draft_tweet": "🚨 Star Citizen Alpha 4.6: Lifeline for Levski 🌟\n\nCommunity rallies to save Levski citizens from the mysterious 'People's Ailment'. A critical humanitarian mission unfolds in the latest game update. Will you join the effort to find a cure? 🏥🚀 #StarCitizen #Alpha46",
+      "validation": {
+        "newsworthiness": "High - narrative-driven update with community involvement",
+        "source": "Official Star Citizen Twitter"
+      }
+    },
+    {
+      "id": "20260202-02",
+      "source_tweet_id": "2017601317724725590",
+      "draft_tweet": "🎉 Star Citizen February Highlights: Coramor Celebrations, Free Fly, and Referral Bonus! 🚀\n\nMark your calendars for a month of love, adventure, and community rewards. Don't miss out on these exciting opportunities! #StarCitizen #February2026",
+      "validation": {
+        "newsworthiness": "Medium - Community event and promotional updates",
+        "source": "Official Star Citizen Twitter"
+      }
+    },
+    {
+      "id": "20260202-03",
+      "source_tweet_id": "2001729797710303511",
+      "draft_tweet": "⚠️ UEE Navy Alert: Vanduul Threat Level Elevated 🛡️\n\nNaval Intelligence releases urgent bulletin warning civilians about increased Vanduul activity. Stay informed, stay safe! #Squadron42 #SpaceSecurity",
+      "validation": {
+        "newsworthiness": "Low-Medium - Narrative-driven lore update",
+        "source": "Squadron 42 Twitter"
+      }
+    },
+    {
+      "id": "20260203-01",
+      "source_tweet_id": "2018701015210496332",
+      "draft_tweet": "🔦 Star Citizen Alpha 4.6: LAMP Technology Arrives! 🚀\n\nNew Light Amplification tech now available on select vehicles, improving visibility in low- or no-light conditions. Check patch notes for LAMP-enabled ships! #StarCitizen #Gaming #SpaceSim",
+      "validation": {
+        "newsworthiness": "High - Significant gameplay technology update",
+        "source": "Official Star Citizen Twitter"
+      }
+    },
+    {
+      "id": "20260204-01",
+      "source_tweet_id": "2018449331381019005",
+      "draft_tweet": "📅 Star Citizen: This Week in Star Citizen Update 🚀\n\nA fresh roundup of the latest updates, community news, and highlights from the Star Citizen universe. Check out the full details and stay connected with the latest developments! #StarCitizen #WeeklyUpdate",
+      "validation": {
+        "newsworthiness": "Low-Medium - Weekly community roundup",
+        "source": "Official Star Citizen Twitter"
+      }
+    }
+  ]
+}

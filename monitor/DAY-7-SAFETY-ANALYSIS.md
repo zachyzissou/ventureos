@@ -9,8 +9,8 @@
 **GatewayHealer can restart the gateway:**
 ```python
 # From gateway_healer.py
-await asyncio.create_subprocess_exec("/usr/local/bin/clawdbot", "gateway", "stop")
-await asyncio.create_subprocess_exec("/usr/local/bin/clawdbot", "gateway", "start")
+await asyncio.create_subprocess_exec("/usr/local/bin/openclaw", "gateway", "stop")
+await asyncio.create_subprocess_exec("/usr/local/bin/openclaw", "gateway", "start")
 ```
 
 **What this means:**
@@ -31,7 +31,7 @@ await asyncio.create_subprocess_exec("/usr/local/bin/clawdbot", "gateway", "star
 ### False Positive Scenarios
 
 **GatewayDetector could falsely trigger if:**
-1. `clawdbot status` command times out (>10s)
+1. `openclaw status` command times out (>10s)
 2. Network hiccup during health check
 3. Gateway slow to respond but not actually down
 
@@ -109,11 +109,11 @@ await asyncio.create_subprocess_exec("/usr/local/bin/clawdbot", "gateway", "star
 ## Specific Concerns for Gateway Healer
 
 **When does it trigger?**
-- Gateway not running (`clawdbot status` returns error)
+- Gateway not running (`openclaw status` returns error)
 - Gateway unresponsive (timeout >10s)
 
 **Can we trust the detector?**
-- GatewayDetector uses `clawdbot status` with 10s timeout
+- GatewayDetector uses `openclaw status` with 10s timeout
 - If command hangs/fails → triggers heal
 - NO validation of "is this a real problem or network blip"
 - NO second opinion check
