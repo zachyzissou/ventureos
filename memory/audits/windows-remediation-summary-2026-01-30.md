@@ -10,20 +10,20 @@ Fixed Windows PC (GamingPC) configuration based on audit findings from `windows-
 ## What Was Done
 
 ### 1. Initial Backup ✅
-- Created backup of `clawdbot.json` → `clawdbot.json.backup-2026-01-30`
+- Created backup of `openclaw.json` → `openclaw.json.backup-2026-01-30`
 - Created backup of `cron/jobs.json` → `jobs.json.backup-2026-01-30`
 
 ### 2. Configuration Optimization ✅
 **CRITICAL Priority - Config Conflict**
 
 **Finding:** Many issues from audit had already been partially addressed:
-- No gateway section found in current clawdbot.json
+- No gateway section found in current openclaw.json
 - Cron jobs already cleaned (0 jobs)
 - No Discord channel configs present
 - No stanton-times agent folder
 
 **Action Taken:**
-- Created minimal node-only configuration in `clawdbot.json`
+- Created minimal node-only configuration in `openclaw.json`
 - Removed ALL unnecessary sections: agents.list, hooks, plugins, messages, wizard
 - Kept only essential node configs: auth profiles, web search tool, basic commands
 
@@ -52,7 +52,7 @@ Verified all configurations:
 - ✅ `node.json`: Correct (points to Mac at 192.168.225.149:18789)
 - ✅ `jobs.json`: Clean (0 jobs)
 - ✅ `agents/`: Clean (only "main" folder, no stanton-times)
-- ✅ `clawdbot.json`: Optimized to minimal node-only config
+- ✅ `openclaw.json`: Optimized to minimal node-only config
 
 ## Validation Results
 
@@ -66,7 +66,7 @@ Verified all configurations:
 
 ### Configuration Verification
 ```
-✅ No gateway section in clawdbot.json
+✅ No gateway section in openclaw.json
 ✅ No Discord channel configs
 ✅ No stale agent folders
 ✅ No cron jobs configured
@@ -75,7 +75,7 @@ Verified all configurations:
 
 ## Final State
 
-### clawdbot.json (Optimized)
+### openclaw.json (Optimized)
 ```json
 {
   "meta": {
@@ -135,7 +135,7 @@ Verified all configurations:
 ## Key Achievements
 
 1. **Backups Created:** Preserved original configs before any changes
-2. **Minimal Config:** Reduced clawdbot.json to bare essentials for node role
+2. **Minimal Config:** Reduced openclaw.json to bare essentials for node role
 3. **Validated Connectivity:** Confirmed node is fully operational
 4. **Documented Results:** Updated audit file with completion status
 
@@ -150,13 +150,13 @@ Verified all configurations:
 ## Testing Performed
 
 1. ✅ Backup creation (2 files)
-2. ✅ Read current configs (clawdbot.json, node.json, jobs.json)
+2. ✅ Read current configs (openclaw.json, node.json, jobs.json)
 3. ✅ Service status check (Get-Service)
 4. ✅ Agent folder enumeration
-5. ✅ Config optimization (clawdbot.json rewrite)
+5. ✅ Config optimization (openclaw.json rewrite)
 6. ✅ Remote command execution (10+ PowerShell commands)
-7. ✅ Node status verification from Mac (clawdbot nodes describe)
-8. ✅ Connectivity validation (echo test)
+7. ✅ Node status verification from Mac (openclaw nodes describe)
+8. ✅ Connectivity validation (openclaw test)
 
 **All tests passed successfully.**
 

@@ -11,7 +11,7 @@
 ### What Was Fixed:
 
 1. ✅ **Config Optimization** (CRITICAL)
-   - Streamlined `clawdbot.json` to minimal node-only configuration
+   - Streamlined `openclaw.json` to minimal node-only configuration
    - Removed all gateway-related configs, agent definitions, hooks, and plugins
    - Kept only: auth profiles, web search tool config, basic commands
    - **Result:** Clean, minimal config appropriate for node-only role
@@ -42,12 +42,12 @@
 ✅ Remote command execution: **WORKING**
 ✅ Browser capability: **AVAILABLE**
 ✅ System capability: **AVAILABLE**
-✅ Config backups: **CREATED** (clawdbot.json.backup-2026-01-30)
+✅ Config backups: **CREATED** (openclaw.json.backup-2026-01-30)
 ✅ Minimal config: **DEPLOYED**
 
 ### Final Configuration:
 
-**clawdbot.json** - Minimal node-only (auth + tools only)
+**openclaw.json** - Minimal node-only (auth + tools only)
 **node.json** - Correct gateway connection (192.168.225.149:18789)
 **jobs.json** - Empty (0 cron jobs)
 **agents/** - Only "main" (appropriate for node)
@@ -66,8 +66,8 @@
 
 ❌ **Critical Issues Found:**
 1. **Config Conflict:** Windows has BOTH gateway + node configs (should be node-only)
-2. **Service Paused:** ClawdbotNode Windows service is paused, not running
-3. **Stale Config:** Old StantonTimes Discord config remains in clawdbot.json
+2. **Service Paused:** OpenClawNode Windows service is paused, not running
+3. **Stale Config:** Old StantonTimes Discord config remains in openclaw.json
 4. **Auth Confusion:** Windows trying to run local gateway causing auth failures
 
 🔧 **Recommended Role:** Windows should be node-only (browser proxy, occasional system commands)
@@ -86,13 +86,13 @@
 - **Capabilities:** browser, system
 - **Commands:** browser.proxy, system.execApprovals.{get,set}, system.run, system.which
 
-### Windows Clawdbot Service
+### Windows OpenClaw Service
 - **Status:** **PAUSED** ❌
-- **Service Name:** ClawdbotNode
-- **Display Name:** "Clawdbot Node (GamingPC)"
+- **Service Name:** OpenClawNode
+- **Display Name:** "OpenClaw Node (GamingPC)"
 
 ### Cron Jobs Configuration
-**Location:** `C:\Users\Zachg\.clawdbot\cron\jobs.json`
+**Location:** `C:\Users\Zachg\.openclaw\cron\jobs.json`
 
 **Disabled (Correct):**
 1. ✅ StantonTimes P0 Monitor (`28f19653...`) - **DISABLED**
@@ -112,7 +112,7 @@
 13-25. ⚠️ Various Bloom/Memory jobs - **ENABLED** (Mac jobs)
 
 ### Node Configuration
-**Location:** `C:\Users\Zachg\.clawdbot\node.json`
+**Location:** `C:\Users\Zachg\.openclaw\node.json`
 ```json
 {
   "version": 1,
@@ -127,7 +127,7 @@
 ```
 
 ### Gateway Configuration (PROBLEM!)
-**Location:** `C:\Users\Zachg\.clawdbot\clawdbot.json`
+**Location:** `C:\Users\Zachg\.openclaw\openclaw.json`
 ```json
 {
   "gateway": {
@@ -150,18 +150,18 @@
 ## 2. Issues Identified
 
 ### Issue #1: Gateway Configuration Conflict ⚠️ **CRITICAL**
-**Problem:** Windows `clawdbot.json` contains gateway config (`mode: local`, `bind: loopback`)  
+**Problem:** Windows `openclaw.json` contains gateway config (`mode: local`, `bind: loopback`)  
 **Impact:** Windows tries to run its own local gateway instead of pure node mode  
-**Evidence:** Error logs show "gateway closed (1006)" when trying `clawdbot cron list`  
+**Evidence:** Error logs show "gateway closed (1006)" when trying `openclaw cron list`  
 **Root Cause:** Old pre-migration config when Windows WAS the gateway  
 
 ### Issue #2: Service Paused 🔴 **HIGH**
-**Problem:** ClawdbotNode Windows service is **PAUSED**, not running  
+**Problem:** OpenClawNode Windows service is **PAUSED**, not running  
 **Impact:** Node cannot connect to Mac gateway or respond to commands  
 **Likely Cause:** Service paused after migration testing, never resumed  
 
 ### Issue #3: Stale Discord Config 🟡 **MEDIUM**
-**Problem:** Windows `clawdbot.json` still has full StantonTimes Discord channel config  
+**Problem:** Windows `openclaw.json` still has full StantonTimes Discord channel config  
 **Impact:** Confusion if Windows gateway accidentally runs; unnecessary config bloat  
 **Found:**
 - `channels.discord.guilds.825047055688532049.channels.1465948913906225286`
@@ -171,7 +171,7 @@
 ### Issue #4: Orphaned Agent Config 🟡 **MEDIUM**
 **Problem:** "stanton-times" agent still configured with workspace and session files  
 **Impact:** Minor - just unused files, but creates confusion  
-**Location:** `C:\Users\Zachg\.clawdbot\agents\stanton-times\`
+**Location:** `C:\Users\Zachg\.openclaw\agents\stanton-times\`
 
 ### Issue #5: Cron Jobs Still Present 🟡 **LOW**
 **Problem:** All cron jobs (StantonTimes + Mac jobs) still in Windows jobs.json  
@@ -216,11 +216,11 @@
 ## 4. Remediation Steps
 
 ### Step 1: Fix Gateway Config (CRITICAL)
-**Action:** Remove gateway section from Windows `clawdbot.json`
+**Action:** Remove gateway section from Windows `openclaw.json`
 
 ```powershell
 # On Windows
-# Edit C:\Users\Zachg\.clawdbot\clawdbot.json
+# Edit C:\Users\Zachg\.openclaw\openclaw.json
 # Delete the entire "gateway" section (lines with mode, bind, auth, tailscale)
 ```
 
@@ -228,18 +228,18 @@
 - File should NOT have `gateway.mode` or `gateway.bind`
 - `node.json` remains unchanged (correct as-is)
 
-### Step 2: Resume Clawdbot Service (HIGH)
+### Step 2: Resume OpenClaw Service (HIGH)
 **Action:** Resume the paused Windows service
 
 ```powershell
 # On Windows (as Administrator)
-Start-Service -Name "ClawdbotNode"
-# Or via Services GUI: services.msc → ClawdbotNode → Start
+Start-Service -Name "OpenClawNode"
+# Or via Services GUI: services.msc → OpenClawNode → Start
 ```
 
 **Verification:**
 ```powershell
-Get-Service -Name "ClawdbotNode" | Select-Object Status, DisplayName
+Get-Service -Name "OpenClawNode" | Select-Object Status, DisplayName
 # Should show: Status = Running
 ```
 
@@ -248,14 +248,14 @@ Get-Service -Name "ClawdbotNode" | Select-Object Status, DisplayName
 
 ```powershell
 # On Windows
-# Delete or truncate C:\Users\Zachg\.clawdbot\cron\jobs.json
+# Delete or truncate C:\Users\Zachg\.openclaw\cron\jobs.json
 # Replace with: {"version": 1, "jobs": []}
 ```
 
 **Rationale:** Node shouldn't have ANY cron jobs - all scheduling on Mac
 
 ### Step 4: Remove Stale Discord Config (MEDIUM)
-**Action:** Strip StantonTimes Discord config from `clawdbot.json`
+**Action:** Strip StantonTimes Discord config from `openclaw.json`
 
 **Remove:**
 - `channels.discord.guilds.825047055688532049.channels.1465948913906225286`
@@ -271,8 +271,8 @@ Get-Service -Name "ClawdbotNode" | Select-Object Status, DisplayName
 
 ```powershell
 # On Windows
-mkdir C:\Users\Zachg\.clawdbot\agents-archive
-move C:\Users\Zachg\.clawdbot\agents\stanton-times C:\Users\Zachg\.clawdbot\agents-archive\
+mkdir C:\Users\Zachg\.openclaw\agents-archive
+move C:\Users\Zachg\.openclaw\agents\stanton-times C:\Users\Zachg\.openclaw\agents-archive\
 ```
 
 ### Step 6: Update Workspace Path (OPTIONAL)
@@ -289,27 +289,27 @@ move C:\Users\Zachg\.clawdbot\agents\stanton-times C:\Users\Zachg\.clawdbot\agen
 
 1. **Service Status**
    ```powershell
-   Get-Service ClawdbotNode | Select-Object Status
+   Get-Service OpenClawNode | Select-Object Status
    # Should be: Running
    ```
 
 2. **Node Connection**
    ```bash
    # On Mac
-   clawdbot nodes status
+   openclaw nodes status
    # Should show GamingPC connected
    ```
 
 3. **Node Commands Work**
    ```bash
    # On Mac
-   clawdbot nodes run GamingPC "powershell -Command 'echo test'"
+   openclaw nodes run GamingPC "powershell -Command 'openclaw test'"
    # Should return "test" without errors
    ```
 
 4. **No Auth Errors**
    - Check Windows Event Viewer
-   - Check `C:\Users\Zachg\.clawdbot\logs\` for errors
+   - Check `C:\Users\Zachg\.openclaw\logs\` for errors
    - Should NOT see "authentication failing" or "gateway closed (1006)"
 
 5. **Browser Proxy Available**
@@ -329,7 +329,7 @@ move C:\Users\Zachg\.clawdbot\agents\stanton-times C:\Users\Zachg\.clawdbot\agen
 
 ## 6. Recommended Windows Configuration
 
-### Minimal `clawdbot.json` for Node
+### Minimal `openclaw.json` for Node
 
 ```json
 {
@@ -429,7 +429,7 @@ move C:\Users\Zachg\.clawdbot\agents\stanton-times C:\Users\Zachg\.clawdbot\agen
 ✅ Node pairing worked correctly  
 
 ### What Was Missed
-❌ Didn't remove gateway config from `clawdbot.json`  
+❌ Didn't remove gateway config from `openclaw.json`  
 ❌ Left Windows service in Paused state  
 ❌ Didn't clean up old Discord configs  
 ❌ Didn't remove Mac cron jobs from Windows config  
@@ -444,21 +444,21 @@ move C:\Users\Zachg\.clawdbot\agents\stanton-times C:\Users\Zachg\.clawdbot\agen
 
 ## Appendix A: File Locations
 
-### Windows Clawdbot Config
-- Main config: `C:\Users\Zachg\.clawdbot\clawdbot.json`
-- Node config: `C:\Users\Zachg\.clawdbot\node.json`
-- Cron jobs: `C:\Users\Zachg\.clawdbot\cron\jobs.json`
-- Logs: `C:\Users\Zachg\.clawdbot\logs\`
-- Agents: `C:\Users\Zachg\.clawdbot\agents\`
+### Windows OpenClaw Config
+- Main config: `C:\Users\Zachg\.openclaw\openclaw.json`
+- Node config: `C:\Users\Zachg\.openclaw\node.json`
+- Cron jobs: `C:\Users\Zachg\.openclaw\cron\jobs.json`
+- Logs: `C:\Users\Zachg\.openclaw\logs\`
+- Agents: `C:\Users\Zachg\.openclaw\agents\`
 
 ### Windows Service
-- Service Name: `ClawdbotNode`
-- Display Name: "Clawdbot Node (GamingPC)"
+- Service Name: `OpenClawNode`
+- Display Name: "OpenClaw Node (GamingPC)"
 - Management: `services.msc` or PowerShell `Get-Service`
 
 ### Mac Gateway Config
-- Main config: `/Users/zachgonser/.clawdbot/clawdbot.json`
-- Cron jobs: `/Users/zachgonser/.clawdbot/cron/jobs.json`
+- Main config: `/Users/zachgonser/.openclaw/openclaw.json`
+- Cron jobs: `/Users/zachgonser/.openclaw/cron/jobs.json`
 - Gateway IP: `192.168.225.149:18789`
 
 ---
@@ -469,7 +469,7 @@ move C:\Users\Zachg\.clawdbot\agents\stanton-times C:\Users\Zachg\.clawdbot\agen
 Windows showing repeated "Authentication Failing" errors in gateway logs.
 
 ### Why It Happened
-1. Windows `clawdbot.json` has `gateway.mode: "local"`
+1. Windows `openclaw.json` has `gateway.mode: "local"`
 2. This makes Windows try to RUN a gateway (not just connect to one)
 3. Windows gateway tries to bind to `127.0.0.1:18789` (loopback)
 4. When CLI commands run, they try to connect to local gateway
@@ -485,27 +485,27 @@ Remove `gateway` section entirely → Windows becomes pure node → connects to 
 
 ### Check Node Status (from Mac)
 ```bash
-clawdbot nodes status
-clawdbot nodes describe GamingPC
+openclaw nodes status
+openclaw nodes describe GamingPC
 ```
 
 ### Run Commands on Windows Node (from Mac)
 ```bash
-clawdbot nodes run GamingPC "powershell -Command 'Get-Date'"
+openclaw nodes run GamingPC "powershell -Command 'Get-Date'"
 ```
 
 ### Check Windows Service
 ```powershell
 # On Windows
-Get-Service ClawdbotNode | Select-Object Status, DisplayName
-Start-Service ClawdbotNode
-Stop-Service ClawdbotNode
+Get-Service OpenClawNode | Select-Object Status, DisplayName
+Start-Service OpenClawNode
+Stop-Service OpenClawNode
 ```
 
 ### View Windows Logs
 ```powershell
 # On Windows
-Get-Content C:\Users\Zachg\.clawdbot\logs\clawdbot.log -Tail 50
+Get-Content C:\Users\Zachg\.openclaw\logs\openclaw.log -Tail 50
 ```
 
 ### Environment Variable (Windows)

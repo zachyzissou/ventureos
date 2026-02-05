@@ -5,16 +5,16 @@
 ## Actions Completed
 
 ### ✅ Step 1: Backup Created
-- Created: `C:\Users\Zachg\.clawdbot\clawdbot.json.backup-20260130-HHMMSS`
+- Created: `C:\Users\Zachg\.openclaw\openclaw.json.backup-20260130-HHMMSS`
 - Status: **SUCCESS**
 
 ### ✅ Step 2: Removed Gateway Config
-- Action: Deleted entire `gateway` section from `clawdbot.json`
+- Action: Deleted entire `gateway` section from `openclaw.json`
 - Removed: `mode: local`, `bind: loopback`, auth config
 - Status: **SUCCESS**
 
 ### ✅ Step 3: Removed Discord Config
-- Action: Deleted entire `channels` section from `clawdbot.json`
+- Action: Deleted entire `channels` section from `openclaw.json`
 - Removed: Full StantonTimes channel config with systemPrompt
 - Status: **SUCCESS**
 
@@ -25,7 +25,7 @@
 - Status: **SUCCESS**
 
 ### ⚠️ Step 5: Service Status
-- Attempted: Resume ClawdbotNode service
+- Attempted: Resume OpenClawNode service
 - Current Status: **Paused** (auto-pauses when idle)
 - Node Connection: **CONNECTED** ✅
 - Functionality: **WORKING** ✅
@@ -33,7 +33,7 @@
 
 ### ✅ Step 6: Archived Old Agent
 - Action: Moved `stanton-times` agent to `agents-archive/`
-- Location: `C:\Users\Zachg\.clawdbot\agents-archive\stanton-times`
+- Location: `C:\Users\Zachg\.openclaw\agents-archive\stanton-times`
 - Status: **SUCCESS**
 
 ## Validation Results
@@ -66,7 +66,7 @@
 
 ## Post-Remediation Configuration
 
-### Windows `clawdbot.json` (Simplified)
+### Windows `openclaw.json` (Simplified)
 - ✅ Auth profiles (Anthropic)
 - ✅ Tool configs (web search)
 - ✅ Agent defaults

@@ -1,7 +1,7 @@
 # Bloom Full Audit Summary
 
 **Date:** 2026-01-28
-**Auditors:** Echo + 5 sub-agents
+**Auditors:** OpenClaw + 5 sub-agents
 **Project:** C:\Users\Zachg\Development\Games\Bloom
 
 ---

@@ -1,13 +1,30 @@
 {
-    "content_intelligence": {
-        "scoring_weights": {
-            "developer_credibility": 0.4,
-            "community_engagement": 0.3,
-            "information_novelty": 0.2,
-            "technical_depth": 0.1
-        },
-        "draft_threshold": 0.7
+  "content_intelligence": {
+    "scoring_weights": {
+      "developer_credibility": 0.4,
+      "community_engagement": 0.3,
+      "information_novelty": 0.2,
+      "technical_depth": 0.1
     },
-    "pending_stories": [],
-    "seen_tweet_ids": {}
+    "draft_threshold": 0.7
+  },
+  "pending_stories": [
+    {
+      "source": "RobertsSpaceInd",
+      "topic": "Server Meshing Update",
+      "description": "Major breakthrough in server meshing technology for Star Citizen Alpha 4.6",
+      "score": 1.0,
+      "draft_status": "posted_for_review",
+      "simulated_draft": "Server Meshing Update \ud83d\ude80\n\nMajor breakthrough in server meshing technology for Star Citizen Alpha 4.6...\n\n#StarCitizen #RobertsSpaceInd"
+    },
+    {
+      "source": "starcitizenbot",
+      "topic": "Patch Notes",
+      "description": "Alpha 4.6 patch notes released with significant performance improvements",
+      "score": 1.0,
+      "draft_status": "posted_for_review",
+      "simulated_draft": "Patch Notes \ud83d\ude80\n\nAlpha 4.6 patch notes released with significant performance improvements...\n\n#StarCitizen #starcitizenbot"
+    }
+  ],
+  "seen_tweet_ids": {}
 }

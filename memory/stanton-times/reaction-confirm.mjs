@@ -1,122 +1,62 @@
 #!/usr/bin/env node
-/**
- * Reaction Confirmation Embed Sender
- * Sends beautiful Discord webhook embeds when reactions are received
- * 
- * Usage: node reaction-confirm.mjs <emoji> <user> <msgId> [context]
- * Example: node reaction-confirm.mjs "✅" "zap" "1234567890" "Draft: Weather alert post"
- */
 
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import fs from 'fs';
+import path from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Capture command line arguments
+const [emoji, username, msgId, context] = process.argv.slice(2);
 
-// Load .env manually
-const envPath = join(__dirname, '.env');
-const envContent = readFileSync(envPath, 'utf-8');
-const env = {};
-for (const line of envContent.split('\n')) {
-  const match = line.match(/^([^#=]+)=(.*)$/);
-  if (match) env[match[1].trim()] = match[2].trim();
+// Logging function
+function log(message) {
+    const logPath = path.join(__dirname, 'reaction_log.txt');
+    const timestamp = new Date().toISOString();
+    fs.appendFileSync(logPath, `${timestamp} - ${message}\n`);
 }
 
-const WEBHOOK_URL = env.STANTON_WEBHOOK_URL;
-
-if (!WEBHOOK_URL) {
-  console.error('Error: STANTON_WEBHOOK_URL not set in .env');
-  process.exit(1);
-}
-
-const [,, emoji, user, msgId, context] = process.argv;
-
-if (!emoji || !user || !msgId) {
-  console.error('Usage: node reaction-confirm.mjs <emoji> <user> <msgId> [context]');
-  process.exit(1);
-}
-
-// Reaction type configurations
-const reactionTypes = {
-  '✅': {
-    title: '✅ Approved',
-    color: 0x57F287, // Green
-    action: 'Proceeding with action',
-    footer: 'Action will be executed'
-  },
-  '❌': {
-    title: '❌ Rejected',
-    color: 0xED4245, // Red
-    action: 'Action cancelled',
-    footer: 'Item has been discarded'
-  },
-  '🤔': {
-    title: '🤔 Held for Review',
-    color: 0xFEE75C, // Yellow
-    action: 'Awaiting further input',
-    footer: 'React again when ready'
-  }
-};
-
-const config = reactionTypes[emoji] || {
-  title: `${emoji} Reaction Received`,
-  color: 0x5865F2, // Discord Blurple
-  action: 'Noted',
-  footer: 'Reaction logged'
-};
-
-const embed = {
-  title: config.title,
-  color: config.color,
-  fields: [
-    {
-      name: 'By',
-      value: `**${user}**`,
-      inline: true
-    },
-    {
-      name: 'Message',
-      value: `\`${msgId}\``,
-      inline: true
-    },
-    {
-      name: 'Status',
-      value: config.action,
-      inline: false
+// State management function
+function updateState(status) {
+    const statePath = path.join(__dirname, 'state.json');
+    let state = {};
+    
+    try {
+        state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    } catch (error) {
+        // Initialize if file doesn't exist
     }
-  ],
-  footer: {
-    text: config.footer
-  },
-  timestamp: new Date().toISOString()
-};
 
-// Add context if provided
-if (context) {
-  embed.description = `> ${context}`;
+    // Update state based on reaction
+    state.last_reaction = {
+        emoji,
+        username,
+        messageId: msgId,
+        context,
+        timestamp: new Date().toISOString(),
+        status
+    };
+
+    fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
 }
 
-const payload = {
-  username: 'The Stanton Times',
-  avatar_url: 'https://pbs.twimg.com/profile_images/1927617270894493696/tKqgVvOp_400x400.jpg',
-  embeds: [embed]
-};
-
-try {
-  const res = await fetch(WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  
-  if (!res.ok) {
-    const text = await res.text();
-    console.error(`Webhook failed: ${res.status} ${text}`);
-    process.exit(1);
-  }
-  
-  console.log(`✓ Confirmation sent: ${config.title} by ${user}`);
-} catch (err) {
-  console.error(`Error: ${err.message}`);
-  process.exit(1);
+// Main reaction processing
+function processReaction() {
+    switch (emoji) {
+        case '✅':
+            log(`APPROVED by ${username}: ${context}`);
+            updateState('approved');
+            break;
+        case '❌':
+            log(`REJECTED by ${username}: ${context}`);
+            updateState('rejected');
+            break;
+        case '🤔':
+            log(`NEEDS REVIEW by ${username}: ${context}`);
+            updateState('pending');
+            break;
+        default:
+            log(`UNKNOWN REACTION ${emoji} by ${username}: ${context}`);
+            updateState('unknown');
+    }
 }
+
+// Execute
+processReaction();

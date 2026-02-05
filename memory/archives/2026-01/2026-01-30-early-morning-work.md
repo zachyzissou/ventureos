@@ -37,7 +37,7 @@ Everything validated and ready. Jobs will prove it on next execution.
 
 ## Fact Extraction to Obsidian (7:32 AM)
 Extracted 2 project facts to Obsidian vault:
-- ✅ `life/areas/projects/echo-autonomy-system.md` - Autonomy implementation details
+- ✅ `life/areas/projects/openclaw-autonomy-system.md` - Autonomy implementation details
 - ✅ `life/areas/projects/stantontimes-automation.md` - Validation status and infrastructure
 
 Updated heartbeat-state.json with extraction timestamp.
@@ -63,7 +63,7 @@ Updated heartbeat-state.json with extraction timestamp.
 
 **Fix:** Updated all to `payload.to = "user:956203522624462918"` (Zach's DM)
 
-**Location:** `~/.clawdbot/cron/jobs.json`
+**Location:** `~/.openclaw/cron/jobs.json`
 
 **Lesson:** When jobs have `deliver: false`, they should use `isolation.postToMainPrefix` to route to main session. But if `payload.to` is set, it overrides that routing.
 

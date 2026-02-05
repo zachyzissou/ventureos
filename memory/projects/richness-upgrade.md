@@ -2,13 +2,13 @@
 
 **Started:** 2026-01-28
 **Status:** In Progress
-**Goal:** Transform Echo from text-only assistant to multi-modal, proactive partner
+**Goal:** Transform OpenClaw from text-only assistant to multi-modal, proactive partner
 
 ## Features to Implement
 
 ### Immediate (DONE)
 - [x] Proactive Briefings - morning cron job (8 AM daily)
-- [x] Knowledge Graph seed - Obsidian integration (📚 Knowledge/Echo Graph/)
+- [x] Knowledge Graph seed - Obsidian integration (📚 Knowledge/OpenClaw Graph/)
 - [x] Curated Feeds - tech/gamedev monitoring cron (12 PM, 6 PM daily)
 - [x] Bloom Dashboard - Obsidian + HTML (📊 Dashboards/Bloom Live.md)
 

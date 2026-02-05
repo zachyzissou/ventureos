@@ -570,8 +570,8 @@ sed -i 's/terminal-grounds/bloom/g' api-documentation.md
 sed -i 's/Terminal Grounds/Bloom/g' api-documentation.md
 
 # 2. Create missing Wiki pages (2 hours)
-echo "# Performance\n\nSee [Development/Performance](../Development/Performance.md)" > Wiki/Technical/Performance.md
-echo "# Combat\n\nSee [Overview](Overview.md#combat)" > Wiki/Gameplay/Combat.md
+openclaw "# Performance\n\nSee [Development/Performance](../Development/Performance.md)" > Wiki/Technical/Performance.md
+openclaw "# Combat\n\nSee [Overview](Overview.md#combat)" > Wiki/Gameplay/Combat.md
 
 # 3. Fix Wiki links (4 hours)
 cd Wiki

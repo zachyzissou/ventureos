@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-The GamingPC has been serving as the primary Clawdbot host. Key findings:
+The GamingPC has been serving as the primary OpenClaw host. Key findings:
 
 - **25 active cron jobs** - Most are StantonTimes monitors, need migration
 - **1 dedicated agent workspace** - stanton-times-agent with full workflow
@@ -23,7 +23,7 @@ The GamingPC has been serving as the primary Clawdbot host. Key findings:
 ### C:\Users\Zachg\clawd\ (Main Workspace)
 
 **Type:** Agent Workspace
-**Purpose:** Primary Echo agent workspace with full configuration
+**Purpose:** Primary OpenClaw agent workspace with full configuration
 **Files Found:**
 - AGENTS.md, SOUL.md, HEARTBEAT.md
 - .env (template, no secrets)
@@ -94,7 +94,7 @@ STANTON_NOTIFY_USER=956203522624462918
 
 ---
 
-### C:\Users\Zachg\.clawdbot\google-mcp\
+### C:\Users\Zachg\.openclaw\google-mcp\
 
 **Type:** Credential Store
 **Purpose:** Google OAuth for calendar/email access
@@ -105,12 +105,12 @@ STANTON_NOTIFY_USER=956203522624462918
 **Migration required:** Yes (if using Google MCP on Mac)
 **Priority:** Important
 **Migration steps:**
-1. Copy both files to Mac ~/.clawdbot/google-mcp/
+1. Copy both files to Mac ~/.openclaw/google-mcp/
 2. May need to re-authenticate if tokens expired
 
 ---
 
-### C:\Users\Zachg\.clawdbot\credentials\
+### C:\Users\Zachg\.openclaw\credentials\
 
 **Type:** Credential Store
 **Purpose:** Discord pairing and allowlist
@@ -124,20 +124,20 @@ STANTON_NOTIFY_USER=956203522624462918
 
 ---
 
-### C:\Users\Zachg\.clawdbot\clawdbot.json
+### C:\Users\Zachg\.openclaw\openclaw.json
 
 **Type:** Config
-**Purpose:** Main Clawdbot configuration
+**Purpose:** Main OpenClaw configuration
 **Contains:**
 - Brave Search API key: `BSAW1ZNoEGBXmYuZhy_o2MaRfx8yctI`
-- Agent configuration (Echo)
+- Agent configuration (OpenClaw)
 - Memory search settings
 - Workspace paths (Windows-specific)
 
 **Migration required:** Check API keys haven't changed on Mac
 **Priority:** Important
 **Migration steps:**
-1. Verify Mac clawdbot.json has same API keys
+1. Verify Mac openclaw.json has same API keys
 2. Paths will be different - that's expected
 
 ---
@@ -176,7 +176,7 @@ STANTON_NOTIFY_USER=956203522624462918
 
 ---
 
-## 4. Cron Jobs (C:\Users\Zachg\.clawdbot\cron\jobs.json)
+## 4. Cron Jobs (C:\Users\Zachg\.openclaw\cron\jobs.json)
 
 **Type:** Scheduled Tasks
 **Purpose:** Automated monitoring and maintenance
@@ -229,7 +229,7 @@ STANTON_NOTIFY_USER=956203522624462918
 **Priority:** Critical
 **Migration steps:**
 1. Export jobs.json from Windows
-2. Import to Mac ~/.clawdbot/cron/
+2. Import to Mac ~/.openclaw/cron/
 3. Update any Windows paths to Mac equivalents
 4. Review which jobs should continue vs. be disabled
 
@@ -354,9 +354,9 @@ life/areas/
 
 ## 9. Windows Task Scheduler
 
-**Task Found:** `Clawdbot Node`
-**Purpose:** Starts clawdbot node on login
-**Command:** C:\Users\Zachg\.clawdbot\node.cmd
+**Task Found:** `OpenClaw Node`
+**Purpose:** Starts openclaw node on login
+**Command:** C:\Users\Zachg\.openclaw\node.cmd
 **Schedule:** At logon
 
 **Migration required:** No - node will continue running for browser proxy
@@ -377,7 +377,7 @@ life/areas/
 ### Phase 2: Important
 
 - [ ] Copy google-mcp/ OAuth files
-- [ ] Verify API keys in clawdbot.json match
+- [ ] Verify API keys in openclaw.json match
 - [ ] Review and enable appropriate cron jobs
 - [ ] Copy memory/heartbeat-state.json
 
