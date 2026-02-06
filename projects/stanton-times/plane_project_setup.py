@@ -1,6 +1,11 @@
 import sys
 import json
-sys.path.append('/Users/zachgonser/clawd/.venv/mcp-server/lib/python3.10/site-packages')
+import os
+
+# Optional local override for environments that keep Plane tooling in a separate venv.
+extra_site_packages = os.getenv("STANTON_TIMES_PLANE_SITE_PACKAGES", "").strip()
+if extra_site_packages:
+    sys.path.append(extra_site_packages)
 
 # Configuration
 PROJECT_ID = "de035243-4d44-44cf-ad37-0c10b4208a7d"

@@ -4,12 +4,17 @@ import re
 import subprocess
 from typing import Optional
 
-from content_processor import StantonTimesContentProcessor
+from src.content_processor import StantonTimesContentProcessor
 from ledger import StantonTimesLedger
-from src.config import ensure_state_file, get_config_path, load_config
+from src.config import (
+    ensure_state_file,
+    get_bird_auth_script,
+    get_config_path,
+    get_log_path,
+    get_send_embed_script,
+    load_config,
+)
 from src.state.store import save_state
-
-BIRD_AUTH_SCRIPT = "/Users/zachgonser/clawd/scripts/bird-auth.sh"
 
 
 class TweetPublisher:
@@ -20,8 +25,17 @@ class TweetPublisher:
         state_file_path = state_file_path or str(ensure_state_file())
         self.content_processor = StantonTimesContentProcessor(state_file_path, config_path)
         self.ledger = StantonTimesLedger()
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(
+            level=logging.INFO,
+            format=(self.config.get("logging", {}) or {}).get(
+                "format",
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            ),
+            filename=get_log_path("tweet_publisher.log"),
+        )
         self.logger = logging.getLogger(__name__)
+        self.bird_auth_script = get_bird_auth_script()
+        self.send_embed_script = get_send_embed_script()
 
     def _extract_tweet_id(self, output: str) -> Optional[str]:
         output = output.strip()
@@ -64,11 +78,14 @@ class TweetPublisher:
         return None
 
     def _post_with_bird(self, tweet_text: str) -> Optional[str]:
-        cmd = [BIRD_AUTH_SCRIPT, "--json", "tweet", tweet_text]
+        cmd = [self.bird_auth_script, "--json", "tweet", tweet_text]
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         except FileNotFoundError:
-            self.logger.error("bird-auth.sh not found. Install bird or update script path.")
+            self.logger.error(
+                "bird-auth script not found (%s). Set STANTON_TIMES_BIRD_AUTH_SCRIPT or install bird-auth.sh on PATH.",
+                self.bird_auth_script,
+            )
             return None
         except Exception as e:
             self.logger.error(f"bird tweet failed: {e}")
@@ -89,7 +106,7 @@ class TweetPublisher:
         description = f"✅ **Published**\n{tweet_url}"
         cmd = [
             "node",
-            "/Users/zachgonser/clawd/projects/stanton-times/send-embed.mjs",
+            self.send_embed_script,
             "--title",
             f"Published: {title}",
             "--description",

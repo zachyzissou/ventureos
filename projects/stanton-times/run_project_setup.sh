@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# Activate virtual environment
-source /Users/zachgonser/clawd/.venv/mcp-server/bin/activate
-
 # Run the project setup script
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${PROJECT_DIR}"
-python plane_project_setup.py
+
+if [[ -f ".venv/bin/activate" ]]; then
+  # shellcheck disable=SC1091
+  source ".venv/bin/activate"
+fi
+
+python3 plane_project_setup.py

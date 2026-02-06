@@ -4,7 +4,7 @@ from datetime import datetime
 import subprocess
 import os
 
-from src.config import PROJECT_ROOT, get_config_path, get_log_path, load_config
+from src.config import PROJECT_ROOT, get_bird_auth_script, get_config_path, get_log_path, load_config
 
 try:
     import psutil  # type: ignore
@@ -115,8 +115,9 @@ class StantonTimesSystemMonitor:
         Check Twitter API connectivity via bird CLI
         """
         try:
+            bird_auth = get_bird_auth_script()
             result = subprocess.run(
-                ['/Users/zachgonser/clawd/scripts/bird-auth.sh', 'whoami'], 
+                [bird_auth, 'whoami'],
                 capture_output=True, 
                 text=True, 
                 timeout=10

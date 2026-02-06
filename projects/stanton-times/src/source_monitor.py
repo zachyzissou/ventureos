@@ -18,7 +18,7 @@ from src.config import ensure_state_file, get_config_path, get_log_path, load_co
 from src.sources.rss import fetch_rss_entries
 from src.state.store import StateValidationError, load_state, save_state
 from src.utils.discord_approval import send_approval_webhook
-from content_processor import StantonTimesContentProcessor
+from src.content_processor import StantonTimesContentProcessor
 
 class AdvancedSourceMonitor:
     def __init__(self, config_path: str = None):

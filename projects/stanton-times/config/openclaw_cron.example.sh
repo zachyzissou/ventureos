@@ -29,10 +29,10 @@ openclaw cron add \
   --cron "*/15 * * * *" \
   --message "cd $PROJECT_DIR && $PY src/app.py monitor"
 
-# Approval sender: (re)post any needs_review drafts to Discord via webhook.
+# Approval: (re)post any needs_review drafts to Discord via webhook.
 openclaw cron add \
-  --name stantontimes-approval-send \
-  --description "Stanton Times: send drafts to Discord for approval" \
+  --name stantontimes-approval \
+  --description "Stanton Times: approval loop (send drafts to Discord)" \
   --agent "$AGENT_ID" \
   --cron "*/5 * * * *" \
   --message "cd $PROJECT_DIR && $PY src/app.py verify"
@@ -44,4 +44,3 @@ openclaw cron add \
   --agent "$AGENT_ID" \
   --cron "*/10 * * * *" \
   --message "cd $PROJECT_DIR && $PY src/app.py publish"
-

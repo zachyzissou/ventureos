@@ -7,7 +7,7 @@ This repo supports scheduling via OpenClaw's built-in cron scheduler.
 OpenClaw cron jobs in this project are typically:
 
 - **Monitor**: run `src/app.py monitor` (ingest sources, score, draft, and post for review)
-- **Approval sender**: run `src/app.py verify` (posts any `needs_review` drafts to Discord)
+- **Approval**: run `src/app.py verify` (posts any `needs_review` drafts to Discord)
 - **Publish**: run `src/app.py publish` (publishes `approved` drafts to X via bird)
 
 Note: `reaction_monitor.py` is a long-running Discord bot that updates `draft_status` when reactions change. It is not a cron job.
@@ -44,4 +44,3 @@ This code writes local logs under `logs/` (created automatically when needed):
 If running via OpenClaw cron, also check the Gateway logs:
 
 - `openclaw logs tail`
-

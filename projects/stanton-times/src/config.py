@@ -20,6 +20,8 @@ ENV_DB_PATH = "STANTON_TIMES_DB_PATH"
 ENV_WEBHOOK_URL = "STANTON_TIMES_DISCORD_WEBHOOK_URL"
 ENV_WEBHOOK_FILE = "STANTON_TIMES_DISCORD_WEBHOOK_FILE"
 ENV_BOT_TOKEN = "STANTON_TIMES_DISCORD_BOT_TOKEN"
+ENV_BIRD_AUTH_SCRIPT = "STANTON_TIMES_BIRD_AUTH_SCRIPT"
+ENV_SEND_EMBED_SCRIPT = "STANTON_TIMES_SEND_EMBED_SCRIPT"
 
 DEFAULT_STATE_TEMPLATE: Dict[str, Any] = {
     "content_intelligence": {
@@ -117,3 +119,36 @@ def get_metrics_path(filename: str) -> str:
 
 def get_ml_model_path(filename: str) -> str:
     return str(DEFAULT_ML_MODELS_DIR / filename)
+
+
+def get_bird_auth_script() -> str:
+    """
+    Path to the bird authentication wrapper script.
+
+    Prefer STANTON_TIMES_BIRD_AUTH_SCRIPT. If a repo-local `scripts/bird-auth.sh`
+    exists, use that. Otherwise fall back to `bird-auth.sh` and rely on PATH.
+    """
+    env = os.getenv(ENV_BIRD_AUTH_SCRIPT, "").strip()
+    if env:
+        return env
+
+    candidate = PROJECT_ROOT / "scripts" / "bird-auth.sh"
+    if candidate.exists():
+        return str(candidate)
+
+    return "bird-auth.sh"
+
+
+def get_send_embed_script() -> str:
+    """
+    Node script that posts a Discord embed (used for publish confirmations).
+    """
+    env = os.getenv(ENV_SEND_EMBED_SCRIPT, "").strip()
+    if env:
+        return env
+
+    candidate = PROJECT_ROOT / "send-embed.mjs"
+    if candidate.exists():
+        return str(candidate)
+
+    return "send-embed.mjs"

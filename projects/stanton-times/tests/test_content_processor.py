@@ -1,6 +1,6 @@
 import unittest
 import json
-from content_processor import StantonTimesContentProcessor
+from src.content_processor import StantonTimesContentProcessor
 
 class TestContentProcessor(unittest.TestCase):
     def setUp(self):

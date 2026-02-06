@@ -1,12 +1,25 @@
 #!/usr/bin/env node
 import { WebhookClient, Client, GatewayIntentBits } from 'discord.js';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-const TOKEN_PATH = '/Users/zachgonser/.credentials/stanton_times_discord_token';
-const WEBHOOK_PATH = '/Users/zachgonser/.credentials/stanton_times_discord_webhook';
-const CHANNEL_ID = '1207388252411453480';
+const TOKEN_PATH = (process.env.STANTON_TIMES_DISCORD_BOT_TOKEN_FILE || '').trim()
+  || path.join(os.homedir(), '.credentials', 'stanton_times_discord_bot_token');
+const WEBHOOK_PATH = (process.env.STANTON_TIMES_DISCORD_WEBHOOK_FILE || '').trim()
+  || path.join(os.homedir(), '.credentials', 'stanton_times_discord_webhook');
+const CHANNEL_ID = (process.env.STANTON_TIMES_DISCORD_CHANNEL_ID || '').trim()
+  || (process.env.STANTON_TIMES_DISCORD_VERIFICATION_CHANNEL_ID || '').trim()
+  || '1207388252411453480';
+
+function loadToken() {
+  const env = (process.env.STANTON_TIMES_DISCORD_BOT_TOKEN || '').trim();
+  if (env) return env;
+  if (fs.existsSync(TOKEN_PATH)) return fs.readFileSync(TOKEN_PATH, 'utf8').trim();
+  return '';
+}
 
 client.once('ready', async () => {
     try {
@@ -36,4 +49,9 @@ client.once('ready', async () => {
     }
 });
 
-client.login(fs.readFileSync(TOKEN_PATH, 'utf8').trim());
+const token = loadToken();
+if (!token) {
+    console.error('Missing Discord bot token. Set STANTON_TIMES_DISCORD_BOT_TOKEN or STANTON_TIMES_DISCORD_BOT_TOKEN_FILE.');
+    process.exit(2);
+}
+client.login(token);

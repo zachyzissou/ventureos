@@ -39,3 +39,9 @@ def test_update_state_appends(tmp_path):
     st = update_state(path, upd)
     assert st["pending_stories"][0]["topic"] == "x"
 
+
+def test_state_coercion_preserves_unknown_keys(tmp_path):
+    path = tmp_path / "state.json"
+    save_state(path, {"ops": {"notes": "keep me"}, "pending_stories": []})
+    loaded = load_state(path)
+    assert loaded["ops"]["notes"] == "keep me"

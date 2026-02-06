@@ -1,10 +1,29 @@
 import discord
 from discord.ext import commands
 import os
+from pathlib import Path
 
-# Read bot token
-with open('/Users/zachgonser/.credentials/stanton_times_discord_token', 'r') as f:
-    BOT_TOKEN = f.read().strip()
+def _load_bot_token() -> str:
+    token = (os.getenv("STANTON_TIMES_DISCORD_BOT_TOKEN") or "").strip()
+    if token:
+        return token
+
+    token_file = Path(
+        os.getenv(
+            "STANTON_TIMES_DISCORD_BOT_TOKEN_FILE",
+            str(Path.home() / ".credentials" / "stanton_times_discord_bot_token"),
+        )
+    )
+    if token_file.exists():
+        return token_file.read_text().strip()
+    return ""
+
+
+BOT_TOKEN = _load_bot_token()
+if not BOT_TOKEN:
+    raise SystemExit(
+        "Missing Discord bot token. Set STANTON_TIMES_DISCORD_BOT_TOKEN or STANTON_TIMES_DISCORD_BOT_TOKEN_FILE."
+    )
 
 # Intents configuration
 intents = discord.Intents.default()

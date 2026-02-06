@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import datetime
 
-from content_processor import StantonTimesContentProcessor
+from src.content_processor import StantonTimesContentProcessor
 from src.config import ensure_state_file, get_config_path, get_log_path, load_config
 from src.state.store import save_state
 from src.utils.discord_approval import send_approval_webhook

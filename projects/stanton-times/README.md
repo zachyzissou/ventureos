@@ -5,9 +5,11 @@ Automated news monitoring + drafting pipeline for @TheStantonTimes. Sources are 
 
 ## Key Docs
 - `docs/PIPELINE.md`
+- `docs/APPROVALS.md`
 - `docs/OPERATIONS.md`
 - `docs/SOURCES.md`
 - `docs/OPENCLAW_CRON.md`
+- `docs/STATE_SCHEMA.md`
 
 ## Project Structure
 ```
@@ -30,6 +32,7 @@ pip install -r requirements.txt
 ## Config
 - `config/config.json`
 - Discord webhook/bot token in `~/.credentials/`
+- Publishing requires `bird-auth.sh` (set `STANTON_TIMES_BIRD_AUTH_SCRIPT` or ensure `bird-auth.sh` is on `PATH`)
 
 ## Run (manual)
 ```bash
@@ -42,12 +45,12 @@ pip install -r requirements.txt
 
 ## Scheduling
 
-- Recommended: OpenClaw cron (monitor/approval-send/publish)
+- Recommended: OpenClaw cron (monitor/approval/publish)
   - Docs: `docs/OPENCLAW_CRON.md`
   - Example installer: `config/openclaw_cron.example.sh`
 - Legacy: `cron_manager.py` (deprecated; kept for backwards compatibility)
 
 ## Testing
 ```bash
-pytest tests/
+python3 -m pytest -q
 ```

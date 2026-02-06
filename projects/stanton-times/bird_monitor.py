@@ -3,8 +3,8 @@ import json
 import logging
 from typing import List, Dict, Any, Optional
 
-from content_processor import StantonTimesContentProcessor
-from src.config import ensure_state_file, get_config_path, load_config
+from src.content_processor import StantonTimesContentProcessor
+from src.config import ensure_state_file, get_bird_auth_script, get_config_path, load_config
 from src.state.store import save_state
 
 
@@ -18,8 +18,8 @@ class BirdMonitor:
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
 
-        # Path to bird-auth.sh script
-        self.bird_auth_path = "/Users/zachgonser/clawd/scripts/bird-auth.sh"
+        # Path to bird-auth.sh script (configurable via STANTON_TIMES_BIRD_AUTH_SCRIPT)
+        self.bird_auth_path = get_bird_auth_script()
 
         # Monitored accounts from config
         raw_accounts = self.config.get('monitored_accounts', [

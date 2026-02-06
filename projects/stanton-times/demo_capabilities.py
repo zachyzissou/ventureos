@@ -1,6 +1,6 @@
 import json
 import sys
-from content_processor import StantonTimesContentProcessor
+from src.content_processor import StantonTimesContentProcessor
 from ml_scorer import AdvancedContentScorer
 from error_handler import StantonTimesErrorHandler
 from permission_manager import StantonTimesPermissionManager

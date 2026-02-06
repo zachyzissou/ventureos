@@ -2,7 +2,7 @@
 
 ## Scheduling (Recommended: OpenClaw Cron)
 
-Prefer OpenClaw cron jobs for `monitor` / `approval send` / `publish`:
+Prefer OpenClaw cron jobs for `monitor` / `approval` / `publish`:
 
 - Docs: `docs/OPENCLAW_CRON.md`
 - Example: `config/openclaw_cron.example.sh`

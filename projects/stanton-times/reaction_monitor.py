@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from src.config import ensure_state_file, get_config_path, get_log_path, load_config
 from src.state.store import load_state, save_state
+from src.utils.approval_decision import decide_draft_status
 from ledger import StantonTimesLedger
 
 class StantonTimesReactionMonitor:
@@ -164,22 +165,24 @@ class StantonTimesReactionMonitor:
             self._update_ledger_status(story, 'rejected')
             return
 
-        if reactions['✏️'] > 0 and reactions['✏️'] >= max(reactions['✅'], reactions['❌'], reactions['🤔']):
-            story['draft_status'] = 'edit_requested'
+        next_status = decide_draft_status(
+            reaction_counts=reactions,
+            message_age=message_age,
+            max_age=self.pending_stories_max_age,
+        )
+        if not next_status:
+            return
+
+        story['draft_status'] = next_status
+        if next_status == 'edit_requested':
             self.logger.info(f"Story marked for edits: {title}")
-            self._update_ledger_status(story, 'edit_requested')
-        elif reactions['✅'] > max(reactions['❌'], reactions['🤔'], reactions['✏️']):
-            story['draft_status'] = 'approved'
+        elif next_status == 'approved':
             self.logger.info(f"Story approved by community: {title}")
-            self._update_ledger_status(story, 'approved')
-        elif reactions['❌'] >= max(reactions['✅'], reactions['🤔'], reactions['✏️']) and reactions['❌'] > 0:
-            story['draft_status'] = 'rejected'
+        elif next_status == 'rejected':
             self.logger.info(f"Story rejected by community: {title}")
-            self._update_ledger_status(story, 'rejected')
-        elif reactions['🤔'] > max(reactions['✅'], reactions['❌'], reactions['✏️']):
-            story['draft_status'] = 'hold'
+        elif next_status == 'hold':
             self.logger.info(f"Story held for review: {title}")
-            self._update_ledger_status(story, 'hold')
+        self._update_ledger_status(story, next_status)
 
     def _load_state(self):
         return load_state(self.state_path)
