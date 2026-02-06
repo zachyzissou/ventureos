@@ -1,15 +1,16 @@
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
+
+from src.config import get_log_path, get_metrics_path
 
 class PerformanceLogger:
-    def __init__(self, log_file_path, metrics_file_path):
-        self.log_file_path = log_file_path
-        self.metrics_file_path = metrics_file_path
-        
+    def __init__(self, log_file_path=None, metrics_file_path=None):
+        self.log_file_path = log_file_path or get_log_path('performance.log')
+        self.metrics_file_path = metrics_file_path or get_metrics_path('tweet_metrics.json')
         # Configure logging
         logging.basicConfig(
-            filename=log_file_path, 
+            filename=self.log_file_path, 
             level=logging.INFO,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
@@ -113,10 +114,7 @@ class PerformanceLogger:
         return sorted_sources[:5]  # Top 5 sources
 
 def main():
-    logger = PerformanceLogger(
-        '/Users/zachgonser/clawd/projects/stanton-times/logs/performance.log',
-        '/Users/zachgonser/clawd/projects/stanton-times/metrics/tweet_metrics.json'
-    )
+    logger = PerformanceLogger()
     
     # Example usage
     sample_tweet = {

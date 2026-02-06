@@ -4,5 +4,6 @@
 source /Users/zachgonser/clawd/.venv/mcp-server/bin/activate
 
 # Run the project setup script
-cd /Users/zachgonser/clawd/projects/stanton-times
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${PROJECT_DIR}"
 python plane_project_setup.py

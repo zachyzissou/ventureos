@@ -1,5 +1,7 @@
-import feedparser
 import logging
+
+from src.sources.rss import fetch_rss_entries
+
 
 class RSSProcessor:
     def __init__(self, feed_url):
@@ -9,8 +11,8 @@ class RSSProcessor:
     def fetch_entries(self):
         """Fetch and process RSS feed entries."""
         try:
-            feed = feedparser.parse(self.feed_url)
-            return [self.process_entry(entry) for entry in feed.entries]
+            entries = fetch_rss_entries(self.feed_url, logger=self.logger)
+            return [self.process_entry(entry) for entry in entries]
         except Exception as e:
             self.logger.error(f"Error processing RSS feed {self.feed_url}: {e}")
             return []
@@ -18,7 +20,7 @@ class RSSProcessor:
     def process_entry(self, entry):
         """Process individual RSS entry."""
         return {
-            'title': entry.get('title', ''),
-            'link': entry.get('link', ''),
-            'published': entry.get('published', '')
+            "title": entry.get("title", ""),
+            "link": entry.get("link", ""),
+            "published": entry.get("published", ""),
         }

@@ -2,6 +2,9 @@ import sys
 import json
 import discord
 
+from src.config import ensure_state_file, load_config
+from src.state.store import load_state, save_state
+
 async def post_story(bot, story):
     """
     Manually post a story to the verification channel
@@ -29,10 +32,13 @@ async def post_story(bot, story):
     await message.add_reaction('❌')  # Reject
     await message.add_reaction('🤔')  # Needs more context
 
+    story['discord_message_id'] = str(message.id)
+
 async def main():
     # Load configuration
-    with open('/Users/zachgonser/clawd/projects/stanton-times/config.json', 'r') as f:
-        config = json.load(f)
+    config = load_config()
+
+    state_path = str(ensure_state_file())
 
     # Create bot instance
     intents = discord.Intents.default()
@@ -47,8 +53,7 @@ async def main():
         print(f'Logged in as {bot.user}')
         
         # Load state file
-        with open('/Users/zachgonser/clawd/memory/stanton-times/state.json', 'r') as f:
-            state = json.load(f)
+        state = load_state(state_path)
         
         # Check for any pending stories
         pending_stories = state.get('pending_stories', [])
@@ -66,8 +71,7 @@ async def main():
         story['draft_status'] = 'posted_for_review'
         
         # Save updated state
-        with open('/Users/zachgonser/clawd/memory/stanton-times/state.json', 'w') as f:
-            json.dump(state, f, indent=2)
+        save_state(state_path, state)
         
         await bot.close()
 

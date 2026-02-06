@@ -1,81 +1,49 @@
 import json
-import sys
 import asyncio
 import discord
 
+from src.config import ensure_state_file, get_config_path, load_config
+from src.state.store import load_state, save_state
+from src.utils.discord_approval import send_approval_webhook
+
+
 class ManualStoryPoster:
-    def __init__(self, config_path, state_path):
+    def __init__(self, config_path=None, state_path=None):
         # Load configuration
-        with open(config_path, 'r') as f:
-            self.config = json.load(f)
-        
+        self.config = load_config()
+        self.config_path = config_path or str(get_config_path())
+
         # Load state
-        with open(state_path, 'r') as f:
-            self.state = json.load(f)
-        
-        # Discord client setup
-        intents = discord.Intents.default()
-        intents.message_content = True
-        self.client = discord.Client(intents=intents)
+        state_path = state_path or str(ensure_state_file())
+        self.state_path = state_path
+        self.state = load_state(state_path)
 
-    async def post_story(self, story_details):
+    def post_story(self, story_details):
         """
-        Manually post a story to the verification channel
+        Manually post a story to the verification channel using webhook flow
         """
-        channel = self.client.get_channel(int(self.config['discord']['verification_channel_id']))
-        
-        if not channel:
-            print(f"Could not find channel with ID {self.config['discord']['verification_channel_id']}")
-            return
+        message_id = send_approval_webhook(story_details)
+        if message_id:
+            story_details['draft_status'] = 'posted_for_review'
+            story_details['discord_message_id'] = str(message_id)
+        else:
+            story_details['draft_status'] = 'needs_review'
 
-        # Create embed
-        embed = discord.Embed(
-            title=f"🗞️ Stanton Times Draft: {story_details['topic']}",
-            description=story_details['tweet_draft'],
-            color=0x5865F2  # Blurple
-        )
-        
-        # Add source and score information
-        embed.add_field(name="Source", value=story_details.get('source', 'Unknown'), inline=True)
-        embed.add_field(name="Content Score", value=f"{story_details.get('content_score', 0):.2f}", inline=True)
-        
-        # Set footer
-        embed.set_footer(text="The Stanton Times - Bringing the 'verse to you")
-
-        # Send message
-        message = await channel.send(embed=embed)
-        
-        # Add reaction buttons
-        await message.add_reaction('✅')  # Approve
-        await message.add_reaction('❌')  # Reject
-        await message.add_reaction('🤔')  # Needs more context
-
-        # Update state
-        story_details['draft_status'] = 'posted_for_review'
         self.state['pending_stories'].append(story_details)
-        
-        # Save updated state
-        with open('/Users/zachgonser/clawd/memory/stanton-times/state.json', 'w') as f:
-            json.dump(self.state, f, indent=2)
 
-    async def run(self):
-        """
-        Run the bot and post the story
-        """
-        await self.client.login(self.config['discord']['bot_token'])
-        await self.post_story(self.create_story_interactively())
-        await self.client.close()
+        # Save updated state
+        self.state = save_state(self.state_path, self.state)
 
     def create_story_interactively(self):
         """
         Interactively create a story from command line input
         """
         print("Creating a new Stanton Times story:")
-        
+
         topic = input("Enter story topic: ")
         source = input("Enter source (default: RobertsSpaceInd): ") or "RobertsSpaceInd"
         tweet_draft = input("Enter tweet draft text: ")
-        
+
         # Optional score input
         while True:
             try:
@@ -94,16 +62,11 @@ class ManualStoryPoster:
             "draft_status": "needs_review"
         }
 
+
 def main():
-    # Paths to config and state files
-    config_path = '/Users/zachgonser/clawd/projects/stanton-times/config.json'
-    state_path = '/Users/zachgonser/clawd/memory/stanton-times/state.json'
+    poster = ManualStoryPoster()
+    poster.post_story(poster.create_story_interactively())
 
-    # Create poster instance
-    poster = ManualStoryPoster(config_path, state_path)
-
-    # Run async event loop
-    asyncio.run(poster.run())
 
 if __name__ == "__main__":
     main()

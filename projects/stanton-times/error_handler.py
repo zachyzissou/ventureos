@@ -3,6 +3,8 @@ import traceback
 import json
 from datetime import datetime, timedelta
 
+from src.config import PROJECT_ROOT, get_config_path, get_log_path, get_state_path
+
 class StantonTimesErrorHandler:
     def __init__(self, config_path, error_log_path):
         # Load configuration
@@ -94,7 +96,7 @@ class StantonTimesErrorHandler:
             'message': 'Restarting bird monitor due to persistent errors',
             'commands': [
                 'pkill -f bird_monitor.py',
-                'python /Users/zachgonser/clawd/projects/stanton-times/bird_monitor.py'
+                f"python3 {PROJECT_ROOT / 'bird_monitor.py'}"
             ]
         }
 
@@ -107,7 +109,7 @@ class StantonTimesErrorHandler:
             'message': 'Restarting Discord bot due to persistent connection issues',
             'commands': [
                 'pkill -f discord_verifier.py',
-                'python /Users/zachgonser/clawd/projects/stanton-times/discord_verifier.py'
+                f"python3 {PROJECT_ROOT / 'discord_verifier.py'}"
             ]
         }
 
@@ -119,7 +121,7 @@ class StantonTimesErrorHandler:
             'action': 'reset_state',
             'message': 'Resetting content processor state due to processing errors',
             'commands': [
-                'cp /Users/zachgonser/clawd/projects/stanton-times/config/state.json.backup /Users/zachgonser/clawd/memory/stanton-times/state.json'
+                f"cp {PROJECT_ROOT / 'config/state.json.backup'} {get_state_path()}"
             ]
         }
 
@@ -135,8 +137,8 @@ class StantonTimesErrorHandler:
 def main():
     # Example usage
     error_handler = StantonTimesErrorHandler(
-        '/Users/zachgonser/clawd/projects/stanton-times/config.json',
-        '/Users/zachgonser/clawd/projects/stanton-times/logs/error_log.json'
+        str(get_config_path()),
+        get_log_path('error_log.json')
     )
     
     try:

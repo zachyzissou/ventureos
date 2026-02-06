@@ -8,10 +8,10 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Deployment configuration
-PROJECT_DIR="/Users/zachgonser/clawd/projects/stanton-times"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="${PROJECT_DIR}/.venv"
 LOG_DIR="${PROJECT_DIR}/logs"
-CONFIG_FILE="${PROJECT_DIR}/config.json"
+CONFIG_FILE="${PROJECT_DIR}/config/config.json"
 
 # Logging setup
 mkdir -p "${LOG_DIR}"
@@ -41,7 +41,7 @@ deploy() {
 
     # Check configuration
     if [ ! -f "${CONFIG_FILE}" ]; then
-        echo -e "${RED}Configuration file missing. Please create config.json${NC}"
+        echo -e "${RED}Configuration file missing. Please create config/config.json${NC}"
         exit 1
     fi
 

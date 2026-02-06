@@ -4,7 +4,7 @@ from content_processor import StantonTimesContentProcessor
 
 class TestContentProcessor(unittest.TestCase):
     def setUp(self):
-        self.processor = StantonTimesContentProcessor('/Users/zachgonser/clawd/memory/stanton-times/state.json')
+        self.processor = StantonTimesContentProcessor()
 
     def test_score_calculation(self):
         # Test content scoring mechanism

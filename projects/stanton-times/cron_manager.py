@@ -3,29 +3,43 @@ import json
 import logging
 from datetime import datetime, timedelta
 
+from src.config import PROJECT_ROOT, get_config_path, load_config
+
+
+# NOTE: Deprecated.
+# This project now documents scheduling via OpenClaw Cron (see README/docs).
+# Keep this file for backwards compatibility, but prefer OpenClaw.
 class StantonTimesCronManager:
-    def __init__(self, config_path):
-        with open(config_path, 'r') as f:
-            self.config = json.load(f)
+    def __init__(self, config_path=None):
+        self.config = load_config()
+        self.project_path = self.config.get("project_path", str(PROJECT_ROOT))
         
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
 
     def create_cron_jobs(self):
+        self.logger.warning(
+            "cron_manager.py is deprecated; prefer OpenClaw cron jobs (monitor/approval/publish)."
+        )
         cron_jobs = [
             {
                 'name': 'source_monitor',
-                'command': f'{self.config["project_path"]}/.venv/bin/python {self.config["project_path"]}/source_monitor.py',
+                'command': f'{self.project_path}/.venv/bin/python {self.project_path}/src/app.py monitor',
                 'schedule': '*/30 * * * *'  # Every 30 minutes
             },
             {
+                'name': 'approval_sender',
+                'command': f'{self.project_path}/.venv/bin/python {self.project_path}/src/app.py verify',
+                'schedule': '*/10 * * * *'  # Every 10 minutes
+            },
+            {
                 'name': 'tweet_publisher',
-                'command': f'{self.config["project_path"]}/.venv/bin/python {self.config["project_path"]}/tweet_publisher.py',
+                'command': f'{self.project_path}/.venv/bin/python {self.project_path}/src/app.py publish',
                 'schedule': '0 * * * *'  # Hourly
             },
             {
                 'name': 'content_cleanup',
-                'command': f'{self.config["project_path"]}/.venv/bin/python {self.config["project_path"]}/content_cleanup.py',
+                'command': f'{self.project_path}/.venv/bin/python {self.project_path}/src/app.py cleanup',
                 'schedule': '0 0 * * *'  # Daily at midnight
             }
         ]
@@ -61,7 +75,7 @@ class StantonTimesCronManager:
         self.logger.info('Cron jobs updated')
 
 def main():
-    manager = StantonTimesCronManager('/Users/zachgonser/clawd/projects/stanton-times/config.json')
+    manager = StantonTimesCronManager()
     manager.create_cron_jobs()
 
 if __name__ == "__main__":

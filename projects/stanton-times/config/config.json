@@ -1,16 +1,120 @@
 {
-    "project_name": "Stanton Times",
-    "version": "0.1.0",
-    "sources": {
-        "rss": [],
-        "web_scrapers": []
+  "project_name": "Stanton Times",
+  "version": "0.1.0",
+  "sources": {
+    "RSI Comm-Link": {
+      "type": "rss",
+      "url": "https://robertsspaceindustries.com/comm-link/rss",
+      "priority": "P0",
+      "bypass_keyword_filter": true
     },
-    "discord": {
-        "webhook_url": "",
-        "channel_id": ""
+    "RSI Patch Notes": {
+      "type": "rss",
+      "url": "https://robertsspaceindustries.com/comm-link/rss",
+      "priority": "P0",
+      "include_keywords": [
+        "patch notes",
+        "ptu",
+        "hotfix",
+        "alpha",
+        "live"
+      ]
     },
-    "logging": {
-        "level": "INFO",
-        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    "Star Citizen (YouTube)": {
+      "type": "rss",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCTeLqJq1mXUX5WWoNXLmOIA",
+      "priority": "P0",
+      "bypass_keyword_filter": true
+    },
+    "StarCitizenTools News": {
+      "type": "rss",
+      "url": "https://www.starcitizen.tools/news/rss",
+      "priority": "P1"
+    },
+    "BoredGamer (YouTube)": {
+      "type": "rss",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC7W5LTUy7DJYpx0cpVKJe0g",
+      "priority": "P1",
+      "bypass_keyword_filter": true
+    },
+    "Olli43 (YouTube)": {
+      "type": "rss",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCH91ivVTdIPZkhWi6oqeQPQ",
+      "priority": "P2",
+      "bypass_keyword_filter": true
+    },
+    "Morphologis (YouTube)": {
+      "type": "rss",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCiPdjrLoUsyJh3XS7Aw7rzg",
+      "priority": "P1",
+      "bypass_keyword_filter": true
+    },
+    "Disco Lando (YouTube)": {
+      "type": "rss",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC8SRvc5rMU9S_Rn3sIXAF7Q",
+      "priority": "P1",
+      "bypass_keyword_filter": true
     }
+  },
+  "monitored_accounts": [
+    {
+      "handle": "RobertsSpaceInd",
+      "priority": "P0",
+      "tier": "official"
+    },
+    {
+      "handle": "StarCitizen",
+      "priority": "P0",
+      "tier": "official"
+    },
+    {
+      "handle": "discolando",
+      "priority": "P0",
+      "tier": "official"
+    },
+    {
+      "handle": "BoredGamerUK",
+      "priority": "P1",
+      "tier": "creator"
+    },
+    {
+      "handle": "Morphologis",
+      "priority": "P1",
+      "tier": "creator"
+    },
+    {
+      "handle": "Olli43",
+      "priority": "P2",
+      "tier": "creator"
+    }
+  ],
+  "content_intelligence": {
+    "mode": "local",
+    "draft_threshold": 0.7,
+    "daily_max_drafts": 6,
+    "cluster_cooldown_hours": 12,
+    "cluster_window_days": 7,
+    "simhash_threshold": 8,
+    "draft_archive_days": 7,
+    "cluster_purge_days": 60,
+    "thread_soft_cap": 5,
+    "thread_hard_cap": 10,
+    "thread_max_tweets": 5,
+    "priority_thresholds": {
+      "P0": 0.0,
+      "P1": 0.7,
+      "P2": 0.8,
+      "default": 0.7
+    }
+  },
+  "discord": {
+    "webhook_url": "",
+    "approval_mention": "",
+    "verification_channel_id": "1465948913906225286",
+    "channel_id": "1465948913906225286"
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  }
 }

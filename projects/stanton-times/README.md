@@ -1,51 +1,53 @@
-# Stanton Times - News Monitoring System
+# Stanton Times — Star Citizen Newsroom Pipeline
 
-## Project Overview
-Automated news monitoring and publishing platform that aggregates content from various sources and distributes via Discord.
+## Overview
+Automated news monitoring + drafting pipeline for @TheStantonTimes. Sources are ingested, deduped, clustered, scored, drafted, and posted for Discord approval before publishing to X.
 
-## Setup and Installation
-
-### Prerequisites
-- Python 3.8+
-- pip
-- virtualenv (recommended)
-
-### Installation Steps
-1. Clone the repository
-2. Create a virtual environment:
-   ```
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-3. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-## Configuration
-- Configure sources in `config/sources.json`
-- Set up Discord webhook in `config/discord.json`
-
-## Running the Project
-- Source Monitoring: `python -m src.core.source_monitor`
-- Discord Bot: `python -m src.core.discord_bot`
-
-## Testing
-Run tests with: `pytest tests/`
+## Key Docs
+- `docs/PIPELINE.md`
+- `docs/OPERATIONS.md`
+- `docs/SOURCES.md`
+- `docs/OPENCLAW_CRON.md`
 
 ## Project Structure
-- `src/`: Source code
-  - `core/`: Main application logic
-  - `utils/`: Utility functions
-  - `content_processors/`: Content extraction and processing
-- `tests/`: Test suites
-- `config/`: Configuration files
-- `scripts/`: Utility and deployment scripts
-- `logs/`: Application logs
+```
+config/     # config.json (sources + thresholds)
+data/       # state.json + ledger sqlite
+logs/       # runtime logs
+scripts/    # maintenance + tools
+reports/    # daily digests + dashboard
+archives/   # stale draft archives
+src/        # core pipeline
+```
 
-## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+## Setup
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Config
+- `config/config.json`
+- Discord webhook/bot token in `~/.credentials/`
+
+## Run (manual)
+```bash
+./.venv/bin/python src/app.py monitor
+./.venv/bin/python src/app.py verify
+./.venv/bin/python src/app.py react
+./.venv/bin/python src/app.py publish
+./.venv/bin/python src/app.py cleanup
+```
+
+## Scheduling
+
+- Recommended: OpenClaw cron (monitor/approval-send/publish)
+  - Docs: `docs/OPENCLAW_CRON.md`
+  - Example installer: `config/openclaw_cron.example.sh`
+- Legacy: `cron_manager.py` (deprecated; kept for backwards compatibility)
+
+## Testing
+```bash
+pytest tests/
+```

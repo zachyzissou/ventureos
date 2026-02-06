@@ -5,8 +5,13 @@ import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestRegressor
 
+from src.config import PROJECT_ROOT, get_ml_model_path
+
 class AdvancedContentScorer:
-    def __init__(self, model_path='/Users/zachgonser/clawd/projects/stanton-times/ml_models/content_scorer.pkl'):
+    def __init__(self, model_path=None):
+        model_path = model_path or get_ml_model_path('content_scorer.pkl')
+        self.model_path = model_path
+
         # Ensure model directory exists
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         
@@ -25,18 +30,18 @@ class AdvancedContentScorer:
             except Exception:
                 # If loading fails, train a new model
                 self.model = self._train_initial_model()
-                self._save_model(model_path)
+                self._save_model(self.model_path)
         else:
             # Train initial model if no model exists
             self.model = self._train_initial_model()
-            self._save_model(model_path)
+            self._save_model(self.model_path)
 
     def _train_initial_model(self):
         """
         Train an initial machine learning model for content scoring
         """
         # Load or create default training data
-        training_data_path = '/Users/zachgonser/clawd/projects/stanton-times/training_data.json'
+        training_data_path = str(PROJECT_ROOT / 'training_data.json')
         try:
             with open(training_data_path, 'r') as f:
                 training_data = json.load(f)
@@ -93,7 +98,7 @@ class AdvancedContentScorer:
         self.model.fit(X_new, new_scores)
         
         # Save updated model
-        self._save_model('/Users/zachgonser/clawd/projects/stanton-times/ml_models/content_scorer.pkl')
+        self._save_model(self.model_path)
 
 def main():
     # Example usage

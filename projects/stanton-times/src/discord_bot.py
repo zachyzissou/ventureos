@@ -3,18 +3,19 @@ import sys
 import logging
 from datetime import datetime
 
+from src.config import get_log_path, load_config
+
 # Verbose logging
 logging.basicConfig(level=logging.DEBUG, 
                     format='%(asctime)s - %(levelname)s: %(message)s',
                     handlers=[
-                        logging.FileHandler('/Users/zachgonser/clawd/projects/stanton-times/logs/discord_bot_verbose.log'),
+                        logging.FileHandler(get_log_path('discord_bot_verbose.log')),
                         logging.StreamHandler(sys.stdout)
                     ])
 
 class StantonTimesDiscordBot:
-    VERIFICATION_CHANNEL_ID = 1207388252411453480
-
-    def __init__(self, token):
+    def __init__(self, token, verification_channel_id):
+        self.verification_channel_id = verification_channel_id
         logging.debug(f"Initializing bot with token length: {len(token)}")
         
         # Explicitly configure intents
@@ -32,7 +33,7 @@ class StantonTimesDiscordBot:
         logging.critical(f"Bot connected as {self.client.user}")
         
         try:
-            channel = self.client.get_channel(self.VERIFICATION_CHANNEL_ID)
+            channel = self.client.get_channel(self.verification_channel_id)
             
             if channel:
                 await channel.send(f"🚀 Stanton Times Bot Online at {datetime.now().isoformat()}")
@@ -51,12 +52,18 @@ class StantonTimesDiscordBot:
             raise
 
 def main():
-    with open('/Users/zachgonser/.credentials/stanton_times_discord_token', 'r') as f:
-        token = f.read().strip()
-    
+    config = load_config()
+    token = config.get('discord', {}).get('bot_token')
+    channel_id = config.get('discord', {}).get('verification_channel_id')
+
+    if not token:
+        raise ValueError('Discord bot token not found in config or env overrides')
+    if not channel_id:
+        raise ValueError('discord.verification_channel_id missing from config')
+
     logging.debug(f"Loaded token, length: {len(token)}")
     
-    bot = StantonTimesDiscordBot(token)
+    bot = StantonTimesDiscordBot(token, int(channel_id))
     bot.run()
 
 if __name__ == "__main__":

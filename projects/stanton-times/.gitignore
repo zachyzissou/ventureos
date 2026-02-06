@@ -12,6 +12,11 @@ __pycache__/
 *.log
 logs/
 
+# Runtime data
+/data/
+/reports/
+/archives/
+
 # Environment files
 .env
 .venv

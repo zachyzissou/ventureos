@@ -1,21 +1,27 @@
-import psutil
 import json
 import logging
 from datetime import datetime
 import subprocess
 import os
 
+from src.config import PROJECT_ROOT, get_config_path, get_log_path, load_config
+
+try:
+    import psutil  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    psutil = None
+
 class StantonTimesSystemMonitor:
-    def __init__(self, config_path):
+    def __init__(self, config_path=None):
         # Load configuration
-        with open(config_path, 'r') as f:
-            self.config = json.load(f)
+        self.config = load_config()
+        self.config_path = config_path or str(get_config_path())
         
         # Logging setup
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - System Monitor - %(levelname)s - %(message)s',
-            filename='/Users/zachgonser/clawd/projects/stanton-times/logs/system_monitor.log'
+            filename=get_log_path('system_monitor.log')
         )
         self.logger = logging.getLogger(__name__)
 
@@ -31,6 +37,15 @@ class StantonTimesSystemMonitor:
         """
         Monitor system resources
         """
+        if psutil is None:
+            # Degraded mode (psutil not installed). Keep pipeline running.
+            return {
+                'cpu_usage': 0.0,
+                'memory_usage': 0.0,
+                'disk_usage': 0.0,
+                'timestamp': datetime.utcnow().isoformat(),
+                'psutil_available': False,
+            }
         return {
             'cpu_usage': psutil.cpu_percent(),
             'memory_usage': psutil.virtual_memory().percent,
@@ -46,6 +61,14 @@ class StantonTimesSystemMonitor:
         
         for process_name in self.critical_processes:
             try:
+                if psutil is None:
+                    process_status[process_name] = {
+                        'running': False,
+                        'count': 0,
+                        'details': [],
+                        'psutil_available': False,
+                    }
+                    continue
                 # Find processes matching the name
                 processes = [p for p in psutil.process_iter(['name', 'cmdline']) 
                              if process_name in ' '.join(p.info.get('cmdline', []))]
@@ -113,6 +136,12 @@ class StantonTimesSystemMonitor:
         Verify Discord bot connection status
         """
         try:
+            if psutil is None:
+                return {
+                    'connected': False,
+                    'process_count': 0,
+                    'psutil_available': False,
+                }
             # Check if Discord bot process is running
             processes = [p for p in psutil.process_iter(['name', 'cmdline']) 
                          if any('discord_verifier.py' in cmd for cmd in p.cmdline())]
@@ -140,7 +169,7 @@ class StantonTimesSystemMonitor:
         # Check process status
         for process, status in report['process_status'].items():
             if not status['running']:
-                recovery_command = f"python /Users/zachgonser/clawd/projects/stanton-times/{process}"
+                recovery_command = f"python3 {PROJECT_ROOT / process}"
                 try:
                     subprocess.Popen(recovery_command.split())
                     recovery_actions.append(f"Restarted {process}")
@@ -155,7 +184,7 @@ class StantonTimesSystemMonitor:
 
 def main():
     # Example usage
-    monitor = StantonTimesSystemMonitor('/Users/zachgonser/clawd/projects/stanton-times/config.json')
+    monitor = StantonTimesSystemMonitor()
     
     # Generate and print health report
     report = monitor.generate_health_report()

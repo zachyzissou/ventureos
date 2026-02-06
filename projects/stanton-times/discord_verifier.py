@@ -1,109 +1,47 @@
 import json
 import logging
-import requests
+from datetime import datetime
+
 from content_processor import StantonTimesContentProcessor
+from src.config import ensure_state_file, get_config_path, get_log_path, load_config
+from src.state.store import save_state
+from src.utils.discord_approval import send_approval_webhook
 
 class StantonTimesDiscordNotifier:
-    def __init__(self, config_path, state_file_path):
+    def __init__(self, config_path=None, state_file_path=None):
         # Load configuration
-        with open(config_path, 'r') as f:
-            self.config = json.load(f)
+        self.config = load_config()
+        self.config_path = config_path or str(get_config_path())
         
         # Logging
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            filename='/Users/zachgonser/clawd/projects/stanton-times/logs/discord_notifier.log'
+            filename=get_log_path('discord_notifier.log')
         )
         self.logger = logging.getLogger(__name__)
 
         # Content processor
-        self.content_processor = StantonTimesContentProcessor(state_file_path)
+        state_file_path = state_file_path or str(ensure_state_file())
+        self.content_processor = StantonTimesContentProcessor(state_file_path, self.config_path)
 
         # Webhook setup
-        with open('/Users/zachgonser/.credentials/stanton_times_discord_webhook', 'r') as f:
-            self.webhook_url = f.read().strip()
-
-    def create_embed(self, story):
-        """
-        Create a Discord embed for a story draft
-        """
-        # Embed colors
-        colors = {
-            'info': 5793266,     # Blurple
-            'success': 5763719,  # Green
-            'error': 15548997,   # Red
-            'warning': 16775424  # Yellow
-        }
-
-        # Create embed payload
-        embed = {
-            'title': f"🗞️ Stanton Times Draft: {story.get('topic', 'Untitled')}",
-            'description': story.get('simulated_draft', 'No draft available'),
-            'color': colors['info'],
-            'fields': [
-                {
-                    'name': 'Source',
-                    'value': story.get('source', 'Unknown'),
-                    'inline': True
-                },
-                {
-                    'name': 'Content Score',
-                    'value': f"{story.get('score', 0):.2f}",
-                    'inline': True
-                }
-            ],
-            'footer': {
-                'text': "The Stanton Times - Bringing the 'verse to you"
-            }
-        }
-
-        return embed
+        self.webhook_url = self.config.get('discord', {}).get('webhook_url', '').strip()
+        if not self.webhook_url:
+            raise ValueError('Discord webhook URL not configured (config or env).')
 
     def send_webhook_message(self, story):
         """
         Send story draft to Discord via webhook
         """
         try:
-            embed = self.create_embed(story)
-            
-            # Webhook payload
-            payload = {
-                'embeds': [embed],
-                'components': [
-                    {
-                        'type': 1,
-                        'components': [
-                            {
-                                'type': 2,
-                                'label': 'Approve',
-                                'style': 3,
-                                'custom_id': 'approve_story'
-                            },
-                            {
-                                'type': 2,
-                                'label': 'Reject',
-                                'style': 4,
-                                'custom_id': 'reject_story'
-                            },
-                            {
-                                'type': 2,
-                                'label': 'Review',
-                                'style': 2,
-                                'custom_id': 'review_story'
-                            }
-                        ]
-                    }
-                ]
-            }
+            message_id = send_approval_webhook(story, webhook_url=self.webhook_url)
 
-            # Send webhook
-            response = requests.post(self.webhook_url, json=payload)
-            
-            if response.status_code in [200, 204]:
-                self.logger.info(f"Successfully sent story draft for {story.get('topic')}")
-            else:
-                self.logger.error(f"Failed to send webhook: {response.text}")
+            if message_id:
+                story['discord_message_id'] = message_id
+                story['discord_message_ts'] = datetime.utcnow().isoformat()
+
+            self.logger.info(f"Successfully sent story draft for {story.get('topic')}")
 
         except Exception as e:
             self.logger.error(f"Error sending webhook: {str(e)}")
@@ -115,19 +53,15 @@ class StantonTimesDiscordNotifier:
         pending_stories = self.content_processor.state.get('pending_stories', [])
         
         for story in pending_stories:
-            if story.get('draft_status') == 'needs_review':
+            if story.get('draft_status') == 'needs_review' and not story.get('discord_message_id'):
                 self.send_webhook_message(story)
                 story['draft_status'] = 'posted_for_review'
 
         # Save updated state
-        with open(self.content_processor.state_file_path, 'w') as f:
-            json.dump(self.content_processor.state, f, indent=2)
+        self.content_processor.state = save_state(self.content_processor.state_file_path, self.content_processor.state)
 
 def main():
-    notifier = StantonTimesDiscordNotifier(
-        '/Users/zachgonser/clawd/projects/stanton-times/config.json',
-        '/Users/zachgonser/clawd/memory/stanton-times/state.json'
-    )
+    notifier = StantonTimesDiscordNotifier()
     notifier.process_pending_stories()
 
 if __name__ == "__main__":

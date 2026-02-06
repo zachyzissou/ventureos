@@ -8,7 +8,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Directories
-PROJECT_DIR="/Users/zachgonser/clawd/projects/stanton-times"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="${PROJECT_DIR}/.venv"
 LOG_DIR="${PROJECT_DIR}/logs"
 

@@ -5,6 +5,7 @@ from ml_scorer import AdvancedContentScorer
 from error_handler import StantonTimesErrorHandler
 from permission_manager import StantonTimesPermissionManager
 from system_monitor import StantonTimesSystemMonitor
+from src.config import get_config_path, get_log_path
 
 def demonstrate_ml_scoring():
     """
@@ -30,7 +31,7 @@ def demonstrate_content_processing():
     Showcase advanced content processing
     """
     print("\n🚀 Content Processing Demonstration:")
-    processor = StantonTimesContentProcessor('/Users/zachgonser/clawd/memory/stanton-times/state.json')
+    processor = StantonTimesContentProcessor()
     
     test_contents = [
         {
@@ -69,8 +70,8 @@ def demonstrate_error_handling():
     """
     print("\n⚠️ Error Handling Demonstration:")
     error_handler = StantonTimesErrorHandler(
-        '/Users/zachgonser/clawd/projects/stanton-times/config.json',
-        '/Users/zachgonser/clawd/projects/stanton-times/logs/demo_errors.log'
+        str(get_config_path()),
+        get_log_path('demo_errors.log')
     )
     
     # Simulate different error scenarios
@@ -88,7 +89,7 @@ def demonstrate_permission_management():
     """
     print("\n🔐 Permission Management Demonstration:")
     permission_manager = StantonTimesPermissionManager(
-        '/Users/zachgonser/clawd/projects/stanton-times/config.json'
+        str(get_config_path())
     )
     
     test_users = [
@@ -114,7 +115,7 @@ def demonstrate_system_monitoring():
     """
     print("\n💻 System Monitoring Demonstration:")
     system_monitor = StantonTimesSystemMonitor(
-        '/Users/zachgonser/clawd/projects/stanton-times/config.json'
+        str(get_config_path())
     )
     
     # Generate health report

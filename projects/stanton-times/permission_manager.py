@@ -1,12 +1,15 @@
 import json
 import logging
+from datetime import datetime
 from typing import Dict, List, Optional
 
+from src.config import get_config_path, get_log_path, load_config
+
 class StantonTimesPermissionManager:
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str = None):
         # Load configuration
-        with open(config_path, 'r') as f:
-            self.config = json.load(f)
+        self.config = load_config()
+        self.config_path = config_path or str(get_config_path())
         
         # Logging
         logging.basicConfig(
@@ -97,7 +100,7 @@ class StantonTimesPermissionManager:
         """
         self.config['permissions'] = self.permissions
         
-        with open('/Users/zachgonser/clawd/projects/stanton-times/config.json', 'w') as f:
+        with open(self.config_path, 'w') as f:
             json.dump(self.config, f, indent=2)
         
         self.logger.info("Permissions updated and saved")
@@ -114,13 +117,13 @@ class StantonTimesPermissionManager:
         }
         
         # Append to audit log
-        with open('/Users/zachgonser/clawd/projects/stanton-times/logs/permission_audit.json', 'a') as f:
+        with open(get_log_path('permission_audit.json'), 'a') as f:
             json.dump(log_entry, f)
             f.write('\n')
 
 def main():
     # Example usage
-    pm = StantonTimesPermissionManager('/Users/zachgonser/clawd/projects/stanton-times/config.json')
+    pm = StantonTimesPermissionManager()
     
     # Check permissions
     user_id = '956203522624462918'

@@ -2,15 +2,17 @@
 
 # Legacy Project Cleanup Script for Stanton Times
 
+BASE_DIR="${HOME}/clawd"
+
 # Directories to investigate
 LEGACY_DIRS=(
-    "/Users/zachgonser/clawd/projects/stanton-times-agent"
-    "/Users/zachgonser/clawd/memory/stanton-times"
-    "/Users/zachgonser/clawd/skills/stanton-times"
+    "${BASE_DIR}/projects/stanton-times-agent"
+    "${BASE_DIR}/memory/stanton-times"
+    "${BASE_DIR}/skills/stanton-times"
 )
 
 # Archiving destination
-ARCHIVE_BASE="/Users/zachgonser/clawd/archives/stanton-times"
+ARCHIVE_BASE="${BASE_DIR}/archives/stanton-times"
 ARCHIVE_DIR="${ARCHIVE_BASE}/legacy-$(date +%Y%m%d_%H%M%S)"
 
 # Create archive directory
@@ -20,14 +22,10 @@ mkdir -p "$ARCHIVE_DIR"
 archive_directory() {
     local source_dir="$1"
     local dir_name=$(basename "$source_dir")
-    
+
     if [ -d "$source_dir" ]; then
-        # Tar and compress the directory
         tar -czvf "${ARCHIVE_DIR}/${dir_name}.tar.gz" -C "$(dirname "$source_dir")" "$dir_name"
-        
-        # Remove original directory
         rm -rf "$source_dir"
-        
         echo "Archived and removed: $source_dir"
     fi
 }
@@ -43,7 +41,7 @@ for dir in "${LEGACY_DIRS[@]}"; do
 done
 
 # Clean up any leftover node_modules or temp files
-find /Users/zachgonser/clawd -type d -name "node_modules" -path "*/stanton-times*" -exec rm -rf {} +
-find /Users/zachgonser/clawd -type f -name "*.log" -path "*/stanton-times*" -delete
+find "${BASE_DIR}" -type d -name "node_modules" -path "*/stanton-times*" -exec rm -rf {} +
+find "${BASE_DIR}" -type f -name "*.log" -path "*/stanton-times*" -delete
 
 echo "Legacy cleanup completed. Archive stored in $ARCHIVE_DIR"

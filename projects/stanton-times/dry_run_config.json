@@ -1,19 +1,9 @@
 {
-    "dry_run_mode": true,
-    "logging": {
-        "level": "INFO",
-        "file": "/Users/zachgonser/clawd/projects/stanton-times/logs/dry_run.log"
-    },
-    "monitored_accounts": [
-        "RobertsSpaceInd",
-        "starcitizenbot",
-        "TheRubenSaurus"
-    ],
-    "content_intelligence": {
-        "draft_threshold": 0.7,
-        "mock_scoring_enabled": true
-    },
-    "output": {
-        "report_path": "/Users/zachgonser/clawd/projects/stanton-times/logs/dry_run_report.json"
-    }
+  "logging": {
+    "file": "./logs/dry_run.log",
+    "level": "INFO"
+  },
+  "report": {
+    "report_path": "./logs/dry_run_report.json"
+  }
 }

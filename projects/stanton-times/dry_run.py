@@ -2,9 +2,13 @@ import json
 import logging
 from datetime import datetime
 
+from src.config import ensure_state_file, get_config_path, get_log_path
+from src.state.store import load_state, save_state
+
 class DryRunProcessor:
-    def __init__(self, config_path):
+    def __init__(self, config_path=None):
         # Load configuration
+        config_path = config_path or str(get_config_path())
         with open(config_path, 'r') as f:
             self.config = json.load(f)
         
@@ -12,7 +16,7 @@ class DryRunProcessor:
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - DRY RUN - %(message)s',
-            filename='/Users/zachgonser/clawd/projects/stanton-times/logs/dry_run.log'
+            filename=get_log_path('dry_run.log')
         )
         self.logger = logging.getLogger(__name__)
 
@@ -111,7 +115,7 @@ class DryRunProcessor:
         }
 
         # Write report to file
-        with open('/Users/zachgonser/clawd/projects/stanton-times/logs/dry_run_report.json', 'w') as f:
+        with open(get_log_path('dry_run_report.json'), 'w') as f:
             json.dump(report, f, indent=2)
 
         return report
@@ -120,22 +124,15 @@ def update_state_file(processed_contents):
     """
     Update the state file with processed contents for Discord verification
     """
-    state_file_path = '/Users/zachgonser/clawd/memory/stanton-times/state.json'
-    
-    try:
-        with open(state_file_path, 'r') as f:
-            state = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        state = {"pending_stories": []}
+    state_file_path = str(ensure_state_file())
+    state = load_state(state_file_path)
 
     # Add processed contents to pending stories
     state['pending_stories'] = processed_contents
-
-    with open(state_file_path, 'w') as f:
-        json.dump(state, f, indent=2)
+    save_state(state_file_path, state)
 
 def main():
-    dry_run = DryRunProcessor('/Users/zachgonser/clawd/projects/stanton-times/config.json')
+    dry_run = DryRunProcessor()
     
     # Run dry run simulation
     processed_contents = dry_run.simulate_tweet_processing()
