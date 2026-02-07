@@ -80,3 +80,36 @@ ARCHIVE_OK: /Users/zachgonser/clawd/archives/2026-02/task_runs
 ```
 Exit: 0
 
+
+---
+
+## Deployment Verification (scripts sync + schema) — 2026-02-07 15:09 CST
+
+### Export Cron Logs (schema check)
+Command: /Users/zachgonser/clawd/scripts/export-cron-logs.sh
+
+File: /Users/zachgonser/clawd/runtime/logs/task_runs/2026-02-07.jsonl
+
+Sample line:
+```
+{"timestamp": 1770497660448, "job_id": "0b64b476-5e47-4d0a-ad4c-5b873623de91", "action": "finished", "status": "ok", "duration": 7594, "model": null, "notes": "HEARTBEAT_OK"}
+```
+Exit: 0
+
+### Backup + Verify
+Command: /Users/zachgonser/clawd/scripts/backup-clawd.sh
+Command: /Users/zachgonser/clawd/scripts/verify-backup.sh
+
+```
+BACKUP_OK: /Users/zachgonser/backups/clawd/clawd-2026-02-07.tar.gz
+```
+Exit: 0
+
+### Cron List
+Command: openclaw cron list
+
+```
+Error: gateway timeout after 30000ms
+Gateway target: ws://127.0.0.1:18789
+```
+Exit: 1
