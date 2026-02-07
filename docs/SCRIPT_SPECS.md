@@ -49,14 +49,16 @@
 ---
 
 ## 4) monitor-openclaw.sh
-**Purpose:** Detect gateway down, auth errors, timeouts.
+**Purpose:** Detect gateway down, auth errors, timeouts, stale gateway.lock.
 
 **Checks:**
 - `openclaw gateway status`
+- stale `~/.openclaw/gateway.lock` when gateway is down (mtime > 10 min)
 - last 200 lines of `~/.openclaw/logs/gateway.err.log`
 
 **Outputs:**
 - “P0: gateway_down”
+- “P1: stale_gateway_lock (<age>s)”
 - “P1: auth_or_timeout_errors”
 
 ---

@@ -97,6 +97,7 @@
 ### 3.1 Monitoring & Alerts
 **Detect:**
 - Gateway crashes/restarts
+- Stale `~/.openclaw/gateway.lock` when gateway is down
 - Auth failures (tool auth, API errors)
 - Timeouts / stuck jobs
 - Cron job failures
