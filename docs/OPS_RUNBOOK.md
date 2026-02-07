@@ -38,5 +38,14 @@
 
 ---
 
+## Config Change Failures (Rollback)
+If a change to `~/.openclaw/openclaw.json` breaks the gateway:
+1. Restore latest backup: `cp ~/.openclaw/openclaw.json.bak-* ~/.openclaw/openclaw.json`
+2. Restart: `openclaw gateway restart`
+3. Verify: `openclaw gateway status`
+4. If still failing, stop and alert with logs.
+
+---
+
 ## P2 (Transient)
 - Log only; no alert unless it repeats.

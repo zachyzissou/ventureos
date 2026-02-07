@@ -45,3 +45,4 @@
 - Roadmap Phases 1–5 remain in backlog (see ROADMAP.md + FEATURE_BACKLOG.md).
 - HTTPS proxy plan for LAN Control UI (secure context) — deferred to **SlurpNet Security Suite** project.
 - Optional config enhancements (subagent model pinning, heartbeat override, memory backend swap).
+- Codex‑assisted config change protocol (added; implement when first needed).

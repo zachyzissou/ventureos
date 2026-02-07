@@ -42,6 +42,8 @@
 - PF anchor `/etc/pf.anchors/openclaw` allowlists LAN + Tailnet for port **18789**, blocks others on **en0/utun6** only (loopback safe).
 - Control UI secure‑context note: LAN access needs HTTPS proxy (localhost ok).
 
+**Safety protocol:** All future config changes follow `docs/CONFIG_CHANGE_SAFETY.md` (Codex‑assisted with rollback).
+
 **Optional (deferred) Enhancements:**
 - Pin subagent model to cheap baseline
 - Heartbeat‑specific model override

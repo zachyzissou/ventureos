@@ -5,6 +5,7 @@
 - **Automatic retry policy** with backoff and max‑attempt limits
 - **Timeout standardization** across all network calls
 - **Graceful degradation** (fallback behaviors when dependencies fail)
+- **Safe config change workflow** (Codex‑assisted patch + restart + auto‑rollback)
 
 ## Proactive Engine
 - **Rule‑based proactive scheduler** (time windows, priority, tags)

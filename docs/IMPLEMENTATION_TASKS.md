@@ -81,6 +81,14 @@
 - Updates never run outside window without explicit approval
 - Restart window specified
 
+### C5 — Safe Config Change Protocol (Codex‑assisted)
+**Deliverable:** `docs/CONFIG_CHANGE_SAFETY.md`
+**Acceptance:**
+- Pre‑flight checklist + backup step
+- Changes applied via `config.patch` (baseHash required)
+- Automatic rollback on restart failure
+- Explicit approval gate documented
+
 ---
 
 ## D) Workflow Automation (P1)
