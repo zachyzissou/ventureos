@@ -32,7 +32,23 @@
 
 ---
 
-## 3) monitor-openclaw.sh
+## 3) restore-backup.sh
+**Purpose:** Restore from a backup archive (dry‑run by default).
+
+**Steps:**
+1. Locate latest or specified archive
+2. Verify checksum
+3. Extract to staging directory
+4. Dry‑run rsync of target files
+5. Apply restore only when `--confirm` is provided (no deletes)
+
+**Outputs:**
+- stdout dry‑run diff or `RESTORE_OK`
+- no changes unless `--confirm`
+
+---
+
+## 4) monitor-openclaw.sh
 **Purpose:** Detect gateway down, auth errors, timeouts.
 
 **Checks:**
@@ -45,7 +61,7 @@
 
 ---
 
-## 4) export-cron-logs.sh
+## 5) export-cron-logs.sh
 **Purpose:** Aggregate cron run logs into daily JSONL for auditing.
 
 **Inputs:**
@@ -57,7 +73,7 @@
 
 ---
 
-## 5) budget-check.sh
+## 6) budget-check.sh
 **Purpose:** Emit quota usage report using `subscription-quota-tracker.js`.
 
 **Outputs:**

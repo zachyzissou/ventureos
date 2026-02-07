@@ -118,6 +118,7 @@
 **Default destination:** `~/backups/clawd/`
 **Retention:** 30 days
 **Verification:** weekly integrity check + test extract
+**Restore:** `scripts/restore-backup.sh` (dry‑run by default; requires `--confirm`)
 
 ### 3.3 Update Cadence
 **Default window:** Sundays 03:00–04:00 CST

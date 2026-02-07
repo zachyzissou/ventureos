@@ -65,7 +65,15 @@
 - Retains last N days
 - Verifies latest backup (checksum or extract)
 
-### C3 — Update Cadence
+### C3 — Restore Workflow (Manual)
+**Deliverable:** `~/clawd/scripts/restore-backup.sh`
+**Acceptance:**
+- Dry‑run by default (no changes)
+- Requires `--confirm` to apply restore
+- Verifies checksum before extract
+- No deletions during restore (non‑destructive)
+
+### C4 — Update Cadence
 **Deliverable:** scheduled reminder + optional controlled update script
 **Acceptance:**
 - Weekly update window documented

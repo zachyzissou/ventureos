@@ -10,11 +10,13 @@
    - Expect archive + checksum + log entry
 2. **Verify** – run `scripts/verify-backup.sh`
    - Expect “BACKUP_OK”
-3. **Monitor** – run `scripts/monitor-openclaw.sh`
+3. **Restore (dry‑run)** – run `scripts/restore-backup.sh`
+   - Expect dry‑run output, no changes
+4. **Monitor** – run `scripts/monitor-openclaw.sh`
    - Expect no errors on healthy system
-4. **Cron Export** – run `scripts/export-cron-logs.sh`
+5. **Cron Export** – run `scripts/export-cron-logs.sh`
    - Expect JSONL created in `runtime/logs/task_runs/`
-5. **Budget Check** – run `scripts/budget-check.sh`
+6. **Budget Check** – run `scripts/budget-check.sh`
    - Expect report output
 
 ## Cron Tests

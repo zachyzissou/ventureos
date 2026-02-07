@@ -11,6 +11,7 @@
 ## Script Additions (workspace/scripts)
 - `backup-clawd.sh`
 - `verify-backup.sh`
+- `restore-backup.sh`
 - `monitor-openclaw.sh`
 - `export-cron-logs.sh`
 - `budget-check.sh`
