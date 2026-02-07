@@ -6,6 +6,13 @@
 - ✅ Basic workflow definition
 - ☐ Metrics defined + tracked
 
+## Phase 0.5 – Policy & Ops (Week 1)
+**Objective:** set guardrails, proactive rules, and ops baselines.
+- ☐ Goals + constraints brief (deep onboarding)
+- ☐ Guardrails + proactive mode rules
+- ☐ Model strategy + budget caps
+- ☐ Monitoring + backup + update cadence defined
+
 ## Phase 1 – Reliability (Weeks 2–3)
 **Objective:** reduce failures, increase consistency.
 - Robust task execution flow
