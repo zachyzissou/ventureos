@@ -14,8 +14,8 @@ This file captures locked defaults and scoped exceptions for the upgrade plan.
 - **Config changes:** do not edit `AGENTS.md` JSON; use policy docs in workspace root.
 - **Scheduling:** deterministic cron (wakeMode=now).
 
-## 2026‑02‑07 — Temporary Exception
-- **Backup excludes:** `memory/fix-reports` and `memory/bloom-content` due to permissions; revisit after permission fix.
+## 2026‑02‑07 — Resolved
+- **Backup coverage restored:** permissions fixed; `memory/fix-reports` and `memory/bloom-content` are included in nightly backups.
 
-## Open Decision
-- Whether to fix permissions for `memory/fix-reports` and `memory/bloom-content` to include them in backups, or keep excluded.
+## Open Decisions
+- None

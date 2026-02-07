@@ -145,7 +145,7 @@
 ---
 
 ## 5) Open Decisions (Remaining)
-- Backup coverage for `memory/fix-reports` and `memory/bloom-content` (fix permissions vs keep excluded)
+- None (backup coverage resolved; permissions fixed)
 
 ## 5.1 Locked Defaults (see DECISIONS.md)
 - Proactive window: **08:00–23:00 CST** (quiet 23:00–08:00)

@@ -109,4 +109,4 @@
 - Alert channel: **Discord DM**
 
 ## Remaining Decisions
-- Backup coverage for `memory/fix-reports` and `memory/bloom-content` (fix permissions vs keep excluded)
+- None (backup coverage resolved; permissions fixed)
