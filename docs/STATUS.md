@@ -40,7 +40,10 @@
 - [x] 2026‑02‑07 — Simulated stale `gateway.lock` scenario (reported complete).
 
 ## ⏳ Pending / Next
-- Decide on HTTPS proxy plan for LAN Control UI (secure context requirement).
+- None (blocked on Security Suite implementation).
+
+## 🔜 Deferred (intentional)
+- HTTPS proxy plan for LAN Control UI (secure context) — deferred to **SlurpNet Security Suite** project.
 
 ## 🔜 Deferred (intentional)
 - Optional config enhancements (subagent model pinning, heartbeat override, memory backend swap).
