@@ -35,3 +35,8 @@
 - **Schedule:** `0 3 * * 0`
 - **Session:** main (systemEvent)
 - **Payload:** “Update window open; reply ‘run update’ to proceed.”
+
+## 7) Archive Task Run Logs
+- **Schedule:** `0 3 1 * *` (monthly)
+- **Session:** isolated
+- **Payload:** run `scripts/archive-task-runs.sh`

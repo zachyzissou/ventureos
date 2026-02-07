@@ -138,11 +138,13 @@
 
 **Queue store (proposed):** `~/clawd/runtime/task-queue.json`
 
+**Schema template (repo):** `docs/templates/task-queue.json`
+
 ### 4.2 Execution Logs
 **Format:** JSONL (one event per line)
 **Path:** `~/clawd/runtime/logs/task_runs/YYYY-MM-DD.jsonl`
 **Fields:** timestamp, job_id, action, status, duration, model, notes
-**Retention:** 30 days (archive monthly)
+**Retention:** 30 days (archive monthly via `archive-task-runs.sh` cron)
 
 ---
 

@@ -85,3 +85,17 @@
 **Outputs:**
 - stdout quota usage report
 - Cron job will parse/alert at 50/80/90%
+
+---
+
+## 7) archive-task-runs.sh
+**Purpose:** Move old `task_runs` JSONL to monthly archives.
+
+**Inputs:**
+- `~/clawd/runtime/logs/task_runs/*.jsonl`
+
+**Outputs:**
+- `~/clawd/archives/YYYY-MM/task_runs/`
+
+**Retention:**
+- Move files older than 30 days; keep `state.json` in place.

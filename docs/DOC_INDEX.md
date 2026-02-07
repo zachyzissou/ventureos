@@ -18,6 +18,7 @@
 ## Templates (workspace starters)
 - **templates/AGENTS.json** – AGENTS policy wiring template
 - **templates/HEARTBEAT.md** – HEARTBEAT template with policy links
+- **templates/task-queue.json** – task queue schema template
 
 ## Implementation Design
 - **REQUIREMENTS.md** – detailed functional + non‑functional requirements
@@ -39,3 +40,4 @@
 ## Research Notes
 - **TWITTER_CONFIG_RESEARCH_2026-02-07.md** – external config patterns & learnings
 - **VOXYZ_CLOSED_LOOP_NOTES_2026-02-07.md** – closed‑loop execution patterns
+- **SPACEPIXEL_THREE_LAYER_MEMORY_NOTES_2026-02-07.md** – three‑layer memory system

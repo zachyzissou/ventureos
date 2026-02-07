@@ -21,6 +21,8 @@ OpenClaw already works. This project is about making it **consistently excellent
 Security hardening is **out of scope for this phase** and will be revisited later. The focus now is product‑level quality and execution.
 
 ## Repository Layout
+- `docs/DOC_INDEX.md` – index of all guidance docs
+- `docs/STATUS.md` – current implementation status
 - `docs/ROADMAP.md` – milestone‑level roadmap
 - `docs/PROJECT_PLAN.md` – delivery plan, milestones, and execution details
 - `docs/FEATURE_BACKLOG.md` – detailed feature list and ownership

@@ -15,6 +15,7 @@
 - `monitor-openclaw.sh`
 - `export-cron-logs.sh`
 - `budget-check.sh`
+- `archive-task-runs.sh`
 
 ## Runtime Directories
 - `runtime/logs/task_runs/`
@@ -28,6 +29,7 @@
 ## Templates (repo only)
 - `docs/templates/AGENTS.json`
 - `docs/templates/HEARTBEAT.md`
+- `docs/templates/task-queue.json`
 
 ---
 

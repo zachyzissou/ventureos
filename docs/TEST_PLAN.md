@@ -18,6 +18,8 @@
    - Expect JSONL created in `runtime/logs/task_runs/`
 6. **Budget Check** – run `scripts/budget-check.sh`
    - Expect report output
+7. **Archive Task Runs** – run `scripts/archive-task-runs.sh`
+   - Expect older JSONL moved to `archives/YYYY-MM/task_runs/`
 
 ## Cron Tests
 - Force run backup job via `cron run` to validate wiring

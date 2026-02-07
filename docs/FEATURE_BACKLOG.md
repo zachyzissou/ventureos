@@ -10,6 +10,8 @@
 - **Rule‑based proactive scheduler** (time windows, priority, tags)
 - **Task queue with SLA tiers** (urgent/normal/low)
 - **Context refresh jobs** (daily summaries, stale memory cleanup)
+- **Three‑layer memory system** (daily logs → entity facts → synthesized memory)
+- **Entity‑based fact store** (`items.json` + `summary.md`, supersede‑not‑delete)
 
 ## Output Quality
 - **Output QA checks** (format, completeness, missing data)

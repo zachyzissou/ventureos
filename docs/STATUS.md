@@ -8,7 +8,7 @@
 - Templates added for AGENTS/HEARTBEAT workspace starters.
 - Monitoring spec includes stale `gateway.lock` detection.
 - Task‑run retention policy documented in `SCRIPT_SPECS.md`.
-- Docs‑lint CI added (broken links + placeholder scan).
+- Docs‑lint CI added (broken links + placeholder scan; includes templates + JSON validation).
 
 ## ✅ Implemented in workspace (~/clawd)
 - Monitoring script updated to detect stale `~/.openclaw/gateway.lock` when gateway is down.
@@ -26,7 +26,8 @@
 - [x] 2026‑02‑07 — Cron jobs installed (backup/verify/monitor/export/budget/update reminder)
 
 ## ⏳ Pending / Next
-- Create `runtime/task-queue.json`.
+- Create `runtime/task-queue.json` (use `docs/templates/task-queue.json`).
+- Install monthly cron for `archive-task-runs.sh`.
 - Update `FEATURE_BACKLOG.md` + `ROADMAP.md` to reflect Phase 0.5 progress.
 - Execute full `TEST_PLAN.md` (including stale lock simulation) and log results.
 

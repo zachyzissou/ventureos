@@ -97,6 +97,13 @@
 - Each run logged with timestamp, job_id, status, duration, model
 - Retention policy documented
 
+### D3 — Archive Task Runs
+**Deliverable:** `~/clawd/scripts/archive-task-runs.sh` + monthly cron
+**Acceptance:**
+- Archives `task_runs` JSONL older than 30 days
+- Stores in `~/clawd/archives/YYYY-MM/task_runs/`
+- Leaves `state.json` in place
+
 ---
 
 ## E) Docs Integration (P2)

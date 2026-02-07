@@ -53,6 +53,7 @@ This doc is the *implementation‑ready* package: final decisions, file changes,
 - `scripts/monitor-openclaw.sh`
 - `scripts/export-cron-logs.sh`
 - `scripts/budget-check.sh`
+- `scripts/archive-task-runs.sh`
 
 ### New runtime dirs
 - `runtime/logs/task_runs/`
@@ -62,6 +63,7 @@ This doc is the *implementation‑ready* package: final decisions, file changes,
 ### Templates (repo only)
 - `docs/templates/AGENTS.json`
 - `docs/templates/HEARTBEAT.md`
+- `docs/templates/task-queue.json`
 
 ### Modified files
 - `AGENTS.md` (link to new policy docs)
@@ -341,6 +343,10 @@ node "$HOME/clawd/subscription-quota-tracker.js" report
 - **Schedule:** `0 3 * * 0`
 - **Payload:** systemEvent reminder: “Update window open; reply ‘run update’ to proceed.”
 
+### Archive Task Run Logs
+- **Schedule:** `0 3 1 * *` (monthly)
+- **Payload:** run `scripts/archive-task-runs.sh`
+
 ---
 
 ## 5) Task Queue (Recurring Jobs by Tier)
@@ -361,6 +367,8 @@ node "$HOME/clawd/subscription-quota-tracker.js" report
 - Weekly Memory Synthesis
 
 **Queue Store:** `runtime/task-queue.json` (metadata only)
+
+**Schema template (repo):** `docs/templates/task-queue.json`
 
 ---
 

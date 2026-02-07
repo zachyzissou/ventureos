@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "generated_at": "YYYY-MM-DD",
+  "items": [
+    {
+      "id": "task-001",
+      "title": "Short description",
+      "tier": "urgent|normal|low",
+      "status": "queued|running|done|failed",
+      "owner": "agent:main",
+      "created_at": "YYYY-MM-DDTHH:MM:SSZ",
+      "updated_at": "YYYY-MM-DDTHH:MM:SSZ",
+      "source": "cron|manual|system",
+      "links": ["/path/or/url"],
+      "notes": "Context / acceptance criteria"
+    }
+  ]
+}
