@@ -52,4 +52,4 @@
 ## ✅ Phase 1 Design Package Ready
 - Reliability playbook added (retry/backoff, timeouts, taxonomy, graceful degradation).
 - Helper scripts added: `retry.sh`, `with-timeout.sh`.
-- Payload hardening applied: Bloom PR Monitor uses retry/timeout + empty-list OK; gh/bird commands wrapped with retry+timeout.
+- Payload hardening applied: Bloom PR Monitor uses retry/timeout + empty-list OK + Playwright fallback; gh/bird commands wrapped with retry+timeout.

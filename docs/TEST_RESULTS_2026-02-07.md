@@ -151,3 +151,8 @@ Result: **OK** after each enable (RPC stayed responsive).
 ## Reliability Hardening — Cron Payloads (2026-02-07 16:18 CST)
 - Wrapped all `gh` and `bird-auth` commands in cron payloads with `retry.sh` + `with-timeout.sh`.
 - Changes applied in `~/.openclaw/cron/jobs.json` (backup created).
+
+---
+
+## Reliability Hardening — PR Monitor Browser Fallback (2026-02-07 16:20 CST)
+- Bloom PR Monitor payload now uses Playwright/browser fallback when `gh pr list` output is corrupted.
