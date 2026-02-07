@@ -148,8 +148,8 @@
 
 ### 4.3 Three‑Layer Memory System
 **Layer 1: Entity Knowledge Graph**
-- Location: `~/Obsidian/VaultZap/life/areas/`
-- Structure: per‑entity `items.json` (atomic facts) + `summary.md` (living summary)
+- Location: `~/Obsidian/VaultZap/life/areas/entities/`
+- Structure: per‑entity folder `<category>/<entity_slug>/items.json` (atomic facts) + `summary.md` (living summary)
 
 **Layer 2: Daily Logs**
 - Location: `~/clawd/memory/YYYY-MM-DD.md`

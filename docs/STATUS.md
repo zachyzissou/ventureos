@@ -16,7 +16,10 @@
 - Backup coverage includes `memory/fix-reports` + `memory/bloom-content`; backup + verify run completed.
 - Restore workflow added (`restore-backup.sh`, dry‑run by default).
 - AGENTS.md + HEARTBEAT.md linked to policy docs.
-- Cron jobs installed: Nightly Backup, Weekly Verify, Monitor, Export Logs, Budget Check, Update Reminder.
+- Cron jobs installed: Nightly Backup, Weekly Verify, Monitor, Export Logs, Budget Check, Update Reminder, Archive Task Runs.
+- Task queue created (`runtime/task-queue.json`).
+- Entity store base created (`~/Obsidian/VaultZap/life/areas/entities`).
+- Fact Extraction + Weekly Memory Synthesis cron jobs updated for entity store.
 
 ## 🧾 Execution Checklist / Audit Log
 - [x] 2026‑02‑07 — Policy docs split + linked in repo
@@ -28,9 +31,10 @@
 - [x] 2026‑02‑07 — Task queue created (`runtime/task-queue.json`)
 - [x] 2026‑02‑07 — Archive task‑runs cron installed (monthly)
 - [x] 2026‑02‑07 — TEST_PLAN executed (see TEST_RESULTS_2026-02-07.md)
+- [x] 2026‑02‑07 — Entity store base created + memory cron jobs updated
 
 ## ⏳ Pending / Next
-- Begin implementation phase (apply scripts + cron to workspace, verify in steady state).
+- Simulate stale gateway.lock scenario (requires safe window/approval).
 
 ## 🔜 Deferred (intentional)
 - Optional config enhancements (subagent model pinning, heartbeat override, memory backend swap).

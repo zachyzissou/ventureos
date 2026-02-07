@@ -40,3 +40,14 @@
 - **Schedule:** `0 3 1 * *` (monthly)
 - **Session:** isolated
 - **Payload:** run `scripts/archive-task-runs.sh`
+
+## 8) Fact Extraction (Entity Store)
+- **Schedule:** `*/30 * * * *`
+- **Session:** isolated
+- **Payload:** agentTurn “Fact Extraction (Three‑Layer Memory)”
+- **Output:** HEARTBEAT_OK when no new facts
+
+## 9) Weekly Memory Synthesis
+- **Schedule:** `0 9 * * 0`
+- **Session:** isolated
+- **Payload:** agentTurn “Weekly Memory Synthesis (Three‑Layer)”

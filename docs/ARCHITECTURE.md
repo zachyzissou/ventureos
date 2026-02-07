@@ -55,7 +55,7 @@ Human intent ──> Policy docs (guardrails, quota policy)
 - **Output:** daily aggregated JSONL for audit
 
 ### 6) Memory System (Three‑Layer)
-- **Layer 1:** Entity knowledge graph (Obsidian `life/areas/` with `items.json` + `summary.md`)
+- **Layer 1:** Entity knowledge graph (Obsidian `life/areas/entities/` with `items.json` + `summary.md`)
 - **Layer 2:** Daily logs (`~/clawd/memory/YYYY-MM-DD.md`)
 - **Layer 3:** Tacit knowledge (`~/clawd/MEMORY.md`)
 - **Process:** cheap fact extraction → entity store; weekly synthesis rewrites summaries; supersede‑not‑delete
