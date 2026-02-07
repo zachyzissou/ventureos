@@ -37,11 +37,10 @@
 - [x] 2026‑02‑07 — Entity store base created + memory cron jobs updated
 - [x] 2026‑02‑07 — Gateway bind=lan; Tailscale Serve disabled; remote.url=ws://openclaw.local:18789
 - [x] 2026‑02‑07 — PF anchor applied for port 18789 (interface‑scoped allowlist + blocks)
+- [x] 2026‑02‑07 — Simulated stale `gateway.lock` scenario (reported complete).
 
 ## ⏳ Pending / Next
-- Investigate P1 `auth_or_timeout_errors` in `~/.openclaw/logs/gateway.err.log`.
 - Decide on HTTPS proxy plan for LAN Control UI (secure context requirement).
-- Simulate stale gateway.lock scenario (requires safe window/approval).
 
 ## 🔜 Deferred (intentional)
 - Optional config enhancements (subagent model pinning, heartbeat override, memory backend swap).
