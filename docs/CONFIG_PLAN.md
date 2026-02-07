@@ -9,6 +9,7 @@
 - `OPS_RUNBOOK.md`
 
 ## Script Additions (workspace/scripts)
+**Source of truth:** repo `scripts/` directory.
 - `backup-clawd.sh`
 - `verify-backup.sh`
 - `restore-backup.sh`

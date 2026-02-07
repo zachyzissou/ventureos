@@ -2,12 +2,12 @@
 
 ## Policy Docs (OpenClaw Upgrade guidance)
 Source of truth (workspace root):
-- /Users/zachgonser/clawd/GOALS_CONSTRAINTS.md
-- /Users/zachgonser/clawd/GUARDRAILS.md
-- /Users/zachgonser/clawd/PROACTIVE_MODE.md
-- /Users/zachgonser/clawd/MODEL_STRATEGY.md
-- /Users/zachgonser/clawd/BUDGET_POLICY.md
-- /Users/zachgonser/clawd/OPS_RUNBOOK.md
+- $HOME/clawd/GOALS_CONSTRAINTS.md
+- $HOME/clawd/GUARDRAILS.md
+- $HOME/clawd/PROACTIVE_MODE.md
+- $HOME/clawd/MODEL_STRATEGY.md
+- $HOME/clawd/BUDGET_POLICY.md
+- $HOME/clawd/OPS_RUNBOOK.md
 
 ## Context Management (Every heartbeat)
 Before anything else:
@@ -21,8 +21,8 @@ Before anything else:
 ```json
 memory/heartbeat-state.json: { "lastChecks": { "system": timestamp } }
 ```
-- Check all 14 cron jobs - any failures in last 4 hours?
-- Check disk space: `df -h /Users/zachgonser`
+- Check configured cron jobs (openclaw cron list) — any failures in last 4 hours?
+- Check disk space: `df -h $HOME`
 - Check Windows node connectivity: `openclaw nodes status`
 - Verify LM Studio daemon: `lms daemon status`
 - If issues found → auto-fix or alert

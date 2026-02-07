@@ -16,9 +16,9 @@
 - **OPS_RUNBOOK.md** – incident response tiers
 
 ## Templates (workspace starters)
-- **templates/AGENTS.json** – AGENTS policy wiring template
-- **templates/HEARTBEAT.md** – HEARTBEAT template with policy links
-- **templates/task-queue.json** – task queue schema template
+- **docs/templates/AGENTS.json** – AGENTS policy wiring template
+- **docs/templates/HEARTBEAT.md** – HEARTBEAT template with policy links
+- **docs/templates/task-queue.json** – task queue schema template
 
 ## Implementation Design
 - **REQUIREMENTS.md** – detailed functional + non‑functional requirements

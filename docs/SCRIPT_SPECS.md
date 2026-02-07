@@ -49,12 +49,16 @@
 ---
 
 ## 4) monitor-openclaw.sh
-**Purpose:** Detect gateway down, auth errors, timeouts, stale gateway.lock.
+**Purpose:** Detect gateway down, auth errors, network timeouts, stale gateway.lock.
 
 **Checks:**
 - `openclaw gateway status`
 - stale `~/.openclaw/gateway.lock` when gateway is down (mtime > 10 min)
 - last 200 lines of `~/.openclaw/logs/gateway.err.log`
+
+**Notes:**
+- Script sets an explicit PATH for cron/launchd contexts.
+- Auth scan targets explicit auth/network error codes (avoid generic “timeout” false positives).
 
 **Outputs:**
 - “P0: gateway_down”
@@ -72,6 +76,13 @@
 **Outputs:**
 - `~/clawd/runtime/logs/task_runs/YYYY-MM-DD.jsonl`
 - `~/clawd/runtime/logs/task_runs/state.json` (last processed timestamps)
+
+**Fields (canonical):**
+- timestamp, job_id, action, status, duration, model, notes
+
+**Notes:**
+- Handles JSONL safely; per‑job last‑seen timestamp stored in `state.json`.
+- Safe if no run files are present.
 
 **Retention:**
 - Keep daily JSONL logs for 30 days

@@ -2,14 +2,16 @@
 
 **As of:** 2026‑02‑07
 
-## ✅ Complete (Docs)
-- Implementation‑ready package is complete (requirements → architecture → scripts → cron → tests → rollout → risks → metrics).
+## ✅ Baseline Docs Complete (Phase 0.5)
+- Implementation‑ready baseline package is complete (requirements → architecture → scripts → cron → tests → rollout → risks → metrics).
 - Policy docs are split into standalone files in this repo and linked from `IMPLEMENTATION_READY.md` + `DOC_INDEX.md`.
-- Templates added for AGENTS/HEARTBEAT workspace starters.
+- Templates added for AGENTS/HEARTBEAT workspace starters (portable paths).
 - Monitoring spec includes stale `gateway.lock` detection.
 - Task‑run retention policy documented in `SCRIPT_SPECS.md`.
 - Three‑layer memory system integrated into requirements/spec/tasks.
 - Docs‑lint CI added (broken links + placeholder scan; includes templates + JSON validation).
+- Script code moved to versioned files under `scripts/` and referenced from docs (source of truth).
+- DOC_INDEX template paths corrected; OPS_RUNBOOK expanded with concrete commands.
 
 ## ✅ Implemented in workspace (~/clawd)
 - Monitoring script updated to detect stale `~/.openclaw/gateway.lock` when gateway is down.
@@ -40,10 +42,6 @@
 - [x] 2026‑02‑07 — Simulated stale `gateway.lock` scenario (reported complete).
 
 ## ⏳ Pending / Next
-- None (blocked on Security Suite implementation).
-
-## 🔜 Deferred (intentional)
+- Roadmap Phases 1–5 remain in backlog (see ROADMAP.md + FEATURE_BACKLOG.md).
 - HTTPS proxy plan for LAN Control UI (secure context) — deferred to **SlurpNet Security Suite** project.
-
-## 🔜 Deferred (intentional)
 - Optional config enhancements (subagent model pinning, heartbeat override, memory backend swap).

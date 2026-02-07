@@ -1,13 +1,42 @@
 # Ops Runbook
 
 ## P0 (System Down / Auth Broken)
-- Alert immediately (Discord DM)
-- Attempt restart only with approval
+**Goal:** restore service quickly and safely.
+
+**Immediate checks:**
+1. `openclaw gateway status`
+2. `tail -n 200 ~/.openclaw/logs/gateway.err.log`
+3. `openclaw doctor --non-interactive`
+4. `launchctl list | grep -i openclaw`
+
+**If gateway is down:**
+- Verify config validity (doctor output). Fix config **only with approval**.
+- If approved: `openclaw gateway restart`
+
+**Auth failures:**
+- Check provider auth state (OAuth token expiry, missing token).
+- Validate `gateway.remote.url` scheme (ws vs wss).
+- Confirm PF rules aren’t blocking gateway access.
+
+**Alert:** Discord DM immediately with suspected cause + next step.
+
+---
 
 ## P1 (Repeated Failures)
-- Alert within 1 hour
-- Provide suspected cause + next steps
-- For `auth_or_timeout_errors`: inspect `~/.openclaw/logs/gateway.err.log`, confirm `remote.url` scheme (ws vs wss), verify provider auth state, and ensure PF rules are not blocking gateway access.
+**Goal:** diagnose and prevent recurrence.
+
+**Checks:**
+- `openclaw gateway status`
+- `tail -n 200 ~/.openclaw/logs/gateway.err.log`
+- `grep -n "auth_or_timeout" ~/clawd/scripts/monitor-openclaw.sh`
+- Verify `gateway.remote.url` scheme (ws vs wss)
+- Check PF anchor rules for port **18789**
+
+**Actions:**
+- Tighten monitor regex if false positives occur.
+- Rotate error log if old noise is causing repeated alerts.
+
+---
 
 ## P2 (Transient)
-- Log only
+- Log only; no alert unless it repeats.
