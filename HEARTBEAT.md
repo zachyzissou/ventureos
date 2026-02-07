@@ -1,5 +1,14 @@
 # HEARTBEAT.md
 
+## Policy Docs (OpenClaw Upgrade guidance)
+Source of truth (GitLab project):
+- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/GOALS_CONSTRAINTS.md
+- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/GUARDRAILS.md
+- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/PROACTIVE_MODE.md
+- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/MODEL_STRATEGY.md
+- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/BUDGET_POLICY.md
+- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/OPS_RUNBOOK.md
+
 ## Context Management (Every heartbeat)
 Before anything else:
 1. Check context size - if approaching limits, archive completed work
