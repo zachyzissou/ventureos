@@ -6,3 +6,15 @@ docs_lint:
   image: python:3.12-slim
   script:
     - python scripts/docs-lint.py
+
+shellcheck:
+  stage: test
+  image: koalaman/shellcheck:stable
+  script:
+    - shellcheck scripts/*.sh
+
+export_cron_logs_test:
+  stage: test
+  image: python:3.12-slim
+  script:
+    - bash scripts/tests/test-export-cron-logs.sh

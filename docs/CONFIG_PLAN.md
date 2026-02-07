@@ -44,6 +44,11 @@
 
 **Safety protocol:** All future config changes follow `docs/CONFIG_CHANGE_SAFETY.md` (Codex‑assisted with rollback).
 
+**Provider config validation (Ollama):**
+- `models.providers.ollama.models[].maxTokens` must be **numeric**.
+- OpenClaw typically uses **maxTokens ≈ 10× contextWindow**.
+- Non‑numeric values will prevent the gateway from starting.
+
 **Optional (deferred) Enhancements:**
 - Pin subagent model to cheap baseline
 - Heartbeat‑specific model override

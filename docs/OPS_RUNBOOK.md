@@ -3,6 +3,8 @@
 ## P0 (System Down / Auth Broken)
 **Goal:** restore service quickly and safely.
 
+**Reference:** `docs/GATEWAY_POSTURES.md` for supported configurations and TLS rules.
+
 **Immediate checks:**
 1. `openclaw gateway status`
 2. `tail -n 200 ~/.openclaw/logs/gateway.err.log`
