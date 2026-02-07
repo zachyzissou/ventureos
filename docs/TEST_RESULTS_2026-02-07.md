@@ -113,3 +113,29 @@ Error: gateway timeout after 30000ms
 Gateway target: ws://127.0.0.1:18789
 ```
 Exit: 1
+
+---
+
+## RPC Stabilization (Ollama context fix) — 2026-02-07 15:56 CST
+
+### Config Patch (Ollama contexts)
+- Updated `models.providers.ollama.models[].contextWindow` to match actual model limits.
+- `maxTokens` kept numeric (10× contextWindow).
+- Restarted gateway via `config.patch`.
+
+### Verification
+Command: `openclaw cron list`
+
+Result: **OK** (RPC responsive).
+
+### Re‑enable StantonTimes jobs (one‑by‑one)
+Enabled jobs (in order):
+1. StantonTimes Pending Tweet Alert
+2. StantonTimes Approval Check
+3. StantonTimes Web RSS
+4. StantonTimes P1 Keywords
+5. StantonTimes P0 Monitor
+6. StantonTimes Creator Monitor
+7. StantonTimes Engagement
+
+Result: **OK** after each enable (RPC stayed responsive).
