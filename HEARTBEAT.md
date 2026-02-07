@@ -50,6 +50,11 @@ memory/heartbeat-state.json: { "lastChecks": { "bloom": timestamp } }
 - Pre-generate morning briefing data at 7:30 AM
 - Clean up temp files in workspace
 
+### Ops (Upgrade Baselines)
+- Ensure nightly backup succeeded (see `runtime/logs/backups/`)
+- Ensure cron export job is producing daily JSONL in `runtime/logs/task_runs/`
+- Review budget alert output (if any)
+
 ## Quiet Hours
 23:00 - 08:00 CST: Only alert on P0 issues (system failures, security)
 
@@ -72,3 +77,8 @@ Track in `memory/heartbeat-state.json`:
 - **HEARTBEAT_OK** if nothing needs attention
 - **Alert message** if action/awareness needed
 - **Never** just report status without purpose
+
+## Coding-Agent Monitoring (Immediate Alerts)
+- If any coding agent session fails (auth errors, crashes, timeouts), **alert immediately** in the main chat.
+- When launching a coding agent, start a **background watcher** (poll every 10–15s) and surface errors immediately.
+- Before launching Codex, run a quick auth check; if invalid, **stop and request re-auth**.

@@ -22,9 +22,18 @@
 - Implemented automated memory archival process
 - Enhanced memory consolidation techniques
 
+## Workspace Organization Update (2026-02-06)
+- **runtime/** contains `runtime/logs` and `runtime/tmp`; root `logs` and `tmp` are symlinks.
+- **tools/** contains `openproject-mcp-server`, `unraid-mcp`, `monitor`; root entries are symlinks.
+- **projects/** now only has active repos: `stanton-times`, `jav-library`.
+- **archives/2026-02/** contains moved logs/reports.
+- **archives/2026-02/projects/** contains archived projects (bloom, openproject, stanton-times-agent, etc.).
+- **archives/2026-02/legacy/** contains queue/validation/telemetry/etc.
+- **plane** tooling and artifacts removed outright.
+
 ## Future Focus
 - Improve context compression algorithms
 - Develop more efficient memory storage and retrieval mechanisms
 - Continuous system resilience testing
 
-*Last Updated:* 2026-02-05 09:54 CST
+*Last Updated:* 2026-02-06 17:01 CST
