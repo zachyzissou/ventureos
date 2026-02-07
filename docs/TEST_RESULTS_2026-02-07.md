@@ -145,3 +145,9 @@ Result: **OK** after each enable (RPC stayed responsive).
 ## Reliability Hardening — Bloom PR Monitor (2026-02-07 16:14 CST)
 - Updated cron payload to wrap `gh pr list` with retry + timeout helpers.
 - Treat empty `[]` output as success (no open PRs) to avoid false alerts.
+
+---
+
+## Reliability Hardening — Cron Payloads (2026-02-07 16:18 CST)
+- Wrapped all `gh` and `bird-auth` commands in cron payloads with `retry.sh` + `with-timeout.sh`.
+- Changes applied in `~/.openclaw/cron/jobs.json` (backup created).
