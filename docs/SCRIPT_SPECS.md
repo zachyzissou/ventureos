@@ -73,6 +73,10 @@
 - `~/clawd/runtime/logs/task_runs/YYYY-MM-DD.jsonl`
 - `~/clawd/runtime/logs/task_runs/state.json` (last processed timestamps)
 
+**Retention:**
+- Keep daily JSONL logs for 30 days
+- Archive monthly to `~/clawd/archives/YYYY-MM/task_runs/`
+
 ---
 
 ## 6) budget-check.sh

@@ -25,6 +25,10 @@
 - `AGENTS.md` → link to policy docs
 - `HEARTBEAT.md` → reference monitoring + backup cadence + budget checks
 
+## Templates (repo only)
+- `docs/templates/AGENTS.json`
+- `docs/templates/HEARTBEAT.md`
+
 ---
 
 ## OpenClaw Config

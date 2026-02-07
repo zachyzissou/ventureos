@@ -15,6 +15,10 @@
 - **BUDGET_POLICY.md** – thresholds + caps
 - **OPS_RUNBOOK.md** – incident response tiers
 
+## Templates (workspace starters)
+- **templates/AGENTS.json** – AGENTS policy wiring template
+- **templates/HEARTBEAT.md** – HEARTBEAT template with policy links
+
 ## Implementation Design
 - **REQUIREMENTS.md** – detailed functional + non‑functional requirements
 - **ARCHITECTURE.md** – system design & data flow

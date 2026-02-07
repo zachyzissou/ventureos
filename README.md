@@ -25,6 +25,9 @@ Security hardening is **out of scope for this phase** and will be revisited late
 - `docs/PROJECT_PLAN.md` – delivery plan, milestones, and execution details
 - `docs/FEATURE_BACKLOG.md` – detailed feature list and ownership
 
+## CI / Docs Lint
+- GitLab CI runs `scripts/docs-lint.py` to detect broken links and placeholder markers.
+
 ## How to use this repo
 - Use the issues as the source of truth for implementation.
 - Align work to milestones in the roadmap.

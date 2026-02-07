@@ -59,6 +59,10 @@ This doc is the *implementation‑ready* package: final decisions, file changes,
 - `runtime/logs/backups/`
 - `runtime/monitor/state.json`
 
+### Templates (repo only)
+- `docs/templates/AGENTS.json`
+- `docs/templates/HEARTBEAT.md`
+
 ### Modified files
 - `AGENTS.md` (link to new policy docs)
 - `HEARTBEAT.md` (reference monitoring + backups + budget checks)
