@@ -35,4 +35,7 @@
 - **IMPLEMENTATION_SPEC.md** – high‑level spec
 - **IMPLEMENTATION_TASKS.md** – task breakdown + acceptance criteria
 - **IMPLEMENTATION_READY.md** – implementation‑ready package (defaults locked)
+
+## Research Notes
 - **TWITTER_CONFIG_RESEARCH_2026-02-07.md** – external config patterns & learnings
+- **VOXYZ_CLOSED_LOOP_NOTES_2026-02-07.md** – closed‑loop execution patterns

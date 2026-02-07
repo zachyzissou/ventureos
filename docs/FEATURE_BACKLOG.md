@@ -51,6 +51,18 @@ These are high‑value ideas from external research. Not committed yet, but scop
   - Acceptance: one page with filters (time, severity, model, job_id) + full‑text search.
 
 ### Orchestration
+- **Closed‑loop execution pipeline** (proposal → approval → mission → steps → event → trigger)
+  - Scope: formalize a durable loop so output becomes executed work with feedback.
+  - Acceptance: single pipeline definition + event audit trail.
+
+- **Proposal entrypoint + cap gates**
+  - Scope: all proposal creation goes through one function; enforce quota gates before enqueue.
+  - Acceptance: no queue buildup when quotas are full; rejected proposals logged with reasons.
+
+- **Reaction matrix** (probabilistic follow‑on actions)
+  - Scope: triggers emit templates; reactions create follow‑ups with cooldown + probability.
+  - Acceptance: documented matrix + cooldowns; no trigger storms.
+
 - **Mission control (multi‑agent console)**
   - Scope: single dashboard to queue, prioritize, and approve sub‑agent work.
   - Acceptance: queue view + status + approval hooks; integrates with task‑queue.json.
