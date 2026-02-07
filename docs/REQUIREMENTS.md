@@ -46,11 +46,16 @@
 - Record task runs to JSONL with duration/status/summary.
 - **Acceptance:** Export job defined; logs written daily.
 
-**FR‑11 Auditability**
+**FR‑11 Memory System (Three‑Layer)**
+- Define a three‑layer memory model: daily logs, entity facts, synthesized memory.
+- Entity store uses `items.json` + `summary.md` and supersede‑not‑delete semantics.
+- **Acceptance:** architecture + extraction + synthesis rules documented and linked.
+
+**FR‑12 Auditability**
 - Every automated job should have traceable logs and timestamps.
 - **Acceptance:** Task runs and backup logs kept for 30 days.
 
-**FR‑12 Documentation**
+**FR‑13 Documentation**
 - Provide implementation‑ready package with scripts, cron specs, runbooks, and rollback.
 - **Acceptance:** IMPLEMENTATION_READY.md + supporting docs in repo.
 

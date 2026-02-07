@@ -116,6 +116,29 @@
 
 ---
 
+## F) Memory System (P2)
+
+### F1 — Three‑Layer Memory Architecture
+**Deliverable:** doc section describing three layers + retrieval order
+**Acceptance:**
+- Daily logs (`memory/YYYY-MM-DD.md`)
+- Entity facts (`items.json` + `summary.md`)
+- Tacit memory (`MEMORY.md`)
+
+### F2 — Entity Fact Store
+**Deliverable:** entity directory structure + `items.json` schema + summary format
+**Acceptance:**
+- Facts stored per entity (people/companies/projects)
+- Supersede‑not‑delete semantics defined
+
+### F3 — Weekly Synthesis
+**Deliverable:** weekly job spec that rewrites summaries from active facts
+**Acceptance:**
+- Contradicted facts marked superseded
+- Summaries stay current + concise
+
+---
+
 ## Decisions Locked (Defaults)
 - Proactive window: **08:00–23:00 CST** (quiet 23:00–08:00)
 - Budget thresholds: **50% / 80% / 90%**; at 90% default to cheap model

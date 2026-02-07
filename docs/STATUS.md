@@ -8,6 +8,7 @@
 - Templates added for AGENTS/HEARTBEAT workspace starters.
 - Monitoring spec includes stale `gateway.lock` detection.
 - Task‑run retention policy documented in `SCRIPT_SPECS.md`.
+- Three‑layer memory system integrated into requirements/spec/tasks.
 - Docs‑lint CI added (broken links + placeholder scan; includes templates + JSON validation).
 
 ## ✅ Implemented in workspace (~/clawd)

@@ -60,6 +60,10 @@ This doc is the *implementation‑ready* package: final decisions, file changes,
 - `runtime/logs/backups/`
 - `runtime/monitor/state.json`
 
+### Memory directories (workspace)
+- `~/clawd/memory/` (daily logs)
+- `~/Obsidian/VaultZap/life/areas/` (entity facts + summaries)
+
 ### Templates (repo only)
 - `docs/templates/AGENTS.json`
 - `docs/templates/HEARTBEAT.md`

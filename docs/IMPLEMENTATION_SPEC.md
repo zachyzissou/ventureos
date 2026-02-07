@@ -146,6 +146,22 @@
 **Fields:** timestamp, job_id, action, status, duration, model, notes
 **Retention:** 30 days (archive monthly via `archive-task-runs.sh` cron)
 
+### 4.3 Three‑Layer Memory System
+**Layer 1: Entity Knowledge Graph**
+- Location: `~/Obsidian/VaultZap/life/areas/`
+- Structure: per‑entity `items.json` (atomic facts) + `summary.md` (living summary)
+
+**Layer 2: Daily Logs**
+- Location: `~/clawd/memory/YYYY-MM-DD.md`
+
+**Layer 3: Tacit Memory**
+- Location: `~/clawd/MEMORY.md`
+
+**Process:**
+- Cheap sub‑agent extracts durable facts → entity `items.json`
+- Weekly synthesis rewrites `summary.md` from active facts
+- Facts are superseded, not deleted
+
 ---
 
 ## 5) Open Decisions (Remaining)

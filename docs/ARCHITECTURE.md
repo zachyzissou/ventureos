@@ -10,6 +10,7 @@ This upgrade adds **policy + ops infrastructure** around OpenClaw. It does not r
 4. **Observability**: JSONL execution logs + backup logs.
 5. **Alerting**: Discord DM for P0/P1.
 6. **Task Queue**: conceptual tiers (urgent/normal/low) for scheduled jobs.
+7. **Memory System**: three‑layer memory (daily logs → entity facts → synthesized memory).
 
 ---
 
@@ -52,6 +53,12 @@ Human intent ──> Policy docs (guardrails, quota policy)
 ### 5) Execution Logging
 - **Source:** `~/.openclaw/cron/runs/*.jsonl`
 - **Output:** daily aggregated JSONL for audit
+
+### 6) Memory System (Three‑Layer)
+- **Layer 1:** Entity knowledge graph (Obsidian `life/areas/` with `items.json` + `summary.md`)
+- **Layer 2:** Daily logs (`~/clawd/memory/YYYY-MM-DD.md`)
+- **Layer 3:** Tacit knowledge (`~/clawd/MEMORY.md`)
+- **Process:** cheap fact extraction → entity store; weekly synthesis rewrites summaries; supersede‑not‑delete
 
 ---
 
