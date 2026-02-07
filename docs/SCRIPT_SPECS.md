@@ -58,7 +58,8 @@
 
 **Notes:**
 - Script sets an explicit PATH for cron/launchd contexts.
-- Auth scan targets explicit auth/network error codes (avoid generic “timeout” false positives).
+- Auth scan targets explicit auth/network error codes and uses a token word‑boundary pattern to avoid matching “tokens”.
+- Explicitly matches “gateway timeout” for real network timeouts.
 
 **Outputs:**
 - “P0: gateway_down”

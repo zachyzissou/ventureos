@@ -39,7 +39,7 @@ fi
 
 # Auth/network scan (last 200 lines)
 if [[ -f "$LOG_ERR" ]]; then
-  if tail -n 200 "$LOG_ERR" | egrep -i 'auth|unauth|unauthorized|forbidden|401|403|token|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|ENOTFOUND' >/dev/null; then
+  if tail -n 200 "$LOG_ERR" | egrep -i 'auth|unauth|unauthorized|forbidden|401|403|token(=|:|[[:space:]]|$)|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|ENOTFOUND|gateway timeout' >/dev/null; then
     ISSUES+=("P1: auth_or_timeout_errors")
   fi
 fi
