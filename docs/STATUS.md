@@ -25,12 +25,12 @@
 - [x] 2026‑02‑07 — Backup coverage updated + verify run
 - [x] 2026‑02‑07 — AGENTS/HEARTBEAT linked to policy docs
 - [x] 2026‑02‑07 — Cron jobs installed (backup/verify/monitor/export/budget/update reminder)
+- [x] 2026‑02‑07 — Task queue created (`runtime/task-queue.json`)
+- [x] 2026‑02‑07 — Archive task‑runs cron installed (monthly)
+- [x] 2026‑02‑07 — TEST_PLAN executed (see TEST_RESULTS_2026-02-07.md)
 
 ## ⏳ Pending / Next
-- Create `runtime/task-queue.json` (use `docs/templates/task-queue.json`).
-- Install monthly cron for `archive-task-runs.sh`.
-- Update `FEATURE_BACKLOG.md` + `ROADMAP.md` to reflect Phase 0.5 progress.
-- Execute full `TEST_PLAN.md` (including stale lock simulation) and log results.
+- Begin implementation phase (apply scripts + cron to workspace, verify in steady state).
 
 ## 🔜 Deferred (intentional)
 - Optional config enhancements (subagent model pinning, heartbeat override, memory backend swap).

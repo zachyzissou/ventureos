@@ -36,6 +36,7 @@
 - **IMPLEMENTATION_SPEC.md** – high‑level spec
 - **IMPLEMENTATION_TASKS.md** – task breakdown + acceptance criteria
 - **IMPLEMENTATION_READY.md** – implementation‑ready package (defaults locked)
+- **TEST_RESULTS_2026-02-07.md** – full script test run outputs
 
 ## Research Notes
 - **TWITTER_CONFIG_RESEARCH_2026-02-07.md** – external config patterns & learnings

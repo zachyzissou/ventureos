@@ -4,7 +4,7 @@
 **Objective:** get the core project organized and measurable.
 - ✅ Project plan and backlog created
 - ✅ Basic workflow definition
-- ☐ Metrics defined + tracked
+- ✅ Metrics defined (tracking pending)
 
 ## Phase 0.5 – Policy & Ops (Week 1)
 **Objective:** set guardrails, proactive rules, and ops baselines.
@@ -12,6 +12,8 @@
 - ✅ Guardrails + proactive mode rules
 - ✅ Model strategy + quota caps
 - ✅ Monitoring + backup + update cadence defined
+- ✅ Restore workflow + task‑run retention + archive job spec
+- ✅ Templates + docs‑lint CI
 
 ## Phase 1 – Reliability (Weeks 2–3)
 **Objective:** reduce failures, increase consistency.
