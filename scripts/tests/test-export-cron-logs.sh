@@ -11,7 +11,7 @@ JSONL
 
 bash scripts/export-cron-logs.sh
 
-OUT="$HOME/clawd/runtime/logs/task_runs/$(date +%Y-%m-%d).jsonl"
+export OUT="$HOME/clawd/runtime/logs/task_runs/$(date +%Y-%m-%d).jsonl"
 python3 - <<'PY'
 import json, os
 path=os.environ['OUT']
