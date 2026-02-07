@@ -8,6 +8,9 @@
 - **Payload:** run `scripts/backup-clawd.sh`
 - **Alert:** only on failure
 
+> **Standard guard:** For network/API calls in cron payloads use:
+> `scripts/guarded-run.sh <timeout> 3 2 <command> <args>`
+
 ## 2) Weekly Backup Verify
 - **Schedule:** `30 2 * * 0`
 - **Session:** isolated

@@ -15,6 +15,16 @@ attempt=1
 while true; do
   "$@" && exit 0
   rc=$?
+
+  # Optional: do-not-retry exit codes (space-delimited)
+  if [[ -n "${RETRY_EXCLUDE_CODES:-}" ]]; then
+    for code in $RETRY_EXCLUDE_CODES; do
+      if [[ "$rc" == "$code" ]]; then
+        exit $rc
+      fi
+    done
+  fi
+
   if (( attempt >= MAX )); then
     exit $rc
   fi

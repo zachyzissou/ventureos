@@ -127,6 +127,9 @@ scripts/retry.sh 3 2 <command> <args>
 - Attempt 2 after 2× base
 - Attempt 3 after 4× base
 
+**Optional:**
+- `RETRY_EXCLUDE_CODES="2 64 65"` → exit immediately on those codes
+
 ---
 
 ## 9) with-timeout.sh
@@ -140,3 +143,17 @@ scripts/with-timeout.sh 30 <command> <args>
 **Exit codes:**
 - `124` on timeout
 - Otherwise command exit code
+
+---
+
+## 10) guarded-run.sh
+**Purpose:** Standard wrapper for retry + timeout.
+
+**Usage:**
+```bash
+scripts/guarded-run.sh 60 3 2 <command> <args>
+```
+
+**Behavior:**
+- Runs `with-timeout.sh` inside `retry.sh`
+- Use for network/API commands in cron payloads

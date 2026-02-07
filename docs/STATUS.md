@@ -53,3 +53,9 @@
 - Reliability playbook added (retry/backoff, timeouts, taxonomy, graceful degradation).
 - Helper scripts added: `retry.sh`, `with-timeout.sh`.
 - Payload hardening applied: Bloom PR Monitor uses retry/timeout + empty-list OK + Playwright fallback; gh/bird commands wrapped with retry+timeout.
+
+## ⏳ Phase 1 Implementation (in progress)
+- Added `guarded-run.sh` standard wrapper (retry + timeout).
+- `retry.sh` supports optional `RETRY_EXCLUDE_CODES` for non-retry exits.
+- Reliability playbook expanded with classification cues + degradation matrix.
+- Cron specs updated with guard pattern.
