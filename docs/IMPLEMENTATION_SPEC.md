@@ -49,7 +49,7 @@
 - Any system updates or config changes
 - Any destructive or irreversible action
 
-**Default time window (TBD confirm):** 08:00–23:00 CST
+**Default time window:** 08:00–23:00 CST
 **Quiet hours:** 23:00–08:00 CST (alerts only for P0 incidents)
 
 ### 1.3 Guardrails (Explicit Prohibitions)
@@ -61,7 +61,7 @@
 
 ---
 
-## 2) Model Strategy (Cost + Quality)
+## 2) Model Strategy (Usage + Quality)
 
 ### 2.1 Routing Policy
 **Cheap model** for routine, low‑risk tasks:
@@ -76,8 +76,12 @@
 - High‑risk actions or sensitive content
 - Novel code changes or architecture decisions
 
-### 2.2 Budget Caps + Alerts (TBD confirm)
-- **Monthly cap:** $___ or ___ tokens
+### 2.2 Budget Caps + Alerts (Defaults locked)
+- **Measurement:** subscription usage quotas (points/messages/queries), not $/token.
+- **Caps:**
+  - Anthropic: **10,000 points/month**
+  - OpenAI Codex: **50 msgs / 3h window** (soft cap; alert at 80%+)
+  - Gemini: **100 queries/day** (soft cap; alert at 80%+)
 - **Alert thresholds:** 50% / 80% / 90%
 - **Behavior at 90%:** default to cheap model unless strong model explicitly required
 
@@ -97,7 +101,7 @@
 - Timeouts / stuck jobs
 - Cron job failures
 
-**Alert channels (TBD confirm):** Discord DM / Signal / email
+**Alert channel:** Discord DM
 
 **Severity taxonomy:**
 - **P0:** System down / auth broken / data loss risk → alert immediately
@@ -111,12 +115,12 @@
 - `~/clawd/memory/`
 - `~/clawd/state.json`
 
-**Default destination (TBD confirm):** `~/backups/clawd/`
+**Default destination:** `~/backups/clawd/`
 **Retention:** 30 days
 **Verification:** weekly integrity check + test extract
 
 ### 3.3 Update Cadence
-**Default window (TBD confirm):** Sundays 03:00–04:00 CST
+**Default window:** Sundays 03:00–04:00 CST
 **Restart window:** same
 **Policy:** no updates outside window unless user approves
 
@@ -140,12 +144,16 @@
 
 ---
 
-## 5) Open Decisions (Need Confirmation)
-- Proactive time window
-- Budget caps / thresholds
-- Backup destination + retention policy
-- Update/restart window
-- Alert channel
+## 5) Open Decisions (Remaining)
+- Backup coverage for `memory/fix-reports` and `memory/bloom-content` (fix permissions vs keep excluded)
+
+## 5.1 Locked Defaults (see DECISIONS.md)
+- Proactive window: **08:00–23:00 CST** (quiet 23:00–08:00)
+- Budget thresholds: **50% / 80% / 90%**; at 90% default to cheap model
+- Usage caps: **10,000 points/month** (Anthropic), **50 msgs/3h** (Codex), **100 queries/day** (Gemini)
+- Backup destination: `~/backups/clawd/` (30‑day retention, weekly verify)
+- Update window: Sunday **03:00–04:00 CST** (reminder only; approval required)
+- Alert channel: **Discord DM**
 
 ---
 

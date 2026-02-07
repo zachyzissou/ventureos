@@ -58,8 +58,8 @@
 ---
 
 ## 5) budget-check.sh
-**Purpose:** Emit budget report using `subscription-quota-tracker.js`.
+**Purpose:** Emit quota usage report using `subscription-quota-tracker.js`.
 
 **Outputs:**
-- stdout budget report
+- stdout quota usage report
 - Cron job will parse/alert at 50/80/90%

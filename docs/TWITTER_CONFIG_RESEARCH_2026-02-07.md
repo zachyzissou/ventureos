@@ -25,7 +25,7 @@
 ```
 **Takeaway:** strong default‑deny memory scope + explicit indexing cadence/limits.
 
-### Subagents Model Lock (cost control) – ao_marimo
+### Subagents Model Lock (usage control) – ao_marimo
 **Tweet:** https://x.com/ao_marimo/status/2019931992327090380
 ```
 "subagents": {
@@ -107,9 +107,9 @@
 4. **Gateway health checks** + stale lock cleanup logic.
 5. **Config validation** before apply (schema + rollback).
 
-**Cost / Model Control**
+**Usage / Model Control**
 6. **Subagent model pinning** (cheap model for background tasks).
-7. **Heartbeat model override** (cheap model on heartbeats) + budget alerts.
+7. **Heartbeat model override** (cheap model on heartbeats) + quota alerts.
 
 **Memory**
 8. **Three‑layer memory** (daily + long‑term + always‑loaded context) w/ nightly distill.

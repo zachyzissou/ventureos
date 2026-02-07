@@ -22,9 +22,9 @@
 - Use cheap model for routine tasks, strong model for complex work.
 - **Acceptance:** Criteria + fallback chain documented.
 
-**FR‑05 Budget Caps + Alerts**
-- Define budgets + 50/80/90% thresholds; restrict at 90%.
-- **Acceptance:** Alerts defined; policy doc exists.
+**FR‑05 Usage‑Quota Caps + Alerts**
+- Define subscription usage caps + 50/80/90% thresholds; restrict at 90%.
+- **Acceptance:** Quota alerts defined; policy doc exists.
 
 **FR‑06 Monitoring**
 - Detect crash/auth/timeout failures; alert by severity.
@@ -70,8 +70,8 @@
 **NFR‑04 Maintainability**
 - Scripts are idempotent; logs are readable; rollback is documented.
 
-**NFR‑05 Cost Control**
-- Automated budget alerts prevent silent overspend.
+**NFR‑05 Usage/Quota Control**
+- Automated quota alerts prevent silent overages.
 
 ---
 

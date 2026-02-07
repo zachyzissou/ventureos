@@ -4,9 +4,9 @@
 This upgrade adds **policy + ops infrastructure** around OpenClaw. It does not replace OpenClaw core; it layers **docs, scripts, cron jobs, and logs** to make the system reliable and auditable.
 
 ### Key Components
-1. **Policy Layer** (docs): goals, guardrails, proactive rules, model strategy, budget policy.
+1. **Policy Layer** (docs): goals, guardrails, proactive rules, model strategy, quota policy.
 2. **Orchestration Layer** (OpenClaw cron): schedules scripts and reminders.
-3. **Ops Scripts**: backup, verify, monitor, log export, budget check.
+3. **Ops Scripts**: backup, verify, monitor, log export, quota check.
 4. **Observability**: JSONL execution logs + backup logs.
 5. **Alerting**: Discord DM for P0/P1.
 6. **Task Queue**: conceptual tiers (urgent/normal/low) for scheduled jobs.
@@ -15,7 +15,7 @@ This upgrade adds **policy + ops infrastructure** around OpenClaw. It does not r
 
 ## Data Flow (High Level)
 ```
-Human intent ──> Policy docs (guardrails, budgets)
+Human intent ──> Policy docs (guardrails, quota policy)
                     ↓
                OpenClaw agent
                     ↓
@@ -45,7 +45,7 @@ Human intent ──> Policy docs (guardrails, budgets)
 - **Destination:** `~/backups/clawd/`
 - **Verification:** weekly checksum + test extract
 
-### 4) Budget Control
+### 4) Quota Control
 - **Source:** subscription‑quota tracker
 - **Action:** report + alert at 50/80/90%
 

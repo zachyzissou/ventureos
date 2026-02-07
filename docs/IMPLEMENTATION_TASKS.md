@@ -41,7 +41,7 @@
 ### B2 — Budget Caps + Alerts
 **Deliverable:** `~/clawd/BUDGET_POLICY.md`
 **Acceptance:**
-- Monthly budget caps + thresholds
+- Usage‑quota caps + thresholds (points/messages/queries)
 - Behavior when thresholds exceeded
 - Alert destination specified
 
@@ -100,9 +100,13 @@
 
 ---
 
-## Open Decisions (Need Confirmation)
-- Proactive window
-- Budget caps + thresholds
-- Backup destination + retention
-- Update/restart window
-- Alert channel
+## Decisions Locked (Defaults)
+- Proactive window: **08:00–23:00 CST** (quiet 23:00–08:00)
+- Budget thresholds: **50% / 80% / 90%**; at 90% default to cheap model
+- Usage caps: **10,000 points/month** (Anthropic), **50 msgs/3h** (Codex), **100 queries/day** (Gemini)
+- Backup destination: `~/backups/clawd/` (30‑day retention, weekly verify)
+- Update window: Sunday **03:00–04:00 CST** (reminder only; approval required)
+- Alert channel: **Discord DM**
+
+## Remaining Decisions
+- Backup coverage for `memory/fix-reports` and `memory/bloom-content` (fix permissions vs keep excluded)

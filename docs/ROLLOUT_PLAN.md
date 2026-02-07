@@ -19,7 +19,7 @@
 
 ## Phase 4 – Steady State
 - Weekly review of metrics
-- Monthly review of budget usage
+- Monthly review of quota usage
 
 ---
 
