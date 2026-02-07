@@ -2,7 +2,7 @@
 set -euo pipefail
 
 BACKUP_DIR="$HOME/backups/clawd"
-LATEST=$(ls -t "$BACKUP_DIR"/clawd-*.tar.gz 2>/dev/null | head -n 1)
+LATEST=$(find "$BACKUP_DIR" -maxdepth 1 -name 'clawd-*.tar.gz' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1)
 
 if [[ -z "$LATEST" ]]; then
   echo "NO_BACKUP_FOUND"; exit 1

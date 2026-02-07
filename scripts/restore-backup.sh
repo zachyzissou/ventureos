@@ -33,7 +33,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$ARCHIVE" ]]; then
-  ARCHIVE=$(ls -t "$BACKUP_DIR"/clawd-*.tar.gz 2>/dev/null | head -n 1 || true)
+  ARCHIVE=$(find "$BACKUP_DIR" -maxdepth 1 -name 'clawd-*.tar.gz' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -n 1 || true)
 fi
 
 if [[ -z "$ARCHIVE" || ! -f "$ARCHIVE" ]]; then
