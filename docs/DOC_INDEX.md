@@ -26,6 +26,7 @@
 - **CONFIG_PLAN.md** – file changes, directories, config guidance
 - **CONFIG_CHANGE_SAFETY.md** – safe config change protocol (Codex‑assisted)
 - **GATEWAY_POSTURES.md** – supported gateway configurations + firewall guidance
+- **RELIABILITY_PLAYBOOK.md** – retry/timeout/taxonomy/degradation standards
 - **SCRIPT_SPECS.md** – script‑level specs (backup, monitor, logs, quota)
 - **CRON_SPECS.md** – cron job definitions & schedules
 - **METRICS_PLAN.md** – KPI definitions + collection approach

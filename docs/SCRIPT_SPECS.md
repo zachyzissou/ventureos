@@ -111,3 +111,32 @@
 
 **Retention:**
 - Move files older than 30 days; keep `state.json` in place.
+
+---
+
+## 8) retry.sh
+**Purpose:** Retry external commands with exponential backoff.
+
+**Usage:**
+```bash
+scripts/retry.sh 3 2 <command> <args>
+```
+
+**Behavior:**
+- Attempt 1 immediately
+- Attempt 2 after 2× base
+- Attempt 3 after 4× base
+
+---
+
+## 9) with-timeout.sh
+**Purpose:** Enforce a hard timeout on commands.
+
+**Usage:**
+```bash
+scripts/with-timeout.sh 30 <command> <args>
+```
+
+**Exit codes:**
+- `124` on timeout
+- Otherwise command exit code

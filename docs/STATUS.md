@@ -48,3 +48,7 @@
 
 ## ✅ Recent Stabilization
 - Ollama model context windows corrected; RPC timeouts resolved; StantonTimes jobs re‑enabled sequentially without timeout.
+
+## ✅ Phase 1 Design Package Ready
+- Reliability playbook added (retry/backoff, timeouts, taxonomy, graceful degradation).
+- Helper scripts added: `retry.sh`, `with-timeout.sh`.

@@ -147,6 +147,26 @@
 
 ---
 
+## G) Reliability (Phase 1)
+
+### G1 — Retry + Backoff Standard
+**Deliverable:** `docs/RELIABILITY_PLAYBOOK.md`
+**Acceptance:** retry policy defined; errors classified; non‑retry cases specified.
+
+### G2 — Timeout Standardization
+**Deliverable:** `docs/RELIABILITY_PLAYBOOK.md` + `scripts/with-timeout.sh`
+**Acceptance:** timeouts documented + helper script provided.
+
+### G3 — Error Taxonomy + Recovery
+**Deliverable:** `docs/RELIABILITY_PLAYBOOK.md`
+**Acceptance:** P0/P1/P2 signals + actions defined.
+
+### G4 — Graceful Degradation
+**Deliverable:** `docs/RELIABILITY_PLAYBOOK.md`
+**Acceptance:** fallback behaviors defined for common dependency failures.
+
+---
+
 ## Decisions Locked (Defaults)
 - Proactive window: **08:00–23:00 CST** (quiet 23:00–08:00)
 - Budget thresholds: **50% / 80% / 90%**; at 90% default to cheap model

@@ -17,6 +17,8 @@
 - `export-cron-logs.sh`
 - `budget-check.sh`
 - `archive-task-runs.sh`
+- `retry.sh`
+- `with-timeout.sh`
 
 ## Runtime Directories
 - `runtime/logs/task_runs/`

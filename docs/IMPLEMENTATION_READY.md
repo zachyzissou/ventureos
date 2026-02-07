@@ -107,6 +107,8 @@ chmod +x ~/clawd/scripts/*.sh
 - `scripts/export-cron-logs.sh`
 - `scripts/budget-check.sh`
 - `scripts/archive-task-runs.sh`
+- `scripts/retry.sh`
+- `scripts/with-timeout.sh`
 
 ## 4) Cron Job Specs (OpenClaw)
 
