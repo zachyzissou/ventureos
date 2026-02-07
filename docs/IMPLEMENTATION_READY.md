@@ -1,6 +1,6 @@
 # OpenClaw Upgrade – Implementation‑Ready Design (Defaults Locked)
 
-**Status:** Design complete. **Partial implementation applied** (policy docs split, monitoring enhancements, restore workflow, backup coverage).
+**Status:** Design complete. **Partial implementation applied** (policy docs split, monitoring enhancements, restore workflow, backup coverage, LAN‑first gateway posture + PF hardening).
 
 This doc is the *implementation‑ready* package: final decisions, file changes, scripts, cron job specs, runbooks, verification, and rollback. Once approved, we can execute the plan exactly as written.
 

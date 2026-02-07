@@ -34,7 +34,12 @@
 ---
 
 ## OpenClaw Config
-**Default:** No changes to `~/.openclaw/openclaw.json` in this phase.
+**Exception (applied):** LAN‑first gateway posture.
+- `gateway.bind = lan` (0.0.0.0)
+- `gateway.tailscale.mode = off` (Serve disabled)
+- `gateway.remote.url = ws://openclaw.local:18789`
+- PF anchor `/etc/pf.anchors/openclaw` allowlists LAN + Tailnet for port **18789**, blocks others on **en0/utun6** only (loopback safe).
+- Control UI secure‑context note: LAN access needs HTTPS proxy (localhost ok).
 
 **Optional (deferred) Enhancements:**
 - Pin subagent model to cheap baseline

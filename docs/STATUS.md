@@ -20,6 +20,9 @@
 - Task queue created (`runtime/task-queue.json`).
 - Entity store base created (`~/Obsidian/VaultZap/life/areas/entities`).
 - Fact Extraction + Weekly Memory Synthesis cron jobs updated for entity store.
+- Gateway network posture set to LAN (`bind=lan`), Tailscale Serve disabled, `remote.url=ws://openclaw.local:18789`.
+- PF hardening applied for port **18789** (interface‑scoped allow LAN + Tailnet; blocks others; loopback safe).
+- Control UI requires secure context: LAN access needs HTTPS proxy (localhost ok).
 
 ## 🧾 Execution Checklist / Audit Log
 - [x] 2026‑02‑07 — Policy docs split + linked in repo
@@ -32,8 +35,12 @@
 - [x] 2026‑02‑07 — Archive task‑runs cron installed (monthly)
 - [x] 2026‑02‑07 — TEST_PLAN executed (see TEST_RESULTS_2026-02-07.md)
 - [x] 2026‑02‑07 — Entity store base created + memory cron jobs updated
+- [x] 2026‑02‑07 — Gateway bind=lan; Tailscale Serve disabled; remote.url=ws://openclaw.local:18789
+- [x] 2026‑02‑07 — PF anchor applied for port 18789 (interface‑scoped allowlist + blocks)
 
 ## ⏳ Pending / Next
+- Investigate P1 `auth_or_timeout_errors` in `~/.openclaw/logs/gateway.err.log`.
+- Decide on HTTPS proxy plan for LAN Control UI (secure context requirement).
 - Simulate stale gateway.lock scenario (requires safe window/approval).
 
 ## 🔜 Deferred (intentional)
