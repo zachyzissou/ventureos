@@ -53,6 +53,7 @@
 **Deliverable:** `~/clawd/scripts/monitor-openclaw.sh` + cron job
 **Acceptance:**
 - Detects gateway crash (log grep or process check)
+- Detects stale `~/.openclaw/gateway.lock` when gateway is down (mtime > 10 min)
 - Detects auth failures (log grep)
 - Detects timeouts / stuck jobs
 - Sends alert via chosen channel

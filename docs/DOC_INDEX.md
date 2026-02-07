@@ -2,6 +2,7 @@
 
 ## Core
 - **README.md** – project overview
+- **STATUS.md** – current implementation status
 - **ROADMAP.md** – phased roadmap
 - **PROJECT_PLAN.md** – milestones + success metrics
 - **FEATURE_BACKLOG.md** – backlog by workstream
