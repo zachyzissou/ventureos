@@ -139,3 +139,9 @@ Enabled jobs (in order):
 7. StantonTimes Engagement
 
 Result: **OK** after each enable (RPC stayed responsive).
+
+---
+
+## Reliability Hardening — Bloom PR Monitor (2026-02-07 16:14 CST)
+- Updated cron payload to wrap `gh pr list` with retry + timeout helpers.
+- Treat empty `[]` output as success (no open PRs) to avoid false alerts.

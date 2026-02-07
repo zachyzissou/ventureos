@@ -52,3 +52,4 @@
 ## ✅ Phase 1 Design Package Ready
 - Reliability playbook added (retry/backoff, timeouts, taxonomy, graceful degradation).
 - Helper scripts added: `retry.sh`, `with-timeout.sh`.
+- First payload hardening applied (Bloom PR Monitor uses retry/timeout + empty-list OK).
