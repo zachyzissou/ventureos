@@ -1,0 +1,53 @@
+{
+  "claude_max": {
+    "name": "Claude MAX",
+    "monthly_cost": 200,
+    "reset_cycle": "monthly",
+    "models": {
+      "claude-opus-4-5": {
+        "weight": 10
+      },
+      "claude-sonnet-4-5": {
+        "weight": 3
+      },
+      "claude-haiku-4-5": {
+        "weight": 1
+      }
+    },
+    "estimated_monthly_points": 10000,
+    "used_this_cycle": 0,
+    "last_reset": "2026-02-08T15:07:20.602Z"
+  },
+  "chatgpt_plus": {
+    "name": "ChatGPT Plus",
+    "monthly_cost": 20,
+    "reset_cycle": "3_hours",
+    "models": {
+      "gpt-5.2-codex": {
+        "weight": 1
+      },
+      "gpt-5.1": {
+        "weight": 1
+      }
+    },
+    "estimated_3h_messages": 50,
+    "used_this_window": 0,
+    "last_reset": "2026-02-08T15:07:20.602Z"
+  },
+  "gemini_advanced": {
+    "name": "Gemini Advanced",
+    "monthly_cost": 20,
+    "reset_cycle": "unknown",
+    "models": {
+      "gemini-2.5-pro": {
+        "weight": 1
+      },
+      "gemini-2.5-flash": {
+        "weight": 0.5
+      }
+    },
+    "estimated_daily_queries": 100,
+    "used_today": 0,
+    "last_reset": "2026-02-08T15:07:20.602Z"
+  }
+}
