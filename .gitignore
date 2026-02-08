@@ -1,0 +1,3 @@
+# Ignore local MCP servers
+/tools/openproject-mcp-server/
+/tools/unraid-mcp/
