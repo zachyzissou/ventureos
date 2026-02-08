@@ -1,6 +1,0 @@
-2026-02-01 22:39:31,354 - INFO: Initiating resolution strategy for Project ID: b7824695-65e5-4da6-ba57-3f7ac172266d
-2026-02-01 22:39:31,354 - INFO: Updated configuration: /Users/zachgonser/clawd/plane-mcp-config.json
-2026-02-01 22:39:31,355 - ERROR: Configuration update failed for /Users/zachgonser/clawd/plane.env: Expecting value: line 1 column 1 (char 0)
-2026-02-01 22:39:31,355 - INFO: Updated configuration: /Users/zachgonser/clawd/scripts/plane-project-automation.json
-2026-02-01 22:39:31,355 - INFO: Comprehensive workflow script generated: /Users/zachgonser/clawd/plane_comprehensive_workflow.sh
-2026-02-01 22:39:31,359 - ERROR: Resolution strategy execution failed: [Errno 8] Exec format error: '/Users/zachgonser/clawd/plane_comprehensive_workflow.sh'

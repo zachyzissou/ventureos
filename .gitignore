@@ -1,3 +1,23 @@
 # Ignore local MCP servers
 /tools/openproject-mcp-server/
 /tools/unraid-mcp/
+
+# OS cruft
+.DS_Store
+
+# Local envs / deps
+.venv/
+**/.venv/
+node_modules/
+
+# Runtime/log artifacts
+/runtime/
+/archives/
+*.log
+*_report*.json
+workflow_automation_logs/
+metrics_logs/
+
+# Backup/scratch files
+*.bak
+*.bak.*

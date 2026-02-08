@@ -1,4 +1,0 @@
-2026-02-01 22:41:58,679 - ERROR: Credential loading failed: Expecting value: line 1 column 1 (char 0)
-2026-02-01 22:41:58,679 - INFO: Autonomous Plane Project Resolution Initiated
-2026-02-01 22:41:58,709 - INFO: Resolution report generated: /Users/zachgonser/clawd/plane_autonomous_resolution_report_20260201_224158.json
-2026-02-01 22:41:58,709 - INFO: Autonomous Resolution Complete

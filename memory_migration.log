@@ -1,6 +1,0 @@
-Memory Migration Log - 2026-02-01T23:56:50.357687
-2026-02-01T23:56:50.363204 - Created database backup: /Users/zachgonser/clawd/memory/main.sqlite.backup-20260201_235650
-2026-02-01T23:56:50.435154 - Migrated 1079 memory chunks
-2026-02-01T23:56:50.437190 - Migrated 201 file metadata entries
-2026-02-01T23:56:50.509690 - Migrated 1332 embedding cache entries
-2026-02-01T23:56:50.510871 - Migrated 1 metadata entries
