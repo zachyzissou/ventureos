@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-import core, { SortingOrder, generateId } from '@hcengineering/core'
-import { makeRank } from '@hcengineering/rank'
-import document from '@hcengineering/document'
+import * as core from '@hcengineering/core'
+import * as rank from '@hcengineering/rank'
+import * as document from '@hcengineering/document'
 
 import { connectHuly } from '../src/huly-client.mjs'
 
@@ -50,7 +50,7 @@ async function ensureTeamspace (client) {
 async function upsertDoc (client, teamspaceId, title, markdown) {
   const existing = await client.findOne(document.class.Document, { space: teamspaceId, title })
 
-  const docId = existing?._id ?? generateId()
+  const docId = existing?._id ?? core.generateId()
   const content = await client.uploadMarkup(document.class.Document, docId, 'content', markdown, 'markdown')
 
   if (existing) {
@@ -58,7 +58,7 @@ async function upsertDoc (client, teamspaceId, title, markdown) {
     return { id: existing._id, created: false }
   }
 
-  const lastOne = await client.findOne(document.class.Document, { space: teamspaceId }, { sort: { rank: SortingOrder.Descending } })
+  const lastOne = await client.findOne(document.class.Document, { space: teamspaceId }, { sort: { rank: core.SortingOrder.Descending } })
   await client.createDoc(
     document.class.Document,
     teamspaceId,
@@ -66,7 +66,7 @@ async function upsertDoc (client, teamspaceId, title, markdown) {
       title,
       content,
       parent: document.ids.NoParent,
-      rank: makeRank(lastOne?.rank, undefined)
+      rank: rank.makeRank(lastOne?.rank, undefined)
     },
     docId
   )

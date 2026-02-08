@@ -1,6 +1,6 @@
-import core, { SortingOrder, generateId } from '@hcengineering/core'
-import { makeRank } from '@hcengineering/rank'
-import tracker, { IssuePriority } from '@hcengineering/tracker'
+import * as core from '@hcengineering/core'
+import * as rank from '@hcengineering/rank'
+import * as tracker from '@hcengineering/tracker'
 import { connectHuly } from '../src/huly-client.mjs'
 
 function getArg (name, def = undefined) {
@@ -27,19 +27,19 @@ if (!projectIdentifier) {
 }
 
 const priorityMap = {
-  urgent: IssuePriority.Urgent,
-  high: IssuePriority.High,
-  normal: IssuePriority.Normal,
-  low: IssuePriority.Low
+  urgent: tracker.IssuePriority.Urgent,
+  high: tracker.IssuePriority.High,
+  normal: tracker.IssuePriority.Normal,
+  low: tracker.IssuePriority.Low
 }
-const priority = priorityMap[priorityArg] ?? IssuePriority.Normal
+const priority = priorityMap[priorityArg] ?? tracker.IssuePriority.Normal
 
 const client = await connectHuly()
 try {
   const project = await client.findOne(tracker.class.Project, { identifier: projectIdentifier })
   if (!project) throw new Error(`Project not found: ${projectIdentifier}`)
 
-  const issueId = generateId()
+  const issueId = core.generateId()
 
   // Increment project sequence to get issue number
   const incResult = await client.updateDoc(
@@ -54,7 +54,7 @@ try {
   const lastOne = await client.findOne(
     tracker.class.Issue,
     { space: project._id },
-    { sort: { rank: SortingOrder.Descending } }
+    { sort: { rank: core.SortingOrder.Descending } }
   )
 
   const description = body
@@ -85,7 +85,7 @@ try {
       parents: [],
       childInfo: [],
       dueDate: null,
-      rank: makeRank(lastOne?.rank, undefined)
+      rank: rank.makeRank(lastOne?.rank, undefined)
     },
     issueId
   )

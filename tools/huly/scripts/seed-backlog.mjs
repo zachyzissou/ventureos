@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-import core, { SortingOrder, generateId } from '@hcengineering/core'
-import { makeRank } from '@hcengineering/rank'
-import tracker, { IssuePriority, MilestoneStatus } from '@hcengineering/tracker'
+import * as core from '@hcengineering/core'
+import * as rank from '@hcengineering/rank'
+import * as tracker from '@hcengineering/tracker'
 
 import { connectHuly } from '../src/huly-client.mjs'
 
@@ -15,24 +15,24 @@ if (!PROJECT_IDENTIFIER) {
 
 function priorityFromText (s) {
   const t = (s || '').toLowerCase()
-  if (t.includes('p0')) return IssuePriority.Urgent
-  if (t.includes('p1')) return IssuePriority.High
-  if (t.includes('p2')) return IssuePriority.Normal
-  if (t.includes('p3')) return IssuePriority.Low
-  return IssuePriority.Normal
+  if (t.includes('p0')) return tracker.IssuePriority.Urgent
+  if (t.includes('p1')) return tracker.IssuePriority.High
+  if (t.includes('p2')) return tracker.IssuePriority.Normal
+  if (t.includes('p3')) return tracker.IssuePriority.Low
+  return tracker.IssuePriority.Normal
 }
 
 async function ensureMilestone (client, projectId, label) {
   const existing = await client.findOne(tracker.class.Milestone, { space: projectId, label })
   if (existing) return existing
 
-  const id = generateId()
+  const id = core.generateId()
   await client.createDoc(
     tracker.class.Milestone,
     projectId,
     {
       label,
-      status: MilestoneStatus.InProgress,
+      status: tracker.MilestoneStatus.InProgress,
       targetDate: Date.now() + 1000 * 60 * 60 * 24 * 30,
       comments: 0
     },
@@ -66,7 +66,7 @@ async function createOrUpdateIssue (client, project, title, body, priority, mile
   }
 
   // Create new issue
-  const issueId = generateId()
+  const issueId = core.generateId()
 
   const incResult = await client.updateDoc(
     tracker.class.Project,
@@ -80,7 +80,7 @@ async function createOrUpdateIssue (client, project, title, body, priority, mile
   const lastOne = await client.findOne(
     tracker.class.Issue,
     { space: project._id },
-    { sort: { rank: SortingOrder.Descending } }
+    { sort: { rank: core.SortingOrder.Descending } }
   )
 
   const description = body
@@ -112,7 +112,7 @@ async function createOrUpdateIssue (client, project, title, body, priority, mile
       childInfo: [],
       dueDate: null,
       milestone: milestoneId ?? null,
-      rank: makeRank(lastOne?.rank, undefined)
+      rank: rank.makeRank(lastOne?.rank, undefined)
     },
     issueId
   )

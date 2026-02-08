@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { NodeWebSocketFactory, connect } from '@hcengineering/api-client'
+import * as apiClient from '@hcengineering/api-client'
 
 export function hulyConfig () {
   const url = process.env.HULY_URL
@@ -13,7 +13,7 @@ export function hulyConfig () {
 
   const options = {
     workspace,
-    socketFactory: NodeWebSocketFactory,
+    socketFactory: apiClient.NodeWebSocketFactory,
     connectionTimeout: 30000
   }
 
@@ -31,5 +31,5 @@ export function hulyConfig () {
 
 export async function connectHuly () {
   const { url, options } = hulyConfig()
-  return await connect(url, options)
+  return await apiClient.connect(url, options)
 }
