@@ -1,7 +1,7 @@
 # OpenClaw Upgrade – Project Plan
 
 ## Vision
-Turn OpenClaw into a **production‑grade personal operator**: proactive, reliable, and fast, with clear workflows and measurable outcomes.
+Turn OpenClaw into a **production‑grade personal operator** *and* a **venture‑studio operating system** (VentureOS): proactive, reliable, and fast, with clear workflows, repeatable missions, and measurable outcomes.
 
 ## Success Metrics
 - **Task success rate** ≥ 95%
@@ -20,10 +20,12 @@ Turn OpenClaw into a **production‑grade personal operator**: proactive, reliab
 - Retries + timeouts
 - Clear error alerts
 
-### M3: Proactive Engine (Weeks 4–5)
+### M3: Proactive Engine + Mission Control (Weeks 4–5)
 - Proactive schedule + rules
-- Priority queue
+- Priority queue (P0–P3) + quiet-hours gating
 - Context refresh pipeline
+- **Mission Control foundations** (mission briefs, squads, safety/QA gates)
+- **Business unit registry** (portfolio-aware routing and logging)
 
 ### M4: Quality Upgrades (Weeks 6–7)
 - Output QA gating
@@ -46,6 +48,7 @@ Turn OpenClaw into a **production‑grade personal operator**: proactive, reliab
 3. **Output Quality**
 4. **Workflow Automation**
 5. **Model Orchestration**
+6. **VentureOS / Mission Control (Multi‑Agent Workflows)**
 
 ## Delivery Approach
 - Small, scoped issues

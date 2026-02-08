@@ -13,6 +13,14 @@
 - Script code moved to versioned files under `scripts/` and referenced from docs (source of truth).
 - DOC_INDEX template paths corrected; OPS_RUNBOOK expanded with concrete commands.
 
+## ✅ VentureOS / Multi‑Agent Mission Control (Docs Integrated)
+- Added VentureOS system framing (system vs persona) and multi‑agent operating model.
+- Added 20‑role roster + default squad patterns.
+- Added Business Unit Registry concept (portfolio scalability; multi‑account media pattern).
+- Added Mission Control lifecycle + gates (Sentinel safety/IP/provenance; Verifier QA; Archivist durability).
+- Added templates: mission brief, role card, business unit registry.
+- Extended task queue schema to carry mission metadata (`businessUnit`, `missionType`, `role`, `expectedArtifacts`, `requiresApproval`).
+
 ## ✅ Implemented in workspace (~/clawd)
 - Monitoring script updated to detect stale `~/.openclaw/gateway.lock` when gateway is down.
 - Backup coverage includes `memory/fix-reports` + `memory/bloom-content`; backup + verify run completed.
@@ -43,6 +51,9 @@
 
 ## ⏳ Pending / Next
 - Roadmap Phases 1–5 remain in backlog (see ROADMAP.md + FEATURE_BACKLOG.md).
+- Seed workspace **business unit registry** (`~/clawd/runtime/business-units.json`) with initial units and links to canonical Obsidian notes.
+- Create initial **role cards** for the core operating roles (Echo, Sentinel, Verifier, Archivist, Atlas, Synth, Venture, Oracle, Ledger, Comms).
+- Implement **mission runner** workflow (mission brief → squad execution → gates → archive/register) and carry mission metadata through queue + run logs.
 - HTTPS proxy plan for LAN Control UI (secure context) — deferred to **SlurpNet Security Suite** project.
 - Optional config enhancements (subagent model pinning, heartbeat override, memory backend swap).
 
@@ -62,4 +73,5 @@
 - Ops runbook now includes taxonomy mapping + P2 handling.
 
 ## 🟡 Phase 2 Drafting (started)
-- Proactive Engine draft added (SLA tiers + scheduler rules).
+- Proactive Engine draft added (SLA tiers + scheduler rules) and aligned with mission metadata fields.
+- VentureOS / Mission Control docs integrated (roles, squads, business units, templates).
