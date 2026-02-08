@@ -20,7 +20,7 @@
 - Validate `gateway.remote.url` scheme (ws vs wss).
 - Confirm PF rules aren’t blocking gateway access.
 
-**Alert:** Discord DM immediately with suspected cause + next step.
+**Alert:** Discord → SlurpNet alerts channel immediately with suspected cause + next step.
 
 ---
 

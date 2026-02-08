@@ -32,7 +32,7 @@ This doc is the *implementation‑ready* package: final decisions, file changes,
 - **Policy:** reminder only; updates require explicit approval
 
 ### Alerts
-- **Channel:** Discord DM (user)
+- **Channel:** Discord → SlurpNet alerts channel (`channel:1466893115460812979`)
 
 ---
 

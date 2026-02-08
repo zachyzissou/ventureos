@@ -28,7 +28,7 @@
 ## Alert Tests
 - Simulate auth error by writing a test string to gateway.err.log (optional)
 - Simulate stale lock: create `~/.openclaw/gateway.lock` with old mtime and stop gateway; expect P1 stale_gateway_lock
-- Verify Discord DM alert
+- Verify Discord alert in SlurpNet alerts channel
 
 ## Rollback Test
 - Remove cron jobs

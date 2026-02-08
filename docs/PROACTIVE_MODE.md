@@ -10,6 +10,6 @@ Quiet: 23:00–08:00 CST (alerts only for P0)
 - Log analysis and reporting
 
 ## Escalation
-- P0 → Discord DM immediately
-- P1 → Report within 1 hour
-- P2 → Log only
+- P0 → Discord SlurpNet alerts channel immediately
+- P1 → SlurpNet alerts channel within 1 hour
+- P2 → Log only (no alert)

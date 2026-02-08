@@ -167,13 +167,38 @@
 
 ---
 
+## H) Proactive Engine (Phase 2)
+
+### H1 — SLA Tiers + Scheduler Rules
+**Deliverable:** `docs/PROACTIVE_ENGINE.md`
+**Acceptance:**
+- SLA tiers defined (P0–P3 or equivalent)
+- Quiet-hours gating rules defined
+- Concurrency caps documented
+- Backoff/suppression rules documented
+
+### H2 — Queue Enforcement (v1)
+**Deliverable:** update `runtime/task-queue.json` schema usage + docs
+**Acceptance:**
+- Non-P0 work is queued during quiet hours
+- Repeated failures are suppressed (cooldown windows)
+- Queue entries record attempts + nextRunAt
+
+### H3 — Job Tagging + Routing
+**Deliverable:** cron spec updates + conventions
+**Acceptance:**
+- Each proactive job declares a tier (P0/P1/P2/P3)
+- Alert routing documented (SlurpNet alerts vs approvals channel)
+
+---
+
 ## Decisions Locked (Defaults)
 - Proactive window: **08:00–23:00 CST** (quiet 23:00–08:00)
 - Budget thresholds: **50% / 80% / 90%**; at 90% default to cheap model
 - Usage caps: **10,000 points/month** (Anthropic), **50 msgs/3h** (Codex), **100 queries/day** (Gemini)
 - Backup destination: `~/backups/clawd/` (30‑day retention, weekly verify)
 - Update window: Sunday **03:00–04:00 CST** (reminder only; approval required)
-- Alert channel: **Discord DM**
+- Alert channel: **Discord → SlurpNet alerts channel (`channel:1466893115460812979`)**
 
 ## Remaining Decisions
 - None (backup coverage resolved; permissions fixed)

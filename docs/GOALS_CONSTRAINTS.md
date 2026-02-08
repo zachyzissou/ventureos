@@ -18,4 +18,4 @@
 
 ## Proactive Boundaries
 - Allowed: research, internal organization, drafts, health checks
-- Escalation: Discord DM
+- Escalation: Discord → SlurpNet alerts channel (`channel:1466893115460812979`)

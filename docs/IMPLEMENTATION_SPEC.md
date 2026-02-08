@@ -102,7 +102,7 @@
 - Timeouts / stuck jobs
 - Cron job failures
 
-**Alert channel:** Discord DM
+**Alert channel:** Discord → SlurpNet alerts channel (`channel:1466893115460812979`)
 
 **Severity taxonomy:**
 - **P0:** System down / auth broken / data loss risk → alert immediately
@@ -173,7 +173,7 @@
 - Usage caps: **10,000 points/month** (Anthropic), **50 msgs/3h** (Codex), **100 queries/day** (Gemini)
 - Backup destination: `~/backups/clawd/` (30‑day retention, weekly verify)
 - Update window: Sunday **03:00–04:00 CST** (reminder only; approval required)
-- Alert channel: **Discord DM**
+- Alert channel: **Discord → SlurpNet alerts channel (`channel:1466893115460812979`)**
 
 ---
 

@@ -4,7 +4,7 @@ This file captures locked defaults and scoped exceptions for the upgrade plan.
 
 ## 2026‑02‑07 — Defaults Locked
 - **Proactive window:** 08:00–23:00 CST; quiet hours 23:00–08:00 (P0 alerts only).
-- **Alerts:** Discord DM.
+- **Alerts:** Discord → SlurpNet alerts channel (`channel:1466893115460812979`).
 - **Budgeting:** subscription usage quotas (points/messages/queries), not $/token.
   - Thresholds: 50% / 80% / 90%
   - At 90%: default to cheap model unless explicitly required.

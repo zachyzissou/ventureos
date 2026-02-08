@@ -149,7 +149,7 @@ Result: **OK** after each enable (RPC stayed responsive).
 ---
 
 ## Reliability Hardening — Cron Payloads (2026-02-07 16:18 CST)
-- Wrapped all `gh` and `bird-auth` commands in cron payloads with `retry.sh` + `with-timeout.sh`.
+- Wrapped all `gh` and `bird-auth` commands in cron payloads with `guarded-run.sh` (retry + timeout standard).
 - Changes applied in `~/.openclaw/cron/jobs.json` (backup created).
 
 ---

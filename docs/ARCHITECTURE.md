@@ -8,7 +8,7 @@ This upgrade adds **policy + ops infrastructure** around OpenClaw. It does not r
 2. **Orchestration Layer** (OpenClaw cron): schedules scripts and reminders.
 3. **Ops Scripts**: backup, verify, monitor, log export, quota check.
 4. **Observability**: JSONL execution logs + backup logs.
-5. **Alerting**: Discord DM for P0/P1.
+5. **Alerting**: Discord → SlurpNet alerts channel for P0/P1.
 6. **Task Queue**: conceptual tiers (urgent/normal/low) for scheduled jobs.
 7. **Memory System**: three‑layer memory (daily logs → entity facts → synthesized memory).
 
