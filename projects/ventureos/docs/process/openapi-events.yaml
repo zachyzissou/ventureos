@@ -1,0 +1,819 @@
+openapi: 3.0.3
+info:
+  title: VentureOS Events API
+  version: 0.1.0
+  description: |
+    Domain Events + Event Store API (M1).
+
+    Notes:
+    - Delivery is **at-least-once**; consumers MUST be idempotent.
+    - Replay and DLQ operations require elevated roles.
+servers:
+  - url: /api/v1
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Events
+  - name: Consumers
+  - name: Replays
+  - name: Webhooks
+  - name: DeadLetters
+
+paths:
+  /events:
+    get:
+      summary: List events from the event store
+      tags: [Events]
+      parameters:
+        - $ref: '#/components/parameters/AfterGlobalSeq'
+        - $ref: '#/components/parameters/SinceTime'
+        - $ref: '#/components/parameters/Type'
+        - $ref: '#/components/parameters/AggregateType'
+        - $ref: '#/components/parameters/AggregateId'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    post:
+      summary: Append an event to the event store (internal/admin)
+      description: |
+        Normally events are written transactionally as part of domain commands.
+        This endpoint exists for internal services and administrative tooling.
+      tags: [Events]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventAppendRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '409':
+          description: Duplicate (idempotency/dedupe)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+
+  /events/{event_id}:
+    get:
+      summary: Get an event by ID
+      tags: [Events]
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Not Found
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /event-consumers:
+    get:
+      summary: List registered event consumers and their checkpoint status
+      tags: [Consumers]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consumers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConsumerStatus'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /event-consumers/{consumer_id}/checkpoints:
+    get:
+      summary: Get checkpoints for a consumer (by partition)
+      tags: [Consumers]
+      parameters:
+        - $ref: '#/components/parameters/ConsumerId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkpoints:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConsumerCheckpoint'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+
+  /event-replays:
+    post:
+      summary: Create a replay job
+      tags: [Replays]
+      description: Requires role event:admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplayRequest'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplayJob'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /event-replays/{replay_id}:
+    get:
+      summary: Get replay job status
+      tags: [Replays]
+      parameters:
+        - $ref: '#/components/parameters/ReplayId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplayJob'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+
+  /webhook-subscriptions:
+    get:
+      summary: List webhook subscriptions
+      tags: [Webhooks]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscriptions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookSubscription'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    post:
+      summary: Create a webhook subscription
+      tags: [Webhooks]
+      description: Requires role webhook:admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookSubscriptionCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /webhook-subscriptions/{subscription_id}:
+    get:
+      summary: Get webhook subscription
+      tags: [Webhooks]
+      parameters:
+        - $ref: '#/components/parameters/SubscriptionId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+    patch:
+      summary: Update webhook subscription (activate/filter)
+      tags: [Webhooks]
+      description: Requires role webhook:admin.
+      parameters:
+        - $ref: '#/components/parameters/SubscriptionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookSubscriptionPatchRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete webhook subscription
+      tags: [Webhooks]
+      description: Requires role webhook:admin.
+      parameters:
+        - $ref: '#/components/parameters/SubscriptionId'
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /dead-letters:
+    get:
+      summary: List DLQ records
+      tags: [DeadLetters]
+      description: Requires role event:admin.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeadLetterRecord'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /dead-letters/{dlq_id}:
+    get:
+      summary: Get a DLQ record
+      tags: [DeadLetters]
+      description: Requires role event:admin.
+      parameters:
+        - $ref: '#/components/parameters/DlqId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeadLetterRecord'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+
+  /dead-letters/{dlq_id}:redrive:
+    post:
+      summary: Redrive a DLQ record
+      tags: [DeadLetters]
+      description: Requires role event:admin.
+      parameters:
+        - $ref: '#/components/parameters/DlqId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+              required: [reason]
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [accepted]
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+
+    EventId:
+      name: event_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ConsumerId:
+      name: consumer_id
+      in: path
+      required: true
+      schema:
+        type: string
+
+    SubscriptionId:
+      name: subscription_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    DlqId:
+      name: dlq_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ReplayId:
+      name: replay_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    AfterGlobalSeq:
+      name: after_global_seq
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+      description: Return events with global_seq > after_global_seq.
+
+    SinceTime:
+      name: since_time
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+
+    Type:
+      name: type
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Filter by exact event type.
+
+    AggregateType:
+      name: aggregate_type
+      in: query
+      required: false
+      schema:
+        type: string
+
+    AggregateId:
+      name: aggregate_id
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+
+    CorrelationId:
+      name: correlation_id
+      in: query
+      required: false
+      schema:
+        type: string
+
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 100
+
+  schemas:
+    JsonObject:
+      type: object
+      additionalProperties: true
+
+    Actor:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [user, service]
+        id:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+
+    AggregateRef:
+      type: object
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          format: int64
+
+    Event:
+      type: object
+      properties:
+        global_seq:
+          type: integer
+          format: int64
+        event_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        schema_version:
+          type: integer
+          minimum: 1
+        occurred_at:
+          type: string
+          format: date-time
+        recorded_at:
+          type: string
+          format: date-time
+        producer:
+          type: string
+        aggregate:
+          $ref: '#/components/schemas/AggregateRef'
+        actor:
+          $ref: '#/components/schemas/Actor'
+        correlation_id:
+          type: string
+        causation_id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+        idempotency_key:
+          type: string
+        partition_key:
+          type: string
+        partition:
+          type: integer
+          minimum: 0
+        data:
+          $ref: '#/components/schemas/JsonObject'
+        meta:
+          $ref: '#/components/schemas/JsonObject'
+      required:
+        - event_id
+        - type
+        - schema_version
+        - occurred_at
+        - recorded_at
+        - producer
+        - aggregate
+        - partition_key
+        - partition
+        - data
+
+    EventAppendRequest:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Optional. If omitted the server generates one.
+        type:
+          type: string
+        schema_version:
+          type: integer
+          minimum: 1
+          default: 1
+        occurred_at:
+          type: string
+          format: date-time
+          description: Optional. Defaults to now().
+        producer:
+          type: string
+        aggregate:
+          $ref: '#/components/schemas/AggregateRef'
+        actor:
+          $ref: '#/components/schemas/Actor'
+        correlation_id:
+          type: string
+        causation_id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+        partition_key:
+          type: string
+        data:
+          $ref: '#/components/schemas/JsonObject'
+        meta:
+          $ref: '#/components/schemas/JsonObject'
+      required:
+        - type
+        - producer
+        - aggregate
+        - data
+
+    EventListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        next_after_global_seq:
+          type: integer
+          format: int64
+          description: Cursor to resume listing.
+
+    ConsumerCheckpoint:
+      type: object
+      properties:
+        consumer_id:
+          type: string
+        partition:
+          type: integer
+        last_global_seq:
+          type: integer
+          format: int64
+        updated_at:
+          type: string
+          format: date-time
+
+    ConsumerStatus:
+      type: object
+      properties:
+        consumer_id:
+          type: string
+        partitions:
+          type: integer
+        min_checkpoint:
+          type: integer
+          format: int64
+        max_checkpoint:
+          type: integer
+          format: int64
+        lag_estimate:
+          type: integer
+          format: int64
+        updated_at:
+          type: string
+          format: date-time
+
+    ReplayRequest:
+      type: object
+      properties:
+        target:
+          type: string
+          description: Logical consumer target (e.g., consumer_id or webhook subscription id).
+        mode:
+          type: string
+          enum: [projection, integration]
+        after_global_seq:
+          type: integer
+          format: int64
+        until_global_seq:
+          type: integer
+          format: int64
+        aggregate_id:
+          type: string
+          format: uuid
+        type_allowlist:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+      required: [target, mode, reason]
+
+    ReplayJob:
+      type: object
+      properties:
+        replay_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [accepted, running, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        error:
+          type: string
+
+    WebhookSubscription:
+      type: object
+      properties:
+        subscription_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        url:
+          type: string
+        event_types:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    WebhookSubscriptionCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        event_types:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+          default: true
+      required: [name, url]
+
+    WebhookSubscriptionPatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        event_types:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+
+    DeadLetterRecord:
+      type: object
+      properties:
+        dlq_id:
+          type: string
+          format: uuid
+        consumer_id:
+          type: string
+        subscription_id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        global_seq:
+          type: integer
+          format: int64
+        failed_at:
+          type: string
+          format: date-time
+        attempts:
+          type: integer
+        error:
+          type: string
+        event:
+          $ref: '#/components/schemas/Event'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              $ref: '#/components/schemas/JsonObject'
+            request_id:
+              type: string
