@@ -59,3 +59,7 @@
 - `retry.sh` supports optional `RETRY_EXCLUDE_CODES` for non-retry exits.
 - Reliability playbook expanded with classification cues + degradation matrix.
 - Cron specs updated with guard pattern.
+- Ops runbook now includes taxonomy mapping + P2 handling.
+
+## 🟡 Phase 2 Drafting (started)
+- Proactive Engine draft added (SLA tiers + scheduler rules).

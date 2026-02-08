@@ -37,6 +37,23 @@
 **Actions:**
 - Tighten monitor regex if false positives occur.
 - Rotate error log if old noise is causing repeated alerts.
+- If error repeats ≥2× in 1 hour → escalate to P1 with summary.
+
+---
+
+## P2 (Transient)
+**Goal:** log and move on unless repeated.
+
+**Actions:**
+- Log once (no alert)
+- Escalate to P1 if repeated ≥2× in 1 hour
+
+---
+
+## Error Taxonomy Mapping (Quick Reference)
+- **P0:** gateway down, auth broken (401/403), config invalid, data loss risk
+- **P1:** repeated failures/timeouts, recurring 429s, stale lock
+- **P2:** single transient network/5xx
 
 ---
 

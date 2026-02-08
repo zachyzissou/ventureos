@@ -11,6 +11,7 @@
 - **GOALS_CONSTRAINTS.md** – goals, constraints, comms preferences
 - **GUARDRAILS.md** – explicit prohibitions + allowed actions
 - **PROACTIVE_MODE.md** – proactive window + escalation rules
+- **PROACTIVE_ENGINE.md** – SLA tiers + scheduler rules (Phase 2)
 - **MODEL_STRATEGY.md** – cheap vs strong model guidance
 - **BUDGET_POLICY.md** – thresholds + caps
 - **OPS_RUNBOOK.md** – incident response tiers
