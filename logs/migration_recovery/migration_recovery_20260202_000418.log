@@ -1,8 +1,0 @@
-2026-02-02 00:04:18,467 - ERROR: Git clone failed for bloom: Cloning into '/Users/zachgonser/clawd/projects/bloom'...
-git@github.com: Permission denied (publickey).
-fatal: Could not read from remote repository.
-
-Please make sure you have the correct access rights
-and the repository exists.
-2026-02-02 00:04:18,496 - ERROR: Git clone failed for stanton_times_agent: fatal: destination path '/Users/zachgonser/clawd/projects/stanton-times-agent' already exists and is not an empty directory.
-2026-02-02 00:04:18,496 - INFO: Recovery report generated: /Users/zachgonser/clawd/logs/migration_recovery/recovery_report_20260202_000418.json

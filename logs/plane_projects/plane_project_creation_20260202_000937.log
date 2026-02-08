@@ -1,4 +1,0 @@
-2026-02-02 00:09:37,309 - ERROR: Project creation failed: External Inspiration - Ryan Carson Tweet. Status: 401, Response: {"detail":"Authentication credentials were not provided."}
-2026-02-02 00:09:37,320 - ERROR: Project creation failed: Tech Exploration - PB Teja Tweet. Status: 401, Response: {"detail":"Authentication credentials were not provided."}
-2026-02-02 00:09:37,330 - ERROR: Project creation failed: Innovation Tracking - Ganim Corey Tweet. Status: 401, Response: {"detail":"Authentication credentials were not provided."}
-2026-02-02 00:09:37,330 - INFO: Project creation report saved: /Users/zachgonser/clawd/logs/plane_projects/project_creation_report_20260202_000937.json
