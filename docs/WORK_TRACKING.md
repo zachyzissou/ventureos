@@ -1,15 +1,14 @@
-# Work Tracking (Huly = Source of Truth)
+# Work Tracking (GitLab = Source of Truth)
 
-This repository is the **canonical implementation repo** for upgrading OpenClaw.
+This repository is the **canonical tracker + implementation repo** for upgrading OpenClaw.
 
 ## Source of Truth
-- **Huly** is the source of truth for:
+- **GitLab Issues** in this repo are the source of truth for:
   - scope, acceptance criteria, and priority
   - progress state (Todo / Doing / Blocked / Done)
   - decisions + tradeoffs
   - verification evidence
 - **GitLab Merge Requests** are the source of truth for the actual code/doc change.
-- **GitLab Issues** are optional/secondary (only if we want a code-adjacent mirror), but they are not canonical.
 
 ## Rules (Non‑Negotiable)
 1. **No non-trivial work without an issue.**
@@ -24,7 +23,7 @@ This repository is the **canonical implementation repo** for upgrading OpenClaw.
 ## Local Agent Memory (secondary)
 OpenClaw maintains local work logs under `~/clawd/memory/work-items/` for continuity across sessions.
 
-**Policy:** Local work items are helpful, but they must link back to the **Huly item URL/ID** (Huly is canonical).
+**Policy:** Local work items are helpful, but they must link back to the GitLab Issue URL (GitLab is canonical).
 
 ## Suggested Labels
 - `type::bug`, `type::feature`, `type::docs`, `type::ops`
@@ -32,5 +31,8 @@ OpenClaw maintains local work logs under `~/clawd/memory/work-items/` for contin
 - `area::reliability`, `area::proactive`, `area::mission-control`, `area::memory`, `area::infra`
 
 ## Templates
-- Merge requests: `.gitlab/merge_request_templates/` (includes a required Huly link)
-- GitLab issues: `.gitlab/issue_templates/` (optional; includes a required Huly link if used)
+- Issues: `.gitlab/issue_templates/`
+- Merge requests: `.gitlab/merge_request_templates/`
+
+## Note: Huly
+We attempted a Huly-based tracker workflow, but Huly Desktop on this machine is not exposing a local server for automated import. If/when a self-hosted Huly backend is available, we can revisit.
