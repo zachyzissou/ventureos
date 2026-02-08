@@ -64,9 +64,35 @@ Introduce a **rule‑based scheduler** with **SLA tiers** to govern proactive ta
 
 ---
 
+## Implementation (v1)
+
+### Files
+- **Engine config (gated):** `~/clawd/runtime/proactive-engine.json`
+  - `enabled: false` by default.
+  - quiet hours: `23:00–08:00` (America/Chicago)
+- **Queue storage:** `~/clawd/runtime/task-queue.json` (durable JSON)
+- **Queue/worker tool:** `~/clawd/scripts/task-queue.py`
+  - Source of truth: `openclaw-upgrade/scripts/task-queue.py`
+
+### Worker behavior
+When enabled, the worker:
+- enforces quiet-hours gating (**P0 allowed**, P1–P3 deferred)
+- applies backoff on failure (simple exponential, capped at 1h)
+- writes task run records to `~/clawd/runtime/logs/task_runs/YYYY-MM-DD.jsonl`
+
+### Enablement
+This system is safe to deploy in code immediately, but **must remain disabled** until explicitly approved.
+
+To enable:
+1) Set `enabled: true` in `~/clawd/runtime/proactive-engine.json`
+2) Add a cron job that runs:
+   - `~/clawd/scripts/task-queue.py work`
+3) Update target proactive jobs to enqueue work instead of running immediately when blocked.
+
 ## Phase 2 Acceptance (draft)
 
 - SLA tiers defined and referenced by cron specs.
 - Quiet‑hours enforcement with queuing.
 - Backoff rules applied consistently.
 - Queue entries persisted + retried on next window.
+- Worker is **disabled-by-default** and requires explicit approval to enable.
