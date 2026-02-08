@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "generated_at": "2026-02-07",
+  "units": [
+    {
+      "id": "stantontimes-network",
+      "name": "StantonTimes Network",
+      "category": "media",
+      "owner_role": "Helmsman",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": true
+      },
+      "canonical_notes": [
+        "obsidian://open?vault=VaultZap&file=VentureOS%2FBusiness%20Units%2Fstantontimes-network%2FREADME"
+      ],
+      "automations": [
+        { "kind": "tbd", "name": "TBD" }
+      ]
+    },
+    {
+      "id": "low-noise-studios",
+      "name": "Low Noise Studios",
+      "category": "game",
+      "owner_role": "Producer",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": true
+      },
+      "canonical_notes": [
+        "obsidian://open?vault=VaultZap&file=VentureOS%2FBusiness%20Units%2Flow-noise-studios%2FREADME"
+      ],
+      "automations": [
+        { "kind": "tbd", "name": "TBD" }
+      ]
+    },
+    {
+      "id": "app-studio",
+      "name": "App Studio",
+      "category": "app",
+      "owner_role": "Producer",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": true
+      },
+      "canonical_notes": [
+        "obsidian://open?vault=VaultZap&file=VentureOS%2FBusiness%20Units%2Fapp-studio%2FREADME"
+      ],
+      "automations": [
+        { "kind": "tbd", "name": "TBD" }
+      ]
+    },
+    {
+      "id": "infra-ai-lab",
+      "name": "Infra / AI Lab",
+      "category": "infra",
+      "owner_role": "Helmsman",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": true
+      },
+      "canonical_notes": [
+        "obsidian://open?vault=VaultZap&file=VentureOS%2FBusiness%20Units%2Finfra-ai-lab%2FREADME"
+      ],
+      "automations": [
+        { "kind": "tbd", "name": "TBD" }
+      ]
+    }
+  ]
+}

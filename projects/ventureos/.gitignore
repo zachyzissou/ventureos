@@ -1,0 +1,19 @@
+# VentureOS repo-local ignores
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Secrets / local env files
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local/editor cruft
+*.swp
+*.swo
+*~
+
+# Logs / dumps
+*.log
+*.tmp

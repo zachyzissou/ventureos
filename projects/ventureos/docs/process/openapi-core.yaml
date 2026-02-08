@@ -1,0 +1,1392 @@
+openapi: 3.0.3
+info:
+  title: VentureOS Core API
+  version: 0.1.0
+  description: Minimal OpenAPI skeleton aligned to Spec Pack + Data Model (M0/M1).
+servers:
+  - url: /api/v1
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Ideas
+  - name: ValidationPlans
+  - name: ValidationRuns
+  - name: Decisions
+  - name: Ventures
+  - name: BuildPlans
+  - name: ExecutionRuns
+  - name: MilestoneReviews
+  - name: Portfolios
+  - name: PortfolioUpdates
+  - name: StakeholderReports
+  - name: Artifacts
+  - name: PolicyGates
+  - name: EventOutbox
+
+paths:
+  /ideas:
+    get:
+      summary: List ideas
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create idea
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Idea'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Idea'
+  /ideas/{id}:
+    get:
+      summary: Get idea
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Idea'
+    patch:
+      summary: Update idea
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Idea'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Idea'
+    delete:
+      summary: Archive idea
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /validation-plans:
+    get:
+      summary: List validation plans
+      tags: [ValidationPlans]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create validation plan
+      tags: [ValidationPlans]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationPlan'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationPlan'
+  /validation-plans/{id}:
+    get:
+      summary: Get validation plan
+      tags: [ValidationPlans]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationPlan'
+    patch:
+      summary: Update validation plan
+      tags: [ValidationPlans]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationPlan'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationPlan'
+    delete:
+      summary: Archive validation plan
+      tags: [ValidationPlans]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /validation-runs:
+    get:
+      summary: List validation runs
+      tags: [ValidationRuns]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create validation run
+      tags: [ValidationRuns]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationRun'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationRun'
+  /validation-runs/{id}:
+    get:
+      summary: Get validation run
+      tags: [ValidationRuns]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationRun'
+    patch:
+      summary: Update validation run
+      tags: [ValidationRuns]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationRun'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationRun'
+    delete:
+      summary: Archive validation run
+      tags: [ValidationRuns]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /decisions:
+    get:
+      summary: List decisions
+      tags: [Decisions]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create decision
+      tags: [Decisions]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Decision'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+  /decisions/{id}:
+    get:
+      summary: Get decision
+      tags: [Decisions]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+    patch:
+      summary: Update decision
+      tags: [Decisions]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Decision'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+    delete:
+      summary: Archive decision
+      tags: [Decisions]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /ventures:
+    get:
+      summary: List ventures
+      tags: [Ventures]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create venture
+      tags: [Ventures]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Venture'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Venture'
+  /ventures/{id}:
+    get:
+      summary: Get venture
+      tags: [Ventures]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Venture'
+    patch:
+      summary: Update venture
+      tags: [Ventures]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Venture'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Venture'
+    delete:
+      summary: Archive venture
+      tags: [Ventures]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /build-plans:
+    get:
+      summary: List build plans
+      tags: [BuildPlans]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create build plan
+      tags: [BuildPlans]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildPlan'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildPlan'
+  /build-plans/{id}:
+    get:
+      summary: Get build plan
+      tags: [BuildPlans]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildPlan'
+    patch:
+      summary: Update build plan
+      tags: [BuildPlans]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildPlan'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildPlan'
+    delete:
+      summary: Archive build plan
+      tags: [BuildPlans]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /execution-runs:
+    get:
+      summary: List execution runs
+      tags: [ExecutionRuns]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create execution run
+      tags: [ExecutionRuns]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionRun'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionRun'
+  /execution-runs/{id}:
+    get:
+      summary: Get execution run
+      tags: [ExecutionRuns]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionRun'
+    patch:
+      summary: Update execution run
+      tags: [ExecutionRuns]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionRun'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionRun'
+    delete:
+      summary: Archive execution run
+      tags: [ExecutionRuns]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /milestone-reviews:
+    get:
+      summary: List milestone reviews
+      tags: [MilestoneReviews]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create milestone review
+      tags: [MilestoneReviews]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MilestoneReview'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneReview'
+  /milestone-reviews/{id}:
+    get:
+      summary: Get milestone review
+      tags: [MilestoneReviews]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneReview'
+    patch:
+      summary: Update milestone review
+      tags: [MilestoneReviews]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MilestoneReview'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneReview'
+    delete:
+      summary: Archive milestone review
+      tags: [MilestoneReviews]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /portfolios:
+    get:
+      summary: List portfolios
+      tags: [Portfolios]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create portfolio
+      tags: [Portfolios]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Portfolio'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+  /portfolios/{id}:
+    get:
+      summary: Get portfolio
+      tags: [Portfolios]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+    patch:
+      summary: Update portfolio
+      tags: [Portfolios]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Portfolio'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+    delete:
+      summary: Archive portfolio
+      tags: [Portfolios]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /portfolio-updates:
+    get:
+      summary: List portfolio updates
+      tags: [PortfolioUpdates]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create portfolio update
+      tags: [PortfolioUpdates]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortfolioUpdate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioUpdate'
+  /portfolio-updates/{id}:
+    get:
+      summary: Get portfolio update
+      tags: [PortfolioUpdates]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioUpdate'
+    patch:
+      summary: Update portfolio update
+      tags: [PortfolioUpdates]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortfolioUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioUpdate'
+    delete:
+      summary: Archive portfolio update
+      tags: [PortfolioUpdates]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /stakeholder-reports:
+    get:
+      summary: List stakeholder reports
+      tags: [StakeholderReports]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create stakeholder report
+      tags: [StakeholderReports]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StakeholderReport'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StakeholderReport'
+  /stakeholder-reports/{id}:
+    get:
+      summary: Get stakeholder report
+      tags: [StakeholderReports]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StakeholderReport'
+    patch:
+      summary: Update stakeholder report
+      tags: [StakeholderReports]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StakeholderReport'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StakeholderReport'
+    delete:
+      summary: Archive stakeholder report
+      tags: [StakeholderReports]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /artifacts:
+    get:
+      summary: List artifacts
+      tags: [Artifacts]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create artifact
+      tags: [Artifacts]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Artifact'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+  /artifacts/{id}:
+    get:
+      summary: Get artifact
+      tags: [Artifacts]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+    patch:
+      summary: Update artifact metadata
+      tags: [Artifacts]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Artifact'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+    delete:
+      summary: Archive artifact
+      tags: [Artifacts]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /policy-gates:
+    get:
+      summary: List policy gates
+      tags: [PolicyGates]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+    post:
+      summary: Create policy gate
+      tags: [PolicyGates]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyGate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyGate'
+  /policy-gates/{id}:
+    get:
+      summary: Get policy gate
+      tags: [PolicyGates]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyGate'
+    patch:
+      summary: Update policy gate
+      tags: [PolicyGates]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyGate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyGate'
+    delete:
+      summary: Archive policy gate
+      tags: [PolicyGates]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Archived
+
+  /event-outbox:
+    get:
+      summary: List event outbox records
+      tags: [EventOutbox]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+  /event-outbox/{id}:
+    get:
+      summary: Get event outbox record
+      tags: [EventOutbox]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventOutbox'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    Sort:
+      name: sort
+      in: query
+      schema:
+        type: string
+    Order:
+      name: order
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+
+  schemas:
+    PagedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        page:
+          $ref: '#/components/schemas/PageMeta'
+    PageMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    JsonObject:
+      type: object
+      additionalProperties: true
+
+    Idea:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        owner_id:
+          type: string
+        status:
+          type: string
+        risk_level:
+          type: string
+        priority:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ValidationPlan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        idea_id:
+          type: string
+          format: uuid
+        hypothesis:
+          type: string
+        success_metrics:
+          $ref: '#/components/schemas/JsonObject'
+        timeline:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ValidationRun:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        plan_id:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+        metrics_json:
+          $ref: '#/components/schemas/JsonObject'
+        status:
+          type: string
+        completed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    Decision:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        idea_id:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+        rationale:
+          type: string
+        approved_by:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Venture:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        idea_id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+        status:
+          type: string
+        budget:
+          type: number
+        priority:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BuildPlan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        venture_id:
+          type: string
+          format: uuid
+        milestones_json:
+          type: array
+          items:
+            type: object
+        status:
+          type: string
+        approved_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ExecutionRun:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        venture_id:
+          type: string
+          format: uuid
+        sprint_no:
+          type: integer
+        status:
+          type: string
+        metrics_json:
+          $ref: '#/components/schemas/JsonObject'
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    MilestoneReview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        venture_id:
+          type: string
+          format: uuid
+        milestone_id:
+          type: string
+        outcome:
+          type: string
+        notes:
+          type: string
+        approved_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Portfolio:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        owner_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    PortfolioUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        portfolio_id:
+          type: string
+          format: uuid
+        period:
+          type: string
+        status:
+          type: string
+        metrics_json:
+          $ref: '#/components/schemas/JsonObject'
+        created_at:
+          type: string
+          format: date-time
+
+    StakeholderReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        update_id:
+          type: string
+          format: uuid
+        format:
+          type: string
+        status:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    Artifact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        parent_type:
+          type: string
+        parent_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        minio_uri:
+          type: string
+        metadata_json:
+          $ref: '#/components/schemas/JsonObject'
+        created_at:
+          type: string
+          format: date-time
+
+    PolicyGate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        gate_type:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+          format: uuid
+        required:
+          type: boolean
+        status:
+          type: string
+        approver_role:
+          type: string
+        approved_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    EventOutbox:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        payload_json:
+          $ref: '#/components/schemas/JsonObject'
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              $ref: '#/components/schemas/JsonObject'
+            request_id:
+              type: string

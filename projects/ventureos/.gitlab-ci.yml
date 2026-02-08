@@ -1,0 +1,21 @@
+# VentureOS M0 - minimal CI scaffold
+# Replace placeholder commands with real lint/test steps when code lands.
+
+stages:
+  - lint
+  - test
+
+default:
+  image: alpine:3.19
+  before_script:
+    - echo "VentureOS CI scaffold (M0)"
+
+lint:
+  stage: lint
+  script:
+    - echo "Lint placeholder: no source code yet."
+
+unit_test:
+  stage: test
+  script:
+    - echo "Test placeholder: no source code yet."
