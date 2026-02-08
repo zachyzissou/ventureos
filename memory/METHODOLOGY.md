@@ -198,6 +198,12 @@ All significant work gets documented:
 | On completion | Same file | Final summary, verification results |
 | Session end | `memory/YYYY-MM-DD.md` | Day summary if multiple tasks |
 
+### Work Items (ticketing for anything non-trivial)
+If it changes state, touches infra, has meaningful risk, or takes **>10 minutes**, create a Work Item:
+- Create: `memory/work-items/WI-YYYYMMDD-HHMM-<slug>.md` (start from `memory/work-items/_TEMPLATE.md`)
+- Index it: add a row to `memory/work-items/INDEX.md`
+- Include *evidence*: file paths changed, commands run, logs/artifacts, and verification results
+
 ---
 
 *This methodology is non-negotiable. Every agent, every task, every time.*
