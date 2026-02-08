@@ -24,7 +24,6 @@ memory/heartbeat-state.json: { "lastChecks": { "system": timestamp } }
 - Check configured cron jobs (openclaw cron list) — any failures in last 4 hours?
 - Check disk space: `df -h $HOME`
 - Check Windows node connectivity: `openclaw nodes status`
-- Verify LM Studio daemon: `lms daemon status`
 - If issues found → auto-fix or alert
 
 ### Memory Maintenance (Every 4 hours)

@@ -1,13 +1,13 @@
 # HEARTBEAT.md
 
-## Policy Docs (OpenClaw Upgrade guidance)
-Source of truth (GitLab project):
-- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/GOALS_CONSTRAINTS.md
-- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/GUARDRAILS.md
-- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/PROACTIVE_MODE.md
-- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/MODEL_STRATEGY.md
-- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/BUDGET_POLICY.md
-- /Users/zachgonser/clawd/projects/openclaw-upgrade/docs/OPS_RUNBOOK.md
+## Policy Docs
+Canonical copies (workspace root):
+- /Users/zachgonser/clawd/GOALS_CONSTRAINTS.md
+- /Users/zachgonser/clawd/GUARDRAILS.md
+- /Users/zachgonser/clawd/PROACTIVE_MODE.md
+- /Users/zachgonser/clawd/MODEL_STRATEGY.md
+- /Users/zachgonser/clawd/BUDGET_POLICY.md
+- /Users/zachgonser/clawd/OPS_RUNBOOK.md
 
 ## Context Management (Every heartbeat)
 Before anything else:
@@ -24,7 +24,6 @@ memory/heartbeat-state.json: { "lastChecks": { "system": timestamp } }
 - Check all 14 cron jobs - any failures in last 4 hours?
 - Check disk space: `df -h /Users/zachgonser`
 - Check Windows node connectivity: `openclaw nodes status`
-- Verify LM Studio daemon: `lms daemon status`
 - If issues found → auto-fix or alert
 
 ### Memory Maintenance (Every 4 hours)
