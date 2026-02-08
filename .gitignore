@@ -42,5 +42,11 @@ COMMIT_CHECKLIST.md
 # Backup variants
 *.bak-*
 
-# StantonTimes agent scratch/state
-projects/stanton-times-agent/config/state.json
+# StantonTimes agent scratch/state (legacy project)
+projects/stanton-times-agent/
+
+# OpenClaw upgrade scratch project (superseded)
+projects/openclaw-upgrade/
+
+# Root python scratch (avoid confusing with project-specific requirements.txt)
+/requirements.txt
