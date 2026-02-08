@@ -146,24 +146,34 @@ chmod +x ~/clawd/scripts/*.sh
 
 ## 5) Task Queue (Recurring Jobs by Tier)
 
-**Urgent:**
-- Monitoring (crash/auth/timeout)
-- Backup verify
+We use the Proactive Engine SLA tiers:
+- **P0 (Critical):** execute immediately (allowed in quiet hours)
+- **P1 (Urgent):** target ≤ 1 hour (queued in quiet hours)
+- **P2 (Normal):** target ≤ 24 hours (queued in quiet hours)
+- **P3 (Low):** best effort (queued in quiet hours)
 
-**Normal:**
+**P0:**
+- Monitoring (crash/auth/timeout; gateway down; auth broken; data loss risk)
+
+**P1:**
+- Backup verify (alerts if failure)
+
+**P2:**
 - Morning Briefing
 - Bloom CI Watch
 - Fact Extraction
 - Budget checks
+- Export Cron Logs
 
-**Low:**
+**P3:**
 - Unity Tool Scout
 - Weekly Digest
 - Weekly Memory Synthesis
+- Archive Task Run Logs
 
-**Queue Store:** `runtime/task-queue.json` (metadata only)
+**Queue Store:** `runtime/task-queue.json` (durable metadata; worker executes queued commands)
 
-**Schema template (repo):** `docs/templates/task-queue.json`
+**Schema template (repo):** `docs/templates/task-queue.json` (includes mission metadata fields)
 
 ---
 

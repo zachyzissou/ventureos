@@ -39,7 +39,7 @@
 - **Acceptance:** Reminder job; policy doc.
 
 **FR‑09 Task Queue (Ops)**
-- Define urgent/normal/low tiers for recurring jobs.
+- Define SLA tiers (P0–P3) for recurring jobs and proactive missions.
 - **Acceptance:** Queue schema + classification defined.
 
 **FR‑10 Execution Logs**

@@ -96,7 +96,7 @@
 ### D1 — Task Queue
 **Deliverable:** `~/clawd/runtime/task-queue.json`
 **Acceptance:**
-- Supports SLA tiers (urgent/normal/low)
+- Supports SLA tiers (P0–P3)
 - Supports status tracking (queued/running/done/failed)
 
 ### D2 — Execution Logs
