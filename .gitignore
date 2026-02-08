@@ -17,7 +17,27 @@ node_modules/
 *_report*.json
 workflow_automation_logs/
 metrics_logs/
+heartbeat_response.txt
+*_response.txt
 
 # Backup/scratch files
 *.bak
 *.bak.*
+
+# Project-level archives
+projects/archives/
+
+# Nested git repositories (subprojects)
+projects/jav-library/
+projects/slurpnet-security-suite/
+
+# Local secrets / overrides
+config/*.local.json
+
+# Repo hygiene scratch docs
+REPO_HYGIENE_*.md
+HYGIENE_*.md
+COMMIT_CHECKLIST.md
+
+# Backup variants
+*.bak-*
