@@ -41,3 +41,6 @@ COMMIT_CHECKLIST.md
 
 # Backup variants
 *.bak-*
+
+# StantonTimes agent scratch/state
+projects/stanton-times-agent/config/state.json
