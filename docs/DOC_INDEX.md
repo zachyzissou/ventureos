@@ -8,6 +8,7 @@
 - **FEATURE_BACKLOG.md** – backlog by workstream
 
 ## Policy Docs (repo copies; to be placed in workspace root)
+- **WORK_TRACKING.md** – GitLab issues/MRs as canonical tracker + evidence standards
 - **GOALS_CONSTRAINTS.md** – goals, constraints, comms preferences
 - **GUARDRAILS.md** – explicit prohibitions + allowed actions
 - **PROACTIVE_MODE.md** – proactive window + escalation rules
