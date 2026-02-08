@@ -28,3 +28,6 @@
 
 ### User Notes
 - User planned to restart the computer (Mac Studio) shortly after this work block.
+
+### Subscription Quotas / Budget Tracking
+- Updated `memory/subscription-quotas.json` with model weights and reset timestamps for **Claude Max**, **ChatGPT Plus**, and **Gemini Advanced** (last reset: 2026-02-08T15:07:20.602Z).
