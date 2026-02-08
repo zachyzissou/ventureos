@@ -40,17 +40,31 @@ Introduce a **rule‑based scheduler** with **SLA tiers** to govern proactive ta
 
 ## Queue Schema (draft)
 
+The worker executes **queued shell commands**. Mission metadata is carried alongside the command so runs are searchable and auditable.
+
 ```json
 {
   "id": "uuid",
   "createdAt": "ISO-8601",
   "tier": "P0|P1|P2|P3",
+  "status": "queued|running|done|failed",
   "jobId": "<cron-id>",
   "title": "short description",
-  "payload": {"kind": "agentTurn|systemEvent", "message": "..."},
+
+  "businessUnit": "unit-id",
+  "missionType": "newco|build|content|ops|ai-factory|research",
+  "role": "Echo|Atlas|Synth|Oracle|Ledger|Comms|Forge|Builder|Verifier|Sentinel|Archivist",
+  "expectedArtifacts": ["/path/or/obsidian-uri"],
+  "requiresApproval": false,
+
   "attempts": 0,
+  "maxAttempts": 3,
+  "timeoutSeconds": 300,
+  "nextRunAt": "ISO-8601",
   "lastError": "",
-  "nextRunAt": "ISO-8601"
+  "dedupeKey": "",
+
+  "command": ["bash", "-lc", "echo hello"]
 }
 ```
 
@@ -58,6 +72,7 @@ Introduce a **rule‑based scheduler** with **SLA tiers** to govern proactive ta
 
 ## Integration Points
 
+- **Mission Control (VentureOS)** → enqueues mission steps with `businessUnit`/`missionType`/`role` metadata.
 - **cron jobs** → enqueue when quiet hours or concurrency limits block execution.
 - **monitor-openclaw.sh** → emits P0/P1 signals into queue.
 - **task_runs JSONL** → provides history for suppression logic.

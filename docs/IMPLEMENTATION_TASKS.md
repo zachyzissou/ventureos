@@ -192,6 +192,51 @@
 
 ---
 
+## I) VentureOS / Multi‑Agent Mission Control (Phase 2–3)
+
+### I1 — VentureOS Core Docs
+**Deliverable:** repo docs package
+- `docs/VENTURE_OS.md`
+- `docs/MULTI_AGENT_TEAM.md`
+- `docs/BUSINESS_UNITS.md`
+- `docs/MISSION_CONTROL.md`
+**Acceptance:**
+- Clear distinction between system (VentureOS) and persona (Echo)
+- 20-role roster + default squad patterns
+- Business unit registry rules + scaling pattern for multi-account media ops
+- Mission lifecycle defined with safety/QA gates
+
+### I2 — Mission + Role Templates
+**Deliverable:** templates in `docs/templates/`
+- `mission-brief.md`
+- `role-card.md`
+- `business-unit-registry.json`
+**Acceptance:**
+- Templates are copy/paste usable
+- Artifacts include links/sources and approval requirements
+
+### I3 — Task Queue Mission Metadata
+**Deliverable:** schema and docs updates
+- `docs/templates/task-queue.json` extended with mission metadata
+- `docs/PROACTIVE_ENGINE.md` queue schema updated
+**Acceptance:**
+- Queue items can carry `businessUnit`, `missionType`, `role`, `expectedArtifacts`, `requiresApproval`
+- Existing worker continues to operate on `command` without requiring schema migration
+
+### I4 — Business Unit Registry (Workspace)
+**Deliverable:** `~/clawd/runtime/business-units.json`
+**Acceptance:**
+- Contains initial units (media, game, app, infra)
+- Each unit links to canonical Obsidian notes
+
+### I5 — Optional: Formal Agent Profiles
+**Deliverable:** additional agent profiles with explicit permission boundaries
+**Acceptance:**
+- Per-role tool/model policies documented
+- Requires explicit approval before any config changes
+
+---
+
 ## Decisions Locked (Defaults)
 - Proactive window: **08:00–23:00 CST** (quiet 23:00–08:00)
 - Budget thresholds: **50% / 80% / 90%**; at 90% default to cheap model

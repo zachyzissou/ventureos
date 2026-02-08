@@ -3,16 +3,25 @@
   "generated_at": "YYYY-MM-DD",
   "items": [
     {
-      "id": "task-001",
-      "title": "Short description",
-      "tier": "urgent|normal|low",
+      "id": "uuid",
+      "createdAt": "YYYY-MM-DDTHH:MM:SSZ",
+      "tier": "P0|P1|P2|P3",
       "status": "queued|running|done|failed",
-      "owner": "agent:main",
-      "created_at": "YYYY-MM-DDTHH:MM:SSZ",
-      "updated_at": "YYYY-MM-DDTHH:MM:SSZ",
-      "source": "cron|manual|system",
+      "title": "Short description",
+      "businessUnit": "unit-id",
+      "missionType": "newco|build|content|ops|ai-factory|research",
+      "role": "Echo|Atlas|Synth|Oracle|Ledger|Comms|Forge|Builder|Verifier|Sentinel|Archivist",
+      "jobId": "cron-id-or-empty",
+      "nextRunAt": "YYYY-MM-DDTHH:MM:SSZ",
+      "attempts": 0,
+      "maxAttempts": 3,
+      "timeoutSeconds": 300,
+      "dedupeKey": "",
+      "expectedArtifacts": ["/path/or/obsidian-uri"],
+      "requiresApproval": false,
       "links": ["/path/or/url"],
-      "notes": "Context / acceptance criteria"
+      "notes": "Context / acceptance criteria",
+      "command": ["bash", "-lc", "echo hello"]
     }
   ]
 }

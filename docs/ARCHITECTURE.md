@@ -9,8 +9,10 @@ This upgrade adds **policy + ops infrastructure** around OpenClaw. It does not r
 3. **Ops Scripts**: backup, verify, monitor, log export, quota check.
 4. **Observability**: JSONL execution logs + backup logs.
 5. **Alerting**: Discord → SlurpNet alerts channel for P0/P1.
-6. **Task Queue**: conceptual tiers (urgent/normal/low) for scheduled jobs.
+6. **Task Queue**: durable queue with SLA tiers (P0–P3) + backoff/suppression.
 7. **Memory System**: three‑layer memory (daily logs → entity facts → synthesized memory).
+8. **Business Unit Registry (VentureOS):** a structured catalog of companies/products/brands and their automations, KPIs, and canonical notes.
+9. **Mission Control (VentureOS):** mission briefs → squads → safety/QA gates → durable artifacts.
 
 ---
 
@@ -59,6 +61,11 @@ Human intent ──> Policy docs (guardrails, quota policy)
 - **Layer 2:** Daily logs (`~/clawd/memory/YYYY-MM-DD.md`)
 - **Layer 3:** Tacit knowledge (`~/clawd/MEMORY.md`)
 - **Process:** cheap fact extraction → entity store; weekly synthesis rewrites summaries; supersede‑not‑delete
+
+### 7) VentureOS (Business Units + Mission Control)
+- **Business Units:** durable registry of portfolio units (games, apps, media brands, infra) with goals, KPIs, canonical notes, and automation inventory.
+- **Missions:** discrete work packages that produce linked artifacts; mission metadata is carried through the task queue and run logs.
+- **Roles:** implemented first as role cards + spawned sub‑sessions; later can be formalized into distinct agent profiles with explicit approval.
 
 ---
 

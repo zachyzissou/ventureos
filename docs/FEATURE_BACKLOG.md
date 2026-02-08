@@ -9,10 +9,18 @@
 
 ## Proactive Engine
 - **Rule‑based proactive scheduler** (time windows, priority, tags)
-- **Task queue with SLA tiers** (urgent/normal/low)
+- **Task queue with SLA tiers** (P0–P3) + backoff/suppression
 - **Context refresh jobs** (daily summaries, stale memory cleanup)
 - **Three‑layer memory system** (daily logs → entity facts → synthesized memory)
 - **Entity‑based fact store** (`items.json` + `summary.md`, supersede‑not‑delete)
+
+## VentureOS / Multi‑Agent Mission Control
+- **Business unit registry** (portfolio units: games, apps, media brands, infra)
+- **Mission templates** (NewCo sprint, product build, content ops, ops incident, AI factory batch)
+- **Role cards** for virtual roles (inputs/outputs/checklists) and consistent artifact formats
+- **Mission metadata in task queue** (`businessUnit`, `missionType`, `role`, `expectedArtifacts`, `requiresApproval`)
+- **Canon harvesting conventions** (Obsidian as strategy source; repo/workspace as ops source)
+- **Approval gates** integrated into mission lifecycle (Sentinel + Verifier)
 
 ## Output Quality
 - **Output QA checks** (format, completeness, missing data)

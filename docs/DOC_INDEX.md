@@ -19,7 +19,16 @@
 ## Templates (workspace starters)
 - **docs/templates/AGENTS.json** – AGENTS policy wiring template
 - **docs/templates/HEARTBEAT.md** – HEARTBEAT template with policy links
-- **docs/templates/task-queue.json** – task queue schema template
+- **docs/templates/task-queue.json** – task queue schema template (extended with mission metadata)
+- **docs/templates/mission-brief.md** – mission brief template
+- **docs/templates/role-card.md** – role card template
+- **docs/templates/business-unit-registry.json** – business unit registry template
+
+## VentureOS / Multi-Agent Orchestration
+- **VENTURE_OS.md** – venture studio OS overview (system vs persona)
+- **MULTI_AGENT_TEAM.md** – 20-role roster + squad patterns
+- **BUSINESS_UNITS.md** – business unit registry + scaling rules
+- **MISSION_CONTROL.md** – mission lifecycle, gates, and artifact standards
 
 ## Implementation Design
 - **REQUIREMENTS.md** – detailed functional + non‑functional requirements

@@ -1,6 +1,6 @@
 # Requirements – OpenClaw Upgrade
 
-**Scope:** Context & Prompting, Proactive Mode, Guardrails, Model Strategy, Budgeting, Operational Reliability, Workflow Automation.
+**Scope:** Context & Prompting, Proactive Mode, Guardrails, Model Strategy, Budgeting, Operational Reliability, Workflow Automation, **Business Units**, and **Mission Control** (multi‑agent role orchestration).
 
 ---
 
@@ -58,6 +58,14 @@
 **FR‑13 Documentation**
 - Provide implementation‑ready package with scripts, cron specs, runbooks, and rollback.
 - **Acceptance:** IMPLEMENTATION_READY.md + supporting docs in repo.
+
+**FR‑14 Business Unit Registry**
+- Define a registry of portfolio units (games, apps, media brands, infra) with goals/KPIs, canonical notes, and automation inventory.
+- **Acceptance:** Registry schema + examples exist; queue/log records can carry `businessUnit` ids; units can be added without rewriting core systems.
+
+**FR‑15 Mission Control (Multi‑Agent Roles)**
+- Define mission templates, role cards, squad patterns, and safety/QA gates so work is repeatable and auditable.
+- **Acceptance:** Mission brief template + role card template exist; docs define the mission lifecycle; task queue schema supports mission metadata (`missionType`, `role`, `expectedArtifacts`, `requiresApproval`).
 
 ---
 
