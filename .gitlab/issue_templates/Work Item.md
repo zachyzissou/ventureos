@@ -1,4 +1,7 @@
-# Work Item
+# Work Item (GitLab mirror — Huly is canonical)
+
+## Huly Link (required)
+- Huly item: 
 
 ## Why (context)
 
@@ -23,5 +26,6 @@
 ## Risks / Rollback
 
 ## Links
-- Related issues:
+- Related Huly items:
+- Related GitLab issues:
 - Related MRs:

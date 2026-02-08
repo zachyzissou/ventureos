@@ -1,3 +1,6 @@
+## Huly Link (required)
+- Huly item: 
+
 ## Why
 
 ## What Changed
@@ -11,6 +14,6 @@
 ## Risk / Rollback
 
 ## Checklist
-- [ ] Links issue (Closes #...)
+- [ ] Links Huly item
 - [ ] Verification performed (not just “looks good”)
 - [ ] Docs updated (if needed)

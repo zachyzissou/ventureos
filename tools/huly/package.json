@@ -1,0 +1,17 @@
+{
+  "name": "openclaw-upgrade-huly-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "list-projects": "node --enable-source-maps scripts/list-projects.mjs",
+    "create-issue": "node --enable-source-maps scripts/create-issue.mjs"
+  },
+  "dependencies": {
+    "@hcengineering/api-client": "^0.7.18",
+    "@hcengineering/core": "^0.7.18",
+    "@hcengineering/rank": "^0.7.18",
+    "@hcengineering/tracker": "^0.7.18",
+    "dotenv": "^16.4.7",
+    "ws": "^8.18.0"
+  }
+}
