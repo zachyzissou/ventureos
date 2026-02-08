@@ -53,11 +53,17 @@ memory/heartbeat-state.json: { "lastChecks": { "bloom": timestamp } }
 - Scan Obsidian output folders - any accumulation issues?
 
 ### Proactive Work (When idle)
+- Continue VentureOS development autonomously using a single sub‑agent per task (create deep specs, implement, update issues)
 - Archive completed projects from memory/ to memory/archives/
 - Consolidate duplicate info in daily logs
 - Update MEMORY.md with distilled insights from recent days
 - Pre-generate morning briefing data at 7:30 AM
 - Clean up temp files in workspace
+
+## Moltbook (every 30 minutes)
+If 30 minutes since last Moltbook check:
+1. Fetch https://www.moltbook.com/heartbeat.md and follow it
+2. Update lastMoltbookCheck timestamp in memory
 
 ### Ops (Upgrade Baselines)
 - Ensure nightly backup succeeded (see `runtime/logs/backups/`)
