@@ -1,21 +1,23 @@
-# OpenClaw Upgrade
+# VentureOS
 
-**Tagline:** A high‑leverage upgrade project to turn OpenClaw into a more reliable, more autonomous, and more productive daily operator — without sacrificing control.
+**Tagline:** A venture‑studio operating system built on OpenClaw — mission control, business units, and quality gates without sacrificing safety.
 
 ## Why this exists
-OpenClaw already works. This project is about making it **consistently excellent**: smarter workflows, better automation, clear ownership of tasks, and a roadmap that turns ad‑hoc ideas into shippable features.
+VentureOS turns one operator into a **portfolio builder**: ideate, validate, build, and operate multiple business lines (games, apps, media brands) with repeatable quality. The OpenClaw foundation provides reliability + proactive scheduling; VentureOS adds the **operating model** on top.
 
 ## Guiding Principles
 - **Quality over speed** for core workflows.
 - **Autonomy with guardrails** — automation that is powerful but reversible.
-- **Measurable outcomes** — every feature should change a metric or remove a pain.
+- **Repeatable missions** — same inputs → same artifacts every time.
+- **Safety by design** — approvals for publishing, payments, and destructive actions.
 - **Progressive enhancement** — small deploys, no risky monolith changes.
 
 ## Core Goals
-1. **Daily reliability**: less drift, more predictable results.
-2. **Higher‑quality outputs**: better summaries, better automation, better coding.
-3. **Lower friction**: fewer steps for common actions.
-4. **Proactive workflow**: the agent pulls work forward instead of waiting.
+1. **Portfolio scalability** via Business Units and Mission Control.
+2. **Reliable execution** (retries, timeouts, clear error taxonomy).
+3. **Higher‑quality outputs** with QA gates and artifact standards.
+4. **Lower friction** for common workflows and batching.
+5. **Proactive workflow** that pulls work forward.
 
 ## Scope (Security deferred)
 Security hardening is **out of scope for this phase** and will be revisited later. The focus now is product‑level quality and execution.
@@ -27,6 +29,10 @@ Security hardening is **out of scope for this phase** and will be revisited late
 - `docs/PROJECT_PLAN.md` – delivery plan, milestones, and execution details
 - `docs/FEATURE_BACKLOG.md` – detailed feature list and ownership
 
+## Where strategy lives
+- **Obsidian** is canonical for long‑horizon strategy and Business Unit notes.
+- This repo is for ops, workflows, scripts, and durable execution artifacts.
+
 ## CI / Docs Lint
 - GitLab CI runs `scripts/docs-lint.py` to detect broken links and placeholder markers.
 
@@ -37,4 +43,4 @@ Security hardening is **out of scope for this phase** and will be revisited late
 
 ---
 
-If this project is done right, OpenClaw becomes a durable, dependable partner — not just a clever tool.
+If this project is done right, VentureOS becomes a durable, dependable operating system — not just a clever tool.

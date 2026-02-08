@@ -1,6 +1,6 @@
 # HEARTBEAT.md (Template)
 
-## Policy Docs (OpenClaw Upgrade guidance)
+## Policy Docs (VentureOS guidance)
 Source of truth (workspace root):
 - $HOME/clawd/GOALS_CONSTRAINTS.md
 - $HOME/clawd/GUARDRAILS.md

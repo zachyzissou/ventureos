@@ -4,43 +4,32 @@ This playbook standardizes **retries, timeouts, error taxonomy, and graceful deg
 
 ---
 
-## 1) Error Taxonomy
+## 1) Error Taxonomy (Summary)
 
-### P0 — System Down / Auth Broken
-**Signals:** gateway not running, auth invalid, config invalid, data loss risk.
-**Action:** stop, alert immediately, recover with approval.
+**Full definitions:** see `docs/ERROR_TAXONOMY.md` for detailed criteria, examples, and telemetry requirements.
 
-### P1 — Repeated Failures / Timeouts
-**Signals:** recurring tool failures, RPC timeouts, rate limits (429), repeated timeouts.
-**Action:** retry/backoff, degrade, alert within 1 hour.
+| Severity | Primary Signals | Required Response | Alerting |
+|---|---|---|---|
+| **P0** | gateway down, auth invalid (401/403), config invalid, data loss risk | **Stop automation**, recover only with approval | **Immediate alert** |
+| **P1** | repeated failures/timeouts, recurring 429s, partial outage | **Retry + degrade**, investigate | **Alert within 1 hour** |
+| **P2** | transient 5xx, one‑off timeout, short network hiccup | **Retry silently**, continue | **No alert** (unless repeated) |
 
-### P2 — Transient / Recoverable
-**Signals:** one‑off network errors, temporary 5xx, single timeout.
-**Action:** retry silently, log only.
-
-#### Classification cues
-- **P0:** auth failures (401/403), config invalid, gateway down, corrupted state
-- **P1:** ≥2 failures in 1 hour, repeated 429s, recurring timeouts
-- **P2:** single non‑auth failure or transient network hiccup
+**Classification cues:**
+- **P0** if any auth/config/data‑loss/security signal exists.
+- **P1** when the same failure repeats **≥2× in 1 hour**.
+- **P2** for a single, recoverable failure.
 
 ---
 
 ## 2) Retry + Backoff Policy
 
-**Default:** max 3 attempts, exponential backoff with jitter.
+**Authoritative policy:** see `docs/RETRY_POLICY.md` for tiers, jitter, cooldown, and idempotency rules.
 
-- Attempt 1: immediate
-- Attempt 2: base × 2
-- Attempt 3: base × 4
-
-**Never retry:**
-- 401/403 (auth issues)
-- 4xx (except 429)
-- Invalid arguments / usage errors
-
-**Retry:**
-- 429 (rate limit) with longer backoff
-- 5xx, timeouts, network errors
+**Summary:**
+- **Tiered by error class** (T0–T4). Default transient errors: **3 attempts**, exponential backoff with **full jitter**.
+- **Never retry** auth/config/data‑loss/security signals (P0) or unsafe non‑idempotent actions.
+- **Rate limits (429)** respect `Retry‑After` and use longer backoff.
+- **Required logging fields** per attempt are defined in `docs/RETRY_POLICY.md`.
 
 **Script helpers:**
 - `scripts/retry.sh`
@@ -50,37 +39,58 @@ This playbook standardizes **retries, timeouts, error taxonomy, and graceful deg
 
 ## 3) Timeout Standards
 
-**General defaults:**
+**Authoritative policy:** `docs/TIMEOUT_POLICY.md` (connect/read/total defaults, overrides, logging).
+
+**Summary defaults (total timeout):**
 - **exec:** 60s (local commands)
 - **web_search/web_fetch:** 20s
 - **browser actions:** 30s
 - **message send:** 10s
 - **cron agent turns:** 5–10 min
 
-**Script helper:** `scripts/with-timeout.sh`
+**Script helper:** `scripts/with-timeout.sh` (use `guarded-run.sh` for retry + timeout)
 
 ---
 
 ## 4) Graceful Degradation
 
+**Authoritative policy:** `docs/DEGRADATION_POLICY.md` (tiers, fallbacks, user messaging + approvals).
+
+**Tier summary:**
+- **D0 Normal:** no degradation.
+- **D1 Soft Degrade (P2):** skip optional steps, use cached data, note limitations.
+- **D2 Hard Degrade (P1 or outcome unknown):** read‑only + queue; block side effects unless approved.
+- **D3 Halt (P0):** stop automation; alert; require explicit approval to resume.
+
 When a dependency fails:
-- **Web search down:** use cached memory; report limitation.
-- **Bird auth fails:** skip social checks and alert; do not spam retries.
-- **GitHub API fails:** report “status unknown” and retry next run.
-- **Discord send fails:** fall back to log + retry next run.
+- Classify severity (P0/P1/P2) → map to D1/D2/D3.
+- Prefer **read‑only** actions and **queue** work in D2.
+- Never retry unsafe non‑idempotent actions.
 
 ### Degradation Matrix (quick reference)
-| Dependency | Primary Action | Fallback | Severity |
+| Dependency | Primary Action | Fallback (D1/D2) | Tier |
 |---|---|---|---|
-| GitHub API | Retry (3×) | Report unknown + skip merges | P1 if repeated |
-| Bird auth | Retry (2×) | Skip checks + alert once | P1 |
-| Web search | Retry (2×) | Use cached memory | P2 |
-| Discord send | Retry (2×) | Log locally, retry next run | P2 |
-| Browser automation | Retry (1×) | Report blocked + skip | P2 |
+| GitHub/GitLab API | Retry (T1) | Use local git; mark status unknown; block merges in D2 | D1/D2 |
+| Bird auth | No retry on 401/403 | Skip social publish; alert; require re‑auth | D3 |
+| Web search | Retry (T1) | Use cached memory or local docs | D1 |
+| Discord/Message send | Retry (T1) | Log + queue delivery; retry next run | D1/D2 |
+| Browser automation | Retry (T4) | Use API or manual steps; block submit in D2 | D1/D2 |
+| Model/LLM | Retry (T1) | Fallback model for low‑risk; defer safety‑critical | D1/D2 |
 
 ---
 
-## 5) Implementation Notes
+## 5) Output QA Checks (Format + Completeness)
+
+**Authoritative policy:** `docs/QUALITY_CHECKS.md`
+
+**Summary:** All mission outputs and gate artifacts must pass **format + completeness** checks before archive. Use QA statuses:
+- **QA_PASS:** proceed
+- **QA_WARN:** proceed with limitations noted
+- **QA_FAIL:** hold output, return for rework
+
+---
+
+## 6) Implementation Notes
 
 - Use `scripts/with-timeout.sh` for long‑running shell calls in cron payloads.
 - Use `scripts/retry.sh` when calling external APIs or network commands.

@@ -1,7 +1,7 @@
-# Architecture – OpenClaw Upgrade
+# Architecture – VentureOS
 
 ## Overview
-This upgrade adds **policy + ops infrastructure** around OpenClaw. It does not replace OpenClaw core; it layers **docs, scripts, cron jobs, and logs** to make the system reliable and auditable.
+VentureOS layers **policy + ops infrastructure** around OpenClaw. It does not replace OpenClaw core; it adds **docs, scripts, cron jobs, and logs** to make the system reliable and auditable.
 
 ### Key Components
 1. **Policy Layer** (docs): goals, guardrails, proactive rules, model strategy, quota policy.

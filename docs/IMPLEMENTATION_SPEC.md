@@ -1,6 +1,6 @@
-# OpenClaw Upgrade – Implementation Spec (v0.1)
+# VentureOS – Implementation Spec (v0.1)
 
-**Purpose:** Implement the *first tranche* of upgrades: Context & Prompting, Model Strategy, Operational Reliability, and Workflow Automation.
+**Purpose:** Implement the *first tranche* of VentureOS foundation work: Context & Prompting, Model Strategy, Operational Reliability, and Workflow Automation.
 
 **Scope note:** This is **operational guardrails + workflow quality**, not full security hardening (deferred per project scope).
 

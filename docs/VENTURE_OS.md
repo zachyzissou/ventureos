@@ -7,7 +7,7 @@ It is intentionally distinct from the assistant persona:
 - **Echo** = the *chief orchestrator persona* (the main agent you talk to).
 - **VentureOS** = the *system Echo runs*: role cards, mission templates, business‑unit registry, queues/logging, knowledge flows, and quality gates.
 
-This repo (OpenClaw Upgrade) is the right home because VentureOS depends on the same foundations: guardrails, proactive scheduling, logging, and durable memory.
+This repo is the right home because VentureOS depends on the same OpenClaw foundations: guardrails, proactive scheduling, logging, and durable memory.
 
 ---
 

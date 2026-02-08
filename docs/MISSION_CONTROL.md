@@ -59,6 +59,7 @@ Core rule: **a mission is not complete until its artifacts exist and are linked.
 **Purpose:** generate assets (image/3D/audio/writing) with reproducibility.
 - Squad: Synth, Muse, Glyph/Foley/Modeler, Verifier, Archivist
 - Artifacts: prompt pack, batch manifest, QA notes, import/usage instructions
+- **Batch framework:** see **BATCH_PROCESSING.md** for manifest, chunking, retry, and rollback requirements
 
 ---
 
@@ -84,6 +85,13 @@ We start with **virtual roles**:
   - “ROLE: Ledger — produce unit economics scenarios for X”
 
 This gets us 80% of the benefit without config changes.
+
+---
+
+## Workflow Commands (1‑command entrypoints)
+Common operator actions should be callable via **single commands** with consistent args, prechecks, and safety gates. These are defined in **WORKFLOW_COMMANDS.md** and serve as the default entrypoints for manual ops and future automation.
+
+Mission Control should prefer these commands when building runbooks or mission steps.
 
 ---
 

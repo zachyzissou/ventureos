@@ -1,4 +1,4 @@
-# OpenClaw Upgrade – Implementation Tasks
+# VentureOS – Implementation Tasks
 
 > Ordered, actionable tasks with acceptance criteria.
 

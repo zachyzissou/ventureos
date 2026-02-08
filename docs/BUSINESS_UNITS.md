@@ -23,6 +23,7 @@ Recommended storage:
 - Repo template: `docs/templates/business-unit-registry.json`
 - Workspace runtime copy: `~/clawd/runtime/business-units.json`
 - Canonical strategy pages: Obsidian links stored in each unit record
+- Obsidian path conventions: `docs/OBSIDIAN_CONVENTIONS.md`
 
 ### Required fields (minimum viable)
 - `id` — short stable identifier (slug)

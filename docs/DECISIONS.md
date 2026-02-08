@@ -1,6 +1,6 @@
-# Decisions Log – OpenClaw Upgrade
+# Decisions Log – VentureOS
 
-This file captures locked defaults and scoped exceptions for the upgrade plan.
+This file captures locked defaults and scoped exceptions for the VentureOS implementation plan.
 
 ## 2026‑02‑07 — Defaults Locked
 - **Proactive window:** 08:00–23:00 CST; quiet hours 23:00–08:00 (P0 alerts only).

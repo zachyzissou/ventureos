@@ -3,16 +3,26 @@
 ## Objective
 Introduce a **rule‑based scheduler** with **SLA tiers** to govern proactive tasks, enforce quiet hours, and avoid overload.
 
+**Rules framework:** see **PROACTIVE_RULES.md** for rule schema, windows, cooldowns, escalation, and safety gates.
+
 ---
 
 ## SLA Tiers
 
-| Tier | Name | Target Response | Examples | Allowed in Quiet Hours |
-|---|---|---|---|---|
-| **P0** | Critical | immediate | gateway down, auth broken, data loss risk | ✅ yes |
-| **P1** | Urgent | ≤ 1 hour | repeated failures, rate‑limit loops | ❌ no (queue) |
-| **P2** | Normal | ≤ 24 hours | weekly digests, routine reports | ❌ no (queue) |
-| **P3** | Low | best effort | research notes, cleanup tasks | ❌ no (queue) |
+**Authoritative policy:** see **SLA_POLICY.md** for full definitions, queue field mapping, and escalation triggers.
+
+| Tier | Name | Time‑to‑Ack | Time‑to‑Run | Max Retries | Default Escalation | Allowed in Quiet Hours |
+|---|---|---|---|---|---|---|
+| **P0** | Critical | ≤ 5 min | ≤ 15 min | 5 | Immediate alert + auto‑escalate on any failure | ✅ yes |
+| **P1** | Urgent | ≤ 15 min | ≤ 1 hour | 4 | Alert within 1h; auto‑escalate after 2 failures | ❌ no (queue) |
+| **P2** | Normal | ≤ 4 hours | ≤ 24 hours | 3 | Log only; notify owner on repeated failure | ❌ no (queue) |
+| **P3** | Low | ≤ 24 hours | Best effort (≤ 72h target) | 2 | Log only; notify only if backlog persists | ❌ no (queue) |
+
+**Examples:**
+- **P0:** gateway down, auth broken, data loss risk
+- **P1:** repeated failures, rate‑limit loops
+- **P2:** weekly digests, routine reports
+- **P3:** research notes, cleanup tasks
 
 **Quiet hours:** 23:00–08:00 CST → only P0 executes; all others queued.
 
@@ -44,38 +54,59 @@ The worker executes **queued shell commands**. Mission metadata is carried along
 
 ```json
 {
-  "id": "uuid",
-  "createdAt": "ISO-8601",
-  "tier": "P0|P1|P2|P3",
-  "status": "queued|running|done|failed",
-  "jobId": "<cron-id>",
-  "title": "short description",
+  "id": "28b9f7b8-1c2c-4e7b-8a2e-3d0e1c88f9f1",
+  "createdAt": "2026-02-08T00:20:00Z",
+  "tier": "P2",
+  "status": "queued",
+  "jobId": "cron-stantontimes-weekly",
+  "title": "Draft Stanton Times content calendar",
 
-  "businessUnit": "unit-id",
-  "missionType": "newco|build|content|ops|ai-factory|research",
-  "role": "Echo|Atlas|Synth|Oracle|Ledger|Comms|Forge|Builder|Verifier|Sentinel|Archivist",
-  "expectedArtifacts": ["/path/or/obsidian-uri"],
-  "requiresApproval": false,
+  "businessUnit": "stanton-times",
+  "missionType": "content",
+  "role": "Comms",
+  "expectedArtifacts": [
+    "/obsidian/StantonTimes/2026/02/mission-brief.md",
+    "/obsidian/StantonTimes/2026/02/content-calendar.md",
+    "/obsidian/StantonTimes/2026/02/draft-batch-01.md"
+  ],
+  "requiresApproval": true,
 
   "attempts": 0,
   "maxAttempts": 3,
-  "timeoutSeconds": 300,
-  "nextRunAt": "ISO-8601",
+  "timeoutSeconds": 900,
+  "nextRunAt": "2026-02-08T14:00:00Z",
   "lastError": "",
-  "dedupeKey": "",
+  "dedupeKey": "stanton-times:content:calendar:2026-w06",
 
-  "command": ["bash", "-lc", "echo hello"]
+  "command": ["bash", "-lc", "python scripts/generate_calendar.py --unit stanton-times --week 6"]
 }
 ```
+
+Allowed values:
+- `missionType`: `newco | build | content | ops | ai-factory | research`
+- `role`: `Echo | Atlas | Synth | Oracle | Ledger | Comms | Forge | Builder | Verifier | Sentinel | Archivist`
 
 ---
 
 ## Integration Points
 
 - **Mission Control (VentureOS)** → enqueues mission steps with `businessUnit`/`missionType`/`role` metadata.
+- **feedback events** → thumbs‑down / revision requests enqueue iteration work (see **FEEDBACK_LOOP.md**).
 - **cron jobs** → enqueue when quiet hours or concurrency limits block execution.
+- **context refresh jobs** → P2 daily/weekly summaries + cleanup; schedule + retention in **CONTEXT_REFRESH.md**.
 - **monitor-openclaw.sh** → emits P0/P1 signals into queue.
 - **task_runs JSONL** → provides history for suppression logic.
+
+---
+
+## Routing + Alerts (using mission metadata)
+
+- **businessUnit** → route to the owning dashboard/channel; tag the unit lead for triage.
+- **missionType** → pick the correct workflow/runbook (e.g., `content` routes to approval gates; `ops` routes to on‑call).
+- **role** → auto‑assign the primary worker or filter queue views by specialty.
+- **expectedArtifacts** → treat as a completion checklist; missing artifacts trigger an “incomplete” alert.
+- **requiresApproval** → push to `pendingApprovals`, notify Sentinel/Verifier, and block publish/close until approved.
+- **feedbackType** → map to default tier (thumbs_down → P1, revision_request → P2) unless severity overrides.
 
 ---
 
@@ -85,9 +116,11 @@ The worker executes **queued shell commands**. Mission metadata is carried along
 - **Engine config (gated):** `~/clawd/runtime/proactive-engine.json`
   - `enabled: false` by default.
   - quiet hours: `23:00–08:00` (America/Chicago)
+- **Rules registry (gated):** `~/clawd/runtime/proactive-rules.json`
+  - must match **PROACTIVE_RULES.md** schema
 - **Queue storage:** `~/clawd/runtime/task-queue.json` (durable JSON)
 - **Queue/worker tool:** `~/clawd/scripts/task-queue.py`
-  - Source of truth: `openclaw-upgrade/scripts/task-queue.py`
+  - Source of truth: `VentureOS/scripts/task-queue.py`
 
 ### Worker behavior
 When enabled, the worker:

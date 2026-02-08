@@ -1,8 +1,8 @@
-# Status – OpenClaw Upgrade
+# Status – VentureOS
 
 **As of:** 2026‑02‑07
 
-## ✅ Baseline Docs Complete (Phase 0.5)
+## ✅ Baseline Docs Complete (Phase 0.5 – Repo Reframe)
 - Implementation‑ready baseline package is complete (requirements → architecture → scripts → cron → tests → rollout → risks → metrics).
 - Policy docs are split into standalone files in this repo and linked from `IMPLEMENTATION_READY.md` + `DOC_INDEX.md`.
 - Templates added for AGENTS/HEARTBEAT workspace starters (portable paths).
@@ -35,6 +35,7 @@
 - Control UI requires secure context: LAN access needs HTTPS proxy (localhost ok).
 
 ## 🧾 Execution Checklist / Audit Log
+- [x] 2026‑02‑07 — Repo reframed to VentureOS (docs + templates updated)
 - [x] 2026‑02‑07 — Policy docs split + linked in repo
 - [x] 2026‑02‑07 — Monitoring stale gateway.lock detection implemented
 - [x] 2026‑02‑07 — Restore workflow added (dry‑run)

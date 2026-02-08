@@ -1,27 +1,34 @@
 {
   "version": 1,
-  "generated_at": "YYYY-MM-DD",
+  "generated_at": "2026-02-08",
   "items": [
     {
-      "id": "uuid",
-      "createdAt": "YYYY-MM-DDTHH:MM:SSZ",
-      "tier": "P0|P1|P2|P3",
-      "status": "queued|running|done|failed",
-      "title": "Short description",
-      "businessUnit": "unit-id",
-      "missionType": "newco|build|content|ops|ai-factory|research",
-      "role": "Echo|Atlas|Synth|Oracle|Ledger|Comms|Forge|Builder|Verifier|Sentinel|Archivist",
-      "jobId": "cron-id-or-empty",
-      "nextRunAt": "YYYY-MM-DDTHH:MM:SSZ",
+      "id": "28b9f7b8-1c2c-4e7b-8a2e-3d0e1c88f9f1",
+      "createdAt": "2026-02-08T00:20:00Z",
+      "tier": "P2",
+      "status": "queued",
+      "title": "Draft Stanton Times content calendar",
+      "businessUnit": "stanton-times",
+      "missionType": "content",
+      "role": "Comms",
+      "jobId": "cron-stantontimes-weekly",
+      "nextRunAt": "2026-02-08T14:00:00Z",
       "attempts": 0,
       "maxAttempts": 3,
-      "timeoutSeconds": 300,
-      "dedupeKey": "",
-      "expectedArtifacts": ["/path/or/obsidian-uri"],
-      "requiresApproval": false,
-      "links": ["/path/or/url"],
-      "notes": "Context / acceptance criteria",
-      "command": ["bash", "-lc", "echo hello"]
+      "timeoutSeconds": 900,
+      "dedupeKey": "stanton-times:content:calendar:2026-w06",
+      "expectedArtifacts": [
+        "/obsidian/StantonTimes/2026/02/mission-brief.md",
+        "/obsidian/StantonTimes/2026/02/content-calendar.md",
+        "/obsidian/StantonTimes/2026/02/draft-batch-01.md"
+      ],
+      "requiresApproval": true,
+      "links": [
+        "/obsidian/StantonTimes/2026/02/approval-checklist.md",
+        "https://example.com/brand-guidelines"
+      ],
+      "notes": "Include 7 post ideas with sources; route to Sentinel + Verifier before publish.",
+      "command": ["bash", "-lc", "python scripts/generate_calendar.py --unit stanton-times --week 6"]
     }
   ]
 }

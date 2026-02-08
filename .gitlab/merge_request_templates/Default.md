@@ -2,6 +2,13 @@
 
 ## What Changed
 
+## Mission Metadata
+- Business Unit:
+- Mission Type:
+- Role:
+- Expected Artifacts:
+- Requires Approval: (yes/no + gate)
+
 ## How to Verify
 - [ ]
 

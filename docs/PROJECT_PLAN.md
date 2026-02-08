@@ -1,12 +1,15 @@
-# OpenClaw Upgrade – Project Plan
+# VentureOS – Project Plan
 
 ## Vision
-Turn OpenClaw into a **production‑grade personal operator** *and* a **venture‑studio operating system** (VentureOS): proactive, reliable, and fast, with clear workflows, repeatable missions, and measurable outcomes.
+Build **VentureOS** — a venture‑studio operating system on top of OpenClaw. The foundation delivers reliability and proactive scheduling; VentureOS delivers **business units, mission control, and quality gates** so work is repeatable and auditable.
 
 ## Success Metrics
+- **Mission completion rate** ≥ 90% with required artifacts
+- **Approval gate compliance** = 100% for external actions
 - **Task success rate** ≥ 95%
 - **Average task latency** < 2 minutes for standard tasks
 - **Manual intervention rate** < 10%
+- **Time to create a new Business Unit** ≤ 1 day
 - **User satisfaction**: weekly check‑ins show “good” or better
 
 ## Milestones

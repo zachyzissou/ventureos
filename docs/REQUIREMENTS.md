@@ -1,4 +1,4 @@
-# Requirements – OpenClaw Upgrade
+# Requirements – VentureOS
 
 **Scope:** Context & Prompting, Proactive Mode, Guardrails, Model Strategy, Budgeting, Operational Reliability, Workflow Automation, **Business Units**, and **Mission Control** (multi‑agent role orchestration).
 

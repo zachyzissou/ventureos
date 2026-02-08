@@ -1,4 +1,4 @@
-# OpenClaw Upgrade – Implementation‑Ready Design (Defaults Locked)
+# VentureOS – Implementation‑Ready Design (Defaults Locked)
 
 **Status:** Design complete. **Partial implementation applied** (policy docs split, monitoring enhancements, restore workflow, backup coverage, LAN‑first gateway posture + PF hardening).
 

@@ -1,4 +1,4 @@
-# OpenClaw Upgrade – Roadmap
+# VentureOS – Roadmap
 
 ## Phase 0 – Foundation (Week 1)
 **Objective:** get the core project organized and measurable.
@@ -21,13 +21,14 @@
 - Automatic retries + timeouts for external calls
 - Better error reporting and recovery
 
-## Phase 2 – Proactive Engine (Weeks 4–5)
-**Objective:** agent anticipates work and takes initiative.
+## Phase 2 – Proactive Engine + Mission Control (Weeks 4–5)
+**Objective:** agent anticipates work and runs VentureOS missions.
 - Proactive job scheduling rules
 - Priority queue + SLA tiers (P0–P3)
 - Contextual memory refresh + aging
 - **Mission Control foundations** (mission briefs, squads, safety/QA gates)
 - **Business unit registry** (portfolio-aware routing and logging)
+- **Seed role cards** for core roles (Echo/Sentinel/Verifier/Archivist/etc.)
 
 ## Phase 3 – Quality Upgrades (Weeks 6–7)
 **Objective:** raise output quality in all core workflows.

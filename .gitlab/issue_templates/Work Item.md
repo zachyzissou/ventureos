@@ -2,6 +2,13 @@
 
 ## Why (context)
 
+## Mission Metadata
+- Business Unit:
+- Mission Type:
+- Role:
+- Expected Artifacts:
+- Requires Approval: (yes/no + gate)
+
 ## Scope
 
 ## Definition of Done

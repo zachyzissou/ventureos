@@ -1,4 +1,4 @@
-# Feature Backlog – OpenClaw Upgrade
+# VentureOS – Feature Backlog
 
 ## Reliability & Recovery
 - **Structured error taxonomy** (P0/P1/P2) with consistent alerts

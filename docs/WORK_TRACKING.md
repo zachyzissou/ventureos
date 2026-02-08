@@ -1,6 +1,6 @@
 # Work Tracking (GitLab = Source of Truth)
 
-This repository is the **canonical tracker + implementation repo** for upgrading OpenClaw.
+This repository is the **canonical tracker + implementation repo** for VentureOS (built on OpenClaw).
 
 ## Source of Truth
 - **GitLab Issues** in this repo are the source of truth for:
@@ -21,14 +21,15 @@ This repository is the **canonical tracker + implementation repo** for upgrading
    - Evidence/artifacts (files, logs, commands, screenshots)
 
 ## Local Agent Memory (secondary)
-OpenClaw maintains local work logs under `~/clawd/memory/work-items/` for continuity across sessions.
+The agent maintains local work logs under `~/clawd/memory/work-items/` for continuity across sessions.
 
 **Policy:** Local work items are helpful, but they must link back to the GitLab Issue URL (GitLab is canonical).
 
 ## Suggested Labels
 - `type::bug`, `type::feature`, `type::docs`, `type::ops`
 - `prio::p0`, `prio::p1`, `prio::p2`, `prio::p3`
-- `area::reliability`, `area::proactive`, `area::mission-control`, `area::memory`, `area::infra`
+- `area::ventureos`, `area::quality`, `area::workflow`, `area::model-orchestration`
+- `bu::<name>` (optional, business‑unit scoped)
 
 ## Templates
 - Issues: `.gitlab/issue_templates/`
