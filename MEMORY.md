@@ -53,9 +53,15 @@
 - Project tracker decision finalized: **local GitLab is canonical** (`http://slurpnet:9080/`); **OpenProject retired**; Huly attempt parked.
 - Tracking integration: updated `projects/openclaw-upgrade/docs/WORK_TRACKING.md` to make GitLab the source of truth and seeded GitLab labels/milestones/board; transitional issues include repo hygiene (#21).
 
+## Ops / Repo Hygiene & System Issues (2026-02-07)
+- Fixed `~/clawd` git failure caused by stale submodule gitlinks now symlinks; commit `e5c2e8c` “Repo hygiene: remove stale submodule gitlinks; track unraid-mcp as symlink”.
+- Push to `origin` (SSH `git@192.168.4.225`) timing out; HTTP GitLab remote exists but `main` is behind remote (non-fast-forward).
+- Disabled failing cron job “Memory Fact Extraction” (job id `90f7a25c-79bc-4de2-b8a0-297c0af33c22`) due to invalid model id `anthropic/claude-3-5-sonnet`.
+- StantonTimes `projects/stanton-times/data/state.json` ~151KB (>100KB threshold); bulk is `pending_stories` (~69 items). Cleanup attempt via `python3 src/app.py cleanup` failed with `ModuleNotFoundError: No module named 'src'`.
+
 ## Future Focus
 - Improve context compression algorithms
 - Develop more efficient memory storage and retrieval mechanisms
 - Continuous system resilience testing
 
-*Last Updated:* 2026-02-07 22:57 CST
+*Last Updated:* 2026-02-08 00:41 CST
