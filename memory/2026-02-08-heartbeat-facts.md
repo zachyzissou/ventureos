@@ -1,6 +1,6 @@
 # Memory Heartbeat Extraction - 2026-02-08
 
-**Timestamp**: 1770534735 (2026-02-08 01:12 CST)
+**Timestamp**: 1770540132 (2026-02-08 02:42 CST)
 
 ## Key Facts Extracted
 
@@ -16,6 +16,10 @@
 - Integrated GitLab tracking scaffolding into `projects/openclaw-upgrade` (WORK_TRACKING doc, templates, labels/milestones/board; meta VentureOS issue created).
 
 ### Ops / Repo Hygiene
+- Closed GitLab issues #1–26 (including #21 after adding MCP directory ignores); issue #27 in progress.
+- Commits: `71126a4`, `058704a`.
+- Docs updates for queue metadata.
+- Repo hygiene: symlink work.
 - Fixed `~/clawd` git failure caused by stale submodule gitlinks recorded in index while paths are now symlinks.
   - Commit: `e5c2e8c` “Repo hygiene: remove stale submodule gitlinks; track unraid-mcp as symlink”.
 - Push to `origin` (SSH `git@192.168.4.225`) timing out; HTTP GitLab remote exists, but `main` is behind remote (non-fast-forward).
