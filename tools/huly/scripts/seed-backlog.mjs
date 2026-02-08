@@ -43,11 +43,31 @@ async function ensureMilestone (client, projectId, label) {
   return created
 }
 
-async function createIssue (client, project, title, body, priority, milestoneId) {
-  // Generate unique issue Id
+async function createOrUpdateIssue (client, project, title, body, priority, milestoneId) {
+  const existing = await client.findOne(tracker.class.Issue, { space: project._id, title })
+
+  if (existing) {
+    const description = body
+      ? await client.uploadMarkup(tracker.class.Issue, existing._id, 'description', body, 'markdown')
+      : null
+
+    await client.updateDoc(
+      tracker.class.Issue,
+      project._id,
+      existing._id,
+      {
+        ...(description ? { description } : {}),
+        ...(milestoneId ? { milestone: milestoneId } : {}),
+        priority
+      }
+    )
+    console.log('updated:', existing.identifier, '-', existing.title)
+    return
+  }
+
+  // Create new issue
   const issueId = generateId()
 
-  // Increment sequence to get issue number
   const incResult = await client.updateDoc(
     tracker.class.Project,
     core.space.Space,
@@ -195,7 +215,7 @@ try {
     const title = `${it.code} — ${it.title}`
     const body = `## Source\n\n- From: \`docs/IMPLEMENTATION_TASKS.md\`\n- Bucket: **${it.bucket}**\n\n---\n\n${it.body}\n`
 
-    await createIssue(client, project, title, body, prio, milestoneId)
+    await createOrUpdateIssue(client, project, title, body, prio, milestoneId)
   }
 } finally {
   await client.close()
