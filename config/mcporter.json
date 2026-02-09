@@ -24,8 +24,5 @@
         "USE_PIPELINE": "true"
       }
     }
-  },
-  "imports": [
-    "config/mcporter.local.json"
-  ]
+  }
 }

@@ -10,6 +10,8 @@
 ## Core
 - **README.md** – project overview
 - **docs/roles/REPO_CHARTER.md** – VentureOS charter + scope boundaries
+- **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitLab-first work contract (Issue → Evidence → MR/commit → Verify → Close)
+- **docs/process/LABEL_PROTOCOL.md** – how workflow labels are applied/removed
 - **docs/process/STATUS.md** – current implementation status
 - **docs/process/ROADMAP.md** – phased roadmap
 - **docs/process/PROJECT_PLAN.md** – milestones + success metrics
@@ -69,6 +71,8 @@
 - **docs/templates/mission-runner.md** – mission runner workflow template
 - **docs/templates/role-card.md** – role card template
 - **docs/templates/business-unit-registry.json** – business unit registry template
+- **docs/templates/gitlab-issue-template.md** – issue template (Goal/AC/Evidence/Close-out)
+- **docs/templates/gitlab-mr-template.md** – MR template (Issue link/verification)
 
 ## Implementation Design
 - **docs/process/REQUIREMENTS.md** – detailed functional + non‑functional requirements

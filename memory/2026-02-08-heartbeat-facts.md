@@ -1,6 +1,6 @@
 # Memory Heartbeat Extraction - 2026-02-08
 
-**Timestamp**: 1770540132 (2026-02-08 02:42 CST)
+**Timestamp**: 1770603131 (2026-02-08 20:12 CST)
 
 ## Key Facts Extracted
 
@@ -14,6 +14,23 @@
 ### Work Tracking Implementation
 - Started file-based Work Item system under `memory/work-items/` and updated `memory/METHODOLOGY.md` to require Work Items for non-trivial work.
 - Integrated GitLab tracking scaffolding into `projects/openclaw-upgrade` (WORK_TRACKING doc, templates, labels/milestones/board; meta VentureOS issue created).
+
+### OpenClaw Multi-Agent + Discord Routing
+- Confirmed VentureOS multi-agent architecture per https://docs.openclaw.ai/concepts/multi-agent (isolated agents with workspace + agentDir + sessions) and deterministic bindings.
+- Discord role channels discovered in guild `825047055688532049` under category **“VentureOS — Roles”**:
+  - `1470210601879076914` echo-mission-control
+  - `1470210648624599192` oracle-research
+  - `1470210649786159348` atlas-infra
+  - `1470210650855837696` sentinel-governance
+  - `1470210652143354077` verifier-qa
+  - `1470210653154185298` archivist-knowledge
+  - `1470210654819451024` synth-factory
+- Existing agents: `main` (Echo, default), `oracle`, `atlas`, `sentinel`, `verifier`, `archivist`, `synth`.
+- Created new isolated agent **`echo` (Mission Control)** with workspace `~/.openclaw/workspace-echo` and agentDir `~/.openclaw/agents/echo/agent`; copied `auth-profiles.json` + `models.json` from `main` agentDir.
+- Updated bindings so `echo-mission-control` routes to `agentId: echo` (Mission Control), while DMs remain routed to `main`.
+- Fixed Discord permission issue: `openclaw channels status --probe` initially reported missing `ViewChannel` for role channels; resolved by adjusting Discord permissions. After fix, audit OK.
+- Verified end-to-end routing by sending user-authored “test” message in each channel; each role agent responded via webhook identity.
+- Updated `#echo-mission-control` channel systemPrompt to enforce Mission Control voice (mission briefs/orchestration/synthesis), GitLab canonical context (Obsidian notes only), and to avoid DM troubleshooting/meta-debug in that channel.
 
 ### Ops / Repo Hygiene
 - Closed GitLab issues #1–26 (including #21 after adding MCP directory ignores); issue #27 in progress.
