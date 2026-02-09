@@ -1,12 +1,13 @@
 {
   "lastChecks": {
     "bloom": 1770633855,
-    "memory": 1770633855,
+    "extraction": 1770637466,
+    "memory": 1770637466,
     "stanton": 1770633855,
     "system": 1770633855
   },
   "lastMemoryCheck": 1770595861,
-  "lastMoltbookCheck": 1770637370,
+  "lastMoltbookCheck": 1770640947,
   "lastProactive": 1707206550,
   "quietHours": {
     "end": "08:00",
