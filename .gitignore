@@ -33,6 +33,7 @@ projects/slurpnet-security-suite/
 
 # Local secrets / overrides
 config/*.local.json
+config/mcporter.json
 
 # Repo hygiene scratch docs
 REPO_HYGIENE_*.md
