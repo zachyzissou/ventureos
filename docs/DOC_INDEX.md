@@ -23,6 +23,7 @@
 - **docs/roles/MULTI_AGENT_TEAM.md** – 20-role roster + squad patterns
 - **docs/roles/BUSINESS_UNITS.md** – business unit registry + scaling rules
 - **docs/roles/MISSION_CONTROL.md** – mission lifecycle, gates, and artifact standards
+- **docs/roles/MISSION_CONTROL_COMMANDS.md** – command vocabulary for orchestration (DM + Mission Control channel)
 - **docs/roles/WORKFLOW_COMMANDS.md** – 1‑command workflows, interface pattern, safety gates
 - **docs/roles/WORKFLOW_MACROS.md** – reusable workflow macro schema, storage, execution semantics
 
