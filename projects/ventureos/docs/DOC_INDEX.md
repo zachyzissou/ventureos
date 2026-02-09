@@ -60,6 +60,7 @@
 - **docs/ops/SLA_POLICY.md** – SLA tiers (time‑to‑ack/run, retries, escalation defaults)
 - **docs/ops/CONTEXT_REFRESH.md** – context refresh schedule, jobs, retention/archival rules
 - **docs/ops/MODEL_STRATEGY.md** – cheap vs strong model guidance
+- **docs/ops/MODEL_ROUTING_POLICY.md** – tiered routing + default local model (Tier 1)
 - **docs/ops/MODEL_ROUTING_POLICY.md** – routing criteria, cost gates, fallback rules
 - **docs/ops/MODEL_FALLBACK_CHAIN.md** – fallback order, triggers, retry/timeout interaction, escalation
 - **docs/ops/BUDGET_POLICY.md** – thresholds + caps
