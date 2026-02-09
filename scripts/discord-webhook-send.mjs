@@ -57,25 +57,30 @@ async function main() {
   if (!webhookUrl) die(`No webhook configured for channel ${channelId}`);
 
   const text = args.text;
+  const textFile = args["text-file"] || args.textFile;
   const title = args.title;
   const description = args.description;
+  const descriptionFile = args["description-file"] || args.descriptionFile;
 
-  if (!text && !title && !description) {
-    die("Provide either --text or (--title and/or --description)");
+  const resolvedText = textFile ? fs.readFileSync(String(textFile), "utf8") : text;
+  const resolvedDescription = descriptionFile ? fs.readFileSync(String(descriptionFile), "utf8") : description;
+
+  if (!resolvedText && !title && !resolvedDescription) {
+    die("Provide either --text/--text-file or (--title and/or --description/--description-file)");
   }
 
   /** @type {any} */
   const payload = {};
 
-  if (text) {
-    payload.content = text;
+  if (resolvedText) {
+    payload.content = resolvedText;
   }
 
-  if (title || description) {
+  if (title || resolvedDescription) {
     payload.embeds = [
       {
         ...(title ? { title } : {}),
-        ...(description ? { description } : {}),
+        ...(resolvedDescription ? { description: resolvedDescription } : {}),
         ...(args.color ? { color: hexColorToInt(args.color) } : {}),
       },
     ];

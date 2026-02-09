@@ -13,6 +13,7 @@
 - **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitLab-first work contract (Issue → Evidence → MR/commit → Verify → Close)
 - **docs/process/LABEL_PROTOCOL.md** – how workflow labels are applied/removed
 - **docs/process/GITLAB_PROJECT_RESOLVER.md** – how Mission Control chooses which GitLab project to create issues in
+- **docs/process/DELEGATION_MODEL.md** – delegation ladder + approval rules (Mode B)
 - **docs/process/STATUS.md** – current implementation status
 - **docs/process/ROADMAP.md** – phased roadmap
 - **docs/process/PROJECT_PLAN.md** – milestones + success metrics
@@ -23,6 +24,7 @@
 - **docs/roles/MULTI_AGENT_TEAM.md** – 20-role roster + squad patterns
 - **docs/roles/BUSINESS_UNITS.md** – business unit registry + scaling rules
 - **docs/roles/MISSION_CONTROL.md** – mission lifecycle, gates, and artifact standards
+- **docs/roles/MISSION_CONTROL_COMMANDS.md** – command vocabulary for orchestration (DM + Mission Control channel)
 - **docs/roles/WORKFLOW_COMMANDS.md** – 1‑command workflows, interface pattern, safety gates
 - **docs/roles/WORKFLOW_MACROS.md** – reusable workflow macro schema, storage, execution semantics
 
