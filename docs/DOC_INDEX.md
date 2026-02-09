@@ -12,6 +12,7 @@
 - **docs/roles/REPO_CHARTER.md** – VentureOS charter + scope boundaries
 - **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitLab-first work contract (Issue → Evidence → MR/commit → Verify → Close)
 - **docs/process/LABEL_PROTOCOL.md** – how workflow labels are applied/removed
+- **docs/process/GITLAB_PROJECT_RESOLVER.md** – how Mission Control chooses which GitLab project to create issues in
 - **docs/process/STATUS.md** – current implementation status
 - **docs/process/ROADMAP.md** – phased roadmap
 - **docs/process/PROJECT_PLAN.md** – milestones + success metrics
