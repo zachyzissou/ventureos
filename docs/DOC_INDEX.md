@@ -1,36 +1,68 @@
 # Documentation Index
 
+## Folder Layout
+- **docs/roles/** – VentureOS org, roles, mission control, workflow primitives
+- **docs/process/** – plans, specs, architecture, implementation, QA
+- **docs/ops/** – policy, reliability, budgets, runbooks
+- **docs/templates/** – starter templates + schemas
+- **docs/archive/** – research notes + test results
+
 ## Core
 - **README.md** – project overview
-- **REPO_CHARTER.md** – VentureOS charter + scope boundaries
-- **STATUS.md** – current implementation status
-- **ROADMAP.md** – phased roadmap
-- **PROJECT_PLAN.md** – milestones + success metrics
-- **FEATURE_BACKLOG.md** – backlog by workstream
+- **docs/roles/REPO_CHARTER.md** – VentureOS charter + scope boundaries
+- **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitLab-first work contract (Issue → Evidence → MR/commit → Verify → Close)
+- **docs/process/LABEL_PROTOCOL.md** – how workflow labels are applied/removed
+- **docs/process/GITLAB_PROJECT_RESOLVER.md** – how Mission Control chooses which GitLab project to create issues in
+- **docs/process/STATUS.md** – current implementation status
+- **docs/process/ROADMAP.md** – phased roadmap
+- **docs/process/PROJECT_PLAN.md** – milestones + success metrics
+- **docs/process/FEATURE_BACKLOG.md** – backlog by workstream
 
 ## VentureOS / Multi-Agent Orchestration
-- **VENTURE_OS.md** – venture studio OS overview (system vs persona)
-- **MULTI_AGENT_TEAM.md** – 20-role roster + squad patterns
-- **BUSINESS_UNITS.md** – business unit registry + scaling rules
-- **MISSION_CONTROL.md** – mission lifecycle, gates, and artifact standards
-- **WORKFLOW_COMMANDS.md** – 1‑command workflows, interface pattern, safety gates
-- **WORKFLOW_MACROS.md** – reusable workflow macro schema, storage, execution semantics
+- **docs/roles/VENTURE_OS.md** – venture studio OS overview (system vs persona)
+- **docs/roles/MULTI_AGENT_TEAM.md** – 20-role roster + squad patterns
+- **docs/roles/BUSINESS_UNITS.md** – business unit registry + scaling rules
+- **docs/roles/MISSION_CONTROL.md** – mission lifecycle, gates, and artifact standards
+- **docs/roles/WORKFLOW_COMMANDS.md** – 1‑command workflows, interface pattern, safety gates
+- **docs/roles/WORKFLOW_MACROS.md** – reusable workflow macro schema, storage, execution semantics
+
+### Role Cards (20)
+- **docs/roles/helmsman.md** – portfolio strategist (CEO office)
+- **docs/roles/venture.md** – NewCo incubator
+- **docs/roles/oracle.md** – research (market/competitive/tech)
+- **docs/roles/ledger.md** – finance & bizops (unit economics)
+- **docs/roles/comms.md** – brand/growth/editorial (draft‑first)
+- **docs/roles/producer.md** – PMO/operations lead
+- **docs/roles/echo.md** – mission control / chief of staff
+- **docs/roles/sentinel.md** – governance/safety/IP‑provenance
+- **docs/roles/archivist.md** – knowledge & process librarian
+- **docs/roles/atlas.md** – infrastructure & modelops
+- **docs/roles/synth.md** – AI factory architect (multi‑modal)
+- **docs/roles/verifier.md** – QA / release gatekeeper
+- **docs/roles/forge.md** – Unity technical director
+- **docs/roles/builder.md** – implementation engineer
+- **docs/roles/toolsmith.md** – pipeline engineer (tools/automation)
+- **docs/roles/interface.md** – UX/UI director
+- **docs/roles/mechanic.md** – systems designer
+- **docs/roles/muse.md** – art director
+- **docs/roles/glyph.md** – narrative/world/copy
+- **docs/roles/foley.md** – audio director
 
 ## Policy Docs (repo copies; to be placed in workspace root)
-- **WORK_TRACKING.md** – GitLab issues/MRs as canonical tracker + evidence standards
-- **GOALS_CONSTRAINTS.md** – goals, constraints, comms preferences
-- **GUARDRAILS.md** – explicit prohibitions + allowed actions
-- **PROACTIVE_MODE.md** – proactive window + escalation rules
-- **PROACTIVE_ENGINE.md** – SLA tiers + scheduler rules (Phase 2)
-- **PROACTIVE_RULES.md** – rule schema, windows, cooldowns, escalation, safety gates
-- **SLA_POLICY.md** – SLA tiers (time‑to‑ack/run, retries, escalation defaults)
-- **CONTEXT_REFRESH.md** – context refresh schedule, jobs, retention/archival rules
-- **MODEL_STRATEGY.md** – cheap vs strong model guidance
-- **MODEL_ROUTING_POLICY.md** – routing criteria, cost gates, fallback rules
-- **MODEL_FALLBACK_CHAIN.md** – fallback order, triggers, retry/timeout interaction, escalation
-- **BUDGET_POLICY.md** – thresholds + caps
-- **COST_BUDGETS.md** – thresholds, alert routing, enforcement actions, reporting cadence
-- **OPS_RUNBOOK.md** – incident response tiers
+- **docs/ops/WORK_TRACKING.md** – GitLab issues/MRs as canonical tracker + evidence standards
+- **docs/ops/GOALS_CONSTRAINTS.md** – goals, constraints, comms preferences
+- **docs/ops/GUARDRAILS.md** – explicit prohibitions + allowed actions
+- **docs/ops/PROACTIVE_MODE.md** – proactive window + escalation rules
+- **docs/ops/PROACTIVE_ENGINE.md** – SLA tiers + scheduler rules (Phase 2)
+- **docs/ops/PROACTIVE_RULES.md** – rule schema, windows, cooldowns, escalation, safety gates
+- **docs/ops/SLA_POLICY.md** – SLA tiers (time‑to‑ack/run, retries, escalation defaults)
+- **docs/ops/CONTEXT_REFRESH.md** – context refresh schedule, jobs, retention/archival rules
+- **docs/ops/MODEL_STRATEGY.md** – cheap vs strong model guidance
+- **docs/ops/MODEL_ROUTING_POLICY.md** – routing criteria, cost gates, fallback rules
+- **docs/ops/MODEL_FALLBACK_CHAIN.md** – fallback order, triggers, retry/timeout interaction, escalation
+- **docs/ops/BUDGET_POLICY.md** – thresholds + caps
+- **docs/ops/COST_BUDGETS.md** – thresholds, alert routing, enforcement actions, reporting cadence
+- **docs/ops/OPS_RUNBOOK.md** – incident response tiers
 
 ## Templates (workspace starters)
 - **docs/templates/AGENTS.json** – AGENTS policy wiring template
@@ -40,40 +72,48 @@
 - **docs/templates/mission-runner.md** – mission runner workflow template
 - **docs/templates/role-card.md** – role card template
 - **docs/templates/business-unit-registry.json** – business unit registry template
+- **docs/templates/gitlab-issue-template.md** – issue template (Goal/AC/Evidence/Close-out)
+- **docs/templates/gitlab-mr-template.md** – MR template (Issue link/verification)
 
 ## Implementation Design
-- **REQUIREMENTS.md** – detailed functional + non‑functional requirements
-- **ARCHITECTURE.md** – system design & data flow
-- **CONFIG_PLAN.md** – file changes, directories, config guidance
-- **CONFIG_CHANGE_SAFETY.md** – safe config change protocol (Codex‑assisted)
-- **GATEWAY_POSTURES.md** – supported gateway configurations + firewall guidance
-- **RELIABILITY_PLAYBOOK.md** – retry/timeout/taxonomy/degradation standards
-- **QUALITY_CHECKS.md** – output QA checks (format + completeness)
-- **FEEDBACK_LOOP.md** – feedback capture loop (thumbs up/down, revision requests, logging)
-- **STYLE_TEMPLATES.md** – standard templates for summaries, reports, incident notes, decision memos
-- **DEGRADATION_POLICY.md** – degradation tiers, fallback behaviors, user messaging + approvals
-- **TIMEOUT_POLICY.md** – connect/read/total timeout standards, overrides, logging
-- **RETRY_POLICY.md** – retry tiers, backoff + jitter, cooldown, idempotency rules
-- **BATCH_PROCESSING.md** – batch manifest, validation, chunking, retries, rollback + queue integration
-- **ERROR_TAXONOMY.md** – detailed P0/P1/P2 criteria, response, alerting
-- **SCRIPT_SPECS.md** – script‑level specs (backup, monitor, logs, quota)
-- **CRON_SPECS.md** – cron job definitions & schedules
-- **METRICS_PLAN.md** – KPI definitions + collection approach
-- **TEST_PLAN.md** – verification & test cases
-- **ROLLOUT_PLAN.md** – phased rollout + rollback
-- **RISK_REGISTER.md** – risks, mitigation, owner
-- **DECISIONS.md** – locked defaults + ADRs
+- **docs/process/REQUIREMENTS.md** – detailed functional + non‑functional requirements
+- **docs/process/API_Core_CRUD.md** – core CRUD endpoints + API conventions (M1)
+- **docs/process/API_Documents_Notes.md** – documents + notes endpoints (versioning, tagging, search, soft‑delete) (M1)
+- **docs/process/openapi-core.yaml** – OpenAPI (core)
+- **docs/process/openapi-docs-notes.yaml** – OpenAPI (documents + notes)
+- **docs/process/openapi-events.yaml** – OpenAPI (domain events + event store)
+- **docs/process/DOMAIN_EVENTS_EVENT_STORE.md** – domain event envelope, event store, consumers, replay, DLQ, retention
+- **docs/process/ARCHITECTURE.md** – system design & data flow
+- **docs/process/MISSION_RUNTIME_STATE_MACHINE.md** – mission runtime + task queue state machine, SLA + telemetry
+- **docs/process/CONFIG_PLAN.md** – file changes, directories, config guidance
+- **docs/process/CONFIG_CHANGE_SAFETY.md** – safe config change protocol (Codex‑assisted)
+- **docs/process/GATEWAY_POSTURES.md** – supported gateway configurations + firewall guidance
+- **docs/ops/RELIABILITY_PLAYBOOK.md** – retry/timeout/taxonomy/degradation standards
+- **docs/process/QUALITY_CHECKS.md** – output QA checks (format + completeness)
+- **docs/process/FEEDBACK_LOOP.md** – feedback capture loop (thumbs up/down, revision requests, logging)
+- **docs/process/STYLE_TEMPLATES.md** – standard templates for summaries, reports, incident notes, decision memos
+- **docs/ops/DEGRADATION_POLICY.md** – degradation tiers, fallback behaviors, user messaging + approvals
+- **docs/ops/TIMEOUT_POLICY.md** – connect/read/total timeout standards, overrides, logging
+- **docs/ops/RETRY_POLICY.md** – retry tiers, backoff + jitter, cooldown, idempotency rules
+- **docs/ops/ERROR_TAXONOMY.md** – detailed P0/P1/P2 criteria, response, alerting
+- **docs/process/SCRIPT_SPECS.md** – script‑level specs (backup, monitor, logs, quota)
+- **docs/process/CRON_SPECS.md** – cron job definitions & schedules
+- **docs/process/METRICS_PLAN.md** – KPI definitions + collection approach
+- **docs/process/TEST_PLAN.md** – verification & test cases
+- **docs/process/ROLLOUT_PLAN.md** – phased rollout + rollback
+- **docs/process/RISK_REGISTER.md** – risks, mitigation, owner
+- **docs/process/DECISIONS.md** – locked defaults + ADRs
 
 ## Execution Packages
-- **IMPLEMENTATION_SPEC.md** – high‑level spec
-- **IMPLEMENTATION_TASKS.md** – task breakdown + acceptance criteria
-- **IMPLEMENTATION_READY.md** – implementation‑ready package (defaults locked)
-- **TEST_RESULTS_2026-02-07.md** – full script test run outputs
+- **docs/process/IMPLEMENTATION_SPEC.md** – high‑level spec
+- **docs/process/IMPLEMENTATION_TASKS.md** – task breakdown + acceptance criteria
+- **docs/process/IMPLEMENTATION_READY.md** – implementation‑ready package (defaults locked)
+- **docs/archive/TEST_RESULTS_2026-02-07.md** – full script test run outputs
 
 ## Ops / Decommissioning
-- **OPENPROJECT_DECOMMISSION.md** – checklist + verification steps to remove OpenProject integration
+- **docs/ops/OPENPROJECT_DECOMMISSION.md** – checklist + verification steps to remove OpenProject integration
 
 ## Research Notes
-- **TWITTER_CONFIG_RESEARCH_2026-02-07.md** – external config patterns & learnings
-- **VOXYZ_CLOSED_LOOP_NOTES_2026-02-07.md** – closed‑loop execution patterns
-- **SPACEPIXEL_THREE_LAYER_MEMORY_NOTES_2026-02-07.md** – three‑layer memory system
+- **docs/archive/TWITTER_CONFIG_RESEARCH_2026-02-07.md** – external config patterns & learnings
+- **docs/archive/VOXYZ_CLOSED_LOOP_NOTES_2026-02-07.md** – closed‑loop execution patterns
+- **docs/archive/SPACEPIXEL_THREE_LAYER_MEMORY_NOTES_2026-02-07.md** – three‑layer memory system
