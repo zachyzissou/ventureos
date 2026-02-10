@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 from src.config import ensure_state_file, get_config_path, get_log_path, load_config
 from src.scoring.relevance import normalize_weights, resolve_draft_threshold, weighted_score
+from src.scoring.approval_tiers import ApprovalTierManager
 from src.state.store import load_state, update_state
 from ledger import StantonTimesLedger
 
@@ -34,6 +35,10 @@ class StantonTimesContentProcessor:
         self.system_monitor = StantonTimesSystemMonitor(config_path)
         self.ledger = StantonTimesLedger()
         self.style_guide = TweetStyleGuide()
+        
+        # Initialize approval tier manager
+        auto_approve_config = (self.config.get("content_intelligence", {}) or {}).get("auto_approve", {})
+        self.approval_tiers = ApprovalTierManager(auto_approve_config)
 
         # Load state and setup logging
         self.state = load_state(self.state_file_path)
@@ -296,8 +301,21 @@ class StantonTimesContentProcessor:
             if self.ledger.recent_draft_similar(tweet_draft):
                 tweet_draft = f"{tweet_draft} (more soon)"
 
+            # Check approval tier BEFORE posting for review
+            approval_tier, tier_reason = self.approval_tiers.determine_tier(content, score)
+            
+            # Set draft status based on tier
+            if approval_tier == "auto_approve":
+                draft_status = "auto_approved"
+                self.logger.info(f"Auto-approved: {tier_reason}")
+            else:
+                # Tier 2 (batch_digest) still goes to posted_for_review for now
+                # The digest logic will be a separate enhancement
+                draft_status = "posted_for_review"
+                self.logger.info(f"Pending review: {tier_reason}")
+
             # Update state
-            self._update_state(content, score, tweet_draft, thread_draft)
+            self._update_state(content, score, tweet_draft, thread_draft, draft_status, tier_reason)
 
             # Mark ledger
             self.ledger.mark_draft(ledger_item.item_id, ledger_item.cluster_id, tweet_draft)
@@ -722,7 +740,15 @@ class StantonTimesContentProcessor:
         raw = f"{content.get('source')}|{content.get('topic')}|{content.get('id', '')}"
         return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
 
-    def _update_state(self, content: Dict[str, Any], score: float, tweet_draft: str, thread_draft: str = ""):
+    def _update_state(
+        self, 
+        content: Dict[str, Any], 
+        score: float, 
+        tweet_draft: str, 
+        thread_draft: str = "",
+        draft_status: str = "posted_for_review",
+        tier_reason: str = ""
+    ):
         """
         Update the state file with processed content
         """
@@ -739,11 +765,14 @@ class StantonTimesContentProcessor:
             "ledger_item_id": content.get('ledger_item_id'),
             "content_score": score,
             "tweet_draft": tweet_draft,
-            "draft_status": "needs_review"
+            "draft_status": draft_status
         }
 
         if thread_draft:
             story["thread_draft"] = thread_draft
+        
+        if tier_reason:
+            story["approval_tier_reason"] = tier_reason
 
         def _apply(state: Dict[str, Any]) -> Dict[str, Any]:
             state.setdefault("pending_stories", [])
