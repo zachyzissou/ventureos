@@ -32,6 +32,7 @@ projects/jav-library/
 projects/slurpnet-security-suite/
 
 # Local secrets / overrides
+.credentials/
 config/*.local.json
 config/mcporter.json
 
