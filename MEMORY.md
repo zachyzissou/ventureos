@@ -3,6 +3,18 @@
 - Updated VentureOS naming strategy documentation
 - Archived 48 legacy project files
 
+## Weekly Synthesis - 2026-02-09
+- Built Screen Innovations Troy shade integration for Home Assistant — 7 SDN cover entities with position tracking via unauthenticated CGI API (`troy.lan:80`)
+- Troy credentials discovered: UI/telnet password `CBC0ntrol4U`, username `Telnet1`
+- Troy CLI script at `skills/homeassistant/scripts/troy.sh` (Python, C4 scale 100=open)
+- HA SSH access configured via Terminal & SSH add-on (key: `~/.ssh/ha_ed25519`)
+- Assigned 101 HA entities to rooms (covers, lights, thermostats, media players)
+- HomeKit Bridge active but most devices in "Default Room" — pending user go-ahead to reorganize
+- Detailed device table and API reference in `memory/2026-02-09-troy-homeassistant.md`
+- StantonTimes fully disabled (LaunchAgents + crontab removed) until draft quality P0s are fixed; auto-approve tiers implemented with high thresholds (official 0.95, trusted 0.98); 6 GitLab issues filed (#10–#15)
+- Multi-agent rollout completed: all 7 role agents now have SOUL/AGENTS; Atlas owns infra/monitoring crons; Echo autonomy rules updated to self-merge and stop asking for approvals
+- Pool lights server LaunchAgent added (survives reboot); user explicitly parked HA/pool-lights work for now
+
 ## Weekly Synthesis - 2026-02-08
 - Routed cron announce outputs to SlurpNet alerts (Discord channel:1466893115460812979); StantonTimes approvals stay in the dedicated approvals channel.
 - VentureOS direction reaffirmed: ~20-agent venture studio OS; **GitLab is source of truth**; Obsidian is *notes* (supporting, not canonical); work must be fully trackable (tickets/evidence) with explicit ping/check-in on completion.
