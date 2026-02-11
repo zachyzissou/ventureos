@@ -1,5 +1,12 @@
 ## Daily Log - 2026-02-11
 - Home Assistant: fixed Middle Bed Samsung TV power reliability by adding explicit wake_on_lan to config and updating `script.watch_roku_middle_bed` to send a magic packet to MAC `f4:dd:06:89:35:75` before power/input; HA core restarted.
+- WHOOP morning check-in: fixed empty `**Suggestions:**` header in `skills/whoop/bin/whoop-morning.mjs` (collect into array, skip header if empty). Added empty-section-header rule to Echo SOUL.md and Morning Briefing cron prompt.
+- rebuild-prompts.mjs: fixed gateway PID detection — macOS `pgrep` can't see `openclaw-gateway`; switched to `ps -eo pid,comm | grep 'openclaw-gateway'`.
+- HA scripts created: `script.watch_tv_theater` (AppleTV Theater source) and `script.watch_tv_living` (AppleTV Living source). Theater script intentionally excludes lighting (separate scene later).
+- Bloom MR !40 still has merge conflicts — user aware, no action yet.
+- Multi-agent audit: Echo SOUL.md updated to forbid curl/hardcoded tokens in dispatches, use mcporter gitlab instead. Reset crashed Sentinel + confused Verifier sessions.
+- HA IP changed: 192.168.225.133 → 192.168.225.132 (credentials updated).
+- HA HomeKit/Siri: created automation `middle_bed_source_roku` — triggers on source change to "Roku 2", handles WOL + TV power + KEY_HDMI1 (direct, not cycling). Roku is on HDMI 1. Siri "watch Roku in the middle bed" works.
 
 ## Weekly Synthesis - 2026-02-07
 - Consolidated 1217 task runs from StantonTimes
