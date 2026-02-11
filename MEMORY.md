@@ -1,3 +1,6 @@
+## Daily Log - 2026-02-11
+- Home Assistant: fixed Middle Bed Samsung TV power reliability by adding explicit wake_on_lan to config and updating `script.watch_roku_middle_bed` to send a magic packet to MAC `f4:dd:06:89:35:75` before power/input; HA core restarted.
+
 ## Weekly Synthesis - 2026-02-07
 - Consolidated 1217 task runs from StantonTimes
 - Updated VentureOS naming strategy documentation
