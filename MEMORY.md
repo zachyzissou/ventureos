@@ -5,8 +5,12 @@
 - All 9 cameras in HomeKit accessory mode (ports 21074-21082), `video_codec: copy` (H.264 passthrough), linked motion sensors, all `state: loaded`.
 - Camera Hub consolidation: 9 cameras now through single NVR ONVIF entry `01KH9GM4J21KZVFZQZNEFMKSE3` (entities: `camera.n16nrx_profile_X_0`). ffmpeg args applied.
 - Front doorbell (Control4 C4-VDB-E, 192.168.225.131): ONVIF entry `01KH9JE5EH9DJ6V2AEBDHED7XZ`, HomeKit accessory `01KH9JR0V6NTGNCHZR155HJF36` (port 21073, unpaired). Doorbell press chain: ONVIF DigitalInput → automation → `input_boolean.front_doorbell_pressed` → HomeKit notification.
-- Patio heaters: created 4 template climate entities mapping `light.patio_heater_N_patio_heater_N` brightness (0-255) to temperature (0-100). Climate domain chosen to avoid Siri "turn off lights/fans" group commands. Heater light entities excluded from HomeKit bridge. HA backup slug `7bd5ec99`.
-- Pending: HA core restart (blocked by job queue contention), then verify climate entities + pair doorbell + test doorbell press chain + clean up duplicate heater names.
+- Patio heaters: HA template integration does NOT support climate entities — used template **switches** instead (heaters are on/off only). 4 `switch.patio_heater_*` entities created, light entities hidden (`hidden_by: user`), 6 patio heat scripts excluded from HomeKit bridge.
+- Middle Bed TV: simplified to pure Control4 path — `select_source` handles power on + input natively. Samsung TV integration **disabled** (websocket conflict with C4). Removed redundant automation + 3 TV scripts. Home app controls TV via C4 zone directly.
+- Control4 HomeKit state bug: C4 integration returns `idle` (not `off`) when powered down → HomeKit shows TVs as "on". Hardcoded in `control4/media_player.py`. Fix: universal media player wrapper (approved, not yet implemented).
+- Samsung TV ref: QN55QN90DAFXZA at 192.168.225.103, MAC f4:dd:06:89:35:75, config entry `01KH5R3B7ZX3TC1ZTW04BY24NZ` (disabled).
+- HA WebSocket API required for entity registry updates (REST API returns 404). Python + websockets from Mac Studio.
+- Pending: pair doorbell in Home app, test doorbell chain, implement universal media player wrappers for correct TV on/off state, disable 6 `not_loaded` HomeKit TV accessories.
 - Details in `memory/2026-02-12.md`.
 
 ## Daily Log - 2026-02-11
