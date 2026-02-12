@@ -3,7 +3,10 @@
 - Created `scripts/cron-health-check.sh` + cron job (id: `59e58b7a-f287-478e-b2d9-1a0c092bae56`, 30min, atlas, report-only).
 - HomeKit cameras: diagnosed live stream failure — Pi CPU bottleneck from ffmpeg `-pred 1`. Fix: `-preset ultrafast -tune zerolatency` extra_arguments (confirmed working on one camera, pending rollout to all 9).
 - All 9 cameras in HomeKit accessory mode (ports 21074-21082), `video_codec: copy` (H.264 passthrough), linked motion sensors, all `state: loaded`.
-- Pending: apply ffmpeg args to remaining 8 ONVIF entries; investigate SRTP/codec compat if streams still fail; consider sub-stream or NVR H.264 codec change as fallbacks.
+- Camera Hub consolidation: 9 cameras now through single NVR ONVIF entry `01KH9GM4J21KZVFZQZNEFMKSE3` (entities: `camera.n16nrx_profile_X_0`). ffmpeg args applied.
+- Front doorbell (Control4 C4-VDB-E, 192.168.225.131): ONVIF entry `01KH9JE5EH9DJ6V2AEBDHED7XZ`, HomeKit accessory `01KH9JR0V6NTGNCHZR155HJF36` (port 21073, unpaired). Doorbell press chain: ONVIF DigitalInput → automation → `input_boolean.front_doorbell_pressed` → HomeKit notification.
+- Patio heaters: created 4 template climate entities mapping `light.patio_heater_N_patio_heater_N` brightness (0-255) to temperature (0-100). Climate domain chosen to avoid Siri "turn off lights/fans" group commands. Heater light entities excluded from HomeKit bridge. HA backup slug `7bd5ec99`.
+- Pending: HA core restart (blocked by job queue contention), then verify climate entities + pair doorbell + test doorbell press chain + clean up duplicate heater names.
 - Details in `memory/2026-02-12.md`.
 
 ## Daily Log - 2026-02-11
