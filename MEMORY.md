@@ -7,6 +7,11 @@
 - Multi-agent audit: Echo SOUL.md updated to forbid curl/hardcoded tokens in dispatches, use mcporter gitlab instead. Reset crashed Sentinel + confused Verifier sessions.
 - HA IP changed: 192.168.225.133 → 192.168.225.132 (credentials updated).
 - HA HomeKit/Siri: created automation `middle_bed_source_roku` — triggers on source change to "Roku 2", handles WOL + TV power + KEY_HDMI1 (direct, not cycling). Roku is on HDMI 1. Siri "watch Roku in the middle bed" works.
+- HomeKit bridge overhaul: trimmed domains 14→8, excluded 22 entities, reset corrupted bridge pairing (entry_id `01KH0PTC9WSYR3RCYCGNXXR7T9`). Error "Could not change settings" resolved.
+- Entity area propagation: jq script applied device areas → entity `area_id` in `core.entity_registry` (113→277 entities). HomeKit can't auto-assign rooms (HAP limitation); manual only.
+- Roku Ultra device: renamed "Roke Middle Bed" → "Roku Middle Bed", area corrected patio→middle_bed.
+- Peekaboo: Home app is Catalyst (iPad) app — AX automation impossible. Peekaboo Accessibility detection has a bug (shows ❌ despite being granted).
+- Speco Blue cameras: NVR at .100 (Dahua-based), 9 cameras on 192.168.225.x (OUI `5c:f2:07`). RTSP port 9008, format `profile1`/`profile2`. **Blocked: 401 Unauthorized** — need credentials from user.
 
 ## Weekly Synthesis - 2026-02-07
 - Consolidated 1217 task runs from StantonTimes
