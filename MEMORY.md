@@ -11,7 +11,15 @@
 - Entity area propagation: jq script applied device areas → entity `area_id` in `core.entity_registry` (113→277 entities). HomeKit can't auto-assign rooms (HAP limitation); manual only.
 - Roku Ultra device: renamed "Roke Middle Bed" → "Roku Middle Bed", area corrected patio→middle_bed.
 - Peekaboo: Home app is Catalyst (iPad) app — AX automation impossible. Peekaboo Accessibility detection has a bug (shows ❌ despite being granted).
-- Speco Blue cameras: NVR at .100 (Dahua-based), 9 cameras on 192.168.225.x (OUI `5c:f2:07`). RTSP port 9008, format `profile1`/`profile2`. **Blocked: 401 Unauthorized** — need credentials from user.
+- Speco Blue cameras: NVR + 9 cameras configured in HA. Details in CREDENTIALS.md.
+- ONVIF integration complete: all 9 cameras streaming in HA (admin creds), 27 entities renamed. Camera models: O4VT2G/O4FT2/O4VT2.
+- HomeKit bridge camera attempt failed — architectural limitation (bridge mode can't stream video). Accessory mode required (like TVs). Awaiting user approval.
+- config_entries corruption: SSH pipe-through-jq truncated file 42→6 entries; recovered from `/tmp/config_entries_cam.json`. **Rule: use HA REST API only, never SSH file editing.**
+- HA options flow API: `/api/config/config_entries/options/flow` — multi-step (init→exclude→cameras). Used for all bridge config changes now.
+- Details in `memory/2026-02-11-homekit-cameras.md`.
+- Agent rename: Mission Control "Echo" → "Nexus" (agent ID stays `echo`). Discord channel renamed `#echo-mission-control` → `#nexus-mission-control`. SOUL.md + gateway config updated.
+- Dispatch routing fix: added `subagents.allowAgents` (all 8 agent IDs) to both `main` and `echo` agents — without this, `agents_list` returned empty and `sessions_spawn` couldn't target team agents. Not yet verified end-to-end.
+- Discord channel ID reference saved in `memory/2026-02-11.md`.
 
 ## Weekly Synthesis - 2026-02-07
 - Consolidated 1217 task runs from StantonTimes
@@ -20,7 +28,7 @@
 
 ## Weekly Synthesis - 2026-02-09
 - Built Screen Innovations Troy shade integration for Home Assistant — 7 SDN cover entities with position tracking via unauthenticated CGI API (`troy.lan:80`)
-- Troy credentials discovered: UI/telnet password `CBC0ntrol4U`, username `Telnet1`
+- Troy credentials discovered — stored in CREDENTIALS.md (mode 600)
 - Troy CLI script at `skills/homeassistant/scripts/troy.sh` (Python, C4 scale 100=open)
 - HA SSH access configured via Terminal & SSH add-on (key: `~/.ssh/ha_ed25519`)
 - Assigned 101 HA entities to rooms (covers, lights, thermostats, media players)
