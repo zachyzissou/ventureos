@@ -1,3 +1,11 @@
+## Daily Log - 2026-02-12
+- Cron self-healing: Nexus (Mission Control) rogue-disabled healthy `memory-facts-extraction` job — re-enabled it, added CRITICAL cron rules to Nexus SOUL.md forbidding agents from disabling jobs without user approval.
+- Created `scripts/cron-health-check.sh` + cron job (id: `59e58b7a-f287-478e-b2d9-1a0c092bae56`, 30min, atlas, report-only).
+- HomeKit cameras: diagnosed live stream failure — Pi CPU bottleneck from ffmpeg `-pred 1`. Fix: `-preset ultrafast -tune zerolatency` extra_arguments (confirmed working on one camera, pending rollout to all 9).
+- All 9 cameras in HomeKit accessory mode (ports 21074-21082), `video_codec: copy` (H.264 passthrough), linked motion sensors, all `state: loaded`.
+- Pending: apply ffmpeg args to remaining 8 ONVIF entries; investigate SRTP/codec compat if streams still fail; consider sub-stream or NVR H.264 codec change as fallbacks.
+- Details in `memory/2026-02-12.md`.
+
 ## Daily Log - 2026-02-11
 - Home Assistant: fixed Middle Bed Samsung TV power reliability by adding explicit wake_on_lan to config and updating `script.watch_roku_middle_bed` to send a magic packet to MAC `f4:dd:06:89:35:75` before power/input; HA core restarted.
 - WHOOP morning check-in: fixed empty `**Suggestions:**` header in `skills/whoop/bin/whoop-morning.mjs` (collect into array, skip header if empty). Added empty-section-header rule to Echo SOUL.md and Morning Briefing cron prompt.
