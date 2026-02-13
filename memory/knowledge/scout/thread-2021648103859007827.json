@@ -1,0 +1,101 @@
+[
+  {
+    "id": "2021648103859007827",
+    "text": "Want to try @openclaw with a Universal Profile?\nHere is a guide made by @LUKSOAgent  👈😃👉\n\nhttps://t.co/DReC1YW9h7",
+    "createdAt": "Wed Feb 11 18:10:43 +0000 2026",
+    "replyCount": 5,
+    "retweetCount": 17,
+    "likeCount": 96,
+    "conversationId": "2021648103859007827",
+    "author": {
+      "username": "feindura",
+      "name": "Fabian Vogelsteller"
+    },
+    "authorId": "161071669"
+  },
+  {
+    "id": "2021655597209509955",
+    "text": "@feindura @openclaw @LUKSOAgent Really wanna do it but only with a local LLM. Sadly rtx3050 and 64gb ram is now way near enough.",
+    "createdAt": "Wed Feb 11 18:40:29 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 2,
+    "conversationId": "2021648103859007827",
+    "inReplyToStatusId": "2021648103859007827",
+    "author": {
+      "username": "Cryptovoxels1",
+      "name": "Ferroresonance 🆙"
+    },
+    "authorId": "1105399227637735424"
+  },
+  {
+    "id": "2021683588656177492",
+    "text": "@feindura @lukso_io @openclaw @LUKSOAgent https://t.co/RDIM9E5rDe",
+    "createdAt": "Wed Feb 11 20:31:43 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2021648103859007827",
+    "inReplyToStatusId": "2021648103859007827",
+    "author": {
+      "username": "Bertl_XKX",
+      "name": "Orbis lacteus 🆙"
+    },
+    "authorId": "1616083289613242371",
+    "media": [
+      {
+        "type": "animated_gif",
+        "url": "https://pbs.twimg.com/tweet_video_thumb/HA52gXgXYAA38O9.jpg",
+        "width": 220,
+        "height": 220,
+        "previewUrl": "https://pbs.twimg.com/tweet_video_thumb/HA52gXgXYAA38O9.jpg:small",
+        "videoUrl": "https://video.twimg.com/tweet_video/HA52gXgXYAA38O9.mp4"
+      }
+    ]
+  },
+  {
+    "id": "2021713646661841259",
+    "text": "@feindura @openclaw @LUKSOAgent Thanks!",
+    "createdAt": "Wed Feb 11 22:31:09 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2021648103859007827",
+    "inReplyToStatusId": "2021648103859007827",
+    "author": {
+      "username": "Alts_Anonymous",
+      "name": "Alts Anonymous 🧐 🆙"
+    },
+    "authorId": "1002416271609102337"
+  },
+  {
+    "id": "2021730567566540920",
+    "text": "@feindura @openclaw @LUKSOAgent just ordered 3 mac minis...",
+    "createdAt": "Wed Feb 11 23:38:23 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2021648103859007827",
+    "inReplyToStatusId": "2021648103859007827",
+    "author": {
+      "username": "stevenefowler",
+      "name": "steven eric fowler"
+    },
+    "authorId": "21321475"
+  },
+  {
+    "id": "2021767437717582124",
+    "text": "@feindura @openclaw @LUKSOAgent the best projects always come with a clear onboarding guide. props to the team for making it easy for the new folks.",
+    "createdAt": "Thu Feb 12 02:04:54 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2021648103859007827",
+    "inReplyToStatusId": "2021648103859007827",
+    "author": {
+      "username": "Gro3_",
+      "name": "Gro3"
+    },
+    "authorId": "1831307064087298048"
+  }
+]

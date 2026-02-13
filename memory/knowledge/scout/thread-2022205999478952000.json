@@ -1,0 +1,346 @@
+[
+  {
+    "id": "2022205999478952000",
+    "text": "This AI destroys Clawdbot, and nobody's paying attention - here's how to set it up\n\nTLDR: this AI is 10x BETTER than Clawdbot, and reading this now will put you ahead of 99% of people.\n\nThe reality is that Openclaw (clawd) has major bottlenecks that make it difficult for the average person to extract any value.\n\nIt's hard to set up, expensive to run, and has critical security risks.\n\nIf you've actually set up Openclaw, you know this to be true.\n\nThis article is the solution to all of Openclaw's problems.\n\nI'm about to show you how to get all the benefits of agentic automation with zero complex setup, at no cost, and with 100% security.\n\nAt the very end of this article, I give this tool a weighted score of 1-10 across various categories - accessibility, value, impact, and privacy/security.\n\nSpoiler alert: it ranked higher than Openclaw on most - stick around until the end to see my official ratings versus Openclaw.\n\nContents\n\nl: Introduction\n\nll: Set up & Best Practices\n\nlll: Real Workflows (exact prompts included)\n\nIV: Valuable Tools & Resources\n\nV: Final Thoughts\n\n---\n\n## Introduction\n\nSo, what AI tool am I talking about?\n\nManusAI.\n\nIf you've experimented with Manus before, you know how good it is, and I'm about to show you how to further skyrocket your productivity beyond what you thought was possible.\n\nFor those who've never tested Manus before, think of it this way:\n\nChatGPT tells you what to do.\n\nManus takes action for you.\n\nIt can edit Google Docs/Spreadsheets, schedule automations, vibe code apps, conduct deep research, and much more.\n\nThis is your all-in-one personal AI assistant that lives on your computer with no terminal installation like Openclaw.\n\nGetting Started\n\n1. Head to https:// manus. im/app\n\n2. Create Account\n\n3. Done\n\nIt's that simple.\n\nOnce you have an account, you'll be greeted by a chatbox similar to those on other AI platforms.\n\nNow, you can start prompting Manus to do things for you - feel free to start testing.\n\nIf you feel lost on what to use Manus for, don't worry - in section three, I'll show you real workflows with prompts you can copy/paste right now.\n\n---\n\n## Set up & Best Practices - Getting the most out of Manus (5 tips)\n\n1. How to pick your model - model selection matrix:\n\nManus 1.6 Lite: for everyday tasks (cheap)\n\nManus 1.6: agent for \"medium\" tasks (affordable)\n\nManus 1.6 Max: for complex workflows - vibe coding, design, etc. (expensive)\n\n2.     Prompting 101\n\nHow to properly prompt agentic Manus models.\n\nFor me, I've found this prompting structure to be extremely reliable:\n\n[Role] + [Agentic Task] + [Steps] + [Output format]\n\nExample: Act as an Excel spreadsheet expert. I need you to edit this spreadsheet [paste link]. I want you to [insert tasks] and export the new spreadsheet as a Google spreadsheet instead of an Excel file.\n\nMost people don't know this, but Manus also has a massive prompt library on the homepage.\n\nTake advantage of these pre-built prompts.\n\n3.     Connectors\n\nTo get the most out of your Manus prompts, enable connectors.\n\nYou can do this in Settings → Connectors.\n\nThe main connector you want to set up is \"My Browser\" - this allows Manus to take action in your browser.\n\nManus has 70+ connectors (Notion, Google Drive, Slack, GitHub, and more).\n\nGo through them all and set up relevant connectors.\n\n4.     Manus Extension\n\nOnce you have enabled connectors, install the Manus Browser Operator.\n\nThis extension will give Manus hands and let it actually use the browser connection you just set up.\n\nHere: https://manus. im/features/manus- browser-operator\n\n5.     Manus Skills\n\nThis is a brand new feature, and I love it.\n\nManus skills are like Claude Skills but for agents.\n\nThese Skills allow agents to automate repetitive tasks within specified instruction parameters.\n\nHighly recommend spending time building Manus Skills.\n\n---\n\n## Real Workflows (exact prompts included)\n\nNow that you know a bit about Manus, you're probably wondering how to use it in your daily workflows to boost productivity.\n\nFor this section, I want to run you through some of my personal workflows and their exact prompts/instruction sets.\n\n1. Scheduled Tasks  (market research)\n\nManus is better than Clawdbot at this.\n\nIn Settings → Scheduled Tasks, you can schedule task automations you want Manus to run alongside your connectors.\n\nFor example, every single day at 9 am, I have Manus use my browser connection to scan the web and send me a morning crypto market research report.\n\nI'm in the crypto markets, so market research reports are helpful as crypto moves very fast, but you can do this for literally anything.\n\nCollating top AI news, scanning your Notion to-do lists, and more\n\nHere's the exact prompt you can use to have Manus deliver a daily crypto market research report:\n\n```\nUse browser search to scan the last 24 hours of crypto news from credible sources such as CoinDesk, The Block, Cointelegraph, Bloomberg, Reuters, official project blogs, and major X accounts if relevant.\n\nIdentify only news that materially impacts markets, narratives, or positioning. Skip low-signal announcements.\n\nGroup findings into clear sections:\n\nMarket-moving news\n\nMajor protocol or ecosystem updates\n\nRegulatory or macro developments\n\nNotable funding, M&A, or institutional activity\n\nFor each item, include:\n\nA one-sentence summary\n\nWhy it matters in plain English\n\nWho is affected (BTC, ETH, specific sectors, or tokens if applicable)\n\nPrioritize clarity, accuracy, and signal over speed or hype.\n\nKeep the total output skimmable. Bullet points preferred. No filler.\n```\n\n2.     Stock Analysis Skill\n\nAs I mentioned in the previous section, Manus has some awesome Skills.\n\nOne of the Manus Skills I've been heavily using lately is a \"stock analysis\" skill.\n\nThis Skill essentially serves as my personal stock market research assistant.\n\nIt summarises company research, technical analysis/indicators, scans price APIs, and more.\n\nYou can add this Skill to your Manus now, here is the Skill . MD file:\n\n```\nYAML\nname: stock-analysis\ndescription: \"Analyze stocks and companies using financial market data. Get company profiles, technical insights, price charts, insider holdings, and SEC filings for comprehensive stock research.\"\nStock Analysis\nComprehensive stock and company analysis using with real-time market data.\nCore Capabilities\nCompany Research: Get company profiles, business info, executive teams\nTechnical Analysis: Access price charts, technical indicators, outlooks\nFundamental Analysis: Review insights, valuations, analyst ratings\nInsider Activity: Track insider holdings and transactions\nRegulatory Filings: Access SEC filing history and documents\nMulti-Stock Comparison: Compare multiple stocks with chart data\nAvailable APIs\nCompany Information\nYahoo/get_stock_profile - Company profile (business, industry, executives, contact)\nYahoo/get_stock_insights - Technical indicators, valuation, ratings, research reports\nTrading & Market Data\nYahoo/get_stock_chart - Historical price data with customizable timeframes\nOwnership & Compliance\nYahoo/get_stock_holders - Insider holdings and transactions\nYahoo/get_stock_sec_filing - SEC filing history (10-K, 10-Q, 8-K, etc.)\nCommon Workflows\n1. Company Overview → Deep Dive\nPlain Text\nUser: \"Tell me about AAPL\"\n→ Yahoo/get_stock_profile (business summary, industry, employees)\n→ Yahoo/get_stock_insights (technical outlook, valuation, ratings)\n→ Yahoo/get_stock_chart (recent price performance)\n2. Technical Analysis → Fundamental Check\nPlain Text\nUser: \"Is TSLA a good buy?\"\n→ Yahoo/get_stock_chart (price trends, support/resistance)\n→ Yahoo/get_stock_insights (technical outlook, target price, rating)\n→ Yahoo/get_stock_profile (verify business fundamentals)\n3. Insider Activity Analysis\nPlain Text\nUser: \"Show me insider trading for NVDA\"\n→ Yahoo/get_stock_holders (insider transactions)\n→ Yahoo/get_stock_profile (context about executives)\n→ Yahoo/get_stock_insights (check if aligned with outlook)\n4. Due Diligence Package\nPlain Text\nUser: \"Full analysis of MSFT\"\n→ Yahoo/get_stock_profile (company background)\n→ Yahoo/get_stock_insights (analyst ratings, valuation)\n→ Yahoo/get_stock_chart (historical performance)\n→ Yahoo/get_stock_holders (insider sentiment)\n→ Yahoo/get_stock_sec_filing (recent regulatory filings)\n5. Multi-Stock Comparison\nPlain Text\nUser: \"Compare AAPL vs MSFT vs GOOGL\"\n→ Yahoo/get_stock_chart (with comparisons parameter)\n→ Yahoo/get_stock_insights (for each symbol)\n→ Compare metrics side-by-side\n6. Sector Research\nPlain Text\nUser: \"Analyze tech stocks: AAPL, NVDA, AMD\"\n→ Yahoo/get_stock_profile (each company's focus area)\n→ Yahoo/get_stock_insights (sector comparison scores)\n→ Yahoo/get_stock_chart (relative performance)\nKey Parameters\nCommon Parameters\nsymbol: Stock ticker symbol (e.g., \"AAPL\", \"TSLA\")\nregion: Market region (US, GB, JP, etc.) - default: US\nlang: Response language (en-US, zh-Hant-HK, etc.) - default: en-US\nChart-Specific\ninterval: 1m, 5m, 15m, 30m, 1h, 1d, 1wk, 1mo\nrange: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max\ncomparisons: Compare with other symbols (e.g., \"^GSPC,MSFT\")\nevents: Include dividends, splits, earnings (div, split, earn)\nKey Data Points\nProfile Data\nBusiness summary and industry classification\nEmployee count and executive team\nContact information and website\nSector and industry metrics\nInsights Data\nTechnical outlook: Short/intermediate/long-term signals\nValuation: Relative value vs sector/market\nKey technicals: Support, resistance, stop-loss levels\nRatings: Analyst recommendations and target prices\nCompany metrics: Innovation, hiring, sustainability scores\nResearch reports: Analyst reports and summaries\nSignificant events: Recent developments\nChart Data\nOHLC (Open, High, Low, Close) prices\nVolume data\nAdjusted close prices\n52-week high/low\nCurrent trading period info\nHolder Data\nInsider names and positions\nTransaction dates and descriptions\nHoldings quantity and value\nRelationship to company\nFiling Data\nFiling type (10-K, 10-Q, 8-K, etc.)\nFiling date and title\nEDGAR URLs for full documents\nExhibits and related documents\nWhen to Use This Skill\nALWAYS invoke APIs when users mention:\nStock symbols: \"AAPL\", \"TSLA\", \"$MSFT\", \"stock price\", \"stock info\"\nAnalysis requests: \"analyze\", \"research\", \"look into\", \"tell me about [STOCK]\"\nComparison: \"compare\", \"vs\", \"versus\", \"which is better\"\nPrice queries: \"price\", \"chart\", \"performance\", \"trend\", \"up or down\"\nInsider activity: \"insider\", \"holdings\", \"who owns\", \"buying/selling\"\nFilings: \"SEC filing\", \"10-K\", \"10-Q\", \"earnings report\", \"financial statements\"\nCompany info: \"what does [company] do\", \"who runs\", \"about [company]\"\nRequired API combinations:\nGeneral stock questions → MUST call Yahoo/get_stock_profile + Yahoo/get_stock_insights\nPrice/chart mentions → MUST include Yahoo/get_stock_chart\nInvestment decisions → MUST call all three: chart + insights + profile\nMultiple stocks → MUST use comparison parameters in chart API\nInsider questions → MUST call Yahoo/get_stock_holders + profile for context\nBest Practices\nStart broad, then drill down - Profile first, then specific data\nContext matters - Combine profile with technical data for better insights\nUse comparisons - Chart API supports multi-symbol comparison\nRegional stocks - Set region/lang for non-US markets\nTime relevance - Adjust chart range based on user's timeframe\nInsider context - Combine holder data with profile for complete picture\nAPI Reference\nFull parameter specs and response schemas:\nyahoo-api.md\n\n```\n\n3.     Mail Manus\n\nLastly, everyone should be using Mail Manus.\n\nOne of Openclaw's big selling points is that you can text it from apps like Telegram.\n\nWell, Manus' version of this is Mail Manus.\n\nMail Manus lets you trigger Manus tasks by forwarding emails to a unique bot address. Instead of switching between your inbox and the Manus app, you can delegate work directly from your email and receive results back via email.\n\nWhile it doesn't have the full capabilities of Clawdbot, it's a big unlock for most people and essentially serves as a personal email assistant.\n\nI've been using this for a while (10+ months), and it is one of my main Manus use cases.\n\nWithout leaking my email data, here is the instruction process for exactly how I turned Mail Manus into my personal email assistant:\n\n```\n1\nGet Your Unique Address\n- Find your dedicated Manus Mail address in your settings \n2\nForward for Triage\n- Set up \"Forwarding Rules\" in your main email for specific keywords (e.g., \"Invoice,\" \"Partnership,\" \"Draft\"). This sends only the \"work\" to Manus.\n3\nBlind Copy (BCC) for Tasks\n- When you receive an email you don't have time to deal with, forward it to your Manus Mail. This acts as a \"trigger\" for Manus to start working on it.\n4\nDefine Processing Logic\n- Prompt Manus: \"Whenever an email arrives at my Manus Mail, summarize the key request and draft a response in a Markdown file for me to review.\"\n5\nBatch Review\n- Instead of checking 100 emails, you check one summary report from Manus that lists everything it processed and the drafts it prepared\n```\n\n---\n\n## Valuable Tools & Resources\n\n1.     Manus Academy: An official resource by the Manus team on how to effectively use their AI\n\nhttps:// academy. Manus. im/\n\n2.     Manus Skills 101: An official resource by the Manus team on building effective Skills\n\nhttps://manus. im/docs/ features/skills\n\n3.     Manus Tools: A huge GitHub library of prompts/tools\n\nhttps://gist.github. com/jlia0/db0a9695b3ca7609c9b1a08dcbf872c9\n\n---\n\n## Final Thoughts\n\nAverage Joe Ratings - Openclaw versus Manus:\n\nAccessibility\n\nOpenclaw 4/10 | Requires CLI, Node ≥22, channel config. Hours/days to get running and possibly a dedicated device/servers.\n\nManus 8/10 | Straightforward setup - just create an account, free mobile app, and web use\n\nValue\n\nOpenclaw 5/10 | Open source, but hidden costs add up: API calls, hardware, time investment.\n\nManus 7/10 | For the average person, you'll get a ton of free value, and paid plans are incredibly cheap compared to Openclaw costs.\n\nPrivacy/Security\n\nOpenclaw 2/10 | Risk of prompt injections, requires technical expertise to secure properly. One misconfiguration = complete compromise.\n\nManus 7/10 | Just as secure as other AI tools like ChatGPT - of course, this is a bit subjective, and anytime you give your data to an AI, there is risk of data leaks/misuse, but nowhere near the level of risk as complete device control like Openclaw.\n\nImpact\n\nOpenclaw 9/10 | If it works safely, genuinely transformative. 24/7 AI assistant across your entire desktop.\n\nManus 5/10 | Genuinely useful, will save most people time/money, but can't do nearly as much as Openclaw in terms of sheer desktop control capabilities.\n\nFinal Overall Scores\n\nOpenclaw: 5/10\n\nManus: 6.75/10\n\n---\n\n## Outro\n\nI hope you found value in this article.\n\nfor weekly AI content like this.If you did, be sure to follow me[@milesdeutscher](https://x.com/@milesdeutscher)\n\n.If you enjoy AI deep dives, I'm posting 3x/week articles on my AI-research account[@aiedge_](https://x.com/@aiedge_)\n\nTo show support, please Like/Repost this article💙",
+    "createdAt": "Fri Feb 13 07:07:35 +0000 2026",
+    "replyCount": 22,
+    "retweetCount": 24,
+    "likeCount": 295,
+    "conversationId": "2022205999478952000",
+    "author": {
+      "username": "aiedge_",
+      "name": "AI Edge"
+    },
+    "authorId": "1901654809536843776",
+    "article": {
+      "title": "This AI destroys Clawdbot, and nobody's paying attention - here's how to set it up",
+      "previewText": "TLDR: this AI is 10x BETTER than Clawdbot, and reading this now will put you ahead of 99% of people.\nThe reality is that Openclaw (clawd) has major bottlenecks that make it difficult for the average"
+    }
+  },
+  {
+    "id": "2022212118305554855",
+    "text": "@aiedge_ new speed read banger dropped https://t.co/XC3NCHF2W9",
+    "createdAt": "Fri Feb 13 07:31:54 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 3,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "usespeedreader",
+      "name": "Speed Read (App in bio!)"
+    },
+    "authorId": "2016707454340349952",
+    "media": [
+      {
+        "type": "video",
+        "url": "https://pbs.twimg.com/ext_tw_video_thumb/2022212080321884160/pu/img/_Y_tvdUWW2bHGGZx.jpg",
+        "width": 1080,
+        "height": 1080,
+        "previewUrl": "https://pbs.twimg.com/ext_tw_video_thumb/2022212080321884160/pu/img/_Y_tvdUWW2bHGGZx.jpg:small",
+        "videoUrl": "https://video.twimg.com/ext_tw_video/2022212080321884160/pu/vid/avc1/720x720/AhYupCUBdewJlnww.mp4?tag=12",
+        "durationMs": 115029
+      }
+    ]
+  },
+  {
+    "id": "2022238023245873186",
+    "text": "@aiedge_ lol manus eats credit so quick, way faster than any other LLM. \n\nHitting me with “making final touches now…hold on..OUT OF CREDIT!”",
+    "createdAt": "Fri Feb 13 09:14:50 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 9,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "MyXStack",
+      "name": "hayden"
+    },
+    "authorId": "1754511889898364928"
+  },
+  {
+    "id": "2022242423854735803",
+    "text": "@aiedge_ Yeah except Manus has no memory and file access!!! Not comparable honestly",
+    "createdAt": "Fri Feb 13 09:32:19 +0000 2026",
+    "replyCount": 2,
+    "retweetCount": 0,
+    "likeCount": 18,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "calebhodges",
+      "name": "Caleb Hodges"
+    },
+    "authorId": "1520711610469335041"
+  },
+  {
+    "id": "2022243947813466491",
+    "text": "@aiedge_ not everyone's convinced of openclaw's superiority yet, but it's definitely worth a shot if clawdbot's not cutting it for you",
+    "createdAt": "Fri Feb 13 09:38:23 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "ASolovichh",
+      "name": "Wilson Wizard"
+    },
+    "authorId": "1537059844766810115"
+  },
+  {
+    "id": "2022244668562682037",
+    "text": "@aiedge_ no matter how good this is, not gonna touch a thing from META",
+    "createdAt": "Fri Feb 13 09:41:15 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 6,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "CdeBurner",
+      "name": "exitLQ"
+    },
+    "authorId": "1583774031077163009"
+  },
+  {
+    "id": "2022246735419261218",
+    "text": "@aiedge_ retarded take, as someone who has used manus for months last year. they arnt the same user category",
+    "createdAt": "Fri Feb 13 09:49:27 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 5,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "Barthazian",
+      "name": "barthazian.eth 巴特"
+    },
+    "authorId": "218400079"
+  },
+  {
+    "id": "2022249073542390084",
+    "text": "@aiedge_ @Scobleizer Since Meta put its grubby fingers all over it and, I’m pretty sure, messed with the AI (probably put Llama in there) it’s been much worse. Genuinely Manus was ahead of its time, one of the best products I’ve ever used. Not anymore sadly.",
+    "createdAt": "Fri Feb 13 09:58:45 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 7,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "adam_bolas",
+      "name": "Adam Bolas"
+    },
+    "authorId": "1547659775306899458"
+  },
+  {
+    "id": "2022251818412060809",
+    "text": "@aiedge_ @grok summarize this article for those who don’t understand AI like I’m 12",
+    "createdAt": "Fri Feb 13 10:09:39 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "1dayjaytrades",
+      "name": "Bullish Bear"
+    },
+    "authorId": "1486056363679748100"
+  },
+  {
+    "id": "2022254220104142867",
+    "text": "@aiedge_ link not loading for me",
+    "createdAt": "Fri Feb 13 10:19:12 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "restwellson",
+      "name": "Jimmy Ashcot"
+    },
+    "authorId": "1266643939378868225"
+  },
+  {
+    "id": "2022259358914982027",
+    "text": "@aiedge_ @grok , will you have agentic capacity anytime soon? Is there any internal timeframe for this feature?",
+    "createdAt": "Fri Feb 13 10:39:37 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "hellostakept",
+      "name": "Non curis omnibus"
+    },
+    "authorId": "1236022270088351744"
+  },
+  {
+    "id": "2022259854442627441",
+    "text": "@aiedge_ Not comparable and not a fan of the misleading hyperbolic clickbait headline.",
+    "createdAt": "Fri Feb 13 10:41:35 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 10,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "cmndandconqr",
+      "name": "Just a Cog"
+    },
+    "authorId": "739937563"
+  },
+  {
+    "id": "2022263311820014019",
+    "text": "@aiedge_ Manus is not new. Good software, but not better than openclaw. Sorry not sorry",
+    "createdAt": "Fri Feb 13 10:55:20 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "jackhnels",
+      "name": "Jack Nelson"
+    },
+    "authorId": "2011536782496600064"
+  },
+  {
+    "id": "2022272297512444082",
+    "text": "@aiedge_ Tip: don’t ever settle with anything that’s not open source, period.",
+    "createdAt": "Fri Feb 13 11:31:02 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "Brobservers",
+      "name": "Brobserver"
+    },
+    "authorId": "1866569271687450624"
+  },
+  {
+    "id": "2022273134900961375",
+    "text": "@aiedge_ This reads like an ad",
+    "createdAt": "Fri Feb 13 11:34:22 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "DesmondHudkan",
+      "name": "Dësmond Hudkan"
+    },
+    "authorId": "1714477341601083392"
+  },
+  {
+    "id": "2022274899717296216",
+    "text": "@aiedge_ Manus is an absolute beast, Clawdbot it’s not. Apples and oranges.",
+    "createdAt": "Fri Feb 13 11:41:22 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "grouchorugger",
+      "name": "Groucho"
+    },
+    "authorId": "16605342"
+  },
+  {
+    "id": "2022275703715106970",
+    "text": "@aiedge_ @Scobleizer Not comparable. \nSkill issue.",
+    "createdAt": "Fri Feb 13 11:44:34 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "fariavalue",
+      "name": "Lucas Faria"
+    },
+    "authorId": "1395413965933588484"
+  },
+  {
+    "id": "2022282013521105279",
+    "text": "@aiedge_ No. Manus does not compare to Open Claw.",
+    "createdAt": "Fri Feb 13 12:09:38 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "adeoressi",
+      "name": "Adeo Ressi"
+    },
+    "authorId": "133188015"
+  },
+  {
+    "id": "2022288733018390792",
+    "text": "@aiedge_ How can you really compare command-line tools with access to computer hardware and software, and a browser-based tool like Manus, when they're incomparable at all? Sorry.",
+    "createdAt": "Fri Feb 13 12:36:20 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "sbaranskyi",
+      "name": "ꜱʟᴀᴠᴀ"
+    },
+    "authorId": "3404081"
+  },
+  {
+    "id": "2022289069707817345",
+    "text": "@aiedge_ You wrote the article.  Point me to an independent one.",
+    "createdAt": "Fri Feb 13 12:37:41 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "cgramlich",
+      "name": "G Money$"
+    },
+    "authorId": "26167671"
+  },
+  {
+    "id": "2022289292639228007",
+    "text": "@aiedge_ @grok short summary of the article above, which software is it about?",
+    "createdAt": "Fri Feb 13 12:38:34 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "PeterM17911",
+      "name": "Xplorer the one"
+    },
+    "authorId": "2005210090991931392"
+  },
+  {
+    "id": "2022301320934535323",
+    "text": "@aiedge_ Hmm jeet coded, no thanks",
+    "createdAt": "Fri Feb 13 13:26:22 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022205999478952000",
+    "inReplyToStatusId": "2022205999478952000",
+    "author": {
+      "username": "foloac",
+      "name": "Olak"
+    },
+    "authorId": "1982238702085742592"
+  }
+]

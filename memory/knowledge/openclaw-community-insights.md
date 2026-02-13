@@ -176,3 +176,122 @@ These authors consistently produce high-quality OpenClaw content:
 - @mastra — Memory system research (commercial, but open-source)
 - @DavidOndrej1 — Living files / knowledge architecture philosophy
 - @hooeem — Life automation frameworks
+
+---
+
+## Daily Scout - 2026-02-13
+**Sources**: X/Twitter search via bird CLI (10 queries, 97 tweets, 6 high-engagement)
+
+### 1. OpenClaw 2026.2.12 Release (@openclaw, 3165 likes, 290 RTs)
+**Link**: https://x.com/openclaw/status/2022133878966956470
+
+**What's new**:
+- 🔥 **GLM-5 + MiniMax M2.5 support** — Two new Chinese LLM integrations
+- 💬 **IRC channel integration** — Your bot now fits in with the old guard (mIRC nostalgia)
+- 🛡️ **40+ security fixes** — Major hardening pass
+- 📦 **Custom provider onboarding improvements** — Better DX for adding new LLM APIs
+- 📦 **Compaction improvements** — Better token management
+
+**Community reaction** (37-tweet thread):
+- @frankdegods (558 likes): "why does this feel like the future" [posted video]
+- @thekitze (52 likes): "time to bring back mIRC" [nostalgic screenshot]
+- Update method: Ask agent "update yourself" or run `openclaw update`
+
+**🎯 Actionable**: Check if we want GLM-5/MiniMax M2.5 for cost optimization (Chinese models often cheaper). IRC integration could be fun for legacy system monitoring.
+
+---
+
+### 2. 700+ Community Skills Repository (@Param_eth, 1100 likes, 99 RTs)
+**Link**: https://x.com/Param_eth/status/2016947220923502808
+
+**GitHub**: https://github.com/Param-eth/awesome-clawdbot (inferred from "Awesome Clawdbot" comment)
+
+**Skill categories**:
+- CLI Utilities
+- Git & GitHub
+- Clawdbot Tools
+- DevOps & Cloud
+- Marketing & Sales
+- Search & Research
+- Coding Agents & IDEs
+- Browser & Automation
+- Image & Video Generation
+
+**🎯 Actionable**: Mine this repo for VentureOS skill ideas. Specifically:
+- Marketing/sales automation for StantonTimes/content ops
+- Image/video generation pipelines for game dev
+- DevOps patterns for Unraid/node management
+
+---
+
+### 3. Manning Books Webinar: OpenClaw Reference Architecture (@ManningBooks, 215 likes, 33 RTs)
+**Link**: https://x.com/ManningBooks/status/2021992886275809734
+**Event**: Feb 19, 1pm EST with @_nerdai_ & @ProfTomYeh
+
+**Key quote**: "Agents aren't just prompts, tools, & RAG glued together. You need a reference architecture. @openclaw makes the design decisions behind modern AI agents visible — orchestration, memory, tooling, and how it all fits."
+
+**🎯 Actionable**: Watch this webinar. Manning is a legit technical publisher — if they're covering OpenClaw architecture, it's validation that our approach (orchestration + memory + multi-agent) is industry-grade.
+
+---
+
+### 4. "OpenClaw vs Clawdbot" Controversy (@aiedge_, 291 likes, 24 RTs)
+**Link**: https://x.com/aiedge_/status/2022205999478952000
+
+**Claim**: "This AI destroys Clawdbot, and nobody's paying attention"
+
+**Community pushback** (22-tweet thread):
+- @calebhodges (18 likes): "Yeah except Manus has no memory and file access!!! Not comparable honestly"
+
+**Analysis**: AI Edge is promoting another tool (likely Manus based on context), but the community correctly points out that memory + file system access are table stakes for agent platforms. OpenClaw has both, competitor doesn't.
+
+**Relevance**: LOW — Marketing noise, but validates our memory/file architecture as a core differentiator.
+
+---
+
+### 5. LUKSO Universal Profile Integration (@feindura, 96 likes, 17 RTs)
+**Link**: https://x.com/feindura/status/2021648103859007827
+**Guide by**: @LUKSOAgent
+
+**Context**: LUKSO is a blockchain for digital identity. They've integrated OpenClaw with Universal Profiles (on-chain identity system).
+
+**Relevance**: LOW for VentureOS (we're not doing blockchain), but interesting that OpenClaw is being adopted in crypto/web3 space.
+
+---
+
+### 6. AISecHub: Secure AI Integration Pattern (@AISecHub, 52 likes, 8 RTs)
+**Link**: https://x.com/AISecHub/status/2021422566653476895
+**Resource**: https://t.co/FrCQ8kOaYG (resolve shortlink)
+
+**Security architecture covering**:
+- Agent identity
+- Prompt security
+- Data classification
+- Tool authorization
+- Orchestration trust
+- Human-in-the-loop
+
+**🎯 Actionable**: Review this for VentureOS security hardening. We have multi-agent + external tool access (Home Assistant, social media, etc.) — need to ensure we have proper authorization layers, especially as we add more agents.
+
+---
+
+## Key Themes (Feb 13)
+
+1. **OpenClaw adoption accelerating** — Major release (2026.2.12), Manning webinar, 700+ community skills. The ecosystem is maturing fast.
+
+2. **Memory + file access = table stakes** — Community consistently pushes back on tools without persistent memory or file system integration. Our architecture is on the right track.
+
+3. **Security is becoming a priority** — 40+ security fixes in latest release, AISecHub publishing architecture guides. As agents get more autonomy, threat surface grows.
+
+4. **Chinese LLM integrations** — GLM-5, MiniMax M2.5 support suggests OpenClaw is prioritizing cost-effective models (Chinese providers often 1/10th the price of OpenAI/Anthropic).
+
+5. **Crypto/web3 adoption** — LUKSO integration shows OpenClaw is spreading beyond traditional dev tools into blockchain identity/automation use cases.
+
+---
+
+## Accounts to Watch (New)
+- @aiedge_ — AI tool comparisons (but verify claims, some marketing hype)
+- @ManningBooks — Publishing OpenClaw architecture content (high signal)
+- @Param_eth — Community skill aggregation
+- @AISecHub — Security architecture for AI agents
+- @LUKSOAgent — Blockchain/identity integration examples
+

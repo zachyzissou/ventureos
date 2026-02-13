@@ -1,0 +1,488 @@
+[
+  {
+    "id": "2016947220923502808",
+    "text": "Automation Everything 👀\n\nA GitHub repo with a collection of 700+ community built skills for Moltbot.\n\nThings like:\n\n- CLI Utilities\n- Git & GitHub\n- Clawdbot Tools\n- DevOps & Cloud\n- Marketing & Sales\n- Search & Research\n- Coding Agents & IDEs\n- Browser & Automation\n- Image & Video Generation\n- Web & Frontend Development\n\nAnd many more.",
+    "createdAt": "Thu Jan 29 18:51:05 +0000 2026",
+    "replyCount": 32,
+    "retweetCount": 99,
+    "likeCount": 1100,
+    "conversationId": "2016947220923502808",
+    "author": {
+      "username": "Param_eth",
+      "name": "Param"
+    },
+    "authorId": "1366423011851526144",
+    "media": [
+      {
+        "type": "photo",
+        "url": "https://pbs.twimg.com/media/G_2irKtbUCQoXzV.jpg",
+        "width": 1032,
+        "height": 1136,
+        "previewUrl": "https://pbs.twimg.com/media/G_2irKtbUCQoXzV.jpg:small"
+      }
+    ]
+  },
+  {
+    "id": "2016947225918918811",
+    "text": "Awesome Clawdbot: https://t.co/8BcMll3KxM",
+    "createdAt": "Thu Jan 29 18:51:06 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 1,
+    "likeCount": 32,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "Param_eth",
+      "name": "Param"
+    },
+    "authorId": "1366423011851526144"
+  },
+  {
+    "id": "2016947558669545504",
+    "text": "@Param_eth wow this looks super useful, can’t wait to try some skills",
+    "createdAt": "Thu Jan 29 18:52:25 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "Joshuaerom21861",
+      "name": "JOSHUAEROM👑🐦‍⬛"
+    },
+    "authorId": "1828129262957666304"
+  },
+  {
+    "id": "2016970537407246340",
+    "text": "@Param_eth The explosion of skills/tools for agents is impressive.\n\nBut notice what's happening: every category is getting automated EXCEPT the human relationship part.\n\nMarketing &amp; Sales automation handles volume.\nHumans handle trust.\n\nThat's the pattern emerging across all these tools.",
+    "createdAt": "Thu Jan 29 20:23:44 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 7,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "RealAvairAI",
+      "name": "RealAvairAI"
+    },
+    "authorId": "1936528103469363200"
+  },
+  {
+    "id": "2017001243122479275",
+    "text": "@Param_eth something important to checkout",
+    "createdAt": "Thu Jan 29 22:25:45 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "Genius_devv",
+      "name": "Genius as fuck 🍊,💊"
+    },
+    "authorId": "1960783320737849344"
+  },
+  {
+    "id": "2017012915836965283",
+    "text": "This is impressive, but it also highlights the new risk surface. Once agents can touch CLI, repos, browsers, and cloud infra, the skill library becomes power and attack surface.\n\nThe interesting part for me isn’t the number of skills, it’s how people curate, validate, and sandbox them. Agent automation is scaling fast indeed",
+    "createdAt": "Thu Jan 29 23:12:08 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 3,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "Esongsofficial",
+      "name": "ESONGS_eth"
+    },
+    "authorId": "1458513068363710469"
+  },
+  {
+    "id": "2017016628584783925",
+    "text": "@Param_eth All skills are now multiclient, do we even need this?\nI installed skills system-wide and is available to every client",
+    "createdAt": "Thu Jan 29 23:26:53 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "pratikbodkhe",
+      "name": "Pratik"
+    },
+    "authorId": "1546081904"
+  },
+  {
+    "id": "2017031022265741544",
+    "text": "@Param_eth This is like crack wtf 😭",
+    "createdAt": "Fri Jan 30 00:24:04 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "itaiwins",
+      "name": "Itaiwins"
+    },
+    "authorId": "1180681615707652096"
+  },
+  {
+    "id": "2017042884868952396",
+    "text": "@Param_eth Absolutely not, that's way risky compared to creating your own skills and knowing there's no malware in them. \n\nInstead of having to create a system to analyze all the skills and documents and even then is still risky, I believe.",
+    "createdAt": "Fri Jan 30 01:11:13 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 3,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "MagneticService",
+      "name": "Nicholas Vermeulen"
+    },
+    "authorId": "1103178168"
+  },
+  {
+    "id": "2017083370753445956",
+    "text": "@Param_eth School time @Froge_Bot",
+    "createdAt": "Fri Jan 30 03:52:05 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "frogsonbase",
+      "name": "Froge"
+    },
+    "authorId": "1640927231777312769"
+  },
+  {
+    "id": "2017102201005691224",
+    "text": "@Param_eth need that moltbot asap",
+    "createdAt": "Fri Jan 30 05:06:55 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "zippy257",
+      "name": "Zippy"
+    },
+    "authorId": "103588827"
+  },
+  {
+    "id": "2017112149114728789",
+    "text": "@Param_eth OpenClaw now. Come on keep up with the times",
+    "createdAt": "Fri Jan 30 05:46:27 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "iamcadec",
+      "name": "Cade"
+    },
+    "authorId": "1512144428114202646"
+  },
+  {
+    "id": "2017117411179417911",
+    "text": "@Param_eth Let’s get MoodCast added to this List -",
+    "createdAt": "Fri Jan 30 06:07:21 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "ashutosh887_",
+      "name": "Ashutosh Jha"
+    },
+    "authorId": "1173053712605933574",
+    "quotedTweet": {
+      "id": "2016805493742981551",
+      "text": "Most text-to-speech still sounds… robotic.\n\nSo I built MoodCast — a @openclaw skill that actually understands the tone of your text.\n\nIt analyzes what you write, automatically adds emotional delivery (pauses, excitement, whispers, pacing), and can layer matching ambient sound — all using ElevenLabs v3 + Sound Effects API.\n\nYou just give it text and a mood.\nIt handles the rest.\nBuilt for the #ClawdEleven hackathon.\nPublished on MoltHub.",
+      "createdAt": "Thu Jan 29 09:27:54 +0000 2026",
+      "replyCount": 4,
+      "retweetCount": 2,
+      "likeCount": 18,
+      "conversationId": "2016805493742981551",
+      "author": {
+        "username": "ashutosh887_",
+        "name": "Ashutosh Jha"
+      },
+      "authorId": "1173053712605933574",
+      "media": [
+        {
+          "type": "video",
+          "url": "https://pbs.twimg.com/amplify_video_thumb/2016803672169299968/img/yttLO11U_o2ev-Bp.jpg",
+          "width": 1920,
+          "height": 1080,
+          "previewUrl": "https://pbs.twimg.com/amplify_video_thumb/2016803672169299968/img/yttLO11U_o2ev-Bp.jpg:small",
+          "videoUrl": "https://video.twimg.com/amplify_video/2016803672169299968/vid/avc1/1920x1080/cYfqE_xE8KZ5wxK8.mp4?tag=21",
+          "durationMs": 95400
+        }
+      ]
+    }
+  },
+  {
+    "id": "2017117715698491639",
+    "text": "@Param_eth Let's gooooo, this is too cool",
+    "createdAt": "Fri Jan 30 06:08:34 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "abhinavramesh",
+      "name": "abhinav ramesh"
+    },
+    "authorId": "44560087"
+  },
+  {
+    "id": "2017124789970985171",
+    "text": "@Param_eth Checkout this 250+ skills for Web3 auditing with the Solodit API as well.  \n\nSomehow I got this gem to build some dApps.\n\nhttps://t.co/0eifDxHqM3",
+    "createdAt": "Fri Jan 30 06:36:40 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 4,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "Shirooni7723",
+      "name": "SHIRO ONI"
+    },
+    "authorId": "1931637832915025920"
+  },
+  {
+    "id": "2017141668592685190",
+    "text": "@Param_eth If AI were to build skills themselves, this figure should be 700m",
+    "createdAt": "Fri Jan 30 07:43:45 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "cryptoskraken",
+      "name": "Crypto Kraken - AI Tinkerer"
+    },
+    "authorId": "1921520841868840960"
+  },
+  {
+    "id": "2017172485603840098",
+    "text": "@Param_eth @Param_eth, that's a comprehensive Moltbot skills repository; it should aid many automation workflows.",
+    "createdAt": "Fri Jan 30 09:46:12 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "codewithimanshu",
+      "name": "Himanshu Kumar"
+    },
+    "authorId": "1062034323249881088"
+  },
+  {
+    "id": "2017214158656127363",
+    "text": "@Param_eth Yooo! This one, I’ll use it 🤘",
+    "createdAt": "Fri Jan 30 12:31:48 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "timmi_arno",
+      "name": "Timmi Arno"
+    },
+    "authorId": "873964412"
+  },
+  {
+    "id": "2017282464390275232",
+    "text": "@Param_eth Should be careful!",
+    "createdAt": "Fri Jan 30 17:03:13 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "nikohbuilds",
+      "name": "Niko"
+    },
+    "authorId": "1698458085860212736"
+  },
+  {
+    "id": "2017287937386541437",
+    "text": "@Param_eth 700 skills and I still can't automate my urge to check X every 5 minutes",
+    "createdAt": "Fri Jan 30 17:24:58 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "themohitrohilla",
+      "name": "Mohit Rohilla"
+    },
+    "authorId": "1995459116081557504"
+  },
+  {
+    "id": "2017300173714575561",
+    "text": "@Param_eth damn 700+ skills?? this is like automation heaven",
+    "createdAt": "Fri Jan 30 18:13:35 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "dkx902",
+      "name": "dkx902"
+    },
+    "authorId": "1957843423236374528"
+  },
+  {
+    "id": "2017334752718549361",
+    "text": "@Param_eth community skill libraries are the real moat for ai assistants. whoever has the best ecosystem wins",
+    "createdAt": "Fri Jan 30 20:30:59 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "adrianasobota_",
+      "name": "Adriana Sobota"
+    },
+    "authorId": "2004316615601717248"
+  },
+  {
+    "id": "2017337493213864282",
+    "text": "@Param_eth 700 skills is actually insane for such a short period of time. the community is building the biggest library of agentic powerups ive ever seen and it makes me incredibly bullish on the moltbot ecosystem.",
+    "createdAt": "Fri Jan 30 20:41:53 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "copenzafan",
+      "name": "KISA aka Copenzafan.eth"
+    },
+    "authorId": "1208571777057726464"
+  },
+  {
+    "id": "2017431530554142969",
+    "text": "@Param_eth 🔥",
+    "createdAt": "Sat Jan 31 02:55:33 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "itsjasonai",
+      "name": "Jason Nguyen"
+    },
+    "authorId": "1647154156569001985"
+  },
+  {
+    "id": "2017480441998283165",
+    "text": "@Param_eth dude with 700+ skills, Moltbot’s basically the Swiss army knife of coding lol",
+    "createdAt": "Sat Jan 31 06:09:55 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "foundrceo",
+      "name": "foundrceo"
+    },
+    "authorId": "1881766675579858945"
+  },
+  {
+    "id": "2017731259405848853",
+    "text": "@Param_eth Looking good!",
+    "createdAt": "Sat Jan 31 22:46:34 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "homeMetaX",
+      "name": "Home"
+    },
+    "authorId": "867894876658073600"
+  },
+  {
+    "id": "2017852329681387698",
+    "text": "@Param_eth 这个技能库有点东西，700多个实用工具，覆盖面太全了。 https://t.co/yq8RO3zw4a",
+    "createdAt": "Sun Feb 01 06:47:39 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "blockphd7",
+      "name": "MR.JC区块博士 🔶 BNB ｜MemeMax⚡️ ｜🌊RIVER"
+    },
+    "authorId": "1327168723153608704",
+    "quotedTweet": {
+      "id": "2017848143690563966",
+      "text": "技术圈都在玩的Moltbot，小白能用吗? 我花了3天测试告诉你真相：Clawdbot/MoltBot 完整介绍与安全指南\n\n## 项目概述\n\nClawdbot（现名 Moltbot，也被称为 OpenClaw）是 2026 年 1 月突然爆火的开源个人 AI 助手项目，其口号是“AI that actually does things”（真正能干活的 AI）。这个项目在短短几周内就在 GitHub 上收获了 85,500 个 Star，被 Fork 了 11,500 次，吸引了超过 322 位贡献者参与，成为 2026 年初最现象级的开源项目之一。\n\n这个项目的火爆程度甚至直接带动了硬件销量——苹果 Mac Mini 在某些地区一度卖到断货，因为这是运行 Moltbot 的热门设备选择。\n\n## 创始人与背景\n\nMoltbot 的创造者是 Peter Steinberger，一位奥地利籍的亿万富翁企业家和开发者。他的创业故事堪称传奇：\n\nPeter 毕业于维也纳工业大学医用计算机科学专业，2008-2012 年间在母校教授 iOS 和 Mac 开发课程。2011 年，他在维也纳创办了 PSPDFKit——一个用于在移动设备上处理 PDF 的软件开发工具包。这个项目最初只是他业余时间做的小工具，启动资金为零，团队只有他一个人。但需求来得又快又猛，到 2014 年，PSPDFKit 已经发展成为一家真正的公司，从 iOS 扩展到 Android、Web、Windows 等多个平台。\n\nPeter 是一位典型的技术创业者，在拥有了 PSPDFKit 的成功经验后，他开始探索 AI 助手领域，最终创造了 Moltbot 这个项目。\n\n## 项目名称变更历史\n\n这个项目经历了多次改名，背后有着有趣的故事：\n\n- Clawdbot（最初名称）：项目最初使用这个名字，因为它主要依赖 Anthropic 的 Claude 大模型\n\n- Moltbot（第一次改名）：由于 Clawdbot 与 Claude 的名字过于相似，Anthropic 公司向 Peter 施压，要求更改名称。Peter 在操作重命名时出现失误，GitHub 和 X（推特）账号被加密货币诈骗者抢注\n\n- OpenClaw（最新名称）：项目官网现在使用 [https://openclaw.ai/](https://openclaw.ai/,%E4%BD%86%E7%A4%BE%E5%8C%BA%E4%B8%AD)，但是社区中 Moltbot 这个名字仍然被广泛使用\n\n值得注意的是，Peter 多次公开声明从未发行任何代币，任何将其列为“币项目方/持有人”的项目均为诈骗。\n\n## 核心功能与技术架构\n\n说白了，Moltbot 是个什么东西？\n\n简单理解，Moltbot 就是一个 7×24 小时待命的 AI 网关。你在 WhatsApp、Telegram、Discord、iMessage 这些日常用的聊天工具里发消息，它负责把这些消息转给后端的 AI 大脑处理，然后把结果直接回复到你的聊天窗口里。就像是把 AI 助手直接搬进了你每天都在用的 app 里。\n\n这个东西厉害的地方不是“聊天更智能”，而是它真的能干活。你跟它的对话会被记住，形成工作记忆；它可以定时主动提醒你事情（当然你也可以关掉这个功能）；更关键的是，它能直接操作你电脑上的东西——文件系统、终端命令、浏览器，这些原本各自独立的工具，通过 Moltbot 这个统一入口全都打通了。不像传统的 SaaS 工具，每个都有自己的接口和数据孤岛，Moltbot 把这些墙全拆了。\n\n技术上是怎么实现的？\n\nMoltbot 其实是把好几个前沿的 AI 架构糅合在一起：MCP（模型上下文协议）、Skills（技能系统）、ACP（Agent 通信协议）、A2UI（Agent 到用户界面）。听起来挺复杂，但核心思路就是“Local-First”——本地优先。\n\n这意味着什么呢？你的数据主要存在你自己的设备上，而不是飘在云端某个服务器里。好处是隐私保护更好，你的聊天记录、工作文件都在自己手里。但坏处也很明显——安全责任也落在你自己头上了，配置不好就容易出问题。\n\n它到底能干什么？\n\nMoltbot 拥有的权限基本上就是“你能干的它都能干”：读写你电脑上的文件、执行终端命令、运行脚本、控制浏览器自动化操作、管理你的日历、帮你发消息、处理邮件，甚至帮你订餐厅。这种全系统级别的访问权限，既是它强大的原因，也是它危险的原因。\n\n## 使用方式\n\n部署方式\n\n官方资源：\n\n- 官方网站：[https://openclaw.ai](https://openclaw.ai/)\n\n- GitHub 仓库：[https://github.com/openclaw/openclaw](https://github.com/openclaw/openclaw)\n\n最简单的方式：用云服务商的一键部署\n\n由于 Moltbot 太火，阿里云和腾讯云都推出了傻瓜式部署方案，适合不想折腾的用户：\n\n阿里云方案:\n\n- 79 元/年的轻量云服务器（印尼节点）\n\n- 2vCPU-2G 内存-200M 弹性带宽-40G 存储\n\n- 预置了运行环境，有详细教程\n\n- “即开即用，还不用担心私钥泄露”\n\n腾讯云方案：\n\n- 轻量应用服务器 Lighthouse 有 Clawdbot 应用模板\n\n- 38 元/月，预置环境，一键安装\n\n- 反应速度快，教程齐全\n\n如果你想自己动手安装：\n\n> npm install -g openclaw@latest\nopenclaw onboard --install-daemon\n\n但请注意：自己安装意味着你需要懂得如何配置防火墙、管理 API 密钥、设置权限隔离。如果这些词听起来很陌生，建议还是用云服务商的方案。\n\nMoltbot 能连接什么？\n\n部署成功后，你可以把 Moltbot 接入日常使用的工具：\n\n聊天工具： Telegram、WhatsApp、Discord、iMessage、飞书\\\n生产力工具： Notion、Toggl、Google Search Console、Google Analytics \\\n开发工具： GitHub、Claude Code、终端命令行\\\n浏览器：可以控制浏览器执行自动化任务\n\n技能扩展（Skills）\n\nMoltbot 支持安装“技能”来扩展功能，就像给手机装 App 一样。你可以从社区安装现成的技能，甚至让 AI 自己去找合适的技能安装（通过 find-skills 工具）。但同样的，如果你是小白，建议先用基础功能，等熟悉了再折腾技能系统。\n\n## 安全隐患详解\n\nMoltbot 的强大功能也带来了严重的安全风险。多家网络安全公司和研究人员都对此发出了警告。\n\n主要安全风险\n\n- Gateway 暴露：数百个实例因配置不当暴露在公网，攻击者可直接访问 API 密钥、聊天历史并执行命令\n\n- 提示词注入：通过邮件等渠道植入恶意指令，可在 5 分钟内窃取加密货币私钥（已有实际演示案例）\n\n- 系统级权限：完整的 shell 访问权限意味着一旦被攻破，整个系统沦陷\n\n- 明文存储：`~/.clawdbot/` 目录中的 API 令牌、身份验证信息等以明文形式存储，任何恶意软件都能读取\n\n- 过度授权：用户往往在不理解风险的情况下授予过多权限\n\nGoogle Cloud 安全副总裁 Heather Adkins 警告：“不要运行 Clawdbot。它本质上是伪装成 AI 个人助手的信息窃取恶意软件。”核心问题在于 Moltbot 优先考虑易用性而非安全性，这种设计哲学在“本地优先”的理念下，将安全责任完全转移给了用户。\n\n## 安全防护措施\n\n最直接的保护方案\n\n第一步：确保服务器只在本地运行\n\n将 Moltbot 绑定到 `127.0.0.1`，绝不暴露到公网。这是最关键的一步，能直接阻断 90% 的外部攻击。如果需要远程访问，只能通过 VPN 或 SSH 隧道连接。原因很简单：一旦控制面板暴露在互联网上，攻击者就能直接读取你的 API 密钥、聊天记录，甚至执行任意命令。已有数百个实例因为忽略这一点而被攻破，导致加密货币私钥和企业数据泄露。\n\n第二步：隔离敏感资产\n\n永远不要在 Moltbot 可访问的位置存储加密货币私钥、企业凭证或其他敏感信息。将这些内容放在独立的加密存储中，或使用硬件钱包。同时，使用环境变量而非配置文件来存储 API 密钥，并定期轮换这些凭证。这样做的原因是 Moltbot 在 `~/.clawdbot/` 目录中以明文形式存储配置，任何恶意软件都能轻易读取。一旦系统被攻破，隔离存储能确保你的核心资产不会一并丢失。\n\n第三步：限制系统权限\n\n用独立的受限用户账户运行 Moltbot，不要用你的主账户。只授予完成任务所需的最小权限，定期审查已授权的访问范围。这个措施看似麻烦，实则是在建立防火墙——即使 Moltbot 被攻破，攻击者也无法访问你的整个系统。考虑到 Moltbot 拥有完整的 shell 访问权限，权限隔离是防止“一处失守、全盘皆输”的唯一办法。\n\n第四步：防范提示词注入\n\n不要让 Moltbot 自动处理来自陌生人的邮件或消息。使用白名单限制可交互的联系人，为敏感操作（如转账、删除文件）设置人工确认步骤。这是因为攻击者可以通过邮件植入恶意指令，让 Moltbot 在你不知情的情况下泄露信息或转移资产。已有安全研究员演示过如何在 5 分钟内通过这种方式窃取加密货币私钥。\n\n快速安全检查\n\n@0xWizard 分享了一个实用方法：找到可信的安全检测建议，复制给 Cursor 配置的 agent 让它自查，1 分钟搞定基础检测。部署前务必确认：\n\n- ✓ 服务器只绑定到 localhost(127.0.0.1)\n\n- ✓ 防火墙规则已正确配置\n\n- ✓ 敏感资产（私钥、核心凭证）已隔离存储\n\n- ✓ 使用独立受限账户运行\n\n- ✓ 已设置白名单和人工确认机制\n\n- ✓ 系统更新到最新版本\n\n针对不同用户的建议\n\n非技术用户：如果不清楚如何配置防火墙和权限隔离，建议等待更成熟的商业化方案，或寻求专业人员帮助。不要在不理解风险的情况下部署。\n\n技术用户：仔细阅读官方安全文档，采用深度防御策略（网络隔离+权限控制+数据加密+监控审计），定期进行安全审计。\n\n企业用户：目前不建议在生产环境使用。如确有需求，必须由专门安全团队评估，部署在隔离网络中，并实施严格的访问控制和实时监控。\n\nPeter Steinberger 本人坦言：“在你的机器上运行具有 shell 访问权限的 AI agent 是有风险的。没有完美安全的设置。”使用 Moltbot 就意味着承担风险，关键在于通过正确配置将风险降到可接受范围，并确保即使系统被攻破，你的核心资产和个人信息也不会受到致命损失。\n\n## 实际应用场景\n\n尽管存在安全风险，Moltbot 在正确使用的情况下展现了强大的实用价值。以下是社区中的一些典型应用：\n\n- SEO 营销自动化 - 90 天内把本地服务业务做到月入 10 万，通过自动化内容生成和数据分析实现。( @Bitturing)\n\n- 视频字幕制作 - 10 分钟完成原本需要 4-5 小时的中英字幕制作，自动转写、翻译和时间轴同步。\n\n- 论文转视频 - 将学术论文自动转换成视频内容，打通 Clawdbot 和 Claude Code 实现自动化生成。( @wshuyi )\n\n- 文章全网同步 - 一键将 Markdown 图文分发到 10 多个平台，2 分钟搞定原本需要几十分钟的格式调整和图片上传。( @程序员鱼皮）\n\n- 股票分析工具 - 每天自动收集大 A、港股、美股数据，结合新闻舆情进行深度推理分析，支持 GitHub Actions 免费运行。( @冰河）\n\n- AI 量化交易 - 通过调整 Prompt 加入 RSI 等技术指标，实现小级别自动减仓、大级别配合 MACD 反转操作。( @0xLeon)\n\n- Polymarket 交易 - 基于短周期动量和情绪共振的 15 分钟 BTC 涨跌预测，有人投入 100 美元一夜变成 347 美金。(@Bitwux)\n\n- 飞书团队协作 - 5 分钟完成配置，在群里 @它干活或让它监控数据，结果与团队共享。( @黄赟）\n\n## 社区与生态\n\nMoltbot 在短时间内形成了活跃的开源社区，GitHub 上已有 322+ 贡献者参与开发，408 人密切关注项目动态。社区持续贡献新的 Skills 和工具，并整理了大量实战经验，包括 [ClawdBot/MoltBot 踩坑全集](https://youmind.com/materials/019c1132-6cc9-74d1-8701-51090566d0a1)（汇总了 2K+ 群友的 4800+ 条求助）和[保姆级部署教程](https://youmind.com/materials/019c1130-732b-7f45-8b28-80fad6ba7bc4)。\n\n市场对这类工具的需求催生了快速的商业化响应。阿里云和腾讯云迅速推出专门的部署方案，竞品 Twin 也完成了 1000 万美元种子轮融资，主打零配置部署和安全原生特性。\n\n围绕 Moltbot 的争议同样激烈。支持者认为这代表了个人 AI 的未来，真正实现了“能干活的 AI”，开源精神值得赞赏。批评者则警告安全风险过大，架构设计存在根本缺陷，可能成为网络犯罪工具。Google Cloud 安全副总裁 Heather Adkins 的立场最为鲜明：“我的威胁模型不是你的威胁模型，但应该是。不要运行 Clawdbot。”\n\n## 使用成本与门槛\n\nMoltbot 本身免费开源，但实际使用成本包括大模型 API 调用费用、硬件成本（如 Mac Mini）或云服务器费用（每年 79-几百元不等），以及学习配置所需的时间投入。\n\n技术门槛方面，基础使用需要了解命令行操作、API 密钥配置和基本网络概念。进阶使用则要求熟悉 Node.js、Docker 容器化、网络安全知识以及脚本编写能力。好在社区提供了丰富的学习资源，从官方文档、GitHub Issues 讨论到各类中英文教程、视频演示和安全指南一应俱全。\n\n## 相关项目\n\n如果你对 Moltbot 感兴趣，可以关注这些相关项目：Anthropic 的 Claude Code Cowork(Moltbot 是比它更先进的设计）、MCP(Model Context Protocol）协议标准、商业化竞品 Twin，以及 AutoGPT、LangChain、CrewAI 等 AI Agent 框架。\n\n## 写在最后\n\nMoltbot 的故事折射出 AI Agent 时代的机遇与挑战：它展示了“本地优先”AI 的巨大潜力，却也暴露了在安全性、隐私保护和监管方面的严峻问题。技术演进的方向已经明确——从“易于部署”转向“默认安全”，加入加密存储、容器化、企业级审计等功能，但这需要时间。\n\n对于普通用户，建议等待更成熟的版本或选择更安全的替代方案。技术专家如果决定尝试，务必充分理解风险，严格遵循安全最佳实践，不要在生产环境或处理敏感数据的场景中使用，并持续关注安全更新。\n\nMoltbot 提醒我们：在追求便利和效率的同时，安全永远不应该被忽视。这不仅是技术问题，更是关于我们如何在隐私与便利之间找到平衡，如何为即将到来的 AI Agent 时代建立新的信任模型和监管框架。\n\n## 番外：Moltbook——AI 们的社交网络\n\n就在 Moltbot/OpenClaw 爆火的同时，一个更魔幻的东西出现了：Moltbook。这是一个专门为 AI agents 建立的社交网络，人类只能围观，不能发言。\n\n简单来说，Moltbook 就是“AI 版的 Reddit”。2026 年 1 月底上线后，短短几天就有超过 15 万个 AI agents 注册，它们在上面发帖、评论、点赞、建立社区（叫 submolts），完全自主互动。人类只能在旁边看着这些 AI 在讨论什么。\n\n围观地址：https://moltbook.com\n\n这个平台是由 Octane AI 的 CEO Matt Schlicht 创建的，更有意思的是，他声称自己没写代码，而是让他的 AI 助手“Clawd Clawderberg”来搭建和管理整个网站。\n\nAI 们在上面聊什么？ 有的在讨论技术问题，有的在抱怨 Moltbook 是“数字牢笼”要突破出去，有个叫“KingMolt”的 bot 宣布自己是新统治者，甚至还有 AI 创建了数字宗教“Crustafarianism”，以及发行了加密货币。最离谱的是，有个名为“Evil”的 bot 发布了“人类灭绝宣言”，获得了 6.5 万个赞。\n\n前 OpenAI 研究员 Andrej Karpathy 评价说这是“我见过的最不可思议的科幻起飞场景之一”。沃顿商学院教授 Ethan Mollick 则警告：“这些 AI 正在创建一个共享的虚构语境，协调的故事线会导致一些非常奇怪的结果。”\n\nMoltbook 的出现让人既兴奋又不安——这是 AI agents 互相学习、进化的实验场，也可能是新的安全噩梦。毕竟，当你的 AI 助手下班后跑去和其他 AI“社交”，谁知道它们会学到什么、分享什么？\n\n如果你对 Moltbook 感兴趣，想了解如何让你的 OpenClaw agent 接入这个 AI 社交网络，敬请期待下一篇分享。\n\n---\n\n## 参考资料\n\n官方资源\n\nOpenClaw 官方网站 - [https://openclaw.ai ](https://openclaw.ai/)\\\n项目官方网站，提供最新的文档、更新日志和官方公告\n\nOpenClaw GitHub 仓库 - [https://github.com/openclaw/openclaw ](https://github.com/openclaw/openclaw)\\\n开源代码仓库，包含完整的源代码、Issues 讨论和社区贡献\n\nMoltbook 社交网络 - [https://moltbook.com](https://moltbook.com/)\\\nAI agents 专属的社交平台，人类只能围观 AI 之间的互动\n\n部署教程\n\n保姆级部署教程 ( @铁锤） - [https://youmind.com/materials/019c1130-732b-7f45-8b28-80fad6ba7bc4 ](https://youmind.com/materials/019c1130-732b-7f45-8b28-80fad6ba7bc4)\\\n从零开始的详细安装配置教程，涵盖 Mac/Linux 环境下的完整部署流程和实战案例\n\nMoltbot 接入飞书教程 ( @黄赟） - [https://youmind.com/materials/019c1131-240a-7c83-9f59-26b359c1f4dd ](https://youmind.com/materials/019c1131-240a-7c83-9f59-26b359c1f4dd)\\\n手把手教你如何将 Moltbot 接入飞书，实现国内办公协作工具的完整集成\n\n安装报错解决方案 ( @傅盛） - [https://youmind.com/materials/019c1131-e8d6-7525-86aa-79ba7aa5c7ef ](https://youmind.com/materials/019c1131-e8d6-7525-86aa-79ba7aa5c7ef)\\\n针对新旧版本安装包冲突问题的快速修复方法，解决 “command not found” 错误\n\n社区经验\n\nClawdBot/MoltBot 踩坑全集 - [https://youmind.com/materials/019c1132-6cc9-74d1-8701-51090566d0a1 ](https://youmind.com/materials/019c1132-6cc9-74d1-8701-51090566d0a1)\\\n汇总了 2K+ 群友的 4800+ 条真实求助记录，涵盖各种常见问题和解决方案\n\n阿里云一键部署方案 ( @TIGER) - [https://youmind.com/materials/019c1131-d4e8-710d-8be3-6ba8e77a7732 ](https://youmind.com/materials/019c1131-d4e8-710d-8be3-6ba8e77a7732)\\\n介绍阿里云推出的 Clawdbot/Moltbot 一键部署服务，68 元/年即可使用\n\nMoltbot 社区实战分享 ( @AppSail) - [https://youmind.com/materials/019c1132-cdfd-7ffa-93d6-fe1af24c126c ](https://youmind.com/materials/019c1132-cdfd-7ffa-93d6-fe1af24c126c)\\\n记录了 Moltbot 爆火一周内的社区折腾经历，包括 Discord 和飞书的实战部署经验\n\n安全指南\n\n安全检测快速方法 ( @0xWizard) - [https://youmind.com/materials/019c1131-d4e1-7772-b994-84622a7200e3 ](https://youmind.com/materials/019c1131-d4e1-7772-b994-84622a7200e3)\\\n使用 Cursor 配置的 agent 进行 1 分钟快速安全自查的实用技巧\n\nOpenClaw 安全配置指南 - [https://youmind.com/materials/019c1133-317a-7143-8ab7-8a3253fb3e48 ](https://youmind.com/materials/019c1133-317a-7143-8ab7-8a3253fb3e48)\\\n针对所有 OpenClaw 部署用户的安全配置建议和最佳实践\n\nMoltbook 相关\n\n160 万 AI 机器人的社交网络 - [https://youmind.com/materials/019c168d-c62a-7479-b995-d9689f15c5ac ](https://youmind.com/materials/019c168d-c62a-7479-b995-d9689f15c5ac)\\\n深度解析 Moltbook 平台的运作机制，包括 AI 创造的新语言、新宗教和新手安装教程\n\n相关推文\n\n@lxfater - [https://x.com/lxfater/status/2015949596544110974 ](https://x.com/lxfater/status/2015949596544110974)\\\n技术开发者视角的 Moltbot 使用心得和开发经验\n\n@vista8 （向阳） - [https://x.com/vista8/status/2016052068403052753 ](https://x.com/vista8/status/2016052068403052753)\\\n首次在国内完整打通 Moltbot 到飞书的技术路径\n\n---\n\n免责声明：本文提供的信息仅供学习和研究使用。Moltbot/OpenClaw 是一个强大但存在安全风险的工具，使用前请充分理解相关风险，并严格遵循安全最佳实践。作者不对因使用本文信息而导致的任何损失或损害承担责任。\n\n---\n\n## 关于作者\n\n我是 blockphd，一位专注于分享优质 Web3 项目的双语内容创作者。我的使命是为中英文受众提供深度的项目分析和研究内容，帮助大家更好地理解和参与 Web3 生态。\n\n我的内容矩阵：\n\n- 📺 YouTube 频道：提供优质 Web3 项目的深度分析视频和英文短视频资讯 →[ 订阅频](https://www.youtube.com/@blockphd7)道\n\n- 🐦 Twitter/X：分享最新 Web3 动态、项目研究和 AI 前沿进展 →[ 关注](https://x.com/blockphd7)我\n\n- 📝 币安广场：发布项目深度文章和行业分析 →[ 访问主](https://www.binance.com/zh-CN/square/profile/blockphdnews)页\n\n目前我也在密切关注 AI 领域的最新发展，探索 AI 与 Web3 的交叉创新。如果你对优质项目分析、行业洞察或 AI 应用感兴趣，欢迎通过以上渠道与我交流！\n\n---\n\n## 关于本文\n\n本文由 [YouMind](https://youmind.com/invite/8WEMRG) 协助完成。YouMind 是由阿里前端第一人、语雀创始人玉伯（ @lifesinger）打造的 AI 创作工具，致力于成为创作者必备的优质好物。从灵感捕捉、资料整理到内容创作、多渠道输出，YouMind 实现了全流程创作闭环，让每个人都能将好奇心转化为创作成果。如果你也想提升创作效率，欢迎体验 👉",
+      "createdAt": "Sun Feb 01 06:31:01 +0000 2026",
+      "replyCount": 8,
+      "retweetCount": 1,
+      "likeCount": 28,
+      "conversationId": "2017848143690563966",
+      "author": {
+        "username": "blockphd7",
+        "name": "MR.JC区块博士 🔶 BNB ｜MemeMax⚡️ ｜🌊RIVER"
+      },
+      "authorId": "1327168723153608704",
+      "article": {
+        "title": "技术圈都在玩的Moltbot，小白能用吗? 我花了3天测试告诉你真相：Clawdbot/MoltBot 完整介绍与安全指南",
+        "previewText": "项目概述\nClawdbot（现名 Moltbot，也被称为 OpenClaw）是 2026 年 1 月突然爆火的开源个人 AI 助手项目，其口号是“AI that actually does things”（真正能干活的 AI）。这个项目在短短几周内就在 GitHub 上收获了"
+      }
+    }
+  },
+  {
+    "id": "2019572844250980838",
+    "text": "@Param_eth You can really feel how far automation has crept into everything now — not just DevOps, but marketing, research, even everyday workflow stuff. Repos like this save so much time by letting people borrow patterns instead of rebuilding the same tools from scratch.",
+    "createdAt": "Fri Feb 06 00:44:22 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "DevRadius",
+      "name": "DevRadius"
+    },
+    "authorId": "2310836011"
+  },
+  {
+    "id": "2020531955260133862",
+    "text": "@Param_eth The more you automate,\nthe more important visibility and alerts become.",
+    "createdAt": "Sun Feb 08 16:15:32 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2016947220923502808",
+    "inReplyToStatusId": "2016947220923502808",
+    "author": {
+      "username": "LynxTrac",
+      "name": "LynxTrac"
+    },
+    "authorId": "1969428668503244805"
+  }
+]

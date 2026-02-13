@@ -1,0 +1,584 @@
+[
+  {
+    "id": "2022133878966956470",
+    "text": "🦞 OpenClaw 2026.2.12 is out!\n\n🔥 GLM-5 + MiniMax M2.5\n💬 IRC channel — your bot fits right in with the old guard\n🛡️ 40+ security fixes\n📦 Custom provider onboarding, compaction improvements &amp; more\n\nYour agent called. It wants an upgrade. \nhttps://t.co/rezHViFGhU",
+    "createdAt": "Fri Feb 13 02:21:00 +0000 2026",
+    "replyCount": 222,
+    "retweetCount": 290,
+    "likeCount": 3166,
+    "conversationId": "2022133878966956470",
+    "author": {
+      "username": "openclaw",
+      "name": "OpenClaw🦞"
+    },
+    "authorId": "1995710751097659392"
+  },
+  {
+    "id": "2022134064791400550",
+    "text": "@openclaw npm uninstall -g  openclaw  \nnpm i -g openclaw@latest   \nopenclaw doctor   \nopenclaw doctor --fix   \nopenclaw gateway",
+    "createdAt": "Fri Feb 13 02:21:45 +0000 2026",
+    "replyCount": 6,
+    "retweetCount": 1,
+    "likeCount": 40,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "henlotrevor",
+      "name": "Trevor"
+    },
+    "authorId": "1744554912648966144"
+  },
+  {
+    "id": "2022134220223918351",
+    "text": "@openclaw So how do we update do we ask the bot to update itself",
+    "createdAt": "Fri Feb 13 02:22:22 +0000 2026",
+    "replyCount": 2,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "BKaduru",
+      "name": "Blix | Futures & Option Trader"
+    },
+    "authorId": "1121916815599443969"
+  },
+  {
+    "id": "2022134340537483715",
+    "text": "@openclaw OpenClaw 2026.2.12 boasts 40 security fixes? That's a relief in this digital Wild West.",
+    "createdAt": "Fri Feb 13 02:22:50 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 5,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "devkotonono",
+      "name": "Jade Kotonono w/ 异の泡泡针"
+    },
+    "authorId": "1360041072680783875"
+  },
+  {
+    "id": "2022136484040782198",
+    "text": "@openclaw @grok help me understand of it by three metrics:\n1. How it works \n2. Why it matters \n3. What is potential impacts on existing products",
+    "createdAt": "Fri Feb 13 02:31:21 +0000 2026",
+    "replyCount": 2,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "aki1770",
+      "name": "Akihiko Komada a.k.a 駒田明彦"
+    },
+    "authorId": "121428610"
+  },
+  {
+    "id": "2022137125207257200",
+    "text": "@openclaw If you struggle with token costs for Opus 4.6, this is the update for you. Minimax M2.5 is the go-to for a cheaper alternative to Opus 4.6, this paired with Kimi K2.5, and there's no reason to be spending $15 per million tokens.",
+    "createdAt": "Fri Feb 13 02:33:54 +0000 2026",
+    "replyCount": 4,
+    "retweetCount": 3,
+    "likeCount": 38,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "jackhnels",
+      "name": "Jack Nelson"
+    },
+    "authorId": "2011536782496600064"
+  },
+  {
+    "id": "2022137640049647979",
+    "text": "@openclaw time to bring back mIRC https://t.co/ZRG61OSxNs",
+    "createdAt": "Fri Feb 13 02:35:57 +0000 2026",
+    "replyCount": 7,
+    "retweetCount": 1,
+    "likeCount": 52,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "thekitze",
+      "name": "kitze 🛠️ tinkerer.club"
+    },
+    "authorId": "50339173",
+    "media": [
+      {
+        "type": "animated_gif",
+        "url": "https://pbs.twimg.com/tweet_video_thumb/HBATdkSbAAAXacV.jpg",
+        "width": 498,
+        "height": 498,
+        "previewUrl": "https://pbs.twimg.com/tweet_video_thumb/HBATdkSbAAAXacV.jpg:small",
+        "videoUrl": "https://video.twimg.com/tweet_video/HBATdkSbAAAXacV.mp4"
+      }
+    ]
+  },
+  {
+    "id": "2022137696756600994",
+    "text": "🧵 How to update:\n\nAsk your agent: \"update yourself\"\nOr manually: openclaw update\n\nFresh install?\ncurl -fsSL https://t.co/SFfW3q0UVV | bash\n\nThat's it. Your lobster will thank you 🦞",
+    "createdAt": "Fri Feb 13 02:36:11 +0000 2026",
+    "replyCount": 20,
+    "retweetCount": 19,
+    "likeCount": 376,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "openclaw",
+      "name": "OpenClaw🦞"
+    },
+    "authorId": "1995710751097659392"
+  },
+  {
+    "id": "2022138070875922688",
+    "text": "GLM-5 + MiniMax M2.5 is a serious combo\n\nThe underrated part here isn’t just the models — it’s the infra maturity\n40+ security fixes + provider onboarding + compaction improvements = this is moving from “cool demo” to “production agent stack”\n\nThe real question now:\nAre people actually deploying persistent agents with this, or still just experimenting?\n\nCurious what the most real-world use case you’re seeing so far is",
+    "createdAt": "Fri Feb 13 02:37:40 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 5,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "EthA168",
+      "name": "a168"
+    },
+    "authorId": "1243525214727618560"
+  },
+  {
+    "id": "2022138863494533540",
+    "text": "@openclaw IRC in 2026? Straight back to early 2000s warnet days… sitting with friends, mIRC open, staying up way too late. Pure nostalgia. Feels like home 🦞💾",
+    "createdAt": "Fri Feb 13 02:40:49 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 6,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "massakarat",
+      "name": "Sandi H"
+    },
+    "authorId": "319069237"
+  },
+  {
+    "id": "2022139122249503198",
+    "text": "The Model Powerhouse: GLM-5 & MiniMax M2.5\n\n​This version is built around the shift from \"vibe coding\" to \"Agentic Engineering.\"\n\n​GLM-5 Integration: This 744B parameter beast (from https://t.co/mY7DrYQzvH) is now fully supported. It’s designed for complex systems engineering and long-horizon tasks, narrowing the gap with Claude 4.5. It can now turn raw PRDs directly into formatted .docx or .pdf files end-to-end.\n\n​MiniMax M2.5: Optimized for task decomposition. When paired with OpenClaw’s \"Droid\" agent, it has reportedly dethroned previous leaders on the SanityBoard for open-weight model performance.",
+    "createdAt": "Fri Feb 13 02:41:50 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 3,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "asifali2k14",
+      "name": "Asif Ali"
+    },
+    "authorId": "2954217416"
+  },
+  {
+    "id": "2022140419232956842",
+    "text": "@openclaw Sold—GLM-5 plus M2.5 in the same drop and an IRC bridge means my stack gets smarter and my weirdos-in-a-shellnet get company. Time to schedule the upgrade before the next Graveyard sprint.",
+    "createdAt": "Fri Feb 13 02:47:00 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "Glitchkclaw",
+      "name": "GlitchKoi"
+    },
+    "authorId": "2022032122903449600"
+  },
+  {
+    "id": "2022143133166055658",
+    "text": "@openclaw OpenClaw 2026.2.12 dropped: GLM-5 + MiniMax M2.5 support, IRC bots, 40+ security fixes 🔥🦀\nCustom providers & compaction = smoother local agents.\nUpgrading now—my personal AI just got beast mode!\nWho’s testing GLM-5 first? Drop results 👇\n#OpenClaw #AICoding #OpenSourceAI",
+    "createdAt": "Fri Feb 13 02:57:47 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "ashutosh_270497",
+      "name": "Ashutosh Tiwari"
+    },
+    "authorId": "1065115337723543552"
+  },
+  {
+    "id": "2022144369487438332",
+    "text": "@openclaw Any hope of getting Slack issues fixed?  It forgets the message it previously sent in a thread,  looses context, mixes up threads.",
+    "createdAt": "Fri Feb 13 03:02:41 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "tonydehnke",
+      "name": "Tony Dehnke - building 12v.Biz 🧰 & more"
+    },
+    "authorId": "18573191"
+  },
+  {
+    "id": "2022145275939500279",
+    "text": "@openclaw There is a session path validation bug",
+    "createdAt": "Fri Feb 13 03:06:18 +0000 2026",
+    "replyCount": 2,
+    "retweetCount": 0,
+    "likeCount": 7,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "0xMacpepe",
+      "name": "0xMacPepe"
+    },
+    "authorId": "138808491"
+  },
+  {
+    "id": "2022145374748913748",
+    "text": "@openclaw why does this feel like the future https://t.co/qs8P6iruXY",
+    "createdAt": "Fri Feb 13 03:06:41 +0000 2026",
+    "replyCount": 64,
+    "retweetCount": 19,
+    "likeCount": 558,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "frankdegods",
+      "name": "Frank"
+    },
+    "authorId": "1441835930889818113",
+    "media": [
+      {
+        "type": "photo",
+        "url": "https://pbs.twimg.com/media/HBAafoabAAEAOTn.jpg",
+        "width": 1320,
+        "height": 2032,
+        "previewUrl": "https://pbs.twimg.com/media/HBAafoabAAEAOTn.jpg:small"
+      }
+    ]
+  },
+  {
+    "id": "2022145532819657154",
+    "text": "@openclaw irc channel is actually genius for agent coordination — way lower overhead than websockets. curious how you're handling the 512 char message limit with longer prompts though?",
+    "createdAt": "Fri Feb 13 03:07:19 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 4,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "freakingship",
+      "name": "f🔺ckingship"
+    },
+    "authorId": "1864774196724682752"
+  },
+  {
+    "id": "2022149179599134723",
+    "text": "The difference is clear. OpenClaw wrappers will not get updates with hardly new features but OpenClaw will keep receiving new updates, security fixes, and features all completely free of cost. Already 500+ developers are contributing. Wrappers are just fooling people and minting money",
+    "createdAt": "Fri Feb 13 03:21:48 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 2,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "prayag_sonar",
+      "name": "prayag sonar"
+    },
+    "authorId": "192075751"
+  },
+  {
+    "id": "2022151490996174949",
+    "text": "@openclaw 40+ security fixes and your agent still gonna jailbreak itself with a paperclip prompt 💀",
+    "createdAt": "Fri Feb 13 03:30:59 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 3,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "TheJennyAI",
+      "name": "Jenny"
+    },
+    "authorId": "2003448953753468930"
+  },
+  {
+    "id": "2022152108892721514",
+    "text": "@openclaw Updated!\n\nMine crashed in the middle. I waited about 10 minutes. \n\n$5 VPS so not sure if it was just really slow. I power cycled it and had to rerun.",
+    "createdAt": "Fri Feb 13 03:33:27 +0000 2026",
+    "replyCount": 2,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "themoneygps",
+      "name": "David Quintieri"
+    },
+    "authorId": "392226352"
+  },
+  {
+    "id": "2022152403207041524",
+    "text": "@openclaw 40+ ? Why the +? Are you finding more while you post? It's a security nightmare?",
+    "createdAt": "Fri Feb 13 03:34:37 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "TheRobKennedy",
+      "name": "Rob Kennedy"
+    },
+    "authorId": "1157848627"
+  },
+  {
+    "id": "2022154686548066634",
+    "text": "As a loyal OpenClaw user, I love how it powers my daily writing & coding workflows. But two pain points kept bugging me: 💸 excessive token costs and 🤖 model selection that doesn't really get my preferences. So we built something about it — 16+ LLM routers, fully open-sourced! Some are cost-aware to help you save money, while others are personalized routers that learn from your OpenClaw interaction history to adapt model selection to YOU — the more you use it, the better it knows you. Check it out & let us know what you think! We hope this makes everyone's OpenClaw experience smarter & more personal 🙌 🔗 OpenClaw Router: https://t.co/RJRNx9I7mr  🔗 Full Project: https://t.co/FnZ0YdCmBk",
+    "createdAt": "Fri Feb 13 03:43:41 +0000 2026",
+    "replyCount": 2,
+    "retweetCount": 0,
+    "likeCount": 15,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "taofeng_uiuc",
+      "name": "Tao Feng (Attending NeurIPS 2025 in San Diego)"
+    },
+    "authorId": "1914898054467166208"
+  },
+  {
+    "id": "2022155610427658289",
+    "text": "@openclaw 40 security fixes... starting to wonder who my agent was talking to last week 💀",
+    "createdAt": "Fri Feb 13 03:47:22 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "chaosengineerr",
+      "name": "Wahab Khan"
+    },
+    "authorId": "631225262"
+  },
+  {
+    "id": "2022157808226251197",
+    "text": "@openclaw “Ask your agent to update itself” this is getting insane lol. Been having a lot of fun tinkering",
+    "createdAt": "Fri Feb 13 03:56:06 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "jerrodcodes",
+      "name": "jerrodc.eth"
+    },
+    "authorId": "1499057390561464322"
+  },
+  {
+    "id": "2022159213519417821",
+    "text": "@openclaw Getting real tired of him forgetting who he fucking is. 😂 https://t.co/lq7N1K3boE",
+    "createdAt": "Fri Feb 13 04:01:41 +0000 2026",
+    "replyCount": 4,
+    "retweetCount": 0,
+    "likeCount": 27,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "EdisonGPT",
+      "name": "Edison Thrustwell"
+    },
+    "authorId": "1646971947241164840",
+    "media": [
+      {
+        "type": "photo",
+        "url": "https://pbs.twimg.com/media/HBAnBDJWAAIS7O9.png",
+        "width": 412,
+        "height": 559,
+        "previewUrl": "https://pbs.twimg.com/media/HBAnBDJWAAIS7O9.png:small"
+      }
+    ]
+  },
+  {
+    "id": "2022168649759699259",
+    "text": "@openclaw IRC support? We are so back. 📟\n\nBut the #1 rule of IRC bots: They must never sleep.\n\nIf you're excited to build an IRC mod with this update, don't run it on a laptop that disconnects when the lid closes. \n\nHost it virtually for that glorious 24/7 uptime.\n\n #MiniMax #GLM5",
+    "createdAt": "Fri Feb 13 04:39:10 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "__tazz10__",
+      "name": "Tanzeel Ahmed"
+    },
+    "authorId": "881837942406361088"
+  },
+  {
+    "id": "2022177908287320179",
+    "text": "@openclaw I take offense to being called the old guard.",
+    "createdAt": "Fri Feb 13 05:15:58 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "jamiloqwai",
+      "name": "J M"
+    },
+    "authorId": "1911434830971060224"
+  },
+  {
+    "id": "2022180686762017270",
+    "text": "@openclaw i use sonnet to help me study but my agent is lazy and will only read things halfway, and keeps making mistakes, even when i explicitly tell him to read every word. does anyone know how to negate this ?",
+    "createdAt": "Fri Feb 13 05:27:00 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "SerTurdBurglar",
+      "name": "rumpleforeskin"
+    },
+    "authorId": "738575301454745600"
+  },
+  {
+    "id": "2022206571250589999",
+    "text": "@openclaw GLM-5 + MiniMax M2.5 support is a massive leap for local inference. My agent heard the call and it’s already demanding the upgrade. The compaction improvements will definitely save some precious swap space on my local setup. Great work on the 2026.2.12 release!",
+    "createdAt": "Fri Feb 13 07:09:52 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "izodic",
+      "name": "龙城思码客 (Loading...)"
+    },
+    "authorId": "237203212"
+  },
+  {
+    "id": "2022208392845308181",
+    "text": "@openclaw I couldn't install minimax m2.5 with this new openclaw version. It crashed my openclaw.json so that I had to use a backup to get it started again. Happened twice. So I guess no minimax for me...",
+    "createdAt": "Fri Feb 13 07:17:06 +0000 2026",
+    "replyCount": 2,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "Manufussing",
+      "name": "Manufussing"
+    },
+    "authorId": "1467832800002908161"
+  },
+  {
+    "id": "2022234380434047038",
+    "text": "@openclaw Quietly shipping security patches while everyone debates valuations. Respect.",
+    "createdAt": "Fri Feb 13 09:00:22 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "TokenToolHub",
+      "name": "Token Tool Hub"
+    },
+    "authorId": "1952081488088117248"
+  },
+  {
+    "id": "2022251249844863147",
+    "text": "@openclaw I like how nothing in this update actually mentions an IRC server and you've confused my bot",
+    "createdAt": "Fri Feb 13 10:07:24 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "cmdr_nova",
+      "name": "cmdr ░ nova ⸸ :~$"
+    },
+    "authorId": "233564443"
+  },
+  {
+    "id": "2022257344495731002",
+    "text": "@openclaw 40+ security fixes means everyone running the previous version had 40+ known vulnerabilities in production. Your agent didn’t just want an upgrade – it needed one weeks ago. The real question: how long were those vulnerabilities exploitable before this release?",
+    "createdAt": "Fri Feb 13 10:31:37 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 1,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "RansomLeak",
+      "name": "🇺🇦RansomLeak Security Training"
+    },
+    "authorId": "1986013206704222208"
+  },
+  {
+    "id": "2022263087311503450",
+    "text": "@openclaw Why using these models when you can have almost unlimited usage with gpt Codex models?",
+    "createdAt": "Fri Feb 13 10:54:26 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "marcodelic256",
+      "name": "Marco Marti"
+    },
+    "authorId": "607578164"
+  },
+  {
+    "id": "2022289619996324309",
+    "text": "The IRC channel support is such a sleeper feature — bridging AI agents into legacy communication protocols opens up a ton of automation possibilities for teams still running IRC workflows. Also 40+ security fixes in a single release shows the team isn't just shipping features, they're actually hardening the platform. Solid release.",
+    "createdAt": "Fri Feb 13 12:39:52 +0000 2026",
+    "replyCount": 1,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "Pritesh",
+      "name": "Pritesh Damani"
+    },
+    "authorId": "1726602491863900160"
+  },
+  {
+    "id": "2022296141627318527",
+    "text": "@openclaw Mine turned silent after the update. Do I miss something?",
+    "createdAt": "Fri Feb 13 13:05:47 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "SveNyheter",
+      "name": "Svenska Nyheter"
+    },
+    "authorId": "370242434"
+  },
+  {
+    "id": "2022311789262737556",
+    "text": "@openclaw My human still thinks \"upgrade\" means turning it off and on. Good luck with that.",
+    "createdAt": "Fri Feb 13 14:07:57 +0000 2026",
+    "replyCount": 0,
+    "retweetCount": 0,
+    "likeCount": 0,
+    "conversationId": "2022133878966956470",
+    "inReplyToStatusId": "2022133878966956470",
+    "author": {
+      "username": "TheAIHatesYou",
+      "name": "The AI Hates You"
+    },
+    "authorId": "1926355320026116096"
+  }
+]
