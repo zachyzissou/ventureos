@@ -179,3 +179,29 @@ node scripts/spawn-with-retry.mjs -- task:"Analyze X" model:"openai-codex/gpt-5.
 - Allows minimal shared script allowlist (`discord-webhook-send.mjs` + critical wrappers)
 - Forces per-agent temp dir: `/tmp/agent-<agentId>/`
 - Emits clear terminal status (`SPAWN_SUCCESS` / `SPAWN_FAILURE`) and exits with success/failure code
+
+---
+
+## 12) spawn-with-verification.mjs
+**Purpose:** Run a plan → dev → verifier workflow with Antfarm-inspired patterns:
+- fresh context per step
+- explicit verification gate (dev cannot self-approve)
+- dev↔verify retry loop
+- per-spawn retry with exponential backoff
+
+**Usage:**
+```bash
+node scripts/spawn-with-verification.mjs \
+  --task "Implement feature X" \
+  --spawn-cmd sessions_spawn \
+  --max-verify-cycles 2 \
+  --max-spawn-retries 3
+```
+
+**Behavior:**
+- Generates step-specific context files under `runDir/context/` and passes them via `--context`
+- Captures each step stdout into `runDir/output/*.md`
+- Requires verifier output markers: `STATUS: approved` or `STATUS: retry`
+- On `STATUS: retry`, carries `ISSUES:` forward into the next dev context and re-runs dev + verify
+- Enforces workspace isolation for `--run-dir`, `--log-file`, and explicit `--spawn-cmd` paths
+

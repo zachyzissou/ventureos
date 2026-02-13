@@ -18,3 +18,11 @@ export_cron_logs_test:
   image: python:3.12-slim
   script:
     - bash scripts/tests/test-export-cron-logs.sh
+
+spawn_tests:
+  stage: test
+  image: node:20-slim
+  script:
+    - node --version
+    - bash scripts/tests/test-spawn-with-retry.sh
+    - bash scripts/tests/test-spawn-with-verification.sh
