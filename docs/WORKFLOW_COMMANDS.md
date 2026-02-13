@@ -34,6 +34,11 @@ All workflows should run through the standard wrapper for retries + timeouts:
 scripts/guarded-run.sh <timeout> <max_attempts> <base_sleep> <command...>
 ```
 
+For multi-agent fan-out workflows, wrap subagent dispatch with:
+```
+node scripts/spawn-with-retry.mjs -- <sessions_spawn args...>
+```
+
 ---
 
 ## Safety Gates (Required)

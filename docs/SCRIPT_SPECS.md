@@ -157,3 +157,20 @@ scripts/guarded-run.sh 60 3 2 <command> <args>
 **Behavior:**
 - Runs `with-timeout.sh` inside `retry.sh`
 - Use for network/API commands in cron payloads
+
+---
+
+## 11) spawn-with-retry.mjs
+**Purpose:** Wrap `sessions_spawn` with explicit retries and durable failure logs.
+
+**Usage:**
+```bash
+node scripts/spawn-with-retry.mjs -- task:"Analyze X" model:"openai-codex/gpt-5.3-codex" label:"oracle-x"
+```
+
+**Behavior:**
+- Calls `sessions_spawn` by default (override with `--spawn-cmd`)
+- Retries with exponential backoff (2s, 4s, 8s, 16s)
+- Default `--max-retries 3` (2s/4s/8s); `--max-retries 4` enables 16s retry
+- Writes JSONL log records to `/Users/zachgonser/clawd/runtime/logs/spawn-with-retry.log`
+- Emits clear terminal status (`SPAWN_SUCCESS` / `SPAWN_FAILURE`) and exits with success/failure code

@@ -98,6 +98,7 @@
 - **docs/ops/RETRY_POLICY.md** – retry tiers, backoff + jitter, cooldown, idempotency rules
 - **docs/ops/ERROR_TAXONOMY.md** – detailed P0/P1/P2 criteria, response, alerting
 - **docs/process/SCRIPT_SPECS.md** – script‑level specs (backup, monitor, logs, quota)
+- **SESSIONS_SPAWN_RETRY_WRAPPER.md** – sessions_spawn retry wrapper usage, logging, and integration points
 - **docs/process/CRON_SPECS.md** – cron job definitions & schedules
 - **docs/process/METRICS_PLAN.md** – KPI definitions + collection approach
 - **docs/process/TEST_PLAN.md** – verification & test cases
