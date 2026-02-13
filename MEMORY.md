@@ -14,7 +14,8 @@
 - Roku devices confirmed: Roku 1 at `192.168.225.166` (MAC `50:06:F5:6D:F9:58`), Roku 2 at `192.168.225.139` (MAC `50:06:F5:6D:F4:39`). Both Roku Ultra, firmware 15.1.4, HTTP API port 8060 reachable (no auth).
 - Three rooms share two Rokus via C4 AV matrix: Front Bed, Middle Bed, Patio. Volume handled by C4 room zone (routes to amp or TV speakers per room).
 - Proposed solution: single template automation mapping `homekit_tv_remote_key_pressed` → check entity source attribute → POST to correct Roku IP:8060/keypress/<key>. Design doc in `memory/2026-02-12-apple-remote-control4.md`.
-- Pending: pair doorbell in Home app, test doorbell chain, implement universal media player wrappers for correct TV on/off state, enable Front Bed + Patio HomeKit TV accessories, implement Apple Remote → Roku navigation automations.
+- Multi-agent audit: Sentinel 🔴 BROKEN (209K>200K, prompt-too-long, needs session reset); Verifier ⚠️ 189K near limit (preemptive reset needed); Archivist ⚠️ memory-facts-extraction embedding failures (missing API keys). Session file storage location still unknown. 2 stale GamingPC node pairings need cleanup.
+- Pending: pair doorbell in Home app, test doorbell chain, implement universal media player wrappers for correct TV on/off state, enable Front Bed + Patio HomeKit TV accessories, implement Apple Remote → Roku navigation automations, reset Sentinel/Verifier sessions, fix Archivist embeddings.
 - Details in `memory/2026-02-12.md`.
 
 ## Daily Log - 2026-02-11
