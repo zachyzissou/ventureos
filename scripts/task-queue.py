@@ -10,8 +10,8 @@ Design goals:
 - Safe defaults: does nothing unless proactively enabled via proactive-engine.json
 - Non-destructive: does not truncate logs; queue is append/update only
 
-Queue file default: ~/clawd/runtime/task-queue.json
-Config default:     ~/clawd/runtime/proactive-engine.json
+Queue file default: <workspace>/runtime/task-queue/<agentId>/task-queue.json
+Config default:     <workspace>/runtime/task-queue/<agentId>/proactive-engine.json
 """
 
 from __future__ import annotations
@@ -34,6 +34,50 @@ except Exception:  # pragma: no cover
     ZoneInfo = None  # type: ignore
 
 DEFAULT_TZ = "America/Chicago"
+
+
+def current_agent_id() -> str:
+    raw = os.getenv("OPENCLAW_AGENT_ID") or os.getenv("AGENT_ID") or "main"
+    safe = "".join(c if c.isalnum() or c in "._-" else "-" for c in raw)
+    return safe or "main"
+
+
+def workspace_root() -> Path:
+    configured = os.getenv("OPENCLAW_WORKSPACE") or os.getenv("AGENT_WORKSPACE") or os.getenv("WORKSPACE_ROOT")
+    if configured:
+        return Path(configured).expanduser().resolve()
+    return Path(__file__).resolve().parents[1]
+
+
+def task_queue_defaults() -> tuple[Path, Path, Path]:
+    root = workspace_root()
+    agent = current_agent_id()
+    base = root / "runtime" / "task-queue" / agent
+    return (
+        base / "task-queue.json",
+        base / "proactive-engine.json",
+        root / "runtime" / "logs" / "task_runs" / agent,
+    )
+
+
+def agent_tmp_dir() -> Path:
+    d = Path("/tmp") / f"agent-{current_agent_id()}"
+    d.mkdir(parents=True, exist_ok=True)
+    try:
+        d.chmod(0o700)
+    except Exception:
+        pass
+    return d
+
+
+def assert_within_workspace(raw: str, label: str) -> Path:
+    root = workspace_root().resolve()
+    resolved = Path(raw).expanduser().resolve()
+    try:
+        resolved.relative_to(root)
+    except Exception as exc:
+        raise SystemExit(f"PATH_ISOLATION_DENY: {label} outside workspace ({resolved})") from exc
+    return resolved
 
 
 def now_utc() -> dt.datetime:
@@ -228,8 +272,20 @@ def append_task_run_log(base: Path, record: dict) -> None:
 
 def run_command(command: list[str], timeout_s: int) -> tuple[int, str, str, float]:
     start = time.time()
+    env = os.environ.copy()
+    env["OPENCLAW_AGENT_ID"] = current_agent_id()
+    env["OPENCLAW_WORKSPACE"] = str(workspace_root())
+    env["TMPDIR"] = str(agent_tmp_dir())
+
     try:
-        cp = subprocess.run(command, capture_output=True, text=True, timeout=timeout_s)
+        cp = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+            env=env,
+            cwd=str(workspace_root()),
+        )
         dur = time.time() - start
         return cp.returncode, (cp.stdout or ""), (cp.stderr or ""), dur
     except subprocess.TimeoutExpired as e:
@@ -353,8 +409,10 @@ def cmd_work(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    default_queue, default_config, default_task_runs = task_queue_defaults()
+
     p = argparse.ArgumentParser(description="Durable task queue + worker (Phase 2 building block)")
-    p.add_argument("--queue", default=str(Path.home() / "clawd/runtime/task-queue.json"))
+    p.add_argument("--queue", default=str(default_queue))
 
     sub = p.add_subparsers(dest="cmd", required=True)
 
@@ -375,8 +433,8 @@ def build_parser() -> argparse.ArgumentParser:
     l.set_defaults(func=cmd_list)
 
     w = sub.add_parser("work", help="process due tasks (requires proactive engine enabled)")
-    w.add_argument("--config", default=str(Path.home() / "clawd/runtime/proactive-engine.json"))
-    w.add_argument("--task-runs-dir", default=str(Path.home() / "clawd/runtime/logs/task_runs"))
+    w.add_argument("--config", default=str(default_config))
+    w.add_argument("--task-runs-dir", default=str(default_task_runs))
     w.set_defaults(func=cmd_work)
 
     return p
@@ -385,6 +443,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     p = build_parser()
     args = p.parse_args()
+
+    args.queue = str(assert_within_workspace(args.queue, "queue"))
+    if args.cmd == "work":
+        args.config = str(assert_within_workspace(args.config, "config"))
+        args.task_runs_dir = str(assert_within_workspace(args.task_runs_dir, "task-runs-dir"))
 
     if args.cmd == "enqueue":
         # argparse gives command including leading '--' sometimes; ensure we got something

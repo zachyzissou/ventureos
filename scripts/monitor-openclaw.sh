@@ -3,7 +3,16 @@ set -euo pipefail
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-STATE="$HOME/clawd/runtime/monitor/state.json"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/agent-env.sh
+source "$SCRIPT_DIR/lib/agent-env.sh"
+
+AGENT_ID="$(agent_env_agent_id)"
+WORKSPACE_ROOT="$(agent_env_workspace_root)"
+TMPDIR="$(agent_env_tmp_dir)"
+export TMPDIR
+
+STATE="$WORKSPACE_ROOT/runtime/monitor/$AGENT_ID/state.json"
 LOG_ERR="$HOME/.openclaw/logs/gateway.err.log"
 LOCK="$HOME/.openclaw/gateway.lock"
 
@@ -125,7 +134,9 @@ jq --argjson now "$NOW" \
    --arg hash "$NEW_HASH" \
    --argjson pos "$NEW_POS" \
    --arg inode "$CUR_INODE" \
-   '.last_check=$now | .last_alert=$last_alert | .last_issue_hash=$hash | .gateway_err_pos=$pos | .gateway_err_inode=$inode' \
+   --arg agentId "$AGENT_ID" \
+   --arg workspace "$WORKSPACE_ROOT" \
+   '.last_check=$now | .last_alert=$last_alert | .last_issue_hash=$hash | .gateway_err_pos=$pos | .gateway_err_inode=$inode | .agentId=$agentId | .workspace=$workspace' \
    "$STATE" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
 
 if [[ ${#ISSUES[@]} -eq 0 ]]; then

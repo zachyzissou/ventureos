@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/agent-env.sh
+source "$SCRIPT_DIR/lib/agent-env.sh"
+
+TMPDIR="$(agent_env_tmp_dir)"
+export TMPDIR
+
 BACKUP_DIR="$HOME/backups/clawd"
 ARCHIVE=""
 CONFIRM=false

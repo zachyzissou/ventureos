@@ -49,6 +49,7 @@
 - [x] 2026‑02‑07 — Gateway bind=lan; Tailscale Serve disabled; remote.url=ws://openclaw.local:18789
 - [x] 2026‑02‑07 — PF anchor applied for port 18789 (interface‑scoped allowlist + blocks)
 - [x] 2026‑02‑07 — Simulated stale `gateway.lock` scenario (reported complete).
+- [x] 2026‑02‑13 — Per-agent workspace isolation implemented (default-deny paths, shared allowlist, per-agent TMPDIR, 2-agent verification).
 
 ## ⏳ Pending / Next
 - Roadmap Phases 1–5 remain in backlog (see ROADMAP.md + FEATURE_BACKLOG.md).
