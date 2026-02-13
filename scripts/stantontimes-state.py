@@ -31,7 +31,17 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-STATE_PATH = Path.home() / "clawd/projects/stanton-times/state.json"
+AGENT_ID = (os.getenv("OPENCLAW_AGENT_ID") or os.getenv("AGENT_ID") or "main")
+WORKSPACE_ROOT = Path(
+    os.getenv("OPENCLAW_WORKSPACE")
+    or os.getenv("AGENT_WORKSPACE")
+    or os.getenv("WORKSPACE_ROOT")
+    or Path(__file__).resolve().parents[1]
+).expanduser().resolve()
+STATE_PATH = WORKSPACE_ROOT / "projects" / "stanton-times" / "state.json"
+TMPDIR = Path("/tmp") / f"agent-{''.join(c if c.isalnum() or c in '._-' else '-' for c in AGENT_ID)}"
+TMPDIR.mkdir(parents=True, exist_ok=True)
+
 
 
 def _default_state() -> dict:

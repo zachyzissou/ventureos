@@ -30,7 +30,9 @@ for json_path in sorted((docs_dir / "templates").glob("*.json")):
 for path in paths:
     text = path.read_text(encoding="utf-8")
     for i, line in enumerate(text.splitlines(), start=1):
-        if placeholder_re.search(line):
+        # Ignore placeholder tokens inside inline code spans.
+        scan_line = re.sub(r"`[^`]*`", "", line)
+        if placeholder_re.search(scan_line):
             placeholders.append((path.name, i, line.strip()))
     for _, target in link_re.findall(text):
         if target.startswith("http") or target.startswith("#") or target.startswith("mailto:"):

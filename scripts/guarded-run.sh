@@ -6,10 +6,12 @@ if [[ $# -lt 4 ]]; then
   exit 1
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 TIMEOUT="$1"; shift
 MAX_ATTEMPTS="$1"; shift
 BASE_SLEEP="$1"; shift
 
 # Standard wrapper: retry + timeout
-/Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/retry.sh "$MAX_ATTEMPTS" "$BASE_SLEEP" \
-  /Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/with-timeout.sh "$TIMEOUT" "$@"
+"$SCRIPT_DIR/retry.sh" "$MAX_ATTEMPTS" "$BASE_SLEEP" \
+  "$SCRIPT_DIR/with-timeout.sh" "$TIMEOUT" "$@"

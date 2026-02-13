@@ -2,27 +2,118 @@
 /**
  * Retry wrapper for sessions_spawn with exponential backoff.
  *
- * Default behavior:
- * - command: sessions_spawn
- * - retries: 3 (4 total attempts)
- * - backoff: 2s, 4s, 8s (16s available if max-retries >= 4)
- * - failure log: /Users/zachgonser/clawd/runtime/logs/spawn-with-retry.log
- *
- * Usage:
- *   node scripts/spawn-with-retry.mjs -- task:"Do X" model:"openai-codex/gpt-5.3-codex" label:"x"
- *   node scripts/spawn-with-retry.mjs --max-retries 4 -- task:"Do X" label:"x"
- *   node scripts/spawn-with-retry.mjs --spawn-cmd "node /tmp/mock-sessions-spawn.mjs" -- --agent invalid
+ * Workspace-isolated defaults:
+ * - default deny for explicit paths outside workspace
+ * - minimal shared script allowlist (discord-webhook-send + critical wrappers)
+ * - per-agent temp dir: /tmp/agent-<agentId>/
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const REPO_ROOT = path.resolve(__dirname, "..");
 
 const BACKOFF_SECONDS = [2, 4, 8, 16];
 const DEFAULT_MAX_RETRIES = 3;
-const DEFAULT_LOG_FILE =
-  process.env.SPAWN_RETRY_LOG || "/Users/zachgonser/clawd/runtime/logs/spawn-with-retry.log";
 const DEFAULT_SPAWN_CMD = process.env.SESSIONS_SPAWN_CMD || "sessions_spawn";
+
+const DEFAULT_SHARED_ALLOWLIST = [
+  path.resolve(REPO_ROOT, "scripts/discord-webhook-send.mjs"),
+  "/Users/zachgonser/clawd/scripts/discord-webhook-send.mjs",
+  "/Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/retry.sh",
+  "/Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/with-timeout.sh",
+].map((p) => path.resolve(p));
+
+function getAgentId() {
+  const raw = process.env.OPENCLAW_AGENT_ID || process.env.AGENT_ID || "main";
+  return String(raw).replace(/[^a-zA-Z0-9._-]/g, "-");
+}
+
+function getWorkspaceRoot() {
+  const configured =
+    process.env.OPENCLAW_WORKSPACE || process.env.AGENT_WORKSPACE || process.env.WORKSPACE_ROOT;
+  return path.resolve(configured || process.cwd());
+}
+
+function getAgentTmpDir(agentId) {
+  const dir = path.join("/tmp", `agent-${agentId}`);
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  return dir;
+}
+
+function getSharedAllowlist() {
+  const extra = String(process.env.SHARED_SCRIPT_ALLOWLIST || "")
+    .split(path.delimiter)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((p) => resolvePath(p));
+
+  return new Set([...DEFAULT_SHARED_ALLOWLIST, ...extra]);
+}
+
+function resolvePath(rawPath, baseDir = process.cwd()) {
+  const raw = String(rawPath);
+  if (raw.startsWith("~/")) {
+    return path.resolve(os.homedir(), raw.slice(2));
+  }
+  if (raw === "~") {
+    return path.resolve(os.homedir());
+  }
+  return path.isAbsolute(raw) ? path.resolve(raw) : path.resolve(baseDir, raw);
+}
+
+function isWithin(targetPath, basePath) {
+  const rel = path.relative(basePath, targetPath);
+  return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+}
+
+const CONTEXT = {
+  agentId: getAgentId(),
+  workspaceRoot: getWorkspaceRoot(),
+};
+CONTEXT.tmpDir = getAgentTmpDir(CONTEXT.agentId);
+CONTEXT.sharedAllowlist = getSharedAllowlist();
+
+const DEFAULT_LOG_FILE =
+  process.env.SPAWN_RETRY_LOG || path.join(CONTEXT.workspaceRoot, "runtime", "logs", "spawn-with-retry.log");
+
+function deny(reason, details = "") {
+  const suffix = details ? ` (${details})` : "";
+  throw new Error(`PATH_ISOLATION_DENY: ${reason}${suffix}`);
+}
+
+function assertWritablePath(rawPath, label) {
+  const resolved = resolvePath(rawPath);
+  if (isWithin(resolved, CONTEXT.workspaceRoot) || isWithin(resolved, CONTEXT.tmpDir)) {
+    return resolved;
+  }
+  deny(`${label} must be inside workspace or /tmp/agent-${CONTEXT.agentId}`, resolved);
+}
+
+function assertExecutablePath(rawPath, label) {
+  const cmd = String(rawPath || "").trim();
+  if (!cmd) {
+    throw new Error(`${label} is required`);
+  }
+
+  // Bare command names (e.g., sessions_spawn) resolve via PATH.
+  if (!cmd.includes("/")) {
+    return cmd;
+  }
+
+  const resolved = resolvePath(cmd);
+  if (isWithin(resolved, CONTEXT.workspaceRoot) || CONTEXT.sharedAllowlist.has(resolved)) {
+    return resolved;
+  }
+
+  deny(`${label} outside workspace is not allowlisted`, resolved);
+}
 
 function usage(code = 0) {
   const msg = `spawn-with-retry.mjs
@@ -33,15 +124,26 @@ Usage:
 Options:
   --spawn-cmd <cmd>      Command to execute (default: sessions_spawn)
   --max-retries <n>      Retries after initial attempt (default: 3)
-  --log-file <path>      Failure log path
+  --log-file <path>      Failure log path (workspace-local by default)
   --quiet                Do not stream child stdout/stderr
   --json                 Print machine-readable final result JSON
   -h, --help             Show help
 
+Isolation:
+  - Agent ID: ${CONTEXT.agentId}
+  - Workspace: ${CONTEXT.workspaceRoot}
+  - TMPDIR: ${CONTEXT.tmpDir}
+  - Default deny outside workspace for explicit path args
+
 Examples:
-  node scripts/spawn-with-retry.mjs -- task:"Build QA report" model:"openai-codex/gpt-5.3-codex" label:"qa"
-  node scripts/spawn-with-retry.mjs --max-retries 4 -- task:"Dispatch" label:"dispatch-1"
-  node scripts/spawn-with-retry.mjs --spawn-cmd "node /tmp/mock-spawn.mjs" -- --agent invalid-agent
+  AGENT_ID=atlas OPENCLAW_WORKSPACE=~/.openclaw/workspace-atlas \
+    node scripts/spawn-with-retry.mjs -- task:"Build QA report" label:"qa"
+
+  AGENT_ID=oracle OPENCLAW_WORKSPACE=~/.openclaw/workspace-oracle \
+    node scripts/spawn-with-retry.mjs --max-retries 4 -- task:"Dispatch" label:"dispatch-1"
+
+  AGENT_ID=atlas OPENCLAW_WORKSPACE=~/.openclaw/workspace-atlas \
+    node scripts/spawn-with-retry.mjs --spawn-cmd /tmp/agent-atlas/mock-spawn.sh -- --agent invalid-agent
 `;
   process.stdout.write(msg);
   process.exit(code);
@@ -102,6 +204,9 @@ function parseArgs(argv) {
     passthrough.push(a);
   }
 
+  opts.spawnCmd = assertExecutablePath(opts.spawnCmd, "spawn-cmd");
+  opts.logFile = assertWritablePath(opts.logFile, "log-file");
+
   return { opts, passthrough };
 }
 
@@ -124,7 +229,13 @@ function runCommand(commandLine, { quiet }) {
   return new Promise((resolve) => {
     const startedAt = Date.now();
     const child = spawn("bash", ["-lc", commandLine], {
-      env: process.env,
+      env: {
+        ...process.env,
+        OPENCLAW_AGENT_ID: CONTEXT.agentId,
+        OPENCLAW_WORKSPACE: CONTEXT.workspaceRoot,
+        TMPDIR: CONTEXT.tmpDir,
+      },
+      cwd: CONTEXT.workspaceRoot,
       stdio: ["ignore", "pipe", "pipe"],
     });
 
@@ -175,6 +286,9 @@ async function main() {
     if (result.code === 0) {
       const summary = {
         ok: true,
+        agentId: CONTEXT.agentId,
+        workspace: CONTEXT.workspaceRoot,
+        tmpDir: CONTEXT.tmpDir,
         command: opts.spawnCmd,
         args: passthrough,
         attempt,
@@ -205,6 +319,8 @@ async function main() {
     const failureRecord = {
       ts: new Date().toISOString(),
       event: willRetry ? "spawn_retry" : "spawn_failed",
+      agentId: CONTEXT.agentId,
+      workspace: CONTEXT.workspaceRoot,
       attempt,
       totalAttempts,
       maxRetries: opts.maxRetries,
@@ -226,6 +342,8 @@ async function main() {
     if (!willRetry) {
       const summary = {
         ok: false,
+        agentId: CONTEXT.agentId,
+        workspace: CONTEXT.workspaceRoot,
         command: opts.spawnCmd,
         args: passthrough,
         attempts: attempt,

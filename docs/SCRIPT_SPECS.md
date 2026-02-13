@@ -65,6 +65,7 @@
 - “P0: gateway_down”
 - “P1: stale_gateway_lock (<age>s)”
 - “P1: auth_or_timeout_errors”
+- state file: `<workspace>/runtime/monitor/<agentId>/state.json`
 
 ---
 
@@ -75,8 +76,8 @@
 - `~/.openclaw/cron/runs/*.jsonl`
 
 **Outputs:**
-- `~/clawd/runtime/logs/task_runs/YYYY-MM-DD.jsonl`
-- `~/clawd/runtime/logs/task_runs/state.json` (last processed timestamps)
+- `<workspace>/runtime/logs/task_runs/<agentId>/YYYY-MM-DD.jsonl`
+- `<workspace>/runtime/logs/task_runs/<agentId>/state.json` (last processed timestamps)
 
 **Fields (canonical):**
 - timestamp, job_id, action, status, duration, model, notes
@@ -87,7 +88,7 @@
 
 **Retention:**
 - Keep daily JSONL logs for 30 days
-- Archive monthly to `~/clawd/archives/YYYY-MM/task_runs/`
+- Archive monthly to `<workspace>/archives/YYYY-MM/task_runs/<agentId>/`
 
 ---
 
@@ -104,10 +105,10 @@
 **Purpose:** Move old `task_runs` JSONL to monthly archives.
 
 **Inputs:**
-- `~/clawd/runtime/logs/task_runs/*.jsonl`
+- `<workspace>/runtime/logs/task_runs/<agentId>/*.jsonl`
 
 **Outputs:**
-- `~/clawd/archives/YYYY-MM/task_runs/`
+- `<workspace>/archives/YYYY-MM/task_runs/<agentId>/`
 
 **Retention:**
 - Move files older than 30 days; keep `state.json` in place.
@@ -155,8 +156,9 @@ scripts/guarded-run.sh 60 3 2 <command> <args>
 ```
 
 **Behavior:**
-- Runs `with-timeout.sh` inside `retry.sh`
+- Runs repo-local `with-timeout.sh` inside repo-local `retry.sh`
 - Use for network/API commands in cron payloads
+- No dependency on external shared wrapper paths
 
 ---
 
@@ -172,5 +174,8 @@ node scripts/spawn-with-retry.mjs -- task:"Analyze X" model:"openai-codex/gpt-5.
 - Calls `sessions_spawn` by default (override with `--spawn-cmd`)
 - Retries with exponential backoff (2s, 4s, 8s, 16s)
 - Default `--max-retries 3` (2s/4s/8s); `--max-retries 4` enables 16s retry
-- Writes JSONL log records to `/Users/zachgonser/clawd/runtime/logs/spawn-with-retry.log`
+- Writes JSONL log records to `<workspace>/runtime/logs/spawn-with-retry.log`
+- Enforces default-deny for explicit path args outside workspace
+- Allows minimal shared script allowlist (`discord-webhook-send.mjs` + critical wrappers)
+- Forces per-agent temp dir: `/tmp/agent-<agentId>/`
 - Emits clear terminal status (`SPAWN_SUCCESS` / `SPAWN_FAILURE`) and exits with success/failure code

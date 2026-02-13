@@ -19,17 +19,25 @@ Example:
 - `hc pong 002 (Mission Control) 2026-02-09T03:44:11Z`
 
 ## Automated validator (MVP)
-Script: `projects/ventureos/scripts/routing-healthcheck.sh`
+Script: `scripts/routing-healthcheck.sh`
 
 What it does:
-- Reads `projects/ventureos/config/alert-routing.json`
-- Checks `~/.openclaw/credentials/discord/webhooks.json` exists
+- Reads `<workspace>/config/alert-routing.json`
+- Checks the configured webhook map file exists
 - Verifies webhook-map entries exist for all VentureOS role channels
-- Verifies a webhook exists for SlurpNet alerts channel (required to send alerts)
-- Alerts **only** to SlurpNet alerts channel (deduped / suppressed); if the alerts webhook is missing, it fails but cannot notify
+- Verifies a webhook exists for alerts channel
+- Alerts **only** to alerts channel (deduped / suppressed)
 
-State/dedupe file:
-- `runtime/monitor/routing-healthcheck.json`
+## Workspace Isolation (new)
+- Uses `AGENT_ID` + `OPENCLAW_WORKSPACE` to isolate runtime files.
+- **State/dedupe file**:
+  - `<workspace>/runtime/monitor/<agentId>/routing-healthcheck.json`
+- **Default deny** for mutable/config paths outside workspace.
+- **Shared allowlist (minimal)** only for shared script execution:
+  - `discord-webhook-send.mjs`
+  - other critical shared wrappers only when explicitly allowlisted
+- **Per-agent temp dir**:
+  - `/tmp/agent-<agentId>/`
 
 ## Guardrails
 - Never log tokens or webhook URLs.
@@ -37,12 +45,15 @@ State/dedupe file:
 - Only alert on state change or after suppression window.
 
 ## Failure modes
+- Missing config file → fail
 - Missing webhook map file → fail
 - Missing webhook entry for any required channel → fail + alert
+- Path isolation violation (outside workspace / not allowlisted) → fail
 
 ## Remediation
-- Create/add webhooks for missing channel IDs in `~/.openclaw/credentials/discord/webhooks.json`.
-- Re-run `routing-healthcheck.sh`.
+- Create/add webhooks for missing channel IDs in webhook map.
+- Re-run `routing-healthcheck.sh` in the same agent workspace context.
 
 ## Evidence
-See GitLab issue #46 for implementation + MR.
+- Issue: #46 (initial implementation)
+- Isolation follow-up: see workspace isolation MR in project 15.
