@@ -10,7 +10,11 @@
 - Control4 HomeKit state bug: C4 integration returns `idle` (not `off`) when powered down → HomeKit shows TVs as "on". Hardcoded in `control4/media_player.py`. Fix: universal media player wrapper (approved, not yet implemented).
 - Samsung TV ref: QN55QN90DAFXZA at 192.168.225.103, MAC f4:dd:06:89:35:75, config entry `01KH5R3B7ZX3TC1ZTW04BY24NZ` (disabled).
 - HA WebSocket API required for entity registry updates (REST API returns 404). Python + websockets from Mac Studio.
-- Pending: pair doorbell in Home app, test doorbell chain, implement universal media player wrappers for correct TV on/off state, disable 6 `not_loaded` HomeKit TV accessories.
+- Apple Remote Widget research: iOS Control Center remote works with HomeKit TV accessories. D-pad/select/back fire `homekit_tv_remote_key_pressed` events (includes `entity_id`). Volume/power/source already handled by C4 media_player — only navigation needs custom automations.
+- Roku devices confirmed: Roku 1 at `192.168.225.166` (MAC `50:06:F5:6D:F9:58`), Roku 2 at `192.168.225.139` (MAC `50:06:F5:6D:F4:39`). Both Roku Ultra, firmware 15.1.4, HTTP API port 8060 reachable (no auth).
+- Three rooms share two Rokus via C4 AV matrix: Front Bed, Middle Bed, Patio. Volume handled by C4 room zone (routes to amp or TV speakers per room).
+- Proposed solution: single template automation mapping `homekit_tv_remote_key_pressed` → check entity source attribute → POST to correct Roku IP:8060/keypress/<key>. Design doc in `memory/2026-02-12-apple-remote-control4.md`.
+- Pending: pair doorbell in Home app, test doorbell chain, implement universal media player wrappers for correct TV on/off state, enable Front Bed + Patio HomeKit TV accessories, implement Apple Remote → Roku navigation automations.
 - Details in `memory/2026-02-12.md`.
 
 ## Daily Log - 2026-02-11
