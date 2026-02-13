@@ -99,7 +99,10 @@
 - **docs/ops/ERROR_TAXONOMY.md** – detailed P0/P1/P2 criteria, response, alerting
 - **docs/process/SCRIPT_SPECS.md** – script‑level specs (backup, monitor, logs, quota)
 - **docs/process/WORKSPACE_ISOLATION.md** – per-agent workspace isolation policy + implementation + verification
+- **docs/process/WORKFLOW_PATTERNS_ANTFARM.md** – Antfarm-derived workflow helper API + usage examples
 - **SESSIONS_SPAWN_RETRY_WRAPPER.md** – sessions_spawn retry wrapper usage, logging, and integration points
+- **SESSIONS_SPAWN_ANTFARM_PATTERNS.md** – Antfarm-inspired workflow patterns (fresh context, verification loop, retries)
+- **TEST_COVERAGE_SPAWN_PATTERNS.md** – test coverage report for spawn pattern scripts
 - **docs/process/CRON_SPECS.md** – cron job definitions & schedules
 - **docs/process/METRICS_PLAN.md** – KPI definitions + collection approach
 - **docs/process/TEST_PLAN.md** – verification & test cases
