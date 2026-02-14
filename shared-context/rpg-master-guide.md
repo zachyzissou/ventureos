@@ -879,18 +879,22 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 - **Owner:** Verifier
 - **Output:** `~/clawd/ventureos/lib/voice-rules.ts` (602 lines) + tests (692 lines) + docs (259 lines)
 
-**Track 4: Security Infrastructure** 🔄 IN PROGRESS (Started 2026-02-14 16:13 CST)
-- Message sanitization
-- Rate limiting
-- HITL triggers
-- **Owner:** Sentinel (session: 32ac7e6e, 1h timeout)
-- **ETA:** 4-6 hours
+**Track 4: Security Infrastructure** ✅ COMPLETE (2026-02-14 16:25 CST, 12m2s)
+- ✅ Message sanitization (11 secret types, injection scoring)
+- ✅ Rate limiting (per-agent + conversation + challenge limits)
+- ✅ HITL engine (11 triggers, Discord webhook alerts)
+- ✅ Tests: 143/143 passing, 93% coverage
+- **Owner:** Sentinel
+- **Output:** 4,008 lines (723 + 572 + 762 implementation + tests + docs)
 
-**Track 5: Conversation Orchestration** 📅 PENDING (Week 5-7 estimated)
-- Affinity dynamics
+**Track 5: Conversation Orchestration** 🔄 IN PROGRESS (Started 2026-02-14 16:25 CST)
+- Conversation engine core (message routing, turn management)
+- Affinity dynamics (Khala Network integration)
+- Security pipeline integration
 - Dashboard UI with live 2D sprites
 - Conversation visualization
-- **Owner:** Synth + Oracle
+- **Owner:** Synth (implementation, session bd8d6c34) + Oracle (UI, session 50566ee6)
+- **ETA:** Week 5-7 estimate (likely faster given Track 1-4 velocity)
 
 **Track 6: Integration & Testing** 📅 PENDING (Week 8 estimated)
 - Security penetration testing
@@ -1170,11 +1174,11 @@ The RPG system ships features at AI-native velocity (Phase 4 Track 1-2 delivered
 
 ---
 
-## Next Steps (Updated 2026-02-14 16:13 CST)
+## Next Steps (Updated 2026-02-14 16:25 CST)
 
 **Immediate Priority: Phase 4 Track Completion**
 
-**Status:** ✅ P0 Infrastructure Hardening COMPLETE | ✅ Tracks 1-3 COMPLETE | 🔄 Track 4 IN PROGRESS
+**Status:** ✅ P0 Infrastructure Hardening COMPLETE | ✅ Tracks 1-4 COMPLETE | 🔄 Track 5 IN PROGRESS
 
 1. **🛡️ Infrastructure Hardening Sprint** (this week, 10-14 hours) — ✅ 100% COMPLETE
    - ✅ **Adopt three-tier estimation framework** (Oracle, 3m30s, COMPLETE 2026-02-14 19:40 CST)
@@ -1185,18 +1189,21 @@ The RPG system ships features at AI-native velocity (Phase 4 Track 1-2 delivered
      - Auto-reset + handoff summary generation operational
      - Deployed: `~/clawd/scripts/session-health-check.sh` (hourly cron)
 
-2. **✅ Phase 4 Tracks 1-3 COMPLETE**
-   - ✅ Track 1: Role Cards (Oracle + Synth, 14 min, validated by Verifier 12:32 CST)
+2. **✅ Phase 4 Tracks 1-4 COMPLETE**
+   - ✅ Track 1: Role Cards (Oracle + Synth, 14 min, validated by Verifier)
    - ✅ Track 2: KPI Registry (Archivist, 13m4s, 34 KPIs, 29/29 tests)
    - ✅ Track 3: Voice RULES (Verifier, 5m47s, 76/76 tests, 99% coverage)
+   - ✅ Track 4: Security Infrastructure (Sentinel, 12m2s, 143/143 tests, 93% coverage)
 
-3. **🔄 Phase 4 Track 4 IN PROGRESS** (started 16:13 CST)
-   - Security Infrastructure (Sentinel, session 32ac7e6e, ETA 4-6h)
-   - Tasks: message sanitization, rate limiting, HITL triggers
+3. **🔄 Phase 4 Track 5 IN PROGRESS** (started 16:25 CST)
+   - Conversation Orchestration
+   - Synth (implementation): session bd8d6c34, 1h timeout
+   - Oracle (UI/visualization): session 50566ee6, 1h timeout
+   - Tasks: conversation engine, affinity dynamics, security integration, dashboard UI, 2D sprites
 
-4. **📅 Phase 4 Tracks 5-6 PENDING** (after Track 4)
-   - Track 5: Conversation Orchestration (Synth + Oracle, Week 5-7 est)
-   - Track 6: Integration & Testing (Verifier + Atlas, Week 8 est)
+4. **📅 Phase 4 Track 6 PENDING** (after Track 5)
+   - Track 6: Integration & Testing (Verifier + Atlas)
+   - Security penetration testing, performance validation
 
 4. **📊 Quality & Monitoring** (P1, next week, 8-12 hours)
    - Pre-approval decision framework
@@ -1214,9 +1221,9 @@ The RPG system ships features at AI-native velocity (Phase 4 Track 1-2 delivered
 
 ---
 
-**Document Status:** ✅ Master reference (updated 2026-02-14 16:13 CST)  
+**Document Status:** ✅ Master reference (updated 2026-02-14 16:25 CST)  
 **Maintained By:** Nexus (Mission Control)  
-**Phase Status:** Phase 1-3 complete, Phase 4 Tracks 1-3 complete, Track 4 in progress, Tracks 5-6 pending  
-**Current Priority:** Phase 4 Track 4 (Security Infrastructure, Sentinel, started 16:13 CST)
+**Phase Status:** Phase 1-3 complete, Phase 4 Tracks 1-4 complete, Track 5 in progress, Track 6 pending  
+**Current Priority:** Phase 4 Track 5 (Conversation Orchestration, Synth + Oracle, started 16:25 CST)
 
 **"My life for Aiur! En Taro Adun! Through the Khala, we are eternal!"**
