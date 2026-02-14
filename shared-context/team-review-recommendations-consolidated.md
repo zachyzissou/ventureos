@@ -8,9 +8,16 @@
 
 ---
 
-## P0: Do This Week (10-14 hours total)
+## P0: Do This Week (10-14 hours total) — 80% COMPLETE
 
 **Priority:** Critical infrastructure fragility. Fix foundation before resuming features.
+
+**Status:** 4/5 items complete (2026-02-14 ~14:14 CST)
+- ✅ Three-tier estimation framework (Oracle, 3m30s)
+- ✅ Fix failing cron jobs + add alerts (Atlas, 37 min)
+- ✅ SQLite hardening (Atlas, 37 min)
+- ✅ SQLite-consistent backups (Atlas, 37 min)
+- 🔄 Session handoff docs (Synth, in progress)
 
 ### 1. Adopt Three-Tier Estimation Framework
 - **Owner:** Oracle + Nexus
@@ -22,39 +29,46 @@
 - **Why:** Reduce estimation error from 10-100x to 1.5-3x
 - **Source:** Oracle review
 
-### 2. Fix Failing Cron Jobs + Add Failure Alerts
+### 2. Fix Failing Cron Jobs + Add Failure Alerts ✅ COMPLETE
 - **Owner:** Atlas
-- **Effort:** 3-4 hours
-- **What:**
-  - Fix Community Scout cron job (currently in error state)
-  - Fix Quality Audit cron job (currently in error state)
-  - Add Discord webhook for ANY cron job error state
-  - Investigate monitor.db (why 0 health checks?)
+- **Actual effort:** 37 minutes (part of 3-task subagent run)
+- **Completed:** 2026-02-14 ~14:00 CST
+- **What was done:**
+  - ✅ Fixed Community Scout cron job (was failing at delivery step, not execution)
+  - ✅ Fixed Quality Audit cron job (timeout + brittle inline script → deterministic helper)
+  - ✅ Added Discord webhook for cron failures (`~/clawd/ventureos/scripts/cron-failure-alert.sh`)
+  - ✅ Created cron error watcher (runs every 5 min, jobId: `41531717-0358-4745-9e45-5d227bb0c5b2`)
+  - ✅ Investigated monitor.db: 0 health checks is expected behavior (only records issues, not OK checks)
 - **Why:** 2 jobs failing silently, monitoring may be broken
 - **Source:** Sentinel + Atlas reviews
 
-### 3. SQLite Hardening
+### 3. SQLite Hardening ✅ COMPLETE
 - **Owner:** Atlas
-- **Effort:** 2-3 hours
-- **What:**
-  - Change `journal_mode` from `delete` to `WAL`
-  - Set `busy_timeout` from `0` to `5000` (5 seconds)
-  - Enable `foreign_keys` (currently `OFF`)
-  - Add retry logic for lock contention
-  - Add periodic integrity checks (`PRAGMA integrity_check`)
+- **Actual effort:** 37 minutes (part of 3-task subagent run)
+- **Completed:** 2026-02-14 ~14:00 CST
+- **What was done:**
+  - ✅ Changed `journal_mode` to `WAL` (both DBs)
+  - ✅ Set `busy_timeout=5000` via connection-level wrapper
+  - ✅ Enabled `foreign_keys=ON` via wrapper
+  - ✅ Created retry logic wrapper (`~/clawd/ventureos/lib/sqlite-with-retries.sh`)
+  - ✅ Added weekly integrity checks (cron jobId: `00150f29-cd4d-4611-b07f-fea46e8ef606`, Sun 03:00)
+  - ✅ Load tested (8 concurrent writers × 200 inserts, no lock errors)
 - **Why:** Current settings risk lock contention and corruption
 - **Target DBs:** 
   - `~/clawd/memory/memory.sqlite`
   - `~/clawd/agents/ventureos-rpg.db`
 - **Source:** Atlas + Sentinel reviews
 
-### 4. SQLite-Consistent Backups
+### 4. SQLite-Consistent Backups ✅ COMPLETE
 - **Owner:** Atlas
-- **Effort:** 2-3 hours
-- **What:**
-  - Replace tar-based backup with SQLite `.backup` command
-  - Ensures consistent snapshot (not mid-transaction state)
-  - Add weekly restore drill (automated validation)
+- **Actual effort:** 37 minutes (part of 3-task subagent run)
+- **Completed:** 2026-02-14 ~14:00 CST
+- **What was done:**
+  - ✅ Created SQLite snapshot script using `.backup` command (`~/clawd/ventureos/scripts/backup-sqlite-consistent.sh`)
+  - ✅ Updated nightly tar backup to exclude live SQLite files (uses snapshots instead)
+  - ✅ Added manifest.json with row counts for restore validation
+  - ✅ Created weekly restore drill (cron jobId: `711dc171-09e2-400c-99de-a6a36491664e`, Sun 03:30)
+  - ✅ Updated restore procedure (`~/clawd/scripts/restore-backup.sh`)
 - **Why:** Current tar backups may capture inconsistent SQLite state
 - **Note:** Offsite already covered by Time Machine to Unraid
 - **Source:** Atlas + Sentinel reviews
@@ -128,25 +142,44 @@
 - **Why:** Current hardcoded paths make testing + refactoring harder
 - **Source:** Verifier review
 
-### 11. Model Routing Strategy
+### 11. Model Routing + Thinking Level Strategy
 - **Owner:** Oracle + Atlas
 - **Effort:** 2-3 hours (documentation + cron updates)
 - **What:**
-  - Route simple tasks to cheaper models (OpenAI/Codex mini/nano)
-  - Route complex tasks to Anthropic Claude
-  - **Simple tasks** → lighter models:
+  - Route simple tasks to cheaper models with lower thinking levels
+  - Route complex tasks to Anthropic Claude with higher thinking levels
+  - **Simple tasks** → lighter models + **low thinking**:
     - `openai-codex/gpt-5.1-codex-mini` (Codex optimized)
     - `openai/gpt-4.1-mini` (general purpose, cheap)
     - `openai/gpt-4.1-nano` (cheapest)
     - `openai/gpt-5-nano` (newest nano)
-  - **Complex tasks** → Anthropic:
+    - Thinking: `low` (routine work, no deep reasoning)
+  - **Complex tasks** → Anthropic + **medium/high thinking**:
     - `anthropic/claude-3-5-sonnet-20241022` (production)
     - `anthropic/claude-3-7-sonnet-20250219` (newer)
     - `anthropic/claude-opus-4-6` (highest capability)
-  - **Use cases for lighter models:** cron health checks, backup verification, log parsing, status monitoring
-  - **Keep Anthropic for:** team reviews, strategic decisions, external content (prompt injection defense)
-- **Why:** Reduce costs + balance load between providers
+    - Thinking: `medium` (balanced), `high` (deep research/security), `xtra-high` (strategic)
+  - **Thinking level by agent:**
+    - **High:** Oracle (research), Sentinel (security), Echo (CEO orchestration)
+    - **Medium:** Atlas, Verifier, Synth, Nexus (balanced)
+    - **Low:** Archivist (documentation), cron jobs (routine monitoring)
+  - **Use cases for lighter models + low thinking:** cron health checks, backup verification, log parsing, status monitoring
+  - **Keep Anthropic + high thinking for:** team reviews, strategic decisions, external content (prompt injection defense)
+- **Why:** Reduce costs + balance load between providers + optimize thinking overhead
 - **Source:** User recommendation (2026-02-14)
+
+### 12. Dispatch Verification Protocol
+- **Owner:** Nexus (process/workflow)
+- **Effort:** 2-3 hours
+- **What:**
+  - **Rule:** NEVER write "dispatched" to memory until AFTER `sessions_spawn` returns success
+  - Memory update pattern: `sessions_spawn → get childSessionKey → THEN write to memory`
+  - Add validation helper: `verify-session-exists.sh <sessionKey>` (returns 0 if JSONL exists, 1 if phantom)
+  - Weekly audit: scan memory for claimed sessions, verify they exist
+- **Why:** Prevent phantom task tracking (memory claims session running, but spawn never executed)
+- **Impact:** Eliminates false "in progress" blockers, prevents wasted debugging time, maintains status trust
+- **Trigger:** 2026-02-14 incident — session 8fff2e9c documented as "already dispatched" but never existed
+- **Source:** User feedback (2026-02-14 20:37 CST) — "we cant have that continuing to happen"
 
 ---
 
@@ -230,23 +263,24 @@
 4. SQLite-consistent backups (2-3h)
 5. Session handoff docs (2-4h, in progress)
 
-### P1 (Next Week: 10-15 hours)
+### P1 (Next Week: 12-18 hours)
 6. Pre-approval decision framework (2-3h)
 7. Runtime DB validation for KPIs (3-4h)
 8. Real-time variance alerts (2-3h)
 9. Cron reliability reporting (2-3h)
 10. Injectable config (2-3h)
 11. Model routing strategy (2-3h)
+12. Dispatch verification protocol (2-3h)
 
 ### P2 (This Month: 16-24 hours)
-12. Spike unknown dependencies (1h per task)
-13. Single Definition-of-Done (2-3h)
-14. Split docs (3-4h)
-15. CI quality gates (4-6h)
-16. Deploy repeatability (4-6h)
-17. Monthly estimation calibration (1-2h/month)
+13. Spike unknown dependencies (1h per task)
+14. Single Definition-of-Done (2-3h)
+15. Split docs (3-4h)
+16. CI quality gates (4-6h)
+17. Deploy repeatability (4-6h)
+18. Monthly estimation calibration (1-2h/month)
 
-**Total effort: 36-53 hours over 4 weeks**
+**Total effort: 38-56 hours over 4 weeks**
 
 ---
 
