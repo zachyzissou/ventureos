@@ -459,17 +459,21 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 
 **Note:** CRE formulas for sentinel/echo/nexus are placeholders (to be refined in Phase 2)
 
-### Phase 1 Complete — Next: Daily Cron Setup
+### Phase 1 Complete — Daily Cron Setup In Progress
 
 **Both tracks complete:**
 - ✅ Track 1 (Infrastructure): Database, directories, backup script
 - ✅ Track 2 (Calculations): Configs, calculation scripts, testing
 
-**Next steps:**
-1. Set up daily cron job to run `calculate-psionic-stats.sh`
-2. Test full pipeline end-to-end
-3. Verify stats update correctly
-4. Begin Phase 2 (Khala Network drift tracking)
+**Cron Setup (Atlas, in progress):**
+- Creating daily cron job (6:00 AM CST)
+- Runs `calculate-psionic-stats.sh` automatically
+- Silent on success, announces errors to #nexus-mission-control
+- ETA: 10-15 minutes
+
+**After cron setup:**
+- Phase 1 fully operational
+- Begin Phase 2 (Khala Network drift tracking)
 
 ---
 
@@ -516,8 +520,14 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 ### Phase 3: Pylon Network Visualization (2-4 weeks, conditional)
 
 **Integration Target:** Existing VentureOS dashboard at http://192.168.225.149:7001  
-**Tech Stack:** Static HTML/CSS/vanilla JS (not React)  
+**Tech Stack:** TBD at Phase 3 kickoff (React/Web Components decision deferred)  
 **Current Features:** KPI trends, agent health monitoring, recent observations
+
+**Tech Stack Decision (deferred to Phase 3):**
+- **Option A (recommended):** Web Components (framework-agnostic, upgrade-friendly)
+- **Option B:** Full React migration (best long-term, adds 1-2 weeks)
+- **Option C:** Vanilla JS (fastest to ship)
+- **Decision date:** Phase 3 kickoff (after Phase 2 complete)
 
 **Deliverables:**
 1. ✅ API endpoints (stats, tactical overlays, Khala Network) — integrate with existing backend
