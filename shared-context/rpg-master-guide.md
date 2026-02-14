@@ -1,8 +1,8 @@
 # VentureOS RPG System — Master Guide (Protoss Edition)
 ## *"En Taro Adun — Through the Khala, We Are One"*
 
-**Last Updated:** 2026-02-14 09:10 CST  
-**Status:** ✅ Blockers resolved — Ready for Phase 1 implementation  
+**Last Updated:** 2026-02-14 09:12 CST  
+**Status:** 🚀 Phase 1 implementation in progress  
 **Lead:** Nexus (Mission Control)
 
 ---
@@ -402,6 +402,55 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 - Echo↔specialists: 0.65-0.80 (orchestrator role)
 - Nexus↔specialists: 0.65-0.80 (coordinator role)
 - Echo↔Nexus: 0.85 (co-founder bond)
+
+---
+
+## Phase 1 Implementation (In Progress)
+
+**Approved:** 2026-02-14 09:12 CST  
+**ETA:** 30-60 minutes
+
+### Track 1: Infrastructure (Atlas)
+
+**Owner:** Atlas (Probe)  
+**Started:** 2026-02-14 09:12 CST  
+**Timeout:** 30 minutes  
+**Tasks:**
+- [ ] Set up production database (verify existing or recreate)
+- [ ] Seed 28 Khala bonds
+- [ ] Create directory structure (tactical-overlays, personality-protocols)
+- [ ] Create backup script
+- [ ] Verify constraints and indexes
+
+**Deliverables:**
+- Operational database at `~/clawd/agents/ventureos-rpg.db`
+- 28 bonds verified
+- Backup script: `~/clawd/scripts/backup-rpg-db.sh`
+
+### Track 2: Calculation Logic (Synth)
+
+**Owner:** Synth (Dark Templar)  
+**Started:** 2026-02-14 09:12 CST  
+**Timeout:** 1 hour  
+**Tasks:**
+- [ ] Create 8 tactical overlay JSON files
+- [ ] Create psionic stats calculation script (Khala v2.0)
+- [ ] Create rank update script
+- [ ] Test with mock data
+- [ ] Document data sources
+
+**Deliverables:**
+- 8 agent configs: `~/clawd/agents/tactical-overlays/*.json`
+- Calculation script: `~/clawd/scripts/calculate-psionic-stats.sh`
+- Rank script: `~/clawd/scripts/update-psionic-ranks.sh`
+- Data source documentation
+
+### Next: Daily Cron Setup
+
+**After Track 1 & 2 complete:**
+- Set up daily cron job (Archivist or Atlas)
+- Test full pipeline end-to-end
+- Verify stats update correctly
 
 ---
 
