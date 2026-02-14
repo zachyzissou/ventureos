@@ -1,8 +1,8 @@
 # VentureOS RPG System — Master Guide (Protoss Edition)
 ## *"En Taro Adun — Through the Khala, We Are One"*
 
-**Last Updated:** 2026-02-14 09:12 CST  
-**Status:** 🚀 Phase 1 implementation in progress  
+**Last Updated:** 2026-02-14 09:22 CST  
+**Status:** ✅ Phase 1 complete — Setting up daily cron  
 **Lead:** Nexus (Mission Control)
 
 ---
@@ -433,30 +433,43 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 - All indexes present
 - Backup script tested and operational
 
-### Track 2: Calculation Logic (Synth)
+### Track 2: Calculation Logic (Synth) ✅ COMPLETE
 
 **Owner:** Synth (Dark Templar)  
 **Started:** 2026-02-14 09:12 CST  
-**Timeout:** 1 hour  
+**Completed:** 2026-02-14 09:21 CST  
+**Runtime:** 9m2s  
 **Tasks:**
-- [ ] Create 8 tactical overlay JSON files
-- [ ] Create psionic stats calculation script (Khala v2.0)
-- [ ] Create rank update script
-- [ ] Test with mock data
-- [ ] Document data sources
+- [x] Create 8 tactical overlay JSON files
+- [x] Create psionic stats calculation script (Khala v2.0)
+- [x] Create rank update script
+- [x] Test with mock data
+- [x] Document data sources
 
 **Deliverables:**
-- 8 agent configs: `~/clawd/agents/tactical-overlays/*.json`
-- Calculation script: `~/clawd/scripts/calculate-psionic-stats.sh`
-- Rank script: `~/clawd/scripts/update-psionic-ranks.sh`
-- Data source documentation
+- 8 agent configs: `~/clawd/agents/tactical-overlays/*.json` (oracle, atlas, sentinel, verifier, archivist, synth, echo, nexus)
+- Calculation script: `~/clawd/scripts/calculate-psionic-stats.sh` — Computes WIS/SPD/TRU/CRE/RCH
+- Rank script: `~/clawd/scripts/update-psionic-ranks.sh` — Calculates ranks 1-15
+- Data source documentation: `~/clawd/shared-context/rpg-metrics-data-sources.md`
 
-### Next: Daily Cron Setup
+**Test Results:**
+- All 8 agents have stats in database
+- Scripts are idempotent (safe to rerun)
+- Warp tech inputs stored as JSON for auditability
 
-**After Track 1 & 2 complete:**
-- Set up daily cron job (Archivist or Atlas)
-- Test full pipeline end-to-end
-- Verify stats update correctly
+**Note:** CRE formulas for sentinel/echo/nexus are placeholders (to be refined in Phase 2)
+
+### Phase 1 Complete — Next: Daily Cron Setup
+
+**Both tracks complete:**
+- ✅ Track 1 (Infrastructure): Database, directories, backup script
+- ✅ Track 2 (Calculations): Configs, calculation scripts, testing
+
+**Next steps:**
+1. Set up daily cron job to run `calculate-psionic-stats.sh`
+2. Test full pipeline end-to-end
+3. Verify stats update correctly
+4. Begin Phase 2 (Khala Network drift tracking)
 
 ---
 
