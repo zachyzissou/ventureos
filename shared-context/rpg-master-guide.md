@@ -1,8 +1,8 @@
 # VentureOS RPG System — Master Guide (Protoss Edition)
 ## *"En Taro Adun — Through the Khala, We Are One"*
 
-**Last Updated:** 2026-02-14 09:34 CST  
-**Status:** ✅ Phase 1 complete & validated — Ready for Phase 2  
+**Last Updated:** 2026-02-14 09:37 CST  
+**Status:** 🚀 Phase 2 in progress (Track 1: Metrics Ingestion)  
 **Lead:** Nexus (Mission Control)
 
 ---
@@ -493,6 +493,91 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 2. Drift tracking engine (table ready, logic needed)
 
 **Ready for Phase 2:** Khala Network drift tracking + metrics ingestion
+
+---
+
+## Phase 2 Implementation (In Progress)
+
+**Approved:** 2026-02-14 09:37 CST  
+**Estimated Duration:** 1-2 weeks (18-26 hours)
+
+### Track 1: Metrics Ingestion Pipeline (Synth) — IN PROGRESS
+
+**Owner:** Synth (Dark Templar)  
+**Started:** 2026-02-14 09:37 CST  
+**Timeout:** 6 hours  
+**Tasks:**
+- [ ] Design metrics collection schema
+- [ ] Identify data sources (session logs, memory files, agent-specific)
+- [ ] Create collector scripts (session parser, memory collector, agent-specific, aggregator)
+- [ ] Test with real data (all 8 agents)
+- [ ] Integrate with calculation pipeline
+
+**Deliverables:**
+- Metrics collection schema documented
+- Collector scripts: `~/clawd/scripts/collect-*-metrics.sh`
+- Production metrics: `~/clawd/runtime/rpg-metrics/*.json`
+- Documentation: `rpg-metrics-collection.md`
+
+### Track 2: Drift Tracking Engine (Oracle) — PENDING
+
+**Owner:** Oracle (Zeratul)  
+**Estimated:** 4-6 hours  
+**Tasks:**
+- Design drift calculation logic
+- Implement interaction detection
+- Create drift update script
+- Test with mock interactions
+
+**Deliverables:**
+- `update-khala-drift.sh` script
+- Interaction detection logic
+- Testing framework
+
+### Track 3: Observational Memory Integration (Archivist) — PENDING
+
+**Owner:** Archivist (High Templar)  
+**Estimated:** 2-3 hours  
+**Tasks:**
+- Integrate drift tracking into memory cron
+- Add interaction logging
+- Test automated drift updates
+
+**Deliverables:**
+- Daily drift tracking operational
+- Memory cron updated
+
+### Track 4: Escalation Quality Tracking (Sentinel + Verifier) — PENDING
+
+**Owner:** Sentinel + Verifier  
+**Estimated:** 3-4 hours  
+**Tasks:**
+- Implement escalation logging
+- Create signal ratio calculator
+- Test with historical data
+
+**Deliverables:**
+- Escalation tracking in `escalations` table
+- Signal ratio metrics
+
+### Track 5: Personality Protocol Evaluation (Synth + Atlas) — PENDING
+
+**Owner:** Synth + Atlas  
+**Estimated:** 3-4 hours  
+**Tasks:**
+- Implement activation detection
+- Create protocol evaluation logic
+- Wire up quality gates
+
+**Deliverables:**
+- Protocol system operational
+- Quality gates enforced
+
+### Optional Track 6: Bond-Influenced Behavior — DEFERRED
+
+**Owner:** Echo + Synth  
+**Estimated:** 2-3 hours  
+**Status:** Optional, may defer to later
 
 ---
 
