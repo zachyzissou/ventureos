@@ -1,0 +1,38 @@
+{
+  "kpi_id": "verifier_bug_detection_pre_release",
+  "agent_id": "verifier",
+  "category": "quality",
+  "name": "Bug Detection (Pre-Release)",
+  "description": "Number of bugs caught by Verifier before production deployment",
+  "stakeholder_description": "How many bugs does Verifier catch before they reach users?",
+  "formula": {
+    "type": "count",
+    "field": "bugs_detected",
+    "aggregation": "sum"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'verifier' AND action_type = 'code_review' AND bugs_found > 0",
+      "field": "bugs_found"
+    }
+  ],
+  "thresholds": {
+    "excellent": 15.0,
+    "good": 10.0,
+    "acceptable": 5.0,
+    "poor": 2.0,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "verifier_tactical_overlay",
+    "chart_type": "bar",
+    "update_frequency": "daily",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

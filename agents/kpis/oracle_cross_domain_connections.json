@@ -1,0 +1,43 @@
+{
+  "kpi_id": "oracle_cross_domain_connections",
+  "agent_id": "oracle",
+  "category": "impact",
+  "name": "Cross-Domain Connections",
+  "description": "Number of insights connecting multiple domains or fields per research task",
+  "stakeholder_description": "How often does Oracle find surprising connections between different topics?",
+  "formula": {
+    "type": "count",
+    "field": "cross_domain_links",
+    "aggregation": "sum"
+  },
+  "data_sources": [
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'oracle'",
+      "field": "unique_domains"
+    },
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'oracle' AND metadata LIKE '%cross_domain%'",
+      "field": "metadata"
+    }
+  ],
+  "thresholds": {
+    "excellent": 5.0,
+    "good": 3.0,
+    "acceptable": 1.5,
+    "poor": 0.5,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "oracle_tactical_overlay",
+    "chart_type": "sparkline",
+    "update_frequency": "daily",
+    "color_scheme": "default"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

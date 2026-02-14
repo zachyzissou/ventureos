@@ -1,0 +1,43 @@
+{
+  "kpi_id": "echo_coordination_effectiveness",
+  "agent_id": "echo",
+  "category": "collaboration",
+  "name": "Coordination Effectiveness",
+  "description": "Success rate of multi-agent coordination orchestrated by Echo",
+  "stakeholder_description": "How well does Echo coordinate teamwork between agents?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "successful_coordinations",
+    "denominator": "total_coordinations",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'echo' AND action_type = 'coordination'",
+      "field": "status"
+    },
+    {
+      "table": "khala_network",
+      "field": "interaction_count"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.85,
+    "good": 0.75,
+    "acceptable": 0.65,
+    "poor": 0.50,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "echo_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

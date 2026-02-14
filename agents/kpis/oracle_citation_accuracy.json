@@ -1,0 +1,44 @@
+{
+  "kpi_id": "oracle_citation_accuracy",
+  "agent_id": "oracle",
+  "category": "quality",
+  "name": "Citation Accuracy",
+  "description": "Percentage of research claims backed by verifiable sources or explicit uncertainty markers",
+  "stakeholder_description": "How often does Oracle's research include proper citations or acknowledge gaps?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "claims_with_citations",
+    "denominator": "total_claims",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'oracle' AND action_type = 'research_output'",
+      "field": "metadata"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'oracle'",
+      "field": "canonical_edits"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.95,
+    "good": 0.85,
+    "acceptable": 0.70,
+    "poor": 0.50,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "oracle_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "daily",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

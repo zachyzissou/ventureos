@@ -1,0 +1,43 @@
+{
+  "kpi_id": "archivist_pattern_recognition",
+  "agent_id": "archivist",
+  "category": "impact",
+  "name": "Pattern Recognition",
+  "description": "Number of unique recurring patterns identified in stored knowledge",
+  "stakeholder_description": "How often does Archivist spot useful patterns in our history?",
+  "formula": {
+    "type": "count",
+    "field": "patterns_identified",
+    "aggregation": "sum"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'archivist' AND action_type = 'pattern_detection'",
+      "field": "pattern_count"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'archivist'",
+      "field": "unique_domains"
+    }
+  ],
+  "thresholds": {
+    "excellent": 10.0,
+    "good": 6.0,
+    "acceptable": 3.0,
+    "poor": 1.0,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "archivist_tactical_overlay",
+    "chart_type": "sparkline",
+    "update_frequency": "daily",
+    "color_scheme": "default"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "kpi_id": "echo_strategic_alignment",
+  "agent_id": "echo",
+  "category": "impact",
+  "name": "Strategic Alignment Score",
+  "description": "Percentage of decisions and actions aligned with long-term strategic goals",
+  "stakeholder_description": "How well does Echo keep everyone focused on the big picture?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "aligned_actions",
+    "denominator": "total_actions",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'echo' AND action_type IN ('decision', 'planning')",
+      "field": "alignment_score"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'echo'",
+      "field": "warp_tech_inputs"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.90,
+    "good": 0.80,
+    "acceptable": 0.70,
+    "poor": 0.55,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "echo_tactical_overlay",
+    "chart_type": "gauge",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

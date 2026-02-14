@@ -1,0 +1,39 @@
+{
+  "kpi_id": "sentinel_escalation_signal_ratio",
+  "agent_id": "sentinel",
+  "category": "quality",
+  "name": "Escalation Signal Ratio",
+  "description": "Ratio of confirmed threats to total security alerts raised",
+  "stakeholder_description": "How accurate are Sentinel's security warnings? (Higher = less noise)",
+  "formula": {
+    "type": "ratio",
+    "numerator": "confirmed_threats",
+    "denominator": "total_alerts",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'sentinel' AND action_type = 'security_alert'",
+      "field": "confirmed"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.80,
+    "good": 0.65,
+    "acceptable": 0.50,
+    "poor": 0.30,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "sentinel_tactical_overlay",
+    "chart_type": "gauge",
+    "update_frequency": "hourly",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

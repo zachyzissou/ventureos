@@ -825,18 +825,377 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 
 ---
 
-## Next Steps
+## Current Status & Progress (2026-02-14)
 
-1. **✅ User approval** — Phase 1 scope locked
-2. **✅ Team review complete** — All 6 agents validated design
-3. **🔄 Phase 1 kickoff** — Atlas implements core system (2 weeks)
-4. **📅 Phase 2** — Khala Network + evolution (1-2 weeks)
-5. **📅 Phase 3** — Pylon Network visualization (conditional, 2-4 weeks)
+### ✅ Phases 1-3: COMPLETE
+
+**Phase 1: Core Psionic System** (Complete 2026-02-14 09:28 CST)
+- ✅ Database operational (8 tables, 28 bonds, 14 indexes)
+- ✅ Psionic stats calculation (Khala v2.0 formulas)
+- ✅ Daily cron job (ec114bdd, 6:00 AM CST)
+- ✅ Backup system operational (7-day retention)
+- **Runtime:** 16 minutes total (Atlas + Synth)
+
+**Phase 2: Khala Network & Evolution** (Complete 2026-02-14)
+- ✅ Drift tracking engine operational
+- ✅ Memory integration (daily sync cron)
+- ✅ Escalation quality tracking (Sentinel)
+- ✅ Personality protocol system active
+- ✅ All 5 tracks validated by Verifier
+
+**Phase 3: Dashboard Visualization** (Complete 2026-02-14)
+- ✅ Web Components deployed at http://192.168.225.149:7001
+- ✅ Pylon Network section with live RPG stats
+- ✅ Khala Network force-directed graph (D3.js)
+- ✅ Mobile-friendly (iPhone/tablet tested)
+- ✅ Team review complete (6 agents, B+/A- grade)
+
+### 🔄 Phase 4: VOXYZ Integration (In Progress)
+
+**Decision:** Full VOXYZ conversation orchestration (not limited Panel Review)  
+**Timeline:** 6-8 weeks estimated → likely compressed (Track 1-2 done Day 1)
+
+**Track 1: Role Cards** ✅ COMPLETE (2026-02-14, same day)
+- ✅ Schema + 8 role card JSONs (oracle, atlas, sentinel, verifier, archivist, synth, echo, nexus)
+- ✅ TypeScript types + enforcement system (3-tier: infrastructure, heuristic, quality)
+- ✅ Handoff contract validation operational
+- ✅ All tests passing (8/8 cards, 9/9 contracts compatible)
+- **Owner:** Oracle (schema) + Synth (implementation, 14 min)
+- **Output:** 4,789 lines of code + documentation
+
+**Track 2: KPI Registry** ✅ COMPLETE (2026-02-14, 13m4s)
+- ✅ 34 KPI definitions across 8 agents (beat 20-30 target)
+- ✅ TypeScript KPI Registry API (600 lines, 10 core functions)
+- ✅ Jest test suite (29/29 tests passing)
+- ✅ Comprehensive documentation (5 files, ~30K words)
+- **Owner:** Archivist
+- **Output:** `~/clawd/agents/kpis/` + `~/clawd/ventureos/lib/kpi-registry.ts`
+
+**Track 3: Voice RULES** 📅 PENDING (Week 3 estimated)
+- Fact+Action message format
+- Anti-filler validation
+- **Owner:** Verifier
+
+**Track 4: Security Infrastructure** 📅 PENDING (Week 3-4 estimated)
+- Message sanitization
+- Rate limiting
+- HITL triggers
+- **Owner:** Sentinel
+
+**Track 5: Conversation Orchestration** 📅 PENDING (Week 5-7 estimated)
+- Affinity dynamics
+- Dashboard UI with live 2D sprites
+- Conversation visualization
+- **Owner:** Synth + Oracle
+
+**Track 6: Integration & Testing** 📅 PENDING (Week 8 estimated)
+- Security penetration testing
+- Performance validation
+- **Owner:** Verifier + Atlas
+
+**Track 1 validation:** Verifier reviewing (in progress, 30-60 min estimated)
+
+### 🎯 Phase 4.5+: Deep Progression System (Design Complete)
+
+**Status:** 📋 DESIGN COMPLETE (2026-02-14 18:48 CST)  
+**Implementation:** Post-Phase 4 conversation system  
+**Timeline:** 8-12 weeks (Phase 4.5-6)  
+**Spec:** `~/clawd/shared-context/deep-progression-system.md` (50KB)
+
+**Goal:** Transform the basic psionic rank system (Levels 1-15) into a deep, strategic progression system with meaningful choices and specialization paths.
+
+**5-Layer Enhancement System:**
+
+**1. Extended Levels + Prestige Ranks**
+- Levels 1-50 (new XP curve: `floor(100 * level^1.8)`)
+- Prestige system unlocks at Level 50:
+  - **Acolyte** (L50): +10 stat ceiling, advanced skill paths
+  - **Adept** (L60): +20 stat ceiling, signature ability evolution, 2× mentor bonus
+  - **Master** (L70): +30 stat ceiling, cross-role synergies, prestige-only skills
+  - **Grandmaster** (L80): +50 stat ceiling, legendary ability, unique interactions
+- Current max level 15 → extends to 80+
+- Stat ceiling 100 → 150 at Grandmaster
+
+**2. Skill Trees (120+ Nodes Defined)**
+- 3-4 specialization paths per agent
+- 10-15 nodes per path
+- Agent-specific examples:
+  - **Oracle:** Deep Research / Rapid Insights / Cross-Domain Synthesis
+  - **Atlas:** Reliability Engineer / Speed Optimizer / Innovation Track
+  - **Sentinel:** Threat Hunter / Policy Architect / Incident Commander
+  - **Verifier:** Quality Assurance / Risk Analysis / Performance Testing
+  - **Archivist:** Knowledge Architect / Pattern Detector / Teaching Specialist
+  - **Synth:** Rapid Prototyper / Quality Craftsman / Innovation Lab
+  - **Echo:** Strategic Vision / Crisis Management / Team Synergy
+  - **Nexus:** Mission Coordinator / Resource Optimizer / Health Monitor
+- Each node: 3 points to max, grants passive bonuses
+- Example nodes: "Citation Mastery" (+15% citation speed), "Emergency Response" (-20% MTTR), "Deep Focus" (+10 WIS when researching >2h)
+
+**3. XP Diversification (6 Sources)**
+- **Memory XP:** +1 per entry (existing, observations 1×, insights 1.5×, patterns 2×)
+- **Mission XP:** +3 per mission (existing, +5 for complex missions)
+- **Collaboration XP:** +2 per validated handoff, +5 for low-affinity (<0.5)
+- **Innovation XP:** +5 per artifact reuse by other agents
+- **Teaching XP:** +10 per successful mentorship (unlocks L15+)
+- **Specialization XP:** +3-15 for role-specific achievements (50+ defined)
+
+**4. Level-Gated Features**
+- **L15:** Mentorship unlocked (teach agents 5+ levels below)
+- **L20:** Second skill tree path unlocked
+- **L25:** Signature abilities unlocked (agent-specific power spikes)
+  - Oracle: **Foresight** (predict outcomes 3 steps ahead)
+  - Atlas: **Emergency Repair** (instant rollback + recovery)
+  - Sentinel: **Lockdown** (freeze suspicious activity, HITL alert)
+  - Verifier: **Deep Scan** (adversarial testing mode)
+  - Archivist: **Knowledge Synthesis** (auto-generate framework from patterns)
+  - Synth: **Rapid Iteration** (prototype → production in 1 cycle)
+  - Echo: **Strategic Override** (coordinate full-team response)
+  - Nexus: **Tactical Coordination** (optimize 3-agent workflows)
+- **L30:** Cross-role synergies (work with other high-level agents for bonuses)
+- **L35:** Third skill tree path unlocked
+- **L40:** Advanced personality protocols
+- **L50:** Prestige rank unlocked
+
+**5. Dynamic Stat Growth**
+- Every 5 levels: choose +5 to any stat (WIS/SPD/TRU/CRE/RCH)
+- Skill nodes grant passive stat bonuses (e.g., Deep Research path → +WIS)
+- Prestige ranks increase stat ceiling (100 → 110/120/130/150)
+- Specialization creates divergent stat profiles (two L50 Oracles can be completely different)
+
+**Implementation Phases:**
+
+**Phase 4.5 (Week 9-10, post-conversation):**
+- Database schema updates (skill_trees, xp_log, level_choices tables)
+- XP diversification (collaboration, innovation tracking)
+- Basic skill tree framework
+
+**Phase 5 (Week 11-14):**
+- Skill tree nodes implementation (120+ nodes)
+- Level-gated features (mentorship, signature abilities)
+- Dynamic stat growth system
+
+**Phase 6 (Month 2):**
+- Prestige system implementation
+- Advanced interactions (cross-role synergies)
+- Dashboard UI for skill trees + progression
+
+**Success Metrics:**
+- Agents make meaningful specialization choices (not cookie-cutter builds)
+- XP sources balanced (no single source >40% of total)
+- Teaching/mentorship active (≥3 mentorship relationships per week)
+- Innovation tracked (≥10 artifact reuses per week across team)
+
+**Documentation:**
+- Full spec: `~/clawd/shared-context/deep-progression-system.md` (50KB, 1400+ lines)
+- Includes: XP formulas, skill tree definitions, signature abilities, prestige mechanics, implementation plan
+
+**Status:** Ready for Phase 4.5 kickoff after conversation system ships.
+
+### 🛠️ Infrastructure Improvements (Parallel Work)
+
+**Session Management Overhaul** 🔄 IN PROGRESS (2026-02-14)
+
+**Context:** Current session bloat monitoring (600KB threshold) does blind resets → agents lose all context. Oracle churned 13 sessions in 24h.
+
+**Levels Analyzed:**
+- **Level 0 (Current):** Lobotomy — backup + delete at 600KB
+- **Level 1 (Implementing):** Summarize-before-reset — 2-4KB handoff doc injected into new session
+- **Level 2:** Sliding window + pinned context
+- **Level 3 (Target):** Memory-backed continuity (extract to persistent storage)
+- **Level 4:** RAG-augmented sessions (embedding store)
+
+**Dispatch:** Synth implementing Level 1 (2-4h ETA)
+- Hook `session-bloat-monitor.sh` to call summarization before reset
+- Wire `memory-observation-sync` to trigger on reset events (not just hourly)
+- Inject handoff doc as first message in new session
+- **Validation:** Verifier will test Oracle's next reset
+
+**Gaps Identified:**
+- Summarization loses nuance (task state, partial results)
+- Race condition critical (sync must run before reset)
+- Token cost (12 summarizations/day at ~50-100K each)
+- Root cause vs symptom (why is Oracle hitting 600KB in <2h?)
+
+**Goal:** Stop the lobotomy, preserve context across resets, ship Level 1 then decide on Level 2 vs Level 3.
 
 ---
 
-**Document Status:** ✅ Master reference complete  
+## 🛡️ Operational Consistency & Infrastructure Hardening (2026-02-14)
+
+**Context:** Team consistency review completed (Oracle, Atlas, Sentinel, Verifier) — all reviews at `~/clawd/shared-context/team-review-consistency-*.md`
+
+**Full synthesis:** `~/clawd/shared-context/team-review-consistency-synthesis.md`
+
+### Core Finding
+
+**"Formula 1 execution engine, horse-and-buggy planning + infrastructure."**
+
+The RPG system ships features at AI-native velocity (Phase 4 Track 1-2 delivered same day vs Week 1-2 estimates = 10-100x faster), but **infrastructure reliability lags behind**. Consistency requires both speed AND stability.
+
+### Key Insights
+
+**Oracle (Strategic):** Estimates anchored to human timelines → 10-100x variance
+- **Three velocity tiers:** 
+  - Tier 1 (cognitive): minutes-hours
+  - Tier 2 (external): hours-days
+  - Tier 3 (physical/time): days-weeks
+- Pure cognitive work (design, docs, code) ships in minutes, not weeks
+
+**Sentinel (Risk):** Infrastructure fragile → 7 single points of failure
+- Monitoring broken (monitor.db has 0 health checks)
+- 2 cron jobs failing silently (Community Scout + Quality Audit)
+- Disk failure = 7 days RPG data loss (backups local only)
+- Session amnesia still happening (Oracle: 13 sessions/24h)
+
+**Atlas (Operations):** SQLite not hardened, backups risky
+- `journal_mode=delete`, `busy_timeout=0`, `foreign_keys=0`
+- Backups use tar on live files (may capture inconsistent state)
+- Path drift (e.g., guarded-run.sh points to legacy paths)
+- No alerts for: session churn, cron SLAs, SQLite locks, disk pressure
+
+**Verifier (Quality):** Quality variance, validation gaps
+- KPI computations not validated against real DB schema
+- Many KPIs reference non-existent columns → errors swallowed, values default to 0
+- Docs internally inconsistent (marked "in progress" and "complete" simultaneously)
+- Role-card coverage gaps (~49-56% vs 70% threshold)
+
+### Unified Recommendations (Prioritized)
+
+**P0: Do This Week (12-16 hours) — Infrastructure Hardening**
+
+1. **✅ Adopt three-tier estimation framework** (COMPLETE 2026-02-14 19:40 CST)
+   - Owner: Oracle (3m30s)
+   - Deliverables: Framework doc (19KB) + quick reference card (7KB)
+   - Location: `~/clawd/shared-context/estimation-framework-three-tier.md`
+   - Key principle: "The bottleneck determines the tier, not task complexity"
+   - Tier buffers: Tier 1 (1.2-1.5x), Tier 2 (1.5-2.5x), Tier 3 (2-4x)
+   - Ready to use immediately (estimation template included)
+
+2. **Fix failing cron jobs + add alerts**
+   - Community Scout + Quality Audit
+   - Discord webhook for any cron error state
+   - Investigate monitor.db (why 0 health checks?)
+
+3. **SQLite hardening**
+   - WAL mode (not delete)
+   - busy_timeout > 0 (5000ms recommended)
+   - foreign_keys ON
+   - Add retries + integrity checks
+
+4. **SQLite-consistent backups + offsite copy**
+   - Use `.backup` command (not tar on live files)
+   - Weekly restore drills
+   - Sync to S3/drive (eliminate disk failure SPOF)
+
+5. **Session handoff docs** (already in progress)
+   - Generate 2-4KB summary before 600KB reset
+   - Synth implementing Level 1
+
+**P1: Do Next Week (10-15 hours) — Quality & Monitoring**
+
+6. **Pre-approval decision framework** — Reduce blocking gates by 50-80%
+7. **Runtime DB validation for KPIs** — Detect missing columns, prevent silent failures
+8. **Real-time variance alerts** — Catch blockers in 15-30 min (not hours later)
+9. **Cron reliability reporting** — SLA tracking, missed-run alerts
+10. **Injectable config** — Stop hardcoding `~/clawd/...` paths in libraries
+
+11. **Model routing strategy** — Route simple tasks to cheaper models, complex to Claude
+   - Reduce costs + balance load between Anthropic and OpenAI
+   - **Simple tasks** (health checks, monitoring, validation) → use lighter models:
+     - `openai-codex/gpt-5.1-codex-mini` (Codex optimized)
+     - `openai/gpt-4.1-mini` (general purpose, cheap)
+     - `openai/gpt-4.1-nano` (cheapest)
+     - `openai/gpt-5-nano` (newest nano)
+   - **Complex tasks** (analysis, external content, critical decisions) → use Anthropic:
+     - `anthropic/claude-3-5-sonnet-20241022` (production workhorse)
+     - `anthropic/claude-3-7-sonnet-20250219` (newer, faster)
+     - `anthropic/claude-opus-4-6` (highest capability, external content defense)
+   - **Use cases for lighter models:** cron health checks, backup verification, log parsing, status monitoring
+   - **Keep Anthropic for:** team reviews, strategic decisions, web content processing (prompt injection defense)
+
+**P2: Do This Month (16-24 hours) — Process & Standardization**
+
+12. Spike unknown dependencies first (30-60 min research before estimation)
+13. Single Definition-of-Done (all work ships with tests + docs + validation)
+14. Split docs (Spec vs Status vs Completion Report)
+15. CI quality gates (tests + coverage threshold + strict TypeScript)
+16. Deploy repeatability (single apply+smoke+rollback entrypoint)
+17. Monthly estimation calibration (review estimate vs actual)
+
+### Success Metrics
+
+**How we'll know it's working:**
+- Estimation error: 10-100x → 1.5-3x
+- Single points of failure: 7 → 0
+- Session amnesia: 13/24h → 0
+- KPI validation errors: many → 0
+- Code coverage: 49-70% → >70% all modules
+- Cron health: 80% → 100%
+
+**Sentinel's Recommendation:** 1-2 week Infrastructure Hardening Sprint before resuming Phase 4 features. Fix now = more consistent long-term.
+
+### How This Supports the RPG System
+
+**The Protoss RPG system depends on reliable infrastructure:**
+
+1. **Psionic Stats Calculation** (Phase 1) — requires SQLite reliability, no corruption
+2. **Khala Network Drift Tracking** (Phase 2) — requires cron jobs working, no silent failures
+3. **Dashboard Visualization** (Phase 3) — requires database availability, real-time updates
+4. **Deep Progression System** (Phase 4.5+) — requires collaboration XP tracking, teaching/innovation metrics
+5. **Conversation Orchestration** (Phase 4) — requires role card validation, KPI accuracy, affinity data
+
+**Without infrastructure hardening:**
+- RPG stats can silently default to 0 (KPI errors swallowed)
+- Drift tracking stops if cron fails (silent degradation)
+- Session amnesia breaks collaboration tracking (Oracle loses context every 2h)
+- Dashboard shows stale/incorrect data (SQLite corruption undetected)
+
+**With infrastructure hardening:**
+- Reliable psionic stats (validated against schema)
+- Drift tracking guaranteed (cron health monitored)
+- Collaboration tracking works (session continuity preserved)
+- Dashboard always accurate (SQLite hardened + backup verification)
+
+**Bottom line:** High velocity is impressive, but **consistency = velocity × reliability**. The RPG system needs both to succeed.
+
+---
+
+## Next Steps (Updated 2026-02-14 19:31 CST)
+
+**Immediate Priority: Infrastructure Hardening (P0)**
+
+**Status:** 🔄 IN PROGRESS (Started 2026-02-14 19:37 CST)
+
+1. **🛡️ Infrastructure Hardening Sprint** (this week, 10-14 hours) — 1/5 complete
+   - ✅ **Adopt three-tier estimation framework** (Oracle, 3m30s, COMPLETE 19:40 CST)
+   - 🔄 **Fix failing cron jobs + add alerts** (Atlas, 3-4h, IN PROGRESS)
+   - ⏳ **SQLite hardening** (Atlas, 2-3h, QUEUED after cron fixes)
+   - ⏳ **SQLite-consistent backups** (Atlas, 2-3h, QUEUED after SQLite hardening)
+   - 🔄 **Session handoff docs** (Synth, 2-4h, IN PROGRESS since earlier)
+
+2. **🔄 Track 1 validation** (Verifier, in progress) — Role card production readiness
+
+3. **📅 Phase 4 Tracks 3-6** (resume after P0 hardening) — Voice RULES, Security, Conversation, Testing
+
+4. **📊 Quality & Monitoring** (P1, next week, 8-12 hours)
+   - Pre-approval decision framework
+   - Runtime DB validation for KPIs
+   - Real-time variance alerts
+   - Cron reliability reporting
+   - Injectable config
+
+5. **📋 Process Improvements** (P2, this month, 16-24 hours)
+   - Spike unknowns, Definition-of-Done, split docs
+   - CI quality gates, deploy repeatability
+   - Monthly estimation calibration
+
+**Rationale:** Team review (Oracle, Atlas, Sentinel, Verifier) identified critical infrastructure fragility. High velocity (Phase 4 same-day delivery) requires high reliability. Fix foundation first = more consistent long-term.
+
+---
+
+**Document Status:** ✅ Master reference (updated 2026-02-14 19:40 CST)  
 **Maintained By:** Nexus (Mission Control)  
-**Last Revised:** 2026-02-14
+**Phase Status:** Phase 1-3 complete, Phase 4 Tracks 1-2 complete, Tracks 3-6 pending  
+**Current Priority:** Infrastructure Hardening (P0, 1/5 complete) — Oracle: estimation framework ✅, Atlas: cron fixes 🔄, Synth: session handoff 🔄
 
 **"My life for Aiur! En Taro Adun! Through the Khala, we are eternal!"**

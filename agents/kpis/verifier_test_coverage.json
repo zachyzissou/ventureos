@@ -1,0 +1,39 @@
+{
+  "kpi_id": "verifier_test_coverage",
+  "agent_id": "verifier",
+  "category": "quality",
+  "name": "Test Coverage",
+  "description": "Percentage of codebase covered by tests validated by Verifier",
+  "stakeholder_description": "How much of our code has Verifier ensured is tested?",
+  "formula": {
+    "type": "percentage",
+    "numerator": "covered_lines",
+    "denominator": "total_lines",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'verifier' AND action_type = 'test_review'",
+      "field": "coverage_percent"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.90,
+    "good": 0.80,
+    "acceptable": 0.70,
+    "poor": 0.50,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "verifier_tactical_overlay",
+    "chart_type": "number",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

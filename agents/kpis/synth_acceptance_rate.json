@@ -1,0 +1,44 @@
+{
+  "kpi_id": "synth_acceptance_rate",
+  "agent_id": "synth",
+  "category": "quality",
+  "name": "Creation Acceptance Rate",
+  "description": "Percentage of Synth's creations accepted without major revisions",
+  "stakeholder_description": "How often are Synth's creations approved on first try?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "accepted_creations",
+    "denominator": "total_creations",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'synth'",
+      "field": "acceptance_rate"
+    },
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'synth' AND action_type = 'creation_review'",
+      "field": "status"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.85,
+    "good": 0.75,
+    "acceptable": 0.65,
+    "poor": 0.50,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "synth_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "daily",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

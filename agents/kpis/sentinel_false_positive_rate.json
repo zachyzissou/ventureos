@@ -1,0 +1,39 @@
+{
+  "kpi_id": "sentinel_false_positive_rate",
+  "agent_id": "sentinel",
+  "category": "quality",
+  "name": "False Positive Rate",
+  "description": "Percentage of security alerts that were not actual threats",
+  "stakeholder_description": "How often does Sentinel cry wolf? (Lower = better)",
+  "formula": {
+    "type": "ratio",
+    "numerator": "false_positives",
+    "denominator": "total_alerts",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'sentinel' AND action_type = 'security_alert'",
+      "field": "confirmed"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.15,
+    "good": 0.25,
+    "acceptable": 0.40,
+    "poor": 0.60,
+    "direction": "lower_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "sentinel_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "daily",
+    "color_scheme": "warning"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

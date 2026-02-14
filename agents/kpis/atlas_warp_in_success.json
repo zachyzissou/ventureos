@@ -1,0 +1,44 @@
+{
+  "kpi_id": "atlas_warp_in_success",
+  "agent_id": "atlas",
+  "category": "performance",
+  "name": "Warp-In Success Rate",
+  "description": "Percentage of zero-downtime deployments and instant failovers",
+  "stakeholder_description": "How often does Atlas achieve seamless infrastructure changes?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "zero_downtime_deployments",
+    "denominator": "total_deployments",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'atlas'",
+      "field": "warp_tech_inputs"
+    },
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'atlas' AND metadata LIKE '%zero_downtime%'",
+      "field": "status"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.85,
+    "good": 0.70,
+    "acceptable": 0.50,
+    "poor": 0.30,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "atlas_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

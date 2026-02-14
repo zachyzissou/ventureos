@@ -1,0 +1,44 @@
+{
+  "kpi_id": "echo_decision_quality",
+  "agent_id": "echo",
+  "category": "quality",
+  "name": "Decision Quality",
+  "description": "Percentage of strategic decisions that achieved intended outcomes",
+  "stakeholder_description": "How often do Echo's strategic decisions work out well?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "successful_decisions",
+    "denominator": "total_decisions",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'echo' AND action_type = 'decision'",
+      "field": "outcome_status"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'echo'",
+      "field": "success_rate"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.90,
+    "good": 0.80,
+    "acceptable": 0.70,
+    "poor": 0.55,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "echo_tactical_overlay",
+    "chart_type": "gauge",
+    "update_frequency": "daily",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

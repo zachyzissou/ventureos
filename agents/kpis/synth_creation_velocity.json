@@ -1,0 +1,43 @@
+{
+  "kpi_id": "synth_creation_velocity",
+  "agent_id": "synth",
+  "category": "performance",
+  "name": "Creation Velocity",
+  "description": "Number of new features, components, or solutions created per week",
+  "stakeholder_description": "How productive is Synth at building new things?",
+  "formula": {
+    "type": "count",
+    "field": "items_created",
+    "aggregation": "sum"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'synth' AND action_type = 'creation'",
+      "field": "items_count"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'synth'",
+      "field": "tasks_completed"
+    }
+  ],
+  "thresholds": {
+    "excellent": 12.0,
+    "good": 8.0,
+    "acceptable": 5.0,
+    "poor": 2.0,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "synth_tactical_overlay",
+    "chart_type": "bar",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

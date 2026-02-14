@@ -1,0 +1,43 @@
+{
+  "kpi_id": "sentinel_threat_detection_latency",
+  "agent_id": "sentinel",
+  "category": "performance",
+  "name": "Threat Detection Latency",
+  "description": "Average time in seconds from threat occurrence to detection",
+  "stakeholder_description": "How quickly does Sentinel spot security issues?",
+  "formula": {
+    "type": "average",
+    "field": "detection_time_seconds",
+    "aggregation": "avg"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'sentinel' AND action_type = 'threat_detection'",
+      "field": "latency"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'sentinel'",
+      "field": "p95_latency_s"
+    }
+  ],
+  "thresholds": {
+    "excellent": 5.0,
+    "good": 15.0,
+    "acceptable": 30.0,
+    "poor": 60.0,
+    "direction": "lower_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "sentinel_tactical_overlay",
+    "chart_type": "sparkline",
+    "update_frequency": "realtime",
+    "color_scheme": "warning"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

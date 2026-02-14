@@ -1,0 +1,44 @@
+{
+  "kpi_id": "archivist_memory_retention",
+  "agent_id": "archivist",
+  "category": "reliability",
+  "name": "Memory Retention Rate",
+  "description": "Percentage of critical memories successfully preserved beyond 30 days",
+  "stakeholder_description": "How well does Archivist keep important information accessible?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "memories_retained_30d",
+    "denominator": "total_memories_created",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'archivist'",
+      "field": "memory_count"
+    },
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'archivist' AND action_type = 'memory_store'",
+      "field": "retention_status"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.95,
+    "good": 0.85,
+    "acceptable": 0.75,
+    "poor": 0.60,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "archivist_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "daily",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

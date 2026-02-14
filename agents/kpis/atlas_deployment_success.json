@@ -1,0 +1,44 @@
+{
+  "kpi_id": "atlas_deployment_success",
+  "agent_id": "atlas",
+  "category": "reliability",
+  "name": "Deployment Success Rate",
+  "description": "Percentage of deployments completed without rollback or critical errors",
+  "stakeholder_description": "How often do Atlas's deployments go smoothly?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "successful_deployments",
+    "denominator": "total_deployments",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'atlas'",
+      "field": "success_rate"
+    },
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'atlas' AND action_type = 'deployment'",
+      "field": "status"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.98,
+    "good": 0.95,
+    "acceptable": 0.90,
+    "poor": 0.80,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "atlas_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "realtime",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

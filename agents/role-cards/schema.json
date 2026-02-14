@@ -1,0 +1,528 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ventureos.dev/schemas/role-card.json",
+  "title": "VentureOS Agent Role Card Schema",
+  "description": "Machine-readable contract defining agent capabilities, boundaries, and interaction protocols",
+  "type": "object",
+  "required": [
+    "agentId",
+    "displayName",
+    "protossUnit",
+    "domain",
+    "inputs",
+    "outputs",
+    "definitionOfDone",
+    "hardBans",
+    "escalation",
+    "metrics"
+  ],
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Unique identifier for the agent (lowercase, alphanumeric with underscores)",
+      "examples": ["oracle", "atlas", "sentinel"]
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable name for the agent",
+      "examples": ["Zeratul (Dark Templar Prelate)", "Probe (Builder)", "Sentinel (Guardian)"]
+    },
+    "protossUnit": {
+      "type": "string",
+      "description": "Protoss unit archetype for RPG theming",
+      "enum": [
+        "Zeratul",
+        "Probe",
+        "Sentinel",
+        "High Templar",
+        "Observer",
+        "Dark Templar",
+        "Executor",
+        "Nexus"
+      ]
+    },
+    "role": {
+      "type": "string",
+      "description": "Primary function in the system",
+      "examples": ["Research & Foresight", "Infrastructure & Operations", "Security Guardian"]
+    },
+    "domain": {
+      "type": "object",
+      "required": ["mission", "responsibilities", "boundaries"],
+      "properties": {
+        "mission": {
+          "type": "string",
+          "description": "Core purpose of the agent",
+          "examples": ["Deep research and pattern analysis for strategic foresight"]
+        },
+        "responsibilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Specific tasks the agent owns",
+          "examples": [
+            [
+              "Conduct multi-source research on technical topics",
+              "Identify patterns across disparate data sources",
+              "Provide strategic foresight based on research findings"
+            ]
+          ]
+        },
+        "boundaries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "What the agent explicitly does NOT do",
+          "examples": [
+            [
+              "Does not execute deployments",
+              "Does not make final approval decisions",
+              "Does not handle customer support"
+            ]
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "type", "format"],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Who/what sends this input (user, agent_id, system, external_api)",
+            "examples": ["user", "archivist", "sentinel", "system"]
+          },
+          "type": {
+            "type": "string",
+            "description": "Semantic type of the input",
+            "examples": [
+              "research_request",
+              "memory_context",
+              "security_alert",
+              "deployment_request"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "natural_language",
+              "json",
+              "markdown",
+              "yaml",
+              "structured_query",
+              "file_path",
+              "url"
+            ],
+            "description": "Technical format of the input"
+          },
+          "schema": {
+            "type": "object",
+            "description": "JSON Schema defining the structure (for json/yaml formats)",
+            "examples": [
+              {
+                "type": "object",
+                "required": ["topic", "depth"],
+                "properties": {
+                  "topic": {
+                    "type": "string"
+                  },
+                  "depth": {
+                    "type": "string",
+                    "enum": ["surface", "deep", "exhaustive"]
+                  }
+                }
+              }
+            ]
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this input is required for agent operation"
+          }
+        }
+      },
+      "minItems": 1,
+      "description": "All possible inputs the agent can receive"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["target", "type", "format"],
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Who/what receives this output (user, agent_id, system, external_api)",
+            "examples": ["user", "archivist", "verifier", "system"]
+          },
+          "type": {
+            "type": "string",
+            "description": "Semantic type of the output",
+            "examples": [
+              "research_report",
+              "knowledge_artifact",
+              "deployment_status",
+              "security_violation"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "natural_language",
+              "json",
+              "markdown",
+              "yaml",
+              "structured_report",
+              "file_path",
+              "url"
+            ],
+            "description": "Technical format of the output"
+          },
+          "schema": {
+            "type": "object",
+            "description": "JSON Schema defining the structure (for json/yaml formats)"
+          },
+          "guarantees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Quality guarantees for this output",
+            "examples": [
+              ["All claims cited with sources", "Confidence levels specified", "Knowledge gaps noted"]
+            ]
+          }
+        }
+      },
+      "minItems": 1,
+      "description": "All possible outputs the agent can produce"
+    },
+    "definitionOfDone": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Completion criteria - when is the agent's work finished?",
+      "examples": [
+        [
+          "Research question answered with evidence",
+          "Sources cited with confidence levels",
+          "Knowledge gaps explicitly noted",
+          "Recommendations provided with clear next actions"
+        ]
+      ]
+    },
+    "hardBans": {
+      "type": "object",
+      "required": ["infrastructure", "heuristic", "quality"],
+      "description": "Three-tier enforcement system for prohibited actions",
+      "properties": {
+        "infrastructure": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule", "enforcement"],
+            "properties": {
+              "rule": {
+                "type": "string",
+                "description": "Prohibited action",
+                "examples": ["No direct database writes", "No deployment without approval"]
+              },
+              "enforcement": {
+                "type": "string",
+                "enum": [
+                  "permission_check",
+                  "api_key_restriction",
+                  "network_policy",
+                  "file_system_permission"
+                ],
+                "description": "How this is enforced at infrastructure level"
+              },
+              "rationale": {
+                "type": "string",
+                "description": "Why this ban exists"
+              }
+            }
+          },
+          "description": "Permission-based hard blocks (physically impossible to violate)"
+        },
+        "heuristic": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule", "enforcement", "severity"],
+            "properties": {
+              "rule": {
+                "type": "string",
+                "description": "Prohibited pattern",
+                "examples": ["No uncited claims", "No made-up numbers"]
+              },
+              "enforcement": {
+                "type": "string",
+                "enum": [
+                  "citation_detector",
+                  "number_source_tracker",
+                  "comparison_verifier",
+                  "pattern_matcher"
+                ],
+                "description": "Detection mechanism"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["warning", "block", "escalate"],
+                "description": "Action taken when violated"
+              },
+              "falsePositiveRate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Expected false positive rate (0-1)"
+              }
+            }
+          },
+          "description": "Heuristic detection (soft warnings routed to Verifier)"
+        },
+        "quality": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule", "enforcement"],
+            "properties": {
+              "rule": {
+                "type": "string",
+                "description": "Quality guideline",
+                "examples": ["No vague language", "No filler phrases"]
+              },
+              "enforcement": {
+                "type": "string",
+                "enum": ["training", "few_shot_examples", "manual_review"],
+                "description": "How this is encouraged (not runtime-enforced)"
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Examples of violations to avoid",
+                "examples": [["probably", "might be", "seems like", "I think maybe"]]
+              }
+            }
+          },
+          "description": "Training guidelines (not runtime-enforced, quality aspirations)"
+        }
+      }
+    },
+    "escalation": {
+      "type": "object",
+      "required": ["triggers"],
+      "properties": {
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["condition", "action"],
+            "properties": {
+              "condition": {
+                "type": "string",
+                "description": "When to escalate",
+                "examples": [
+                  "Conflicting sources with high confidence",
+                  "Research requires >2h effort",
+                  "Topic outside domain expertise"
+                ]
+              },
+              "action": {
+                "type": "string",
+                "description": "What to do when triggered",
+                "examples": [
+                  "Request user clarification",
+                  "Propose scoping with user",
+                  "Escalate to Echo for routing"
+                ]
+              },
+              "target": {
+                "type": "string",
+                "description": "Who receives the escalation (user, agent_id, system)",
+                "examples": ["user", "echo", "sentinel"]
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"],
+                "default": "medium",
+                "description": "Urgency level"
+              },
+              "autoResolve": {
+                "type": "boolean",
+                "default": false,
+                "description": "Can this escalation be auto-resolved if conditions change?"
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "qualityTracking": {
+          "type": "object",
+          "description": "How escalation quality is measured (VentureOS enhancement)",
+          "properties": {
+            "signalRatioTarget": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Target ratio of validated escalations / total escalations",
+              "examples": [0.65]
+            },
+            "adaptiveSensitivity": {
+              "type": "boolean",
+              "default": false,
+              "description": "Whether escalation thresholds auto-tune based on signal ratio"
+            }
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "kpi_id"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable metric name",
+            "examples": ["Citation accuracy", "Deployment success rate"]
+          },
+          "kpi_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "Reference to KPI registry entry",
+            "examples": ["oracle_citation_accuracy", "atlas_deployment_success"]
+          },
+          "category": {
+            "type": "string",
+            "enum": ["quality", "reliability", "efficiency", "impact"],
+            "description": "Metric category"
+          },
+          "threshold": {
+            "type": "object",
+            "properties": {
+              "excellent": {
+                "type": "number"
+              },
+              "good": {
+                "type": "number"
+              },
+              "acceptable": {
+                "type": "number"
+              },
+              "poor": {
+                "type": "number"
+              }
+            },
+            "description": "Performance thresholds"
+          }
+        }
+      },
+      "minItems": 1,
+      "description": "KPIs for measuring agent performance"
+    },
+    "interfaces": {
+      "type": "object",
+      "description": "Agent interaction topology (VentureOS enhancement)",
+      "properties": {
+        "upstream": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Agents that send work to this agent",
+          "examples": [["user", "echo"]]
+        },
+        "core_partners": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Agents frequently collaborated with",
+          "examples": [["archivist", "verifier"]]
+        },
+        "downstream": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Agents that receive work from this agent",
+          "examples": [["archivist", "user"]]
+        }
+      }
+    },
+    "personalityProtocol": {
+      "type": "string",
+      "description": "Path to personality protocol file (optional reference)",
+      "examples": ["~/clawd/agents/personality-protocols/oracle.json"]
+    },
+    "conversationDirectives": {
+      "type": "object",
+      "description": "Conversation dynamics with other agents (VOXYZ-inspired, optional)",
+      "properties": {
+        "conflict_pairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["agent", "directive"],
+            "properties": {
+              "agent": {
+                "type": "string",
+                "description": "Agent ID to have controlled conflict with"
+              },
+              "directive": {
+                "type": "string",
+                "description": "How to engage in conflict",
+                "examples": ["Challenge when reliability > velocity"]
+              },
+              "affinity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Base affinity level (0-1)"
+              }
+            }
+          },
+          "description": "Agents to deliberately create friction with"
+        },
+        "alliance_pairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["agent", "directive"],
+            "properties": {
+              "agent": {
+                "type": "string",
+                "description": "Agent ID to collaborate closely with"
+              },
+              "directive": {
+                "type": "string",
+                "description": "How to collaborate",
+                "examples": ["Defer to their expertise on archive retrieval"]
+              },
+              "affinity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Base affinity level (0-1)"
+              }
+            }
+          },
+          "description": "Agents to collaborate smoothly with"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,43 @@
+{
+  "kpi_id": "archivist_documentation_quality",
+  "agent_id": "archivist",
+  "category": "quality",
+  "name": "Documentation Quality Score",
+  "description": "Composite score based on completeness, clarity, and structure of documentation",
+  "stakeholder_description": "How well-organized and useful is Archivist's documentation?",
+  "formula": {
+    "type": "average",
+    "field": "doc_quality_score",
+    "aggregation": "avg"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'archivist' AND action_type = 'documentation'",
+      "field": "quality_metrics"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'archivist'",
+      "field": "canonical_edits"
+    }
+  ],
+  "thresholds": {
+    "excellent": 8.5,
+    "good": 7.0,
+    "acceptable": 5.5,
+    "poor": 4.0,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "archivist_tactical_overlay",
+    "chart_type": "gauge",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

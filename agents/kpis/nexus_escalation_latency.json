@@ -1,0 +1,43 @@
+{
+  "kpi_id": "nexus_escalation_latency",
+  "agent_id": "nexus",
+  "category": "performance",
+  "name": "Escalation Latency",
+  "description": "Average time in seconds to escalate issues to appropriate handlers",
+  "stakeholder_description": "How quickly does Nexus route problems to the right agent?",
+  "formula": {
+    "type": "average",
+    "field": "escalation_time_seconds",
+    "aggregation": "avg"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'nexus' AND action_type = 'escalation'",
+      "field": "latency"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'nexus'",
+      "field": "p95_latency_s"
+    }
+  ],
+  "thresholds": {
+    "excellent": 1.0,
+    "good": 3.0,
+    "acceptable": 5.0,
+    "poor": 10.0,
+    "direction": "lower_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "nexus_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "realtime",
+    "color_scheme": "warning"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "kpi_id": "verifier_approval_accuracy",
+  "agent_id": "verifier",
+  "category": "quality",
+  "name": "Approval Accuracy",
+  "description": "Percentage of approved code that had no post-deployment bugs",
+  "stakeholder_description": "How often does Verifier correctly approve quality code?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "correct_approvals",
+    "denominator": "total_approvals",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'verifier' AND action_type = 'approval'",
+      "field": "status"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'verifier'",
+      "field": "approval_accuracy"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.95,
+    "good": 0.90,
+    "acceptable": 0.85,
+    "poor": 0.75,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "verifier_tactical_overlay",
+    "chart_type": "gauge",
+    "update_frequency": "daily",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

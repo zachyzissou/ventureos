@@ -1,0 +1,44 @@
+{
+  "kpi_id": "nexus_agent_availability",
+  "agent_id": "nexus",
+  "category": "reliability",
+  "name": "Agent Availability",
+  "description": "Percentage of time all agents are operational and responsive",
+  "stakeholder_description": "How reliably does Nexus keep all agents running?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "available_agent_minutes",
+    "denominator": "total_agent_minutes",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'nexus' AND action_type = 'health_check'",
+      "field": "availability_status"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'nexus'",
+      "field": "success_rate"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.995,
+    "good": 0.99,
+    "acceptable": 0.95,
+    "poor": 0.90,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "nexus_tactical_overlay",
+    "chart_type": "number",
+    "update_frequency": "realtime",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

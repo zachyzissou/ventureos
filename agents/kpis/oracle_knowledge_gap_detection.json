@@ -1,0 +1,38 @@
+{
+  "kpi_id": "oracle_knowledge_gap_detection",
+  "agent_id": "oracle",
+  "category": "impact",
+  "name": "Knowledge Gap Detection",
+  "description": "Number of explicitly flagged knowledge gaps or uncertainties per research task",
+  "stakeholder_description": "How often does Oracle identify what we don't know yet?",
+  "formula": {
+    "type": "average",
+    "field": "gaps_flagged",
+    "aggregation": "avg"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'oracle' AND metadata LIKE '%knowledge_gap%'",
+      "field": "metadata"
+    }
+  ],
+  "thresholds": {
+    "excellent": 3.0,
+    "good": 2.0,
+    "acceptable": 1.0,
+    "poor": 0.5,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "oracle_tactical_overlay",
+    "chart_type": "bar",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

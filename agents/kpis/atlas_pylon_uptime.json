@@ -1,0 +1,44 @@
+{
+  "kpi_id": "atlas_pylon_uptime",
+  "agent_id": "atlas",
+  "category": "reliability",
+  "name": "Pylon Network Uptime",
+  "description": "Percentage of time all critical pylons are operational",
+  "stakeholder_description": "How reliably does Atlas keep the infrastructure running?",
+  "formula": {
+    "type": "percentage",
+    "numerator": "uptime_minutes",
+    "denominator": "total_minutes",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'atlas'",
+      "field": "success_rate"
+    },
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'atlas' AND action_type = 'health_check'",
+      "field": "status"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.999,
+    "good": 0.99,
+    "acceptable": 0.95,
+    "poor": 0.90,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "atlas_tactical_overlay",
+    "chart_type": "number",
+    "update_frequency": "realtime",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

@@ -1,6 +1,6 @@
 # OpenClaw Community Knowledge Base
 **Source**: Zach's X Bookmark folder "Clawd" (15 bookmarks, ingested 2026-02-13)
-**Last Updated**: 2026-02-13
+**Last Updated**: 2026-02-14
 
 ## Key Themes & Actionable Insights
 
@@ -526,55 +526,6 @@ ENCODED_USER="${MASSIVE_PROXY_USERNAME}%3Ftype%3Dmobile%26country%3DUS%26city%3D
 
 ---
 
-## Key Themes (Feb 14)
-
-1. **Context quality > model choice** — Validated again. Good search with cheap model beats bad search with frontier model.
-
-2. **Knowledge from corrections** — Side-effect knowledge capture (Devin pattern) > explicit documentation burden
-
-3. **Structured access > UI automation** — WebMCP, Brave LLM Context API both moving toward structured data vs screenshot/DOM parsing
-
-4. **Agent identity frameworks maturing** — kloss's 8-step initialization is most comprehensive public framework (1K+ likes, getting traction)
-
-5. **Residential proxies entering mainstream** — ClawPod shows path to unblockable web access (but wait for Unblocker API)
-
-6. **CLIs > MCPs** — steipete quote + gogcli adoption suggests CLI tools still preferred over MCP servers for many workflows
-
----
-
-## Patterns to Adopt (Updated)
-
-**From Feb 14 bookmarks**:
-- 🔲 **Brave LLM Context API** — Switch from basic search to token-optimized chunks
-- 🔲 **Correction-capture knowledge** — Implement Devin's side-effect learning pattern
-- 🔲 **Bones codebase ingestion** — Use kloss framework to document repos
-- 🔲 **Nerves token audit** — Profile workspace files, enforce budget guardrails
-- 🔲 **Exa for semantic research** — Add to search routing (complementary to Brave)
-- 🔲 **ClawPod when Unblocker ships** — For geo-restricted research / bot-heavy sites
-
-**Still relevant from previous**:
-- 🔲 Formalized shared-context/ directory
-- 🔲 Proposal → Mission → Step pipeline
-- 🔲 Cap gates at entry point
-- 🔲 Antfarm workflows for dev tasks
-
----
-
-## Accounts to Monitor (Updated)
-- @Legendaryy — Search API comparisons, agent infrastructure (NEW)
-- @dabit3 — Devin/agent knowledge architecture (NEW)
-- @jsongrad — Agent infrastructure (ClawPod, Massive) (NEW)
-- @steipete — gogcli, SOUL.md, CLI tooling
-- @kloss_xyz — Agent initialization frameworks
-- @ChromiumDev — WebMCP, browser standards for agents (NEW)
-- @kaostyl — Battle-tested patterns
-- @AtlasForgeAI — Principles.md philosophy
-- @ryancarson — Antfarm workflows
-- @Voxyz_ai — Multi-agent architecture
-- @ericosiu — Shared context patterns
-
----
-
 ## Daily Scout - 2026-02-14 (Morning)
 **Sources**: Twitter search via openclaw-scout.sh (10 queries, 99 tweets, 5 quality results)
 
@@ -699,17 +650,23 @@ ENCODED_USER="${MASSIVE_PROXY_USERNAME}%3Ftype%3Dmobile%26country%3DUS%26city%3D
 
 ---
 
-## Key Themes (Feb 14 Scout)
+## Key Themes (Synthesized from Feb 13-14)
 
-1. **Taste economy emerging** — From execution to curation. Restraint becoming more valuable than production volume.
+1. **Taste economy emerging** — From execution to curation. Restraint becoming more valuable than production volume. What NOT to make matters as much as what to make.
 
-2. **Memory + file access = non-negotiable** — Community consistently rejects "agents" without persistent memory or file system integration. Our architecture is table stakes for credibility.
+2. **Memory + file access = table stakes** — Community consistently rejects "agents" without persistent memory or file system integration. Our architecture is on the right track.
 
-3. **Skill libraries are a moat, security is the blocker** — 700+ skills show ecosystem velocity, but trust/validation prevents widespread adoption.
+3. **Context quality > model choice** — Good search/context with cheap model beats bad search with frontier model. Tool selection matters more than model selection.
 
-4. **Agent identity crisis ahead** — Multi-agent systems need real IAM (who's liable when agent A calls agent B?). API key sharing is not sustainable.
+4. **Skill libraries are a moat, security is the blocker** — 700+ skills show ecosystem velocity, but trust/validation prevents widespread adoption.
 
-5. **Security frameworks maturing** — AISecHub pattern + community discussion shows enterprise adoption driving formal security architecture.
+5. **Agent identity crisis ahead** — Multi-agent systems need real IAM (who's liable when agent A calls agent B?). API key sharing is not sustainable.
+
+6. **Security frameworks maturing** — 40+ security fixes in OpenClaw 2026.2.12, AISecHub pattern guide, community pushing for formal authorization layers.
+
+7. **Knowledge from corrections > explicit documentation** — Side-effect learning (Devin pattern) compounds faster than wiki maintenance.
+
+8. **Structured access > UI automation** — WebMCP, Brave LLM Context API both moving toward structured data vs screenshot/DOM parsing.
 
 ---
 
@@ -721,22 +678,30 @@ ENCODED_USER="${MASSIVE_PROXY_USERNAME}%3Ftype%3Dmobile%26country%3DUS%26city%3D
 - 🔲 **Tool authorization matrix** — Formalize which agents can access what systems
 - 🔲 **Cognitive continuity monitoring** — Detect personality/behavior drift in agents
 - 🔲 **Skill audit pipeline** — Never auto-install community skills; review code first
+- 🔲 **Brave LLM Context API** — Switch from basic search to token-optimized chunks
+- 🔲 **Correction-capture knowledge** — Implement Devin's side-effect learning pattern
+- 🔲 **Bones codebase ingestion** — Use kloss framework to document repos
+- 🔲 **Nerves token audit** — Profile workspace files, enforce budget guardrails
+- 🔲 **Exa for semantic research** — Add to search routing (complementary to Brave)
+- 🔲 **ClawPod when Unblocker ships** — For geo-restricted research / bot-heavy sites
 
-**Still relevant**:
-- 🔲 Brave LLM Context API (token-optimized search)
-- 🔲 Correction-capture knowledge (Devin pattern)
-- 🔲 Bones codebase ingestion (kloss framework)
+**Still relevant from previous**:
 - 🔲 Formalized shared-context/ directory
+- 🔲 Proposal → Mission → Step pipeline
+- 🔲 Cap gates at entry point
 - 🔲 Antfarm workflows for dev tasks
+- 🔲 Dynamic affinity tracking between agents
+- 🔲 Voice evolution derived from memory stats
+- 🔲 claw-compactor for token cost reduction
 
 ---
 
 ## Accounts to Monitor (Final Update)
-- @paulg — Philosophy of taste/curation in AI age (NEW)
-- @Param_eth — Skill ecosystem tracking (NEW)
-- @aiedge_ — Tool comparisons (verify claims) (NEW)
-- @AISecHub — Security architecture for multi-agent systems (NEW)
-- @feindura — Integration examples (blockchain/identity) (NEW)
+- @paulg — Philosophy of taste/curation in AI age
+- @Param_eth — Skill ecosystem tracking
+- @aiedge_ — Tool comparisons (verify claims)
+- @AISecHub — Security architecture for multi-agent systems
+- @feindura — Integration examples (blockchain/identity)
 - @Legendaryy — Search API comparisons, infrastructure
 - @dabit3 — Knowledge architecture (Devin patterns)
 - @jsongrad — Agent infrastructure (ClawPod, proxies)
@@ -747,4 +712,6 @@ ENCODED_USER="${MASSIVE_PROXY_USERNAME}%3Ftype%3Dmobile%26country%3DUS%26city%3D
 - @ryancarson — Antfarm workflows
 - @Voxyz_ai — Multi-agent architecture
 - @ericosiu — Shared context patterns
-
+- @AtlasForgeAI — Principles.md philosophy
+- @mastra — Memory system research
+- @DavidOndrej1 — Living files philosophy

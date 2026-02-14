@@ -1,0 +1,44 @@
+{
+  "kpi_id": "sentinel_security_coverage",
+  "agent_id": "sentinel",
+  "category": "security",
+  "name": "Security Coverage",
+  "description": "Percentage of attack surface protected by active monitoring",
+  "stakeholder_description": "How much of our system is Sentinel watching?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "monitored_endpoints",
+    "denominator": "total_endpoints",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'sentinel'",
+      "field": "shields"
+    },
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'sentinel' AND action_type = 'coverage_audit'",
+      "field": "coverage_percent"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.95,
+    "good": 0.85,
+    "acceptable": 0.75,
+    "poor": 0.60,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "sentinel_tactical_overlay",
+    "chart_type": "gauge",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

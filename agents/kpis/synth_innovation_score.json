@@ -1,0 +1,43 @@
+{
+  "kpi_id": "synth_innovation_score",
+  "agent_id": "synth",
+  "category": "impact",
+  "name": "Innovation Score",
+  "description": "Composite score measuring novelty and usefulness of creations",
+  "stakeholder_description": "How innovative and valuable are Synth's creations?",
+  "formula": {
+    "type": "average",
+    "field": "innovation_rating",
+    "aggregation": "avg"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'synth' AND action_type = 'creation'",
+      "field": "innovation_metrics"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'synth'",
+      "field": "warp_tech_inputs"
+    }
+  ],
+  "thresholds": {
+    "excellent": 8.0,
+    "good": 6.5,
+    "acceptable": 5.0,
+    "poor": 3.5,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "synth_tactical_overlay",
+    "chart_type": "gauge",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

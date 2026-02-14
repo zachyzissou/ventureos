@@ -1,0 +1,38 @@
+{
+  "kpi_id": "synth_reuse_count",
+  "agent_id": "synth",
+  "category": "impact",
+  "name": "Creation Reuse Count",
+  "description": "Number of times Synth's creations are reused across different contexts",
+  "stakeholder_description": "How often do Synth's solutions get reused by others?",
+  "formula": {
+    "type": "count",
+    "field": "reuse_instances",
+    "aggregation": "sum"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'synth' AND action_type = 'creation_reuse'",
+      "field": "reuse_count"
+    }
+  ],
+  "thresholds": {
+    "excellent": 25.0,
+    "good": 15.0,
+    "acceptable": 8.0,
+    "poor": 3.0,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "synth_tactical_overlay",
+    "chart_type": "sparkline",
+    "update_frequency": "daily",
+    "color_scheme": "default"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

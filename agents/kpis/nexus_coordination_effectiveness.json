@@ -1,0 +1,43 @@
+{
+  "kpi_id": "nexus_coordination_effectiveness",
+  "agent_id": "nexus",
+  "category": "collaboration",
+  "name": "System Coordination Effectiveness",
+  "description": "Success rate of multi-agent handoffs and task routing orchestrated by Nexus",
+  "stakeholder_description": "How smoothly does Nexus coordinate system-wide operations?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "successful_handoffs",
+    "denominator": "total_handoffs",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'nexus' AND action_type = 'handoff'",
+      "field": "status"
+    },
+    {
+      "table": "khala_network",
+      "field": "interaction_count"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.95,
+    "good": 0.90,
+    "acceptable": 0.85,
+    "poor": 0.75,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "nexus_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "hourly",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

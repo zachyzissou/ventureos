@@ -1,0 +1,43 @@
+{
+  "kpi_id": "atlas_incident_response",
+  "agent_id": "atlas",
+  "category": "performance",
+  "name": "Incident Response Time",
+  "description": "Average time in minutes from incident detection to first action",
+  "stakeholder_description": "How quickly does Atlas respond when problems occur?",
+  "formula": {
+    "type": "average",
+    "field": "response_time_minutes",
+    "aggregation": "avg"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'atlas' AND action_type = 'incident_response'",
+      "field": "response_time"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'atlas'",
+      "field": "p95_latency_s"
+    }
+  ],
+  "thresholds": {
+    "excellent": 2.0,
+    "good": 5.0,
+    "acceptable": 10.0,
+    "poor": 20.0,
+    "direction": "lower_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "atlas_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "hourly",
+    "color_scheme": "warning"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

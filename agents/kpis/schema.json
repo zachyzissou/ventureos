@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "KPI Definition Schema",
+  "description": "Canonical metric definitions bridging human language ↔ machine formulas",
+  "type": "object",
+  "required": [
+    "kpi_id",
+    "agent_id",
+    "category",
+    "name",
+    "description",
+    "stakeholder_description",
+    "formula",
+    "data_sources",
+    "thresholds",
+    "visualization",
+    "audit_trail"
+  ],
+  "properties": {
+    "kpi_id": {
+      "type": "string",
+      "pattern": "^[a-z]+_[a-z_]+$",
+      "description": "Unique identifier in format: {agent}_{metric_name}"
+    },
+    "agent_id": {
+      "type": "string",
+      "enum": ["oracle", "atlas", "sentinel", "verifier", "archivist", "synth", "echo", "nexus"],
+      "description": "Agent this KPI measures"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["quality", "performance", "impact", "reliability", "security", "collaboration"],
+      "description": "High-level metric category"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable metric name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Technical description of what is measured"
+    },
+    "stakeholder_description": {
+      "type": "string",
+      "description": "Non-technical explanation suitable for users/stakeholders"
+    },
+    "formula": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ratio", "count", "percentage", "average", "threshold", "custom"],
+          "description": "Formula type determines computation method"
+        },
+        "numerator": {
+          "type": "string",
+          "description": "For ratio/percentage: top value field name"
+        },
+        "denominator": {
+          "type": "string",
+          "description": "For ratio/percentage: bottom value field name"
+        },
+        "field": {
+          "type": "string",
+          "description": "For count/average: field to aggregate"
+        },
+        "scale": {
+          "type": "number",
+          "description": "Multiplier for ratio (e.g., 100 for percentage)",
+          "default": 1
+        },
+        "aggregation": {
+          "type": "string",
+          "enum": ["sum", "avg", "min", "max", "count", "distinct_count"],
+          "description": "Aggregation method for field"
+        },
+        "custom_function": {
+          "type": "string",
+          "description": "For custom type: JavaScript function name to call"
+        }
+      }
+    },
+    "data_sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["table"],
+        "properties": {
+          "table": {
+            "type": "string",
+            "description": "Database table name"
+          },
+          "field": {
+            "type": "string",
+            "description": "Specific field to query"
+          },
+          "filter": {
+            "type": "string",
+            "description": "SQL WHERE clause (without WHERE keyword)"
+          },
+          "join": {
+            "type": "string",
+            "description": "Optional JOIN clause for multi-table queries"
+          }
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "required": ["excellent", "good", "acceptable", "poor"],
+      "properties": {
+        "excellent": {
+          "type": "number",
+          "description": "Value representing excellent performance"
+        },
+        "good": {
+          "type": "number",
+          "description": "Value representing good performance"
+        },
+        "acceptable": {
+          "type": "number",
+          "description": "Minimum acceptable performance"
+        },
+        "poor": {
+          "type": "number",
+          "description": "Value indicating poor performance"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["higher_is_better", "lower_is_better"],
+          "default": "higher_is_better",
+          "description": "Whether higher or lower values are better"
+        }
+      }
+    },
+    "visualization": {
+      "type": "object",
+      "required": ["dashboard_section", "chart_type", "update_frequency"],
+      "properties": {
+        "dashboard_section": {
+          "type": "string",
+          "description": "Dashboard section to display this metric"
+        },
+        "chart_type": {
+          "type": "string",
+          "enum": ["line", "bar", "gauge", "sparkline", "number"],
+          "description": "Visual representation type"
+        },
+        "update_frequency": {
+          "type": "string",
+          "enum": ["realtime", "hourly", "daily", "weekly"],
+          "description": "How often the metric updates"
+        },
+        "color_scheme": {
+          "type": "string",
+          "enum": ["default", "success_danger", "info", "warning"],
+          "default": "default"
+        }
+      }
+    },
+    "audit_trail": {
+      "type": "object",
+      "required": ["created", "last_modified"],
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date",
+          "description": "Date KPI definition was created (YYYY-MM-DD)"
+        },
+        "last_modified": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of last modification"
+        },
+        "change_log": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["date", "description"],
+            "properties": {
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "description": {
+                "type": "string"
+              },
+              "modified_by": {
+                "type": "string"
+              }
+            }
+          },
+          "default": []
+        }
+      }
+    }
+  }
+}

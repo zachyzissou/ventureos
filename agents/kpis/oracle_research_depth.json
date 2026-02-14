@@ -1,0 +1,38 @@
+{
+  "kpi_id": "oracle_research_depth",
+  "agent_id": "oracle",
+  "category": "quality",
+  "name": "Research Depth",
+  "description": "Average number of distinct sources consulted per research task",
+  "stakeholder_description": "How thoroughly does Oracle research each topic?",
+  "formula": {
+    "type": "average",
+    "field": "source_count",
+    "aggregation": "avg"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'oracle' AND action_type = 'research_output'",
+      "field": "metadata"
+    }
+  ],
+  "thresholds": {
+    "excellent": 8.0,
+    "good": 5.0,
+    "acceptable": 3.0,
+    "poor": 1.5,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "oracle_tactical_overlay",
+    "chart_type": "gauge",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

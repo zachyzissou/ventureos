@@ -1,0 +1,43 @@
+{
+  "kpi_id": "archivist_knowledge_reuse",
+  "agent_id": "archivist",
+  "category": "impact",
+  "name": "Knowledge Reuse Rate",
+  "description": "Number of times stored knowledge is successfully retrieved and applied",
+  "stakeholder_description": "How often does Archivist's saved information get used?",
+  "formula": {
+    "type": "count",
+    "field": "knowledge_retrievals",
+    "aggregation": "sum"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'archivist' AND action_type = 'memory_retrieve'",
+      "field": "retrieval_count"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'archivist'",
+      "field": "warp_tech_inputs"
+    }
+  ],
+  "thresholds": {
+    "excellent": 50.0,
+    "good": 30.0,
+    "acceptable": 15.0,
+    "poor": 5.0,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "archivist_tactical_overlay",
+    "chart_type": "bar",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

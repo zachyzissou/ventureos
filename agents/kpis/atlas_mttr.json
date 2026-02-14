@@ -1,0 +1,43 @@
+{
+  "kpi_id": "atlas_mttr",
+  "agent_id": "atlas",
+  "category": "performance",
+  "name": "Mean Time to Recovery (MTTR)",
+  "description": "Average time in minutes to restore service after an incident",
+  "stakeholder_description": "How quickly does Atlas fix things when they break?",
+  "formula": {
+    "type": "average",
+    "field": "recovery_time_minutes",
+    "aggregation": "avg"
+  },
+  "data_sources": [
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'atlas'",
+      "field": "mttr_minutes"
+    },
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'atlas' AND action_type = 'incident_resolution'",
+      "field": "duration_minutes"
+    }
+  ],
+  "thresholds": {
+    "excellent": 5.0,
+    "good": 15.0,
+    "acceptable": 30.0,
+    "poor": 60.0,
+    "direction": "lower_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "atlas_tactical_overlay",
+    "chart_type": "gauge",
+    "update_frequency": "hourly",
+    "color_scheme": "warning"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

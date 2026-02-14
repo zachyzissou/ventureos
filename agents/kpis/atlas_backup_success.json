@@ -1,0 +1,39 @@
+{
+  "kpi_id": "atlas_backup_success",
+  "agent_id": "atlas",
+  "category": "reliability",
+  "name": "Backup Success Rate",
+  "description": "Percentage of scheduled backups completed successfully and verified",
+  "stakeholder_description": "How reliably does Atlas protect our data?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "successful_backups",
+    "denominator": "scheduled_backups",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'atlas' AND action_type = 'backup'",
+      "field": "status"
+    }
+  ],
+  "thresholds": {
+    "excellent": 1.0,
+    "good": 0.98,
+    "acceptable": 0.95,
+    "poor": 0.90,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "atlas_tactical_overlay",
+    "chart_type": "bar",
+    "update_frequency": "daily",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

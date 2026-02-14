@@ -1,0 +1,43 @@
+{
+  "kpi_id": "verifier_review_thoroughness",
+  "agent_id": "verifier",
+  "category": "quality",
+  "name": "Review Thoroughness",
+  "description": "Average depth score of code reviews (based on comments, questions, suggestions)",
+  "stakeholder_description": "How thoroughly does Verifier review code?",
+  "formula": {
+    "type": "average",
+    "field": "review_depth_score",
+    "aggregation": "avg"
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'verifier' AND action_type = 'code_review'",
+      "field": "metadata"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'verifier'",
+      "field": "canonical_edits"
+    }
+  ],
+  "thresholds": {
+    "excellent": 8.0,
+    "good": 6.0,
+    "acceptable": 4.0,
+    "poor": 2.0,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "verifier_tactical_overlay",
+    "chart_type": "line",
+    "update_frequency": "daily",
+    "color_scheme": "info"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}

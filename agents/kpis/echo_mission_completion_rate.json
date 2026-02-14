@@ -1,0 +1,44 @@
+{
+  "kpi_id": "echo_mission_completion_rate",
+  "agent_id": "echo",
+  "category": "performance",
+  "name": "Mission Completion Rate",
+  "description": "Percentage of strategic missions completed successfully within scope",
+  "stakeholder_description": "How often does Echo complete planned initiatives?",
+  "formula": {
+    "type": "ratio",
+    "numerator": "completed_missions",
+    "denominator": "total_missions",
+    "scale": 100
+  },
+  "data_sources": [
+    {
+      "table": "interaction_logs",
+      "filter": "agent_id = 'echo' AND action_type = 'mission'",
+      "field": "completion_status"
+    },
+    {
+      "table": "psionic_stats",
+      "filter": "agent_id = 'echo'",
+      "field": "tasks_completed"
+    }
+  ],
+  "thresholds": {
+    "excellent": 0.90,
+    "good": 0.80,
+    "acceptable": 0.70,
+    "poor": 0.55,
+    "direction": "higher_is_better"
+  },
+  "visualization": {
+    "dashboard_section": "echo_tactical_overlay",
+    "chart_type": "bar",
+    "update_frequency": "daily",
+    "color_scheme": "success_danger"
+  },
+  "audit_trail": {
+    "created": "2026-02-14",
+    "last_modified": "2026-02-14",
+    "change_log": []
+  }
+}
