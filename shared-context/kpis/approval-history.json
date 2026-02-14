@@ -1,0 +1,10 @@
+[
+  {
+    "date": "2026-02-14",
+    "total": 18,
+    "green_false": 0,
+    "yellow_false": 18,
+    "red_legit": 0,
+    "false_escalation_pct": 100
+  }
+]

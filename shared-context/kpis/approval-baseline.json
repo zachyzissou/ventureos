@@ -1,0 +1,8 @@
+{
+  "date": "2026-02-14",
+  "total_requests": 18,
+  "green_false_escalations": 0,
+  "yellow_false_escalations": 18,
+  "red_legitimate": 0,
+  "false_escalation_pct": 100
+}
