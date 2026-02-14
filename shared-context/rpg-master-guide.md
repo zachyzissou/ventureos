@@ -502,21 +502,27 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 
 ### Phase 3: Pylon Network Visualization (2-4 weeks, conditional)
 
+**Integration Target:** Existing VentureOS dashboard at http://192.168.225.149:7001  
+**Tech Stack:** Static HTML/CSS/vanilla JS (not React)  
+**Current Features:** KPI trends, agent health monitoring, recent observations
+
 **Deliverables:**
-1. ✅ API endpoints (stats, tactical overlays, Khala Network)
-2. ✅ 2D Psionic Attribute bars (React components)
-3. ✅ Tactical Overlay panels (expandable)
-4. ✅ Khala Network graph (D3.js/React Flow force-directed)
-5. ✅ Atlas reliability metrics dashboard (6 new metrics)
+1. ✅ API endpoints (stats, tactical overlays, Khala Network) — integrate with existing backend
+2. ✅ 2D Psionic Attribute bars (HTML/CSS/vanilla JS)
+3. ✅ Tactical Overlay panels (expandable, match existing design)
+4. ✅ Khala Network graph (D3.js — works with vanilla JS)
+5. ✅ Atlas reliability metrics dashboard (6 new metrics, integrate with existing health monitoring)
 6. ⚠️ 3D holographic avatars (**DEFERRED** - 2D pixel art sprites decided @ 06:49 CST)
 
 **Success Criteria:**
+- RPG components integrated into existing dashboard layout
 - Pylon Network shows live attributes for all agents
 - Tactical overlays accessible
 - Khala Network visualized
 - Atlas reliability metrics exposed
+- Design matches existing dashboard language
 
-**Owner:** Synth (frontend), Atlas (API), Verifier (testing)
+**Owner:** Synth (frontend integration), Atlas (API), Verifier (testing)
 
 ---
 
