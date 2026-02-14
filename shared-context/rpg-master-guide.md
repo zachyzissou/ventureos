@@ -1217,6 +1217,14 @@ The RPG system ships features at AI-native velocity (Phase 4 Track 1-2 delivered
    - CI quality gates, deploy repeatability
    - Monthly estimation calibration
 
+6. **🎨 Dashboard/UX Backlog** (Post-Phase 4)
+   - **Team Status Fix** (P1, 1-2 hours) — Dashboard shows all agents as "idle" when working on isolated sub-sessions
+     - Issue: `sessions_spawn` creates isolated sessions that don't update main team status
+     - Fix: Add dashboard endpoint that queries `sessions_list(kinds=["isolated"])` and shows active subagent tasks
+     - Should display: "Working: [Task Label] ([Elapsed Time])"
+     - Owner: Atlas or Synth (dashboard backend integration)
+     - Added: 2026-02-14 16:28 CST
+
 **Rationale:** Team review (Oracle, Atlas, Sentinel, Verifier) identified critical infrastructure fragility. High velocity (Phase 4 same-day delivery) requires high reliability. Fix foundation first = more consistent long-term.
 
 ---
