@@ -520,22 +520,26 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 ### Phase 3: Pylon Network Visualization (2-4 weeks, conditional)
 
 **Integration Target:** Existing VentureOS dashboard at http://192.168.225.149:7001  
-**Tech Stack:** TBD at Phase 3 kickoff (React/Web Components decision deferred)  
+**Tech Stack:** Web Components (framework-agnostic, approved 2026-02-14 09:25 CST)  
 **Current Features:** KPI trends, agent health monitoring, recent observations
 
-**Tech Stack Decision (deferred to Phase 3):**
-- **Option A (recommended):** Web Components (framework-agnostic, upgrade-friendly)
-- **Option B:** Full React migration (best long-term, adds 1-2 weeks)
-- **Option C:** Vanilla JS (fastest to ship)
-- **Decision date:** Phase 3 kickoff (after Phase 2 complete)
+**Tech Stack Decision: Web Components**
+- **Rationale:** Framework-agnostic, works with vanilla JS now and React later
+- **Benefits:** 
+  - Build once, use in current static HTML dashboard
+  - Future-proof for React migration (no rewrites needed)
+  - Standards-based (native browser API)
+  - Incrementally upgradeable
+- **Components are portable:** Can be used in any framework or vanilla JS
 
 **Deliverables:**
-1. ✅ API endpoints (stats, tactical overlays, Khala Network) — integrate with existing backend
-2. ✅ 2D Psionic Attribute bars (HTML/CSS/vanilla JS)
-3. ✅ Tactical Overlay panels (expandable, match existing design)
-4. ✅ Khala Network graph (D3.js — works with vanilla JS)
-5. ✅ Atlas reliability metrics dashboard (6 new metrics, integrate with existing health monitoring)
-6. ⚠️ 3D holographic avatars (**DEFERRED** - 2D pixel art sprites decided @ 06:49 CST)
+1. ✅ Web Component library (`<psionic-attribute-bar>`, `<tactical-overlay-panel>`, `<khala-network-graph>`, `<atlas-reliability-metrics>`)
+2. ✅ API endpoints (stats, tactical overlays, Khala Network) — integrate with existing backend
+3. ✅ Integration into existing static HTML dashboard (drop-in with `<script>` tags)
+4. ✅ D3.js Khala Network force-directed graph (wrapped in Web Component)
+5. ✅ Atlas reliability metrics (6 new metrics, integrate with existing health monitoring)
+6. ✅ 2D pixel art sprites (decided @ 06:49 CST)
+7. ⚠️ 3D holographic avatars (**DEFERRED**)
 
 **Success Criteria:**
 - RPG components integrated into existing dashboard layout
