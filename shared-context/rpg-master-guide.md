@@ -871,16 +871,20 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 - **Owner:** Archivist
 - **Output:** `~/clawd/agents/kpis/` + `~/clawd/ventureos/lib/kpi-registry.ts`
 
-**Track 3: Voice RULES** 📅 PENDING (Week 3 estimated)
-- Fact+Action message format
-- Anti-filler validation
+**Track 3: Voice RULES** ✅ COMPLETE (2026-02-14 16:13 CST, 5m47s)
+- ✅ Fact+Action message format (VoiceMessage schema with facts/actions/confidence)
+- ✅ Anti-filler validation (7 categories, ~40 patterns, blocking vs warning)
+- ✅ Integration with role card enforcement (Tier 2 heuristic bridge)
+- ✅ Tests: 76/76 passing, 99.2% coverage
 - **Owner:** Verifier
+- **Output:** `~/clawd/ventureos/lib/voice-rules.ts` (602 lines) + tests (692 lines) + docs (259 lines)
 
-**Track 4: Security Infrastructure** 📅 PENDING (Week 3-4 estimated)
+**Track 4: Security Infrastructure** 🔄 IN PROGRESS (Started 2026-02-14 16:13 CST)
 - Message sanitization
 - Rate limiting
 - HITL triggers
-- **Owner:** Sentinel
+- **Owner:** Sentinel (session: 32ac7e6e, 1h timeout)
+- **ETA:** 4-6 hours
 
 **Track 5: Conversation Orchestration** 📅 PENDING (Week 5-7 estimated)
 - Affinity dynamics
@@ -1099,19 +1103,25 @@ The RPG system ships features at AI-native velocity (Phase 4 Track 1-2 delivered
 9. **Cron reliability reporting** — SLA tracking, missed-run alerts
 10. **Injectable config** — Stop hardcoding `~/clawd/...` paths in libraries
 
-11. **Model routing strategy** — Route simple tasks to cheaper models, complex to Claude
+11. **Model routing + thinking level strategy** — Route simple tasks to cheaper models with lower thinking, complex to Claude with higher thinking
    - Reduce costs + balance load between Anthropic and OpenAI
-   - **Simple tasks** (health checks, monitoring, validation) → use lighter models:
+   - **Simple tasks** (health checks, monitoring, validation) → lighter models + **low thinking**:
      - `openai-codex/gpt-5.1-codex-mini` (Codex optimized)
      - `openai/gpt-4.1-mini` (general purpose, cheap)
      - `openai/gpt-4.1-nano` (cheapest)
      - `openai/gpt-5-nano` (newest nano)
-   - **Complex tasks** (analysis, external content, critical decisions) → use Anthropic:
+     - Thinking: `low` (routine work, no deep reasoning needed)
+   - **Complex tasks** (analysis, external content, critical decisions) → Anthropic + **medium/high thinking**:
      - `anthropic/claude-3-5-sonnet-20241022` (production workhorse)
      - `anthropic/claude-3-7-sonnet-20250219` (newer, faster)
      - `anthropic/claude-opus-4-6` (highest capability, external content defense)
-   - **Use cases for lighter models:** cron health checks, backup verification, log parsing, status monitoring
-   - **Keep Anthropic for:** team reviews, strategic decisions, web content processing (prompt injection defense)
+     - Thinking: `medium` (balanced), `high` (deep research/security), `xtra-high` (complex strategic decisions)
+   - **Thinking level by agent:**
+     - **High:** Oracle (research), Sentinel (security), Echo (CEO orchestration)
+     - **Medium:** Atlas, Verifier, Synth, Nexus (balanced work)
+     - **Low:** Archivist (documentation), cron jobs (health checks, backups, monitoring)
+   - **Use cases for lighter models + low thinking:** cron health checks, backup verification, log parsing, status monitoring
+   - **Keep Anthropic + high thinking for:** team reviews, strategic decisions, web content processing (prompt injection defense)
 
 **P2: Do This Month (16-24 hours) — Process & Standardization**
 
@@ -1160,22 +1170,33 @@ The RPG system ships features at AI-native velocity (Phase 4 Track 1-2 delivered
 
 ---
 
-## Next Steps (Updated 2026-02-14 19:31 CST)
+## Next Steps (Updated 2026-02-14 16:13 CST)
 
-**Immediate Priority: Infrastructure Hardening (P0)**
+**Immediate Priority: Phase 4 Track Completion**
 
-**Status:** 🔄 IN PROGRESS (Started 2026-02-14 19:37 CST)
+**Status:** ✅ P0 Infrastructure Hardening COMPLETE | ✅ Tracks 1-3 COMPLETE | 🔄 Track 4 IN PROGRESS
 
-1. **🛡️ Infrastructure Hardening Sprint** (this week, 10-14 hours) — 1/5 complete
-   - ✅ **Adopt three-tier estimation framework** (Oracle, 3m30s, COMPLETE 19:40 CST)
-   - 🔄 **Fix failing cron jobs + add alerts** (Atlas, 3-4h, IN PROGRESS)
-   - ⏳ **SQLite hardening** (Atlas, 2-3h, QUEUED after cron fixes)
-   - ⏳ **SQLite-consistent backups** (Atlas, 2-3h, QUEUED after SQLite hardening)
-   - 🔄 **Session handoff docs** (Synth, 2-4h, IN PROGRESS since earlier)
+1. **🛡️ Infrastructure Hardening Sprint** (this week, 10-14 hours) — ✅ 100% COMPLETE
+   - ✅ **Adopt three-tier estimation framework** (Oracle, 3m30s, COMPLETE 2026-02-14 19:40 CST)
+   - ✅ **Fix failing cron jobs + add alerts** (Atlas, 37 min, COMPLETE 2026-02-14 ~14:00 CST)
+   - ✅ **SQLite hardening** (Atlas, 37 min, COMPLETE 2026-02-14 ~14:00 CST)
+   - ✅ **SQLite-consistent backups** (Atlas, 37 min, COMPLETE 2026-02-14 ~14:00 CST)
+   - ✅ **Session handoff docs** (Synth, COMPLETE 2026-02-14 ~15:00 CST)
+     - Auto-reset + handoff summary generation operational
+     - Deployed: `~/clawd/scripts/session-health-check.sh` (hourly cron)
 
-2. **🔄 Track 1 validation** (Verifier, in progress) — Role card production readiness
+2. **✅ Phase 4 Tracks 1-3 COMPLETE**
+   - ✅ Track 1: Role Cards (Oracle + Synth, 14 min, validated by Verifier 12:32 CST)
+   - ✅ Track 2: KPI Registry (Archivist, 13m4s, 34 KPIs, 29/29 tests)
+   - ✅ Track 3: Voice RULES (Verifier, 5m47s, 76/76 tests, 99% coverage)
 
-3. **📅 Phase 4 Tracks 3-6** (resume after P0 hardening) — Voice RULES, Security, Conversation, Testing
+3. **🔄 Phase 4 Track 4 IN PROGRESS** (started 16:13 CST)
+   - Security Infrastructure (Sentinel, session 32ac7e6e, ETA 4-6h)
+   - Tasks: message sanitization, rate limiting, HITL triggers
+
+4. **📅 Phase 4 Tracks 5-6 PENDING** (after Track 4)
+   - Track 5: Conversation Orchestration (Synth + Oracle, Week 5-7 est)
+   - Track 6: Integration & Testing (Verifier + Atlas, Week 8 est)
 
 4. **📊 Quality & Monitoring** (P1, next week, 8-12 hours)
    - Pre-approval decision framework
@@ -1193,9 +1214,9 @@ The RPG system ships features at AI-native velocity (Phase 4 Track 1-2 delivered
 
 ---
 
-**Document Status:** ✅ Master reference (updated 2026-02-14 19:40 CST)  
+**Document Status:** ✅ Master reference (updated 2026-02-14 16:13 CST)  
 **Maintained By:** Nexus (Mission Control)  
-**Phase Status:** Phase 1-3 complete, Phase 4 Tracks 1-2 complete, Tracks 3-6 pending  
-**Current Priority:** Infrastructure Hardening (P0, 1/5 complete) — Oracle: estimation framework ✅, Atlas: cron fixes 🔄, Synth: session handoff 🔄
+**Phase Status:** Phase 1-3 complete, Phase 4 Tracks 1-3 complete, Track 4 in progress, Tracks 5-6 pending  
+**Current Priority:** Phase 4 Track 4 (Security Infrastructure, Sentinel, started 16:13 CST)
 
 **"My life for Aiur! En Taro Adun! Through the Khala, we are eternal!"**
