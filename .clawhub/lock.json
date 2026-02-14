@@ -4,6 +4,10 @@
     "healthkit-sync": {
       "version": "1.0.0",
       "installedAt": 1770707859487
+    },
+    "whoop": {
+      "version": "0.1.0",
+      "installedAt": 1770765465690
     }
   }
 }

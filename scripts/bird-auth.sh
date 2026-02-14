@@ -14,5 +14,7 @@ if [ -z "$AUTH_TOKEN" ] || [ -z "$CT0" ]; then
     exit 1
 fi
 
-# Run bird with extracted cookies
+# Run bird with cookies — uses CLI args (bird doesn't support auth env vars).
+# exec replaces the shell process, so tokens only appear for the bird process itself.
+# /proc visibility is unavoidable without upstream env var support.
 exec bird --auth-token "$AUTH_TOKEN" --ct0 "$CT0" "$@"

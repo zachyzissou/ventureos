@@ -1,0 +1,10 @@
+{
+  "agent_id": "sentinel",
+  "protoss_unit": "Sentinel",
+  "role": "Security Guardian",
+  "base_stats": {
+    "tier": "core",
+    "mobility": "medium",
+    "tech_requirement": "gateway"
+  }
+}

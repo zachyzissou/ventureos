@@ -1,0 +1,248 @@
+{
+  "date": "2026-02-10",
+  "generated_at": "2026-02-13T14:33:26-06:00",
+  "window": {
+    "start_ms": 1770703200000,
+    "end_ms": 1770789600000,
+    "start_iso": "2026-02-10T00:00:00-06:00",
+    "end_iso": "2026-02-11T00:00:00-06:00",
+    "tz": "CST"
+  },
+  "slo": {
+    "success_rate": 0.95,
+    "p95_latency_s": 60.0,
+    "missed_cron": 0,
+    "backup_age_h": 24.0
+  },
+  "overall": {
+    "runs_total": 574,
+    "success": 574,
+    "failure": 0,
+    "success_rate": 1.0,
+    "timeout": 0,
+    "timeout_rate": 0.0,
+    "latency_ms": {
+      "p50": 12249.5,
+      "p95": 41731.4,
+      "p99": 98780.22999999991
+    },
+    "handoff": {
+      "attempts": 0,
+      "success": 0,
+      "failure": 0,
+      "success_rate": null
+    },
+    "cron": {
+      "late_runs": 244,
+      "missed_runs": 2073,
+      "drift_ms": {
+        "p50": 33.0,
+        "p95": 92930.49999999997,
+        "p99": 900019.62,
+        "max": 900029
+      }
+    },
+    "cost": {
+      "known_tasks": 0,
+      "total_usd": null,
+      "per_task_usd": null,
+      "note": "No token/cost fields present in cron run logs (Phase 1)."
+    },
+    "backup": {
+      "last_backup_path": "/Users/zachgonser/clawd/scripts/backup-20260207-150603",
+      "last_backup_ts": 1770498363250,
+      "last_backup_iso": "2026-02-07T15:06:03-06:00",
+      "age_hours": 143.45635916666666
+    }
+  },
+  "agents": {
+    "atlas": {
+      "runs_total": 290,
+      "success": 290,
+      "failure": 0,
+      "success_rate": 1.0,
+      "timeout": 0,
+      "timeout_rate": 0.0,
+      "latency_ms": {
+        "p50": 8958.0,
+        "p95": 23955.550000000003,
+        "p99": 31318.15000000004
+      },
+      "handoff": {
+        "attempts": 0,
+        "success": 0,
+        "failure": 0,
+        "success_rate": null
+      },
+      "cron": {
+        "late_runs": 187,
+        "missed_runs": 288,
+        "drift_ms": {
+          "p50": 28903.5,
+          "p95": 95137.44999999998,
+          "p99": 205981.63999999926,
+          "max": 376604
+        }
+      },
+      "cost": {
+        "known_tasks": 0,
+        "total_usd": null,
+        "per_task_usd": null,
+        "note": "No token/cost fields present in cron run logs (Phase 1)."
+      }
+    },
+    "echo": {
+      "runs_total": 1,
+      "success": 1,
+      "failure": 0,
+      "success_rate": 1.0,
+      "timeout": 0,
+      "timeout_rate": 0.0,
+      "latency_ms": {
+        "p50": 40659.0,
+        "p95": 40659.0,
+        "p99": 40659.0
+      },
+      "handoff": {
+        "attempts": 0,
+        "success": 0,
+        "failure": 0,
+        "success_rate": null
+      },
+      "cron": {
+        "late_runs": 0,
+        "missed_runs": 0,
+        "drift_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "cost": {
+        "known_tasks": 0,
+        "total_usd": null,
+        "per_task_usd": null,
+        "note": "No token/cost fields present in cron run logs (Phase 1)."
+      }
+    },
+    "main": {
+      "runs_total": 283,
+      "success": 283,
+      "failure": 0,
+      "success_rate": 1.0,
+      "timeout": 0,
+      "timeout_rate": 0.0,
+      "latency_ms": {
+        "p50": 15871.0,
+        "p95": 64404.099999999955,
+        "p99": 116362.8600000003
+      },
+      "handoff": {
+        "attempts": 0,
+        "success": 0,
+        "failure": 0,
+        "success_rate": null
+      },
+      "cron": {
+        "late_runs": 57,
+        "missed_runs": 1183,
+        "drift_ms": {
+          "p50": 24.0,
+          "p95": 27002.949999999968,
+          "p99": 900021.3799999999,
+          "max": 900029
+        }
+      },
+      "cost": {
+        "known_tasks": 0,
+        "total_usd": null,
+        "per_task_usd": null,
+        "note": "No token/cost fields present in cron run logs (Phase 1)."
+      }
+    }
+  },
+  "baseline_7d": {
+    "days_available": 3,
+    "overall": {
+      "success_rate": 0.9858694208826835,
+      "p95_latency_s": 210.90786666666665,
+      "timeout_rate": 0.0338285351547951,
+      "missed_cron": 1288.0,
+      "backup_age_h": 143.4563298148148,
+      "handoff_success_rate": null
+    },
+    "agents": {
+      "atlas": {
+        "success_rate": 1.0,
+        "p95_latency_s": 75.606,
+        "timeout_rate": 0.0,
+        "missed_cron": 23.0
+      },
+      "main": {
+        "success_rate": 0.9857030750258836,
+        "p95_latency_s": 208.9045333333332,
+        "timeout_rate": 0.03387606254245224,
+        "missed_cron": 745.3333333333334
+      },
+      "unknown": {
+        "success_rate": 1.0,
+        "p95_latency_s": 139.78499999999997,
+        "timeout_rate": 0.0,
+        "missed_cron": 546.0
+      }
+    }
+  },
+  "comparisons": {
+    "baseline_days": 3,
+    "overall": {
+      "success_rate": {
+        "today": 1.0,
+        "baseline_7d": 0.9858694208826835,
+        "delta": 0.014130579117316522,
+        "unit": "ratio",
+        "status": "\u2705"
+      },
+      "p95_latency_s": {
+        "today": 41.7314,
+        "baseline_7d": 210.90786666666665,
+        "delta": -169.17646666666664,
+        "unit": "seconds",
+        "status": "\u2705"
+      },
+      "timeout_rate": {
+        "today": 0.0,
+        "baseline_7d": 0.0338285351547951,
+        "delta": -0.0338285351547951,
+        "unit": "ratio",
+        "status": "\u2705"
+      },
+      "missed_cron": {
+        "today": 2073,
+        "baseline_7d": 1288.0,
+        "delta": 785.0,
+        "unit": "count",
+        "status": "\ud83d\udd34"
+      },
+      "backup_age_h": {
+        "today": 143.45635916666666,
+        "baseline_7d": 143.4563298148148,
+        "delta": 2.9351851850378807e-05,
+        "unit": "hours",
+        "status": "\ud83d\udd34"
+      },
+      "handoff_success_rate": {
+        "today": null,
+        "baseline_7d": null,
+        "delta": null,
+        "unit": "ratio",
+        "status": "\u2014"
+      }
+    }
+  },
+  "notes": {
+    "handoff_definition": "Heuristic: runs whose summary contains \"Session Send:\"; success if summary does not include \"failed\"/\"timeout\".",
+    "timeout_definition": "Heuristic: run error/summary contains substring \"timeout\" (case-insensitive).",
+    "cron_drift_definition": "drift = runAtMs - previous nextRunAtMs for same (jobId, agent). missed schedules are estimated within the day window using last-known interval (nextRunAtMs - runAtMs)."
+  }
+}

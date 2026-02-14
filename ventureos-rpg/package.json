@@ -1,0 +1,14 @@
+{
+  "name": "ventureos-rpg",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "VentureOS RPG visualization + APIs (Phase 3 Pylon Network dashboard)",
+  "scripts": {
+    "dev": "node ./api/server-express.js",
+    "test": "node ./api/smoke-test.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

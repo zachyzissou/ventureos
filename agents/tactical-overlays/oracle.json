@@ -1,0 +1,10 @@
+{
+  "agent_id": "oracle",
+  "protoss_unit": "Zeratul",
+  "role": "Research & Foresight",
+  "base_stats": {
+    "tier": "hero",
+    "mobility": "high",
+    "tech_requirement": "campaign"
+  }
+}

@@ -1,0 +1,356 @@
+#!/bin/bash
+# sync-memory-to-rpg.sh - Sync observational memory patterns to RPG personality activations
+# Phase 2 Track 3: Observational Memory Integration
+# Owner: Archivist
+
+set -euo pipefail
+
+# Configuration
+DB_PATH="$HOME/clawd/agents/ventureos-rpg.db"
+OBS_DIR="$HOME/.openclaw/workspace-archivist/observations"
+OBS_INDEX="$OBS_DIR/index.json"
+LOG_DIR="$HOME/clawd/runtime/logs"
+LOG_FILE="$LOG_DIR/memory-rpg-sync-$(date +%Y-%m-%d).log"
+
+# Protocol thresholds (configurable)
+THRESHOLD_REFERENCE_OUTCOMES=8
+THRESHOLD_USE_FRAMEWORKS=6
+THRESHOLD_CITE_PRECEDENTS=5
+THRESHOLD_PROACTIVE_MONITORING=3
+THRESHOLD_AUTONOMOUS_DELEGATION=5
+THRESHOLD_PROACTIVE_DOCUMENTATION=5
+
+# Ensure log directory exists
+mkdir -p "$LOG_DIR"
+
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+error() {
+    log "ERROR: $*"
+    exit 1
+}
+
+# Validate prerequisites
+check_prerequisites() {
+    log "Checking prerequisites..."
+    
+    [[ -f "$DB_PATH" ]] || error "Database not found: $DB_PATH"
+    [[ -d "$OBS_DIR" ]] || error "Observations directory not found: $OBS_DIR"
+    [[ -f "$OBS_INDEX" ]] || error "Observations index not found: $OBS_INDEX"
+    
+    command -v sqlite3 >/dev/null || error "sqlite3 not found"
+    command -v jq >/dev/null || error "jq not found"
+    command -v rg >/dev/null || error "ripgrep (rg) not found"
+    
+    log "Prerequisites validated"
+}
+
+# Count observations per agent
+count_agent_observations() {
+    local agent=$1
+    
+    # Count observations tagged with agent
+    # Explicit file loop avoids ripgrep single-file format edge case
+    local total=0
+    local files=("$OBS_DIR"/*.md)
+    
+    # Check if any .md files exist
+    if [[ -e "${files[0]}" ]]; then
+        for file in "${files[@]}"; do
+            if [[ -f "$file" ]]; then
+                local count=$(rg --count "#$agent" "$file" 2>/dev/null | head -1 || echo "0")
+                total=$((total + count))
+            fi
+        done
+    fi
+    
+    echo "$total"
+}
+
+# Count specific pattern frequency for agent
+count_pattern() {
+    local agent=$1
+    local pattern_tag=$2
+    
+    # Count observations with both agent tag AND pattern tag
+    # First find lines with agent tag, then count pattern tag matches
+    local agent_lines=$(rg "#$agent" "$OBS_DIR"/*.md 2>/dev/null)
+    if [[ -z "$agent_lines" ]]; then
+        echo "0"
+        return
+    fi
+    
+    local count=$(echo "$agent_lines" | grep -c "#$pattern_tag" 2>/dev/null)
+    echo "$count"
+}
+
+# Check if protocol is currently active
+is_protocol_active() {
+    local agent=$1
+    local protocol=$2
+    
+    local active=$(sqlite3 "$DB_PATH" "
+        SELECT COUNT(*) 
+        FROM personality_activations 
+        WHERE agent_id = '$agent' 
+          AND protocol_id = '$protocol' 
+          AND deactivated_at IS NULL;
+    ")
+    
+    [[ "$active" -gt 0 ]]
+}
+
+# Activate protocol
+activate_protocol() {
+    local agent=$1
+    local protocol=$2
+    local protocol_type=$3
+    local trigger_condition=$4
+    
+    log "Activating: $agent → $protocol ($trigger_condition)"
+    
+    sqlite3 "$DB_PATH" "
+        INSERT INTO personality_activations 
+            (agent_id, protocol_id, protocol_type, trigger_condition, activated_at)
+        VALUES 
+            ('$agent', '$protocol', '$protocol_type', '$trigger_condition', CURRENT_TIMESTAMP)
+        ON CONFLICT(agent_id, protocol_id, activated_at) DO NOTHING;
+    "
+}
+
+# Deactivate protocol
+deactivate_protocol() {
+    local agent=$1
+    local protocol=$2
+    local reason=$3
+    
+    log "Deactivating: $agent → $protocol ($reason)"
+    
+    sqlite3 "$DB_PATH" "
+        UPDATE personality_activations
+        SET deactivated_at = CURRENT_TIMESTAMP
+        WHERE agent_id = '$agent'
+          AND protocol_id = '$protocol'
+          AND deactivated_at IS NULL;
+    "
+}
+
+# Evaluate base protocols for all agents
+evaluate_base_protocols() {
+    local agents=("oracle" "atlas" "nexus" "synth" "archivist" "sentinel" "verifier" "echo")
+    
+    log "Evaluating base protocols..."
+    
+    for agent in "${agents[@]}"; do
+        local obs_count=$(count_agent_observations "$agent")
+        
+        log "  $agent: $obs_count observations"
+        
+        # Protocol: reference_outcomes (observation_count >= 8)
+        if [[ $obs_count -ge $THRESHOLD_REFERENCE_OUTCOMES ]]; then
+            if ! is_protocol_active "$agent" "reference_outcomes"; then
+                activate_protocol "$agent" "reference_outcomes" "base" "{\"observation_count\": $obs_count}"
+            fi
+        else
+            if is_protocol_active "$agent" "reference_outcomes"; then
+                deactivate_protocol "$agent" "reference_outcomes" "observation_count dropped below $THRESHOLD_REFERENCE_OUTCOMES"
+            fi
+        fi
+        
+        # Protocol: use_frameworks (pattern frequency >= 6)
+        local debugging_count=$(count_pattern "$agent" "debugging")
+        local ci_count=$(count_pattern "$agent" "ci")
+        local infra_count=$(count_pattern "$agent" "infrastructure")
+        local monitoring_count=$(count_pattern "$agent" "monitoring")
+        local framework_patterns=$((debugging_count + ci_count + infra_count + monitoring_count))
+        
+        if [[ $framework_patterns -ge $THRESHOLD_USE_FRAMEWORKS ]]; then
+            if ! is_protocol_active "$agent" "use_frameworks"; then
+                activate_protocol "$agent" "use_frameworks" "base" "{\"pattern_count\": $framework_patterns}"
+            fi
+        else
+            if is_protocol_active "$agent" "use_frameworks"; then
+                deactivate_protocol "$agent" "use_frameworks" "pattern_count dropped below $THRESHOLD_USE_FRAMEWORKS"
+            fi
+        fi
+    done
+}
+
+# Evaluate Oracle-specific protocols
+evaluate_oracle_protocols() {
+    log "Evaluating Oracle protocols..."
+    
+    local obs_count=$(count_agent_observations "oracle")
+    local research_tag=$(count_pattern "oracle" "research")
+    local cost_tag=$(count_pattern "oracle" "cost-optimization")
+    local decisions_tag=$(count_pattern "oracle" "decisions")
+    local research_count=$((research_tag + cost_tag + decisions_tag))
+    
+    log "  Oracle research observations: $research_count"
+    
+    # Protocol: cite_precedents (research observations >= 5)
+    if [[ $research_count -ge $THRESHOLD_CITE_PRECEDENTS ]]; then
+        if ! is_protocol_active "oracle" "cite_precedents"; then
+            activate_protocol "oracle" "cite_precedents" "quality_gate" "{\"research_observations\": $research_count}"
+        fi
+    else
+        if is_protocol_active "oracle" "cite_precedents"; then
+            deactivate_protocol "oracle" "cite_precedents" "research_count dropped below $THRESHOLD_CITE_PRECEDENTS"
+        fi
+    fi
+}
+
+# Evaluate Atlas-specific protocols
+evaluate_atlas_protocols() {
+    log "Evaluating Atlas protocols..."
+    
+    local monitoring_tag=$(count_pattern "atlas" "monitoring")
+    local infra_tag=$(count_pattern "atlas" "infrastructure")
+    local monitoring_count=$((monitoring_tag + infra_tag))
+    
+    log "  Atlas monitoring patterns: $monitoring_count"
+    
+    # Protocol: proactive_monitoring (monitoring patterns >= 3)
+    if [[ $monitoring_count -ge $THRESHOLD_PROACTIVE_MONITORING ]]; then
+        if ! is_protocol_active "atlas" "proactive_monitoring"; then
+            activate_protocol "atlas" "proactive_monitoring" "quality_gate" "{\"monitoring_implementations\": $monitoring_count}"
+        fi
+    else
+        if is_protocol_active "atlas" "proactive_monitoring"; then
+            deactivate_protocol "atlas" "proactive_monitoring" "monitoring_count dropped below $THRESHOLD_PROACTIVE_MONITORING"
+        fi
+    fi
+}
+
+# Evaluate Nexus-specific protocols
+evaluate_nexus_protocols() {
+    log "Evaluating Nexus protocols..."
+    
+    local handoff_tag=$(count_pattern "nexus" "handoff")
+    local priorities_tag=$(count_pattern "nexus" "priorities")
+    local delegation_count=$((handoff_tag + priorities_tag))
+    
+    log "  Nexus delegation patterns: $delegation_count"
+    
+    # Protocol: autonomous_delegation (delegation patterns >= 5)
+    if [[ $delegation_count -ge $THRESHOLD_AUTONOMOUS_DELEGATION ]]; then
+        if ! is_protocol_active "nexus" "autonomous_delegation"; then
+            activate_protocol "nexus" "autonomous_delegation" "quality_gate" "{\"delegations\": $delegation_count}"
+        fi
+    else
+        if is_protocol_active "nexus" "autonomous_delegation"; then
+            deactivate_protocol "nexus" "autonomous_delegation" "delegation_count dropped below $THRESHOLD_AUTONOMOUS_DELEGATION"
+        fi
+    fi
+}
+
+# Evaluate Archivist-specific protocols
+evaluate_archivist_protocols() {
+    log "Evaluating Archivist protocols..."
+    
+    local memory_tag=$(count_pattern "archivist" "memory")
+    local obs_memory_tag=$(count_pattern "archivist" "observational-memory")
+    local cron_tag=$(count_pattern "archivist" "cron")
+    local doc_count=$((memory_tag + obs_memory_tag + cron_tag))
+    
+    log "  Archivist documentation patterns: $doc_count"
+    
+    # Protocol: proactive_documentation (documentation patterns >= 5)
+    if [[ $doc_count -ge $THRESHOLD_PROACTIVE_DOCUMENTATION ]]; then
+        if ! is_protocol_active "archivist" "proactive_documentation"; then
+            activate_protocol "archivist" "proactive_documentation" "quality_gate" "{\"documentation_events\": $doc_count}"
+        fi
+    else
+        if is_protocol_active "archivist" "proactive_documentation"; then
+            deactivate_protocol "archivist" "proactive_documentation" "documentation_count dropped below $THRESHOLD_PROACTIVE_DOCUMENTATION"
+        fi
+    fi
+}
+
+# Evaluate Synth-specific protocols
+evaluate_synth_protocols() {
+    log "Evaluating Synth protocols..."
+    
+    local ci_tag=$(count_pattern "synth" "ci")
+    local testing_tag=$(count_pattern "synth" "testing")
+    local pipeline_tag=$(count_pattern "synth" "pipeline")
+    local ci_count=$((ci_tag + testing_tag + pipeline_tag))
+    
+    log "  Synth CI/testing patterns: $ci_count"
+    
+    # Protocol: test_first_discipline (CI patterns >= 5)
+    if [[ $ci_count -ge 5 ]]; then
+        if ! is_protocol_active "synth" "test_first_discipline"; then
+            activate_protocol "synth" "test_first_discipline" "quality_gate" "{\"ci_events\": $ci_count}"
+        fi
+    else
+        if is_protocol_active "synth" "test_first_discipline"; then
+            deactivate_protocol "synth" "test_first_discipline" "ci_count dropped below 5"
+        fi
+    fi
+}
+
+# Generate summary report
+generate_summary() {
+    log "Generating activation summary..."
+    
+    local active_count=$(sqlite3 "$DB_PATH" "
+        SELECT COUNT(*) 
+        FROM personality_activations 
+        WHERE deactivated_at IS NULL;
+    ")
+    
+    local recent_activations=$(sqlite3 "$DB_PATH" "
+        SELECT COUNT(*) 
+        FROM personality_activations 
+        WHERE activated_at >= date('now', '-1 day');
+    ")
+    
+    local recent_deactivations=$(sqlite3 "$DB_PATH" "
+        SELECT COUNT(*) 
+        FROM personality_activations 
+        WHERE deactivated_at >= date('now', '-1 day');
+    ")
+    
+    log "Summary:"
+    log "  Active protocols: $active_count"
+    log "  Activations (last 24h): $recent_activations"
+    log "  Deactivations (last 24h): $recent_deactivations"
+    
+    # List active protocols
+    log "Current active protocols:"
+    sqlite3 "$DB_PATH" "
+        SELECT '  ' || agent_id || ' → ' || protocol_id || ' (' || protocol_type || ')'
+        FROM personality_activations 
+        WHERE deactivated_at IS NULL
+        ORDER BY agent_id, protocol_id;
+    " | tee -a "$LOG_FILE"
+}
+
+# Main execution
+main() {
+    log "========================================="
+    log "Memory → RPG Sync Starting"
+    log "========================================="
+    
+    check_prerequisites
+    
+    evaluate_base_protocols
+    evaluate_oracle_protocols
+    evaluate_atlas_protocols
+    evaluate_nexus_protocols
+    evaluate_archivist_protocols
+    evaluate_synth_protocols
+    
+    generate_summary
+    
+    log "========================================="
+    log "Memory → RPG Sync Complete"
+    log "Log: $LOG_FILE"
+    log "========================================="
+}
+
+# Run main
+main "$@"

@@ -1,0 +1,10 @@
+{
+  "agent_id": "verifier",
+  "protoss_unit": "Observer",
+  "role": "Validation & Quality Assurance",
+  "base_stats": {
+    "tier": "support",
+    "mobility": "high",
+    "tech_requirement": "robotics"
+  }
+}

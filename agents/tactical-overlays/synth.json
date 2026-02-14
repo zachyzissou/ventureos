@@ -1,0 +1,10 @@
+{
+  "agent_id": "synth",
+  "protoss_unit": "Dark Templar",
+  "role": "Implementation & Shadow Ops",
+  "base_stats": {
+    "tier": "elite",
+    "mobility": "high",
+    "tech_requirement": "dark_shrine"
+  }
+}

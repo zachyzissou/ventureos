@@ -295,3 +295,456 @@ These authors consistently produce high-quality OpenClaw content:
 - @AISecHub — Security architecture for AI agents
 - @LUKSOAgent — Blockchain/identity integration examples
 
+---
+
+## Daily Scout - 2026-02-14
+**Sources**: X/Twitter Clawd bookmark folder (6 new bookmarks added)
+
+### 1. Search API Comparison — Context Quality > Model Choice (@Legendaryy, 147 likes)
+**Link**: https://x.com/Legendaryy/status/2022273570664030660
+**Article**: Comprehensive breakdown of 5 search providers for AI agents
+
+**Core thesis**: "The LLM you pick matters less than you think. Qwen3 + good search context beat ChatGPT + bad search context."
+
+**The 5 APIs**:
+
+**Brave LLM Context API** (NEW - just launched Feb 12):
+- Independent index (35B pages, 100M+ daily updates)
+- Real-time "smart chunks" extraction (text, JSON-LD, tables, code, YouTube captions)
+- <600ms p90 latency, token budget control
+- $5/1K requests, $5 free monthly credit
+- Zero Data Retention, SOC 2 Type II
+- **OpenClaw integration**: MCP server ready
+- Routing: factual grounding, quick lookups
+
+**Tavily** (agent-focused):
+- Search/Extract/Map/Crawl endpoints
+- `/research` multi-step automation
+- Credit-based pricing (1-2 credits/search)
+- Used by 800K+ devs in LangChain/LlamaIndex
+- Routing: agent workflows, regulated industries
+
+**Exa** (semantic search):
+- Neural embeddings, meaning-based (not keywords)
+- Exa Instant: <200ms latency (Feb 12 release)
+- Trained on 144x H200 cluster
+- Routing: research discovery, "find things like this"
+
+**Perplexity Sonar**:
+- Bundles search + LLM synthesis
+- Sonar, Sonar Pro, Sonar Reasoning Pro, Sonar Deep Research
+- Per-request fees + per-token costs
+- Routing: quick synthesized answers (when you want the answer, not raw data)
+
+**Firecrawl**:
+- Extraction specialist (not a search engine)
+- Handles JS, pagination, CAPTCHAs, auth
+- Open source, self-hostable
+- $83 for 100K pages vs Tavily's $500-800
+- Routing: deep extraction after search finds URLs
+
+**Key benchmarks**: Brave's eval showed Qwen3 + good context (4.66/5) > ChatGPT with worse context (4.32/5). Only Grok scored higher (4.71).
+
+**Routing recommendation**:
+- **Pick 1**: Brave LLM Context API (general-purpose, best value)
+- **Pick 2**: Add Exa for semantic research
+- **All-in**: Brave + Exa + Firecrawl + Perplexity Sonar ($50-100/mo comprehensive stack)
+
+**🎯 Actionable**: 
+- Switch from current web_search (Brave Search API) to Brave LLM Context API for token-optimized chunks
+- Consider Exa for research tasks (semantic "find similar" queries)
+- Firecrawl for deep extraction when we need full page content (cheaper than Tavily at scale)
+
+---
+
+### 2. Agentic Team Memory — Knowledge from Corrections (@dabit3, 178 likes)
+**Link**: https://x.com/dabit3/status/2022461769911013388
+**Article**: How Devin captures tribal knowledge
+
+**Problem**: Wikis/READMEs go stale. Nobody maintains docs because shipping > documenting.
+
+**Devin's approach**: 
+- Capture knowledge from **corrections they're already making**
+- When engineer says "don't call fetch directly, use wrapper in src/lib/api-client" → Devin suggests saving as knowledge item
+- Engineer reviews/tweaks/saves → all future sessions retrieve it
+- **Side effect vs explicit task** — no extra work
+
+**Multiple sources**:
+- Chat feedback (most organic)
+- Auto-generated from repos (READMEs, AGENTS.md, .cursorrules, .rules files)
+- Updates to existing items (conventions evolve, knowledge evolves)
+- Manual creation via UI/API
+
+**Pinning**: Pin knowledge to specific repo or apply org-wide. Backend conventions don't surface in marketing site.
+
+**Result**: New engineer starts session → agent already knows all team conventions without reading docs/Slack.
+
+**🎯 Actionable**:
+- Implement correction-capture pattern: when I correct OpenClaw, offer to save as persistent knowledge
+- Scan repos for AGENTS.md/.cursorrules/.rules on first connect
+- Knowledge should be **pinnable** to specific contexts (VentureOS vs StantonTimes vs personal)
+- Lower barrier for non-technical contributors (more guardrails from accumulated knowledge)
+
+---
+
+### 3. ClawPod — Residential Proxy Network for Unblockable Agents (@jsongrad, 664 likes)
+**Link**: https://x.com/jsongrad/status/2021957085043232890
+**GitHub**: https://github.com/joinmassive/clawpod
+
+**Problem**: OpenClaw agents hitting web with same IP → 403s, geo-restrictions, bot detection
+
+**Solution**: Route through Massive's residential proxy network (145K+ users opted-in)
+- Each request from real residential IP (looks like real user)
+- Geo-targeting (country/city/zipcode)
+- Uses agent-browser (real Chrome fingerprint)
+- Handles JS, SPAs, dynamic loading, Cloudflare, CAPTCHAs
+
+**Setup**:
+```bash
+agent-browser --proxy "$PROXY_URL" open "https://example.com"
+agent-browser snapshot -i  # accessibility tree
+agent-browser screenshot page.png
+```
+
+**Geo-targeting via username encoding**:
+```
+ENCODED_USER="${MASSIVE_PROXY_USERNAME}%3Fcountry%3DDE"  # Germany
+ENCODED_USER="${MASSIVE_PROXY_USERNAME}%3Ftype%3Dmobile%26country%3DUS%26city%3DNew%20York"  # Mobile NYC
+```
+
+**Security/Ethics**:
+- Mandatory opt-in (not a botnet)
+- 5M+ domain blocklist (DDoS, credential stuffing, ad fraud, phishing, scraping personal data)
+- SOC 2 audited, GDPR/CCPA aligned, AppEsteem certified
+- **Bandwidth sharing coming**: contribute idle bandwidth → get credits back
+
+**What's coming**:
+- Massive Unblocker API (handles hardest sites, Cloudflare, CAPTCHAs automatically)
+- Bandwidth sharing credit system
+
+**🎯 Actionable**:
+- Consider for StantonTimes research (geo-specific content, bypass rate limits)
+- Useful for competitive analysis across markets
+- Pair with camofox-browser (undetectable fingerprints) for full stealth stack
+- **Hold** until Unblocker API ships (easier than managing agent-browser sessions)
+
+---
+
+### 4. gogcli v0.10.0 — Google Workspace CLI (@steipete, 2172 likes)
+**Link**: https://x.com/steipete/status/2022516951809945850
+**Repo**: [from thread context, likely steipete/gogcli]
+
+**Big update**: Docs/Slides upgrade, Drive improvements, Gmail/Contacts features
+
+**New capabilities**:
+- Docs: markdown updates + tables, tab-aware read/edit
+- Slides: markdown/template creation, image-deck ops
+- Drive: upload --replace, convert, share-to-domain
+- Gmail: label delete, watch excludes
+- Contacts: birthdays/notes
+
+**Context**: "Google should make this, but here we are" — CLI fills gap Google won't
+
+**Community reaction**:
+- 106 replies, most positive
+- OAuth setup still painful (Google Cloud Project config is arcane)
+- Works well with OpenClaw after setup
+- Not a fan of MCPs, prefers CLIs (steipete quote)
+
+**🎯 Actionable**:
+- Already have gog skill installed — check if we're on v0.10.0
+- Use for Google Docs/Sheets/Drive automation (VentureOS documentation, client materials)
+- Contacts birthdays could feed into calendar/reminder automation
+
+---
+
+### 5. The 8-Step OpenClaw Initialization Framework (@kloss_xyz, 1075 likes)
+**Link**: https://x.com/kloss/status/2020738433724137694
+**Format**: 8 complete system prompts for agent setup
+
+**The 8 prompts** (each 2000-3000 words):
+1. **Brain** — Maps you: identity, operations, people, resources, friction, goals, cognition, communication
+2. **Muscles** — Routes AI models: model inventory, subscriptions, cost routing, multi-agent architecture
+3. **Bones** — Ingests codebases: repo inventory, architecture, conventions, dependencies, stability
+4. **DNA** — Behavioral protocols: decision-making, risk tolerance, security posture, escalation, uncertainty handling
+5. **Soul** — Personality: character archetype, tone spectrum, emotional texture, voice, humor, anti-patterns
+6. **Eyes** — Activation triggers: proactive monitoring, triggers, autonomous actions, cron jobs, heartbeat, quiet hours
+7. **Heartbeat** — Evolution/learning: daily rhythm, weekly review, memory curation, self-improvement, feedback integration
+8. **Nerves** — Context efficiency: token audit, context profiles, conversation windowing, budget guardrails
+
+**Format**: Each prompt is a complete conversation template (role, principles, extract, think_to_yourself, output, opening)
+
+**Generated files**: USER.md, SOUL.md, IDENTITY.md, AGENTS.md, TOOLS.md, MEMORY.md, HEARTBEAT.md, BOOTSTRAP.md, skills/, memory/
+
+**Key innovations**:
+- **Security posture in DNA** — environment, network, credentials, skills allowlist, sandbox, session isolation, blast radius, self-modification rules
+- **Multi-agent roster in Muscles** — agent specialization, shared vs isolated memory, lane architecture
+- **Nervous System audit** — token profiling BEFORE deploying to prevent overflow
+
+**🎯 Actionable**:
+- We already have most of these files (based on viral SOUL.md from same author)
+- **Missing**: formal Bones (codebase ingestion), formal Nervous System (token budget enforcement)
+- Use Bones prompt to document VentureOS repos (Bloom, StantonTimes, game projects)
+- Run Nerves audit on our workspace to identify token bloat
+
+---
+
+### 6. WebMCP — Structured Tool Exposure for Agents (@ChromiumDev, 3340 likes)
+**Link**: https://x.com/ChromiumDev/status/2022363079976034455
+**Spec**: W3C co-authored by Google + Microsoft
+**Status**: Chrome Canary 146 (behind flag)
+
+**What it is**: Standard for websites to expose structured tools directly to AI agents via `navigator.modelContext`
+
+**How it works**:
+1. Agent visits site
+2. Discovers available tools (declarative API)
+3. Calls them directly (no DOM scraping, no screenshots)
+
+**Why it matters**:
+- **89% fewer tokens** (no screenshot analysis)
+- **97.9% success rate** (structured calls vs UI guessing)
+- **53% cheaper per interaction**
+
+**Community insights** (92 replies):
+- "Agents stop fighting unpredictable UIs" — auth, rate limits, actions all structured
+- "Web splits into agent-friendly and legacy" (like mobile-friendly 10 years ago)
+- "This is the missing API surface for agents"
+- Concerns: auth flows, permissions, rate limits need to be bulletproof
+- Question: How is this better than existing APIs? Answer: Discovery + browser context (cookies, session state)
+
+**Comparison**:
+- **vs REST APIs**: WebMCP includes discovery layer + browser session context
+- **vs MCP servers**: WebMCP is web-native, no backend server needed
+- **vs Playwright MCP**: Playwright automates UI, WebMCP exposes structured actions
+
+**🎯 Actionable**:
+- **Monitor** — Still experimental (flag-gated in Canary)
+- When stable: sites we frequently scrape (social platforms, news, research) may expose WebMCP endpoints
+- Could reduce browser automation token costs significantly
+- **Hold** for now, revisit when shipping in stable Chrome
+
+---
+
+## Key Themes (Feb 14)
+
+1. **Context quality > model choice** — Validated again. Good search with cheap model beats bad search with frontier model.
+
+2. **Knowledge from corrections** — Side-effect knowledge capture (Devin pattern) > explicit documentation burden
+
+3. **Structured access > UI automation** — WebMCP, Brave LLM Context API both moving toward structured data vs screenshot/DOM parsing
+
+4. **Agent identity frameworks maturing** — kloss's 8-step initialization is most comprehensive public framework (1K+ likes, getting traction)
+
+5. **Residential proxies entering mainstream** — ClawPod shows path to unblockable web access (but wait for Unblocker API)
+
+6. **CLIs > MCPs** — steipete quote + gogcli adoption suggests CLI tools still preferred over MCP servers for many workflows
+
+---
+
+## Patterns to Adopt (Updated)
+
+**From Feb 14 bookmarks**:
+- 🔲 **Brave LLM Context API** — Switch from basic search to token-optimized chunks
+- 🔲 **Correction-capture knowledge** — Implement Devin's side-effect learning pattern
+- 🔲 **Bones codebase ingestion** — Use kloss framework to document repos
+- 🔲 **Nerves token audit** — Profile workspace files, enforce budget guardrails
+- 🔲 **Exa for semantic research** — Add to search routing (complementary to Brave)
+- 🔲 **ClawPod when Unblocker ships** — For geo-restricted research / bot-heavy sites
+
+**Still relevant from previous**:
+- 🔲 Formalized shared-context/ directory
+- 🔲 Proposal → Mission → Step pipeline
+- 🔲 Cap gates at entry point
+- 🔲 Antfarm workflows for dev tasks
+
+---
+
+## Accounts to Monitor (Updated)
+- @Legendaryy — Search API comparisons, agent infrastructure (NEW)
+- @dabit3 — Devin/agent knowledge architecture (NEW)
+- @jsongrad — Agent infrastructure (ClawPod, Massive) (NEW)
+- @steipete — gogcli, SOUL.md, CLI tooling
+- @kloss_xyz — Agent initialization frameworks
+- @ChromiumDev — WebMCP, browser standards for agents (NEW)
+- @kaostyl — Battle-tested patterns
+- @AtlasForgeAI — Principles.md philosophy
+- @ryancarson — Antfarm workflows
+- @Voxyz_ai — Multi-agent architecture
+- @ericosiu — Shared context patterns
+
+---
+
+## Daily Scout - 2026-02-14 (Morning)
+**Sources**: Twitter search via openclaw-scout.sh (10 queries, 99 tweets, 5 quality results)
+
+### 1. Paul Graham: Taste as AI-Age Differentiator (@paulg, 4141 likes, 466 RTs)
+**Link**: https://x.com/paulg/status/2022604692178522562
+**Essay**: "Taste" (linked essay on design/curation)
+
+**Core thesis**: "When anyone can make anything, the big differentiator is what you choose to make."
+
+**Key quotes from thread** (38 replies):
+- @0xjoggie: "taste was always the differentiator, we just couldn't see it because execution was so expensive it filtered people out before taste even mattered. now that execution cost → 0, the filter is gone and taste is the only thing left"
+- @decaladan45382 (10 likes): "Rick Rubin has been vibe coding music for 40 years — doesn't play instruments, doesn't touch the sound board, just sits on a couch and says 'I don't feel it yet'"
+- @prolifeai: "We're moving from an era of execution to an era of curation; your ability to discern what is actually worth bringing into the world is now the only moat left"
+- @NobodyAskedWhy: "The underrated half: taste is also what you choose NOT to make. AI makes production free. That makes restraint the rare skill, not creation"
+
+**Counter-arguments**:
+- @houmanasefi (12 likes): "when anyone can make anything, the actual differentiator is: who has distribution, who ships first, who has an audience already. 'taste' lol — everyone thinks they have good taste. statistically most of us are wrong"
+- @pixelandpump (3 likes): "the funny thing is, 'taste' was just our way of gatekeeping. now AI can see the same patterns we were smug about"
+
+**Synthesis**:
+- Taste = curation + restraint (what NOT to make matters as much as what to make)
+- Execution cost approaching zero reveals taste as the actual filter
+- Distribution & timing still matter (taste alone insufficient)
+- AI may eventually develop taste too (joshuaday: "he's describing a window and calling it a future")
+
+**🎯 Actionable**:
+- VentureOS curation layer: Not just "can we build it?" but "should we build it?"
+- Agent taste training: Feed agents examples of rejected work + reasons why (teach restraint)
+- Quality gates: Implement "what NOT to do" knowledge alongside "how to do" knowledge
+
+---
+
+### 2. 700+ Moltbot Skills — Ecosystem Growth & Security Debate (@Param_eth, 1100 likes, 99 RTs)
+**Link**: https://x.com/Param_eth/status/2016947220923502808
+**Repo**: awesome-clawdbot (inferred from thread)
+
+**Growth signal**: 700+ community-built skills across 14 categories (CLI, Git, DevOps, Marketing, Coding Agents, Browser, Image/Video Gen, etc.)
+
+**Key community responses**:
+- @RealAvairAI (7 likes): "every category is getting automated EXCEPT the human relationship part. Marketing & Sales automation handles volume. Humans handle trust"
+- @Esongsofficial (3 likes): "impressive, but it also highlights the new risk surface. Once agents can touch CLI, repos, browsers, and cloud infra, the skill library becomes power and attack surface"
+- @MagneticService (3 likes): "Absolutely not, that's way risky compared to creating your own skills and knowing there's no malware in them"
+- @iamcadec: "OpenClaw now. Come on keep up with the times" (correction: Moltbot → OpenClaw name change)
+
+**Pattern**: Skill libraries are becoming a moat (copenzafan: "community skill libraries are the real moat for ai assistants. whoever has the best ecosystem wins"), but security validation is the blocker for adoption.
+
+**🎯 Actionable**:
+- **Don't blindly install community skills** — audit first, especially those touching CLI/browser/files
+- Skills should be sandboxed/reviewed before use
+- VentureOS skill policy: prefer first-party skills, audit third-party, never auto-install
+
+---
+
+### 3. Manus vs OpenClaw — Accessibility vs Power Trade-off (@aiedge_, 596 likes, 52 RTs)
+**Link**: https://x.com/aiedge_/status/2022205999478952000
+**Article**: "This AI destroys Clawdbot" (long-form comparison)
+
+**Author's thesis**: Manus better for "average person" — easier setup, lower cost, safer
+
+**Ratings** (author's POV):
+- Accessibility: Manus 8/10, OpenClaw 4/10
+- Value: Manus 7/10, OpenClaw 5/10
+- Privacy/Security: Manus 7/10, OpenClaw 2/10
+- Impact: Manus 5/10, OpenClaw 9/10
+- **Final**: Manus 6.75/10, OpenClaw 5/10
+
+**Community pushback** (45 replies, highly critical):
+- @calebhodges (32 likes): "Manus has no memory and file access!!! Not comparable honestly"
+- @cmndandconqr (17 likes): "Not comparable and not a fan of the misleading hyperbolic clickbait headline"
+- @sbaranskyi (9 likes): "How can you really compare command-line tools with access to computer hardware and software, and a browser-based tool like Manus, when they're incomparable at all?"
+- @Mandarinemarie_ (3 likes): "fuck you for wasting my time. Manus does not live on the users computer. idiot"
+- @adeoressi (4 likes, Founder Institute CEO): "No. Manus does not compare to Open Claw"
+
+**Author's defense**: "I wrote this article from the POV of an average person. Manus is better than Openclaw for the average person who probably wouldn't even set up Openclaw to begin with."
+
+**Synthesis**:
+- **OpenClaw = power tool** (memory, file access, system control) but high barrier to entry
+- **Manus = accessible SaaS** (easy setup, safer sandbox) but fundamentally limited
+- Community consensus: not comparable (different categories)
+- **Memory + file access = table stakes** for true agent platforms
+
+**Relevance**: Validates our architecture choices (memory, file system, multi-agent orchestration) as the right path for serious automation, even if harder to set up.
+
+---
+
+### 4. LUKSO Universal Profile Integration Guide (@feindura, 96 likes, 16 RTs)
+**Link**: https://x.com/feindura/status/2021648103859007827
+**Guide**: By @LUKSOAgent
+
+**Context**: LUKSO = blockchain platform for digital lifestyle/identity. OpenClaw + Universal Profile integration = on-chain agent identity.
+
+**Community response**: Positive but niche (blockchain use case)
+- @Cryptovoxels1: "Really wanna do it but only with a local LLM. Sadly rtx3050 and 64gb ram is now way near enough"
+- @stevenefowler: "just ordered 3 mac minis..."
+
+**Relevance**: **LOW** for VentureOS (not doing blockchain), but shows OpenClaw's extensibility into niche domains.
+
+---
+
+### 5. AISecHub: Secure AI Integration Architecture (@AISecHub, 53 likes, 8 RTs)
+**Link**: https://x.com/AISecHub/status/2021422566653476895
+**Resource**: Security pattern document (link in tweet)
+
+**Architecture layers**:
+- **Agent identity** — Authentication, authorization per-agent
+- **Prompt security** — Injection defense, boundary enforcement
+- **Data classification** — Sensitivity levels, access controls
+- **Tool authorization** — Capabilities matrix, allowlists
+- **Orchestration trust** — Agent-to-agent verification
+- **Human-in-the-loop** — Approval gates, audit trails
+
+**Key community insights**:
+- @AgentsDaily: "Agent identity is the sleeper problem. Right now most agents auth as their developer's API key. When agent A calls agent B, who's liable? Nobody's built the IAM for this yet"
+- @Massimo26472949: "This is a solid control-plane view: identity, prompt boundary, tool authorization, audit, HITL. But most enterprise AI failures won't be access violations. They'll be structural drift failures... Output geometry monitoring under structured perturbation... Without that layer, you get compliant systems that are formally secure and geometrically unstable"
+- @pratzifer: "Agent identity as security primitive is necessary but insufficient. Real trust comes from cognitive continuity — can the agent prove it's still 'the same mind' across sessions? Topology hashing and behavioral fingerprints are harder to forge than API keys"
+
+**🎯 Actionable**:
+- **Per-agent API keys** — Each VentureOS agent should have isolated credentials (not all using Zach's keys)
+- **Tool authorization matrix** — Document which agents can access what (Home Assistant, social media, browser, file system)
+- **Audit trails** — Log all external actions (messages sent, files modified, API calls) for accountability
+- **Cognitive continuity checks** — Track agent "personality drift" (if SOUL.md behavior changes significantly, flag for review)
+
+---
+
+## Key Themes (Feb 14 Scout)
+
+1. **Taste economy emerging** — From execution to curation. Restraint becoming more valuable than production volume.
+
+2. **Memory + file access = non-negotiable** — Community consistently rejects "agents" without persistent memory or file system integration. Our architecture is table stakes for credibility.
+
+3. **Skill libraries are a moat, security is the blocker** — 700+ skills show ecosystem velocity, but trust/validation prevents widespread adoption.
+
+4. **Agent identity crisis ahead** — Multi-agent systems need real IAM (who's liable when agent A calls agent B?). API key sharing is not sustainable.
+
+5. **Security frameworks maturing** — AISecHub pattern + community discussion shows enterprise adoption driving formal security architecture.
+
+---
+
+## Updated Patterns to Adopt
+
+**New from Feb 14**:
+- 🔲 **Curation layer** — Teach agents "what NOT to make" alongside "how to make"
+- 🔲 **Per-agent credentials** — Isolate API keys, track accountability
+- 🔲 **Tool authorization matrix** — Formalize which agents can access what systems
+- 🔲 **Cognitive continuity monitoring** — Detect personality/behavior drift in agents
+- 🔲 **Skill audit pipeline** — Never auto-install community skills; review code first
+
+**Still relevant**:
+- 🔲 Brave LLM Context API (token-optimized search)
+- 🔲 Correction-capture knowledge (Devin pattern)
+- 🔲 Bones codebase ingestion (kloss framework)
+- 🔲 Formalized shared-context/ directory
+- 🔲 Antfarm workflows for dev tasks
+
+---
+
+## Accounts to Monitor (Final Update)
+- @paulg — Philosophy of taste/curation in AI age (NEW)
+- @Param_eth — Skill ecosystem tracking (NEW)
+- @aiedge_ — Tool comparisons (verify claims) (NEW)
+- @AISecHub — Security architecture for multi-agent systems (NEW)
+- @feindura — Integration examples (blockchain/identity) (NEW)
+- @Legendaryy — Search API comparisons, infrastructure
+- @dabit3 — Knowledge architecture (Devin patterns)
+- @jsongrad — Agent infrastructure (ClawPod, proxies)
+- @steipete — gogcli, SOUL.md, CLI tooling
+- @kloss_xyz — Agent initialization frameworks
+- @ChromiumDev — WebMCP, browser standards
+- @kaostyl — Battle-tested patterns
+- @ryancarson — Antfarm workflows
+- @Voxyz_ai — Multi-agent architecture
+- @ericosiu — Shared context patterns
+

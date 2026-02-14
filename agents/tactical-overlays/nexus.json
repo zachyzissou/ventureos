@@ -1,0 +1,10 @@
+{
+  "agent_id": "nexus",
+  "protoss_unit": "Nexus",
+  "role": "Mission Control & Routing",
+  "base_stats": {
+    "tier": "structure",
+    "mobility": "none",
+    "tech_requirement": "nexus"
+  }
+}

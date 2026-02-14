@@ -43,15 +43,26 @@ The drift engine pulls data from three primary tables:
 ### 2. Escalation Quality
 
 **Type:** `escalation`  
-**Source:** `escalations` table + `interaction_logs`
+**Source:** `interaction_logs` (processed by `update-khala-drift.sh`)
 
-| Condition | Delta | Rationale |
-|-----------|-------|-----------|
-| Validated as real (`validated_as_real = TRUE`) | +0.04 | Good catch, trust increases |
-| False positive (`validated_as_real = FALSE`) | -0.05 | Cry wolf penalty, trust decreases |
-| Escalation resolved constructively | +0.02 | Problem-solving builds bonds |
+**Drift application:** Escalation drift is applied **exclusively** by the daily cron job (`update-khala-drift.sh` at 06:15 CST). The `validate-escalation.sh` script sets the `outcome` field in `interaction_logs`, which is then processed by the drift engine.
 
-**Example:** Sentinel escalates issue to Verifier, validated as real → +0.04 affinity
+**Drift deltas (fixed, not severity-weighted):**
+
+| Outcome | Delta | Rationale |
+|---------|-------|-----------|
+| `success` (validated) | +0.04 | Validated escalations build trust |
+| `failure` (false positive) | -0.05 | False positives damage credibility |
+| `neutral` (resolved constructively) | +0.02 | Constructive resolution strengthens bonds |
+
+**Why fixed deltas instead of severity-weighted?**
+- **Single source of truth:** All drift applied by `update-khala-drift.sh` ensures no double-application
+- **Simplicity:** Fixed deltas are easier to reason about and debug
+- **Consistency:** Matches the pattern for other interaction types
+
+**Note:** Escalation validation occurs via `validate-escalation.sh`, which updates the `outcome` field in `interaction_logs`. The drift engine processes this outcome during the next daily run. Drift is **not** applied immediately upon validation to prevent double-application.
+
+**Example:** Sentinel escalates issue to Verifier, validated as real → `outcome='success'` → drift applied next cron run (+0.04)
 
 ### 3. Handoff Smoothness
 

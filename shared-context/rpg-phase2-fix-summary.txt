@@ -1,0 +1,52 @@
+========================================
+Phase 2 Fix: Observation Counting Bug
+Subagent: Archivist
+Status: ✅ COMPLETE
+Date: 2026-02-14 05:08 CST
+========================================
+
+MISSION ACCOMPLISHED
+
+✅ Fixed observation counting bug in both scripts
+✅ All 6 edge case tests passing
+✅ Real-world verification complete
+✅ Protocol activation working correctly
+✅ Documentation complete
+
+FILES MODIFIED:
+- /Users/zachgonser/clawd/scripts/sync-memory-to-rpg.sh
+- /Users/zachgonser/clawd/scripts/check-protocol-triggers.sh
+
+THE FIX:
+Replaced format-dependent ripgrep parsing with explicit file loop.
+Now handles 0, 1, or N observation files correctly.
+
+TEST RESULTS:
+- Zero files: ✅ count = 0
+- Single file: ✅ count = 3 (THE BUG SCENARIO - NOW FIXED)
+- Multiple files: ✅ count = 5
+- No matches: ✅ count = 0
+- Mixed files: ✅ count = 3
+- High count: ✅ count = 25
+
+REAL VERIFICATION:
+- sync-memory-to-rpg.sh: ✅ Working
+- check-protocol-triggers.sh: ✅ Working
+- Protocol activations: ✅ Correct
+
+DOCUMENTATION:
+- Fix details: ~/clawd/shared-context/rpg-phase2-fixes.md
+- Full verification: ~/clawd/shared-context/rpg-phase2-fix-obs-count-verification.md
+- Test results: ~/clawd/runtime/tmp/obs-count-test-results.txt
+
+READY FOR:
+- Verifier re-check of Phase 2 Tracks 3 & 5
+- Production deployment
+
+REMAINING PHASE 2 ISSUES:
+1. Escalation drift double-application (medium severity)
+2. Cron collision at 06:20 (medium severity)
+
+Timeline: Completed in 20 minutes as requested.
+
+🎯 Mission complete. Ready for next task.

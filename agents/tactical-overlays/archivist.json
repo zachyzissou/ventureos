@@ -1,0 +1,10 @@
+{
+  "agent_id": "archivist",
+  "protoss_unit": "High Templar",
+  "role": "Knowledge Stewardship",
+  "base_stats": {
+    "tier": "elite",
+    "mobility": "low",
+    "tech_requirement": "templar"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "agent_id": "echo",
+  "protoss_unit": "Artanis",
+  "role": "Leadership & Orchestration",
+  "base_stats": {
+    "tier": "hero",
+    "mobility": "high",
+    "tech_requirement": "campaign"
+  }
+}

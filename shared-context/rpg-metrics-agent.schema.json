@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ventureos.local/schemas/rpg-metrics-agent.schema.json",
+  "title": "VentureOS RPG Agent Metrics",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "agent_id",
+    "collected_at",
+    "memory_count",
+    "unique_domains",
+    "canonical_edits",
+    "p95_latency_s",
+    "mttr_minutes",
+    "acceptance_rate",
+    "success_rate",
+    "approval_accuracy",
+    "tasks_completed",
+    "warp_tech_inputs"
+  ],
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "enum": [
+        "oracle",
+        "atlas",
+        "sentinel",
+        "verifier",
+        "archivist",
+        "synth",
+        "echo",
+        "nexus"
+      ]
+    },
+    "collected_at": {
+      "type": "string",
+      "description": "RFC3339 timestamp with timezone offset",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}([.\\d]+)?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+
+    "memory_count": { "type": "integer", "minimum": 0 },
+    "unique_domains": { "type": "integer", "minimum": 0 },
+    "canonical_edits": { "type": "integer", "minimum": 0 },
+
+    "p95_latency_s": { "type": "number", "minimum": 0 },
+    "mttr_minutes": { "type": "number", "minimum": 0 },
+
+    "acceptance_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+    "success_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+    "approval_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+
+    "tasks_completed": { "type": "integer", "minimum": 0 },
+
+    "warp_tech_inputs": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Agent-specific inputs used by the Warp Technology (CRE) formula. Store raw + normalized fields if available."
+    },
+
+    "domains": { "type": "integer", "minimum": 0 },
+    "edits": { "type": "integer", "minimum": 0 },
+    "warp": { "type": "object", "additionalProperties": true }
+  }
+}

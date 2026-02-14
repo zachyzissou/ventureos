@@ -1,0 +1,10 @@
+{
+  "agent_id": "atlas",
+  "protoss_unit": "Probe",
+  "role": "Infrastructure & Operations",
+  "base_stats": {
+    "tier": "core",
+    "mobility": "high",
+    "tech_requirement": "nexus"
+  }
+}
