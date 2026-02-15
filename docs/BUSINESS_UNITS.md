@@ -1,98 +1,170 @@
-# Business Units — Registry + Operating Rules
+# Business Units — Registry Schema & Operating Rules
 
-A **Business Unit** is a named, durable container that makes VentureOS scalable.
+> **Registry file:** `~/clawd/runtime/business-units.json`  
+> **Schema version:** 2  
+> **Last updated:** 2026-02-15
 
-Instead of “one giant assistant that does everything,” we maintain multiple units with their own:
-- goals and KPIs
-- brand voice/style constraints
-- repositories, services, and automations
-- canonical strategy notes (Obsidian)
-- risk posture (what requires approval)
-
-This matters immediately for:
-- scaling **StantonTimes** into multiple related accounts/brands
-- running multiple products (Unity games, apps, tools)
-- keeping infra and AI pipelines stable while the portfolio expands
+A **Business Unit** is a named, durable container that makes VentureOS scalable. Instead of "one giant assistant that does everything," we maintain discrete units with their own goals, repos, risk posture, and automations.
 
 ---
 
-## Business Unit Registry
-The registry is a simple, auditable source of truth.
+## Registry Location
 
-Recommended storage:
-- Repo template: `docs/templates/business-unit-registry.json`
-- Workspace runtime copy: `~/clawd/runtime/business-units.json`
-- Canonical strategy pages: Obsidian links stored in each unit record
-- Obsidian path conventions: `docs/OBSIDIAN_CONVENTIONS.md`
-
-### Required fields (minimum viable)
-- `id` — short stable identifier (slug)
-- `name` — human-readable
-- `category` — media | game | app | infra | consulting | research
-- `owner_role` — usually Helmsman or Producer
-- `risk` — what actions require explicit approval
-- `canonical_notes` — Obsidian note paths/URIs
-- `automations` — cron jobs, monitors, pipelines
-
-### Suggested fields (useful as portfolio grows)
-- `kpis` — list of measurable targets
-- `cadence` — review cycle (weekly/monthly)
-- `channels` — where drafts/alerts go
-- `repos` — git URLs/paths
-- `services` — docker stacks, endpoints
-- `data_sources` — feeds, APIs, sources of truth
+| File | Purpose |
+|---|---|
+| `~/clawd/runtime/business-units.json` | **Runtime source of truth** — agents read this at mission-planning time |
+| `~/clawd/ventureos/docs/BUSINESS_UNITS.md` | This file — schema docs and operating rules |
 
 ---
 
-## Multi‑account pattern (StantonTimes network)
+## JSON Schema (v2)
+
+### Top-level envelope
+
+```jsonc
+{
+  "$schema": "https://ventureos.dev/schemas/business-units-v2.json",
+  "version": 2,                    // Schema version (integer)
+  "generated_at": "ISO-8601",      // Last generation/update timestamp
+  "units": [ /* ... */ ],          // Array of BusinessUnit objects
+  "categories": { /* ... */ },     // Category id → description map
+  "priorities": { /* ... */ }      // Priority level → description map
+}
+```
+
+### BusinessUnit object
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | `string` | ✅ | Stable slug identifier (kebab-case). Never changes once assigned. |
+| `name` | `string` | ✅ | Human-readable display name. |
+| `description` | `string` | ✅ | One-liner describing purpose and scope. |
+| `category` | `enum` | ✅ | One of: `infra`, `game`, `app`, `media`, `personal`. |
+| `priority` | `enum` | ✅ | One of: `critical`, `high`, `medium`, `low`. |
+| `status` | `enum` | ✅ | One of: `active`, `paused`, `archived`. |
+| `obsidianPath` | `string` | ✅ | Relative path inside `~/Obsidian/VaultZap/`. |
+| `obsidianUri` | `string` | ⬚ | Full `obsidian://` deep-link URI. |
+| `github` | `string\|null` | ✅ | Primary GitHub repo as `owner/repo`, or `null` if none. |
+| `repos` | `Repo[]` | ✅ | Array of associated repositories (may be empty). |
+| `contacts` | `Contact[]` | ✅ | Array of relevant contacts (may be empty). |
+| `tags` | `string[]` | ✅ | Freeform tags for filtering and search. |
+| `owner_role` | `string` | ✅ | VentureOS role responsible (e.g., `Helmsman`, `Producer`). |
+| `risk` | `Risk` | ✅ | Approval requirements for sensitive actions. |
+| `automations` | `Automation[]` | ✅ | Registered automations (cron, monitors, pipelines). |
+| `missionTypes` | `string[]` | ✅ | Valid mission types: `build`, `ops`, `infra`, `content`, `research`. |
+| `cadence` | `string` | ✅ | Review cadence: `daily`, `weekly`, `monthly`, `quarterly`. |
+
+### Repo object
+
+```jsonc
+{
+  "name": "ventureos",                                   // Repo name
+  "url": "https://github.com/zachyzissou/ventureos",     // Full URL
+  "visibility": "private",                                // public | private
+  "note": "optional context"                              // Optional description
+}
+```
+
+### Risk object
+
+```jsonc
+{
+  "external_publish_requires_approval": true,   // Publishing to external platforms
+  "destructive_actions_requires_approval": true, // Deletes, drops, irreversible changes
+  "config_changes_requires_approval": true       // Config/infra modifications
+}
+```
+
+### Automation object
+
+```jsonc
+{
+  "kind": "cron",                    // cron | monitor | tbd
+  "name": "memory-observation-sync", // Stable name for the automation
+  "schedule": "hourly"               // Human-readable schedule (optional)
+}
+```
+
+---
+
+## Categories
+
+| ID | Description |
+|---|---|
+| `infra` | Infrastructure, DevOps, AI/ML pipelines |
+| `game` | Game development projects |
+| `app` | Applications and tooling |
+| `media` | Content creation and publishing |
+| `personal` | Personal systems and productivity |
+
+## Priority Levels
+
+| Level | Meaning |
+|---|---|
+| `critical` | Core infrastructure — failures block everything |
+| `high` | Active projects with regular deliverables |
+| `medium` | Important but lower urgency |
+| `low` | Nice-to-have, background work |
+
+---
+
+## Current Registry (9 units)
+
+| ID | Name | Category | Priority | GitHub | Obsidian |
+|---|---|---|---|---|---|
+| `ventureos` | VentureOS | infra | critical | `zachyzissou/ventureos` ✅ | `🔧 Projects/VentureOS` ✅ |
+| `bloom` | Bloom | game | high | `zachyzissou/Bloom` ✅ | `🔧 Projects/Bloom` ✅ |
+| `jav-library` | jav-library | app | medium | `zachyzissou/jav-library` ✅ | `🔧 Projects/jav-library` ✅ |
+| `home-automation` | Home Automation | infra | medium | — | `🔧 Projects/Home Automation` ✅ |
+| `personal-productivity` | Personal Productivity | personal | medium | — | `🔧 Projects/Personal Productivity` ✅ |
+| `stantontimes-network` | StantonTimes Network | media | high | `zachyzissou/stanton-times` ✅ | `🔧 Projects/TheStantonTimes` ✅ |
+| `low-noise-studios` | Low Noise Studios | game | medium | — | `🔧 Projects/Low Noise` ✅ |
+| `fotopress` | FotoPress | app | low | `zachyzissou/fotopress-website` ✅ | `🔧 Projects/FotoPress` ✅ |
+| `storyteller-suite` | StorytellerSuite | app | low | — | `🔧 Projects/StorytellerSuite` ✅ |
+
+### Validation Summary
+- **Obsidian paths:** 9/9 validated ✅ (all directories exist in `~/Obsidian/VaultZap/`)
+- **GitHub repos:** 5/9 linked ✅ (4 units have no dedicated repo — that's fine)
+- **GitHub repos verified via `gh` CLI** — all linked repos confirmed to exist
+
+---
+
+## Multi-account Pattern (StantonTimes network)
+
 Treat each account as:
-- a **Business Unit** (for fully independent brands), or
-- a **Unit Instance** inside a parent network (when sharing policy + tooling)
+- A **Business Unit** (for fully independent brands), or
+- A **Unit Instance** inside a parent network (when sharing policy + tooling)
 
 Recommended approach:
 - **Parent unit:** `stantontimes-network`
 - **Child units:** `stantontimes-sc`, `stantontimes-bloom`, `stantontimes-dev`, etc.
 
-Each child unit should isolate:
-- state files (avoid race conditions and cross-posting)
-- source lists
-- brand voice constraints
-- approval routing
+Each child isolates: state files, source lists, brand voice constraints, approval routing.
 
 ---
 
-## Example units (seed set)
-These are examples; the registry is designed to be renamed without breaking history.
+## How Business Units Integrate with Missions
 
-### 1) StantonTimes Network
-- Category: media
-- Canon: Obsidian project notes + brand kit
-- Automations: monitors, approvals, publishing drafts, engagement queues
+When a job is enqueued or a mission is planned, it carries:
+- `businessUnit` — registry id
+- `missionType` — one of the unit's allowed `missionTypes`
+- `role` — virtual role running the task
 
-### 2) Low Noise Studios (Unity)
-- Category: game
-- Canon: game design docs + style bible + pipeline notes
-- Automations: repo monitoring, build checks, asset pipeline batch jobs
-
-### 3) App Studio
-- Category: app
-- Canon: product specs, UX patterns, reusable components
-- Automations: backlog grooming, release notes drafts, QA gates
-
-### 4) Infra / AI Lab
-- Category: infra
-- Canon: runbooks, service maps, model serving roadmap
-- Automations: backups, monitoring, capacity checks
+This makes logs searchable by unit, alert routing predictable, and quality gates enforceable per unit.
 
 ---
 
-## How Business Units integrate with the Proactive Engine
-When a job is enqueued or a mission is planned, it should carry:
-- `businessUnit` (registry id)
-- `missionType` (newco | build | ops | content | research)
-- `role` (virtual role running the task)
+## Adding a New Business Unit
 
-This makes:
-- logs searchable by unit
-- alert routing predictable
-- quality gates enforceable per unit
+1. Create Obsidian folder: `~/Obsidian/VaultZap/🔧 Projects/<Name>/`
+2. Add entry to `~/clawd/runtime/business-units.json`
+3. Validate: `jq '.units[] | .id' ~/clawd/runtime/business-units.json` (all ids unique)
+4. If GitHub repo exists, add to `repos[]` array
+5. Update the registry table in this document
+6. Commit both files to `ventureos` repo
+
+## Removing / Archiving a Business Unit
+
+1. Set `"status": "archived"` — do not delete the entry
+2. Update this document
+3. Commit

@@ -73,13 +73,20 @@ function parseArgs(argv: string[]): Options {
 
     if (a === "--agents") {
       const v = argv[++i];
-      if (!v) throw new Error("--agents requires a value");
-      opts.agentIds = new Set(
+      if (v == null) throw new Error("--agents requires a value");
+
+      const agentIds = new Set(
         v
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean)
       );
+
+      if (agentIds.size === 0) {
+        throw new Error("--agents must include at least one agent id");
+      }
+
+      opts.agentIds = agentIds;
       continue;
     }
 

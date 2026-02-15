@@ -137,7 +137,37 @@ Include **all retry/error fields** from `docs/RETRY_POLICY.md` and add:
 
 ---
 
-## 7) Examples
+## 7) Cron Job Degradation Matrix
+
+This matrix maps **every cron job** to its degradation behavior, timeout/retry config, and failure impact. All jobs are executed via `scripts/cron-runner.sh` which reads `config/reliability.json`.
+
+| # | Job | Schedule | Timeout | Retries | Network? | On Timeout | On Failure | Degradation | Impact if Skipped |
+|---|---|---|---:|---:|:---:|---|---|:---:|---|
+| 1 | **Nightly Backup** | `0 8 * * *` | 120s | 1 | No | D1: log + alert next run | D1: alert; manual backup needed | D1 | Backup gap (max 48h until next) |
+| 2 | **Backup Verify** | `30 8 * * 0` | 60s | 1 | No | D1: log; verify next week | D1: alert; unknown backup integrity | D1 | Unverified backup (1 week) |
+| 3 | **Monitoring** | `*/15 * * * *` | 30s | 1 | No | D2: alerting gap | D2: log locally; next run in 15m | D2 | 15-30m blind spot |
+| 4 | **Budget Check** | `0 15 * * *` | 60s | 3 | **Yes** | D1: use last known budget | D1: skip; check manually | D1 | Stale budget data (24h) |
+| 5 | **Export Cron Logs** | `*/30 * * * *` | 60s | 1 | No | D1: logs delayed | D1: retry next 30m cycle | D1 | Log export gap (30-60m) |
+| 6 | **Archive Task Runs** | `0 9 1 * *` | 120s | 1 | No | D1: archive next month | D1: disk accumulation; non-critical | D1 | Old logs not archived |
+| 7 | **Workspace Health** | `0 9 * * *` | 120s | 2 | **Yes** | D1: last health data | D1: scan ok, webhook alert failed → log | D1 | No health alert for 24h |
+| 8 | **Phantom Detector** | `*/30 * * * *` | 120s | 2 | **Yes** | D1: check next cycle | D1: scan ok, webhook failed → log | D1 | Phantom detection gap |
+| 9 | **Session Rotation** | `0 8 * * *` | 180s | 1 | **Yes** | D2: sessions accumulate | D2: spawn risk increases; manual rotation needed | D2 | Session bloat risk |
+| 10 | **Session Monitor** | `0 */6 * * *` | 60s | 2 | **Yes** | D1: check next 6h cycle | D1: auto-rotate skipped | D1 | 6h monitoring gap |
+| 11 | **Routing Healthcheck** | `*/30 * * * *` | 30s | 2 | **Yes** | D2: routing unknown | D2: alert routing may be broken | D2 | Missed P1 alerts |
+
+### Failure Cascades
+
+**High-risk cascade:** If Session Rotation (9) fails for multiple days → session counts grow → phantom sessions → spawn failures → all agents degraded → D3.
+
+**Mitigation:** Session Monitor (10) triggers auto-rotation on critical counts, providing a safety net. Workspace Health (7) provides additional visibility.
+
+**Alerting cascade:** If Routing Healthcheck (11) fails → webhook alerts for other jobs also fail → silent failures.
+
+**Mitigation:** Monitoring (3) uses local-only checks (no webhook dependency). All jobs log locally to `runtime/logs/cron-runs/` regardless of webhook status.
+
+---
+
+## 8) Examples
 
 ### Example A — Web search failure (D1)
 - `web_search` times out once → **D1**
