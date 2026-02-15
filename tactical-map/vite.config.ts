@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Tactical Map Vite config
@@ -15,23 +16,17 @@ export default defineConfig(({ mode }) => {
     root: 'src',
     base: '/map/',
     publicDir: '../assets',
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      }
+    },
     build: {
       outDir: '../dist',
       emptyOutDir: true,
       sourcemap: true
     },
-    plugins: [
-      {
-        name: 'tactical-map-route-rewrite',
-        configureServer(server) {
-          // Serve the app from /map in dev as well.
-          server.middlewares.use((req, _res, next) => {
-            if (req.url === '/map' || req.url === '/map/') req.url = '/';
-            next();
-          });
-        }
-      }
-    ],
+    plugins: [],
     server: {
       port: 5174,
       strictPort: true,
@@ -47,7 +42,7 @@ export default defineConfig(({ mode }) => {
     test: {
       // Vitest: look for tests in the project root (not src/)
       root: '.',
-      include: ['tests/**/*.{test,spec}.{ts,tsx,js,jsx}'],
+      include: ['tests/{unit,integration}/**/*.{test,spec}.{ts,tsx,js,jsx}'],
       globals: true,
       environment: 'node',
       coverage: {
