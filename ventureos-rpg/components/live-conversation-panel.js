@@ -439,6 +439,23 @@ export class LiveConversationPanel extends HTMLElement {
     this._activeConvId = null;
   }
 
+  /**
+   * Escape HTML special characters to prevent XSS injection.
+   * All user-controlled or API-sourced strings MUST pass through this
+   * before being interpolated into innerHTML template literals.
+   *
+   * QA-002 fix: https://github.com/zachyzissou/ventureos/issues/QA-002
+   */
+  _escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   connectedCallback() {
     this.render();
     this._startPolling();
@@ -529,21 +546,21 @@ export class LiveConversationPanel extends HTMLElement {
       }
     }
 
-    // Update typing indicator
+    // Update typing indicator — escape speaker name (API-sourced)
     const typing = this.shadowRoot.querySelector('.typing-indicator');
     if (typing) {
       if (data.currentSpeaker) {
         typing.style.display = 'flex';
         typing.innerHTML = `
           <div class="typing-dots"><span></span><span></span><span></span></div>
-          <span><strong>${data.currentSpeaker}</strong> is composing...</span>
+          <span><strong>${this._escapeHtml(data.currentSpeaker)}</strong> is composing...</span>
         `;
       } else {
         typing.style.display = 'none';
       }
     }
 
-    // Update header
+    // Update header — textContent is already safe (no innerHTML)
     const title = this.shadowRoot.querySelector('.conv-title');
     if (title) title.textContent = data.title || 'Live Conversation';
 
@@ -552,14 +569,14 @@ export class LiveConversationPanel extends HTMLElement {
       liveDot.classList.toggle('inactive', data.status !== 'active');
     }
 
-    // Update conversation selector dropdown
+    // Update conversation selector dropdown — escape titles and IDs
     const selector = this.shadowRoot.querySelector('.conv-selector');
     if (selector && this._conversations.length) {
       selector.innerHTML = this._conversations.map(c =>
-        `<option value="${c.id}" ${c.id === this._activeConvId ? 'selected' : ''}>${c.title || c.id}</option>`
+        `<option value="${this._escapeHtml(c.id)}" ${c.id === this._activeConvId ? 'selected' : ''}>${this._escapeHtml(c.title || c.id)}</option>`
       ).join('');
     } else if (selector && data.id) {
-      selector.innerHTML = `<option value="${data.id}" selected>${data.title || data.id}</option>`;
+      selector.innerHTML = `<option value="${this._escapeHtml(data.id)}" selected>${this._escapeHtml(data.title || data.id)}</option>`;
     }
   }
 
@@ -571,15 +588,17 @@ export class LiveConversationPanel extends HTMLElement {
       const isQueued = data.queue?.includes(p.agent);
       const colors = AGENT_COLORS[p.agent] || {};
 
+      const safeAgent = this._escapeHtml(p.agent);
+      const safeStatus = this._escapeHtml(p.status);
       return `
         <div class="participant ${isSpeaking ? 'speaking' : ''} ${isQueued ? 'queued' : ''}">
-          <agent-sprite agent="${p.agent}" state="${isSpeaking ? 'speaking' : (p.status === 'active' ? 'idle' : 'idle')}" size="32" status="${p.status}"></agent-sprite>
+          <agent-sprite agent="${safeAgent}" state="${isSpeaking ? 'speaking' : (safeStatus === 'active' ? 'idle' : 'idle')}" size="32" status="${safeStatus}"></agent-sprite>
           <div class="participant-info">
-            <div class="participant-name" style="color:${colors.text || 'var(--text)'}">${p.agent}</div>
+            <div class="participant-name" style="color:${colors.text || 'var(--text)'}">${safeAgent}</div>
             <div class="participant-status">
               ${isSpeaking ? '<span class="turn-badge">SPEAKING</span>' : ''}
               ${isQueued ? '<span class="turn-badge queued">QUEUED</span>' : ''}
-              ${!isSpeaking && !isQueued ? `<span>${p.status}</span>` : ''}
+              ${!isSpeaking && !isQueued ? `<span>${safeStatus}</span>` : ''}
             </div>
           </div>
         </div>
@@ -593,13 +612,15 @@ export class LiveConversationPanel extends HTMLElement {
     return data.affinities.slice(0, 6).map(af => {
       const pct = Math.round(af.value * 100);
       const hue = af.value > 0.7 ? '165' : af.value > 0.5 ? '45' : '0';
+      const safeA = this._escapeHtml(String(af.a).slice(0,3));
+      const safeB = this._escapeHtml(String(af.b).slice(0,3));
       return `
         <div class="affinity-pair">
-          <span>${af.a.slice(0,3)}</span>
+          <span>${safeA}</span>
           <div class="affinity-bar">
             <div class="affinity-fill" style="width:${pct}%;background:hsl(${hue},80%,55%);"></div>
           </div>
-          <span>${af.b.slice(0,3)}</span>
+          <span>${safeB}</span>
           <span class="affinity-val">${af.value.toFixed(2)}</span>
         </div>
       `;
@@ -633,35 +654,44 @@ export class LiveConversationPanel extends HTMLElement {
     return groups.map(group => {
       const colors = AGENT_COLORS[group.agent] || {};
       const protossName = AGENT_NAMES[group.agent] || '';
+      const safeGroupAgent = this._escapeHtml(group.agent);
+      const safeProtossName = this._escapeHtml(protossName);
 
       const messagesHtml = group.messages.map(msg => {
         const time = new Date(msg.timestamp);
         const timeStr = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
-        // Type badge
-        const typeBadge = msg.type ? `<span class="msg-type-badge ${msg.type}">${this._typeIcon(msg.type)} ${msg.type}</span>` : '';
+        // Escape message type — only allow known values for CSS class
+        const safeType = ['fact', 'action', 'decision', 'question'].includes(msg.type) ? msg.type : '';
 
-        // Voice violations
+        // Type badge (icon from constant map, type already validated)
+        const typeBadge = safeType ? `<span class="msg-type-badge ${safeType}">${this._typeIcon(safeType)} ${safeType}</span>` : '';
+
+        // *** QA-002 FIX: Escape message text to prevent XSS injection ***
+        const safeText = this._escapeHtml(msg.text);
+
+        // Voice violations — escape each violation string
         const violationsHtml = msg.violations?.length
-          ? msg.violations.map(v => `<div class="voice-violation">⚠️ ${v}</div>`).join('')
+          ? msg.violations.map(v => `<div class="voice-violation">⚠️ ${this._escapeHtml(v)}</div>`).join('')
           : '';
 
-        // Injection score
+        // Injection score (numeric — coerce to number for safety)
         let injHtml = '';
-        if (msg.injectionScore != null && msg.injectionScore > 0) {
-          const level = msg.injectionScore >= 0.8 ? 'critical' : msg.injectionScore >= 0.6 ? 'high' : msg.injectionScore >= 0.3 ? 'medium' : 'low';
-          injHtml = `<span class="injection-score ${level}">🛡️ ${(msg.injectionScore * 100).toFixed(0)}%</span>`;
+        const score = Number(msg.injectionScore);
+        if (!isNaN(score) && score > 0) {
+          const level = score >= 0.8 ? 'critical' : score >= 0.6 ? 'high' : score >= 0.3 ? 'medium' : 'low';
+          injHtml = `<span class="injection-score ${level}">🛡️ ${(score * 100).toFixed(0)}%</span>`;
         }
 
         return `
           <div class="msg-entry">
             <div class="msg-header">
-              <span class="msg-agent" style="color:${colors.text || 'var(--text)'}">${group.agent}</span>
-              <span class="msg-protoss">${protossName}</span>
+              <span class="msg-agent" style="color:${colors.text || 'var(--text)'}">${safeGroupAgent}</span>
+              <span class="msg-protoss">${safeProtossName}</span>
               <span class="msg-time">${timeStr}</span>
             </div>
             <div class="msg-body">
-              ${typeBadge}${msg.text}
+              ${typeBadge}${safeText}
             </div>
             ${violationsHtml}${injHtml}
           </div>
@@ -671,7 +701,7 @@ export class LiveConversationPanel extends HTMLElement {
       return `
         <div class="msg-group" style="border-left:2px solid ${colors.border || 'var(--border)'}; padding-left:10px;">
           <div class="msg-sprite">
-            <agent-sprite agent="${group.agent}" state="idle" size="36"></agent-sprite>
+            <agent-sprite agent="${safeGroupAgent}" state="idle" size="36"></agent-sprite>
           </div>
           <div class="msg-content">
             ${messagesHtml}
