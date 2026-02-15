@@ -449,7 +449,11 @@ describe('HITLEngine — Trigger Management', () => {
       category: 'security',
     };
     engine.addTrigger(customTrigger);
-    expect(engine.getTriggers().find(t => t.id === 'custom_test')).toBeDefined();
+    const found = engine.getTriggers().find(t => t.id === 'custom_test');
+    expect(found).toBeDefined();
+    expect(found!.action).toBe('pause');
+    expect(found!.urgency).toBe('high');
+    expect(found!.category).toBe('security');
   });
 
   it('replaces trigger with same ID', () => {
