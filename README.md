@@ -1,114 +1,140 @@
-# VentureOS
+# VentureOS — Protoss Multi-Agent Operating System
 
-**Tagline:** A venture‑studio operating system built on OpenClaw — mission control, business units, and quality gates without sacrificing safety.
+**"En Taro Adun — Through the Khala, We Are One"**
 
-## Current Status 🟡
-
-**Phase:** Transitioning from Phase 1 (Reliability) to Phase 2 (Mission Control)  
-**Last Updated:** February 11, 2026
-
-### Recent Milestones ✅
-- ✅ Phase 0.5 complete: Policy docs, guardrails, monitoring, backups
-- ✅ Reliability playbook complete: retry/backoff, timeouts, error taxonomy
-- ✅ VentureOS/Mission Control design complete: 20-role roster, business units, mission templates
-- ✅ Task queue architecture defined with mission metadata support
-
-### Active Sprint 🔄
-**Focus**: Complete reliability rollout, begin mission control foundation
-
-**P0 Issues (This Week):**
-- **#48**: Complete Phase 1 Reliability Implementation
-- **#49**: Seed Business Unit Registry
-- **#50**: Create Core Role Cards (Echo, Sentinel, Verifier, Archivist, etc.)
-
-**P1 Issues (Next):**
-- **#51**: Implement Mission Runner Workflow
-- **#52**: Phase 2 Queue Integration - Mission Metadata
-- **#53**: Output QA Framework
-
-**View All Issues:** [GitLab Issues](http://slurpnet:9080/zachgonser/ventureos/-/issues)
-
----
-
-## Why this exists
-VentureOS turns one operator into a **portfolio builder**: ideate, validate, build, and operate multiple business lines (games, apps, media brands) with repeatable quality. The OpenClaw foundation provides reliability + proactive scheduling; VentureOS adds the **operating model** on top.
-
-## Guiding Principles
-- **Quality over speed** for core workflows.
-- **Autonomy with guardrails** — automation that is powerful but reversible.
-- **Repeatable missions** — same inputs → same artifacts every time.
-- **Safety by design** — approvals for publishing, payments, and destructive actions.
-- **Progressive enhancement** — small deploys, no risky monolith changes.
-
-## Core Goals
-1. **Portfolio scalability** via Business Units and Mission Control.
-2. **Reliable execution** (retries, timeouts, clear error taxonomy).
-3. **Higher‑quality outputs** with QA gates and artifact standards.
-4. **Lower friction** for common workflows and batching.
-5. **Proactive workflow** that pulls work forward.
-
-## Architecture Overview
-
-### Business Units
-Portfolio containers for games, apps, media brands, and infrastructure. Each unit has:
-- Goals & KPIs
-- Brand voice/style constraints
-- Repositories & services
-- Risk posture (approval requirements)
-- Link to canonical Obsidian strategy notes
-
-### Missions
-Atomic units of trusted work with:
-- Single objective & explicit deliverables
-- Assigned squad (specialized roles)
-- Safety & QA gates (Sentinel, Verifier)
-- Durability step (Archivist)
-- Full audit trail
-
-### Multi-Agent System
-20 specialized roles compose into squads:
-- **Echo**: Chief orchestrator
-- **Sentinel**: Governance/safety/IP gate
-- **Verifier**: QA/release gate
-- **Archivist**: Knowledge management & durability
-- **Atlas**: Infrastructure & operations
-- **Venture**: Business strategy
-- **Synth**: AI content generation
-- _...and 13 more specialized roles_
-
-## Scope (Security deferred)
-Security hardening is **out of scope for this phase** and will be revisited later. The focus now is product‑level quality and execution.
-
-## Repository Layout
-- `docs/DOC_INDEX.md` – index of all guidance docs
-- `docs/STATUS.md` – current implementation status
-- `docs/ROADMAP.md` – milestone‑level roadmap with issue tracking
-- `docs/PROJECT_PLAN.md` – delivery plan, milestones, and execution details
-- `docs/FEATURE_BACKLOG.md` – detailed feature list and ownership
-- `docs/roles/` – role card definitions
-- `docs/templates/` – mission briefs, role cards, business unit registry
-- `scripts/` – automation scripts and helpers
-- `runtime/` – task queue, business unit registry, logs
-
-## Where strategy lives
-- **Obsidian** is canonical for long‑horizon strategy and Business Unit notes.
-- This repo is for ops, workflows, scripts, and durable execution artifacts.
-
-## CI / Docs Lint
-- GitLab CI runs `scripts/docs-lint.py` to detect broken links and placeholder markers.
-
-## How to use this repo
-- Use the issues as the source of truth for implementation.
-- Align work to milestones in the roadmap.
-- Keep PRs small and tightly scoped.
-- All issues tracked in GitLab: [View Issues](http://slurpnet:9080/zachgonser/ventureos/-/issues)
+VentureOS is a Protoss-themed RPG system overlay for multi-agent coordination, making agent performance visible, relational, and evolutionary.
 
 ## Quick Links
-- **[Roadmap](docs/ROADMAP.md)** - Phase progress and issue tracking
-- **[Status](docs/STATUS.md)** - Detailed implementation status
-- **[Documentation Index](docs/DOC_INDEX.md)** - All docs catalog
-- **[GitLab Issues](http://slurpnet:9080/zachgonser/ventureos/-/issues)** - Active work tracking
+
+- **Master Plan:** [docs/RPG_SYSTEM.md](docs/RPG_SYSTEM.md) — Full spec, phases, KPIs, formulas
+- **GitLab Integration:** [docs/GITLAB_PROCESS.md](docs/GITLAB_PROCESS.md) — MR workflow for P0/P1 fixes
+- **Phase 5 Tactical Map:** [tactical-map/](tactical-map/) — Real-time 2D StarCraft-style command center
+
+## Project Structure
+
+```
+ventureos/
+├── docs/
+│   ├── RPG_SYSTEM.md          # Master plan (Protoss RPG spec)
+│   ├── GITLAB_PROCESS.md      # Verification workflow
+│   ├── PHASE4_TRACK6_REPORT.md # Track 6 completion report
+│   └── CRON_SPECS.md          # Cron job specifications
+├── tactical-map/              # Phase 5 StarCraft command center
+│   ├── src/                   # TypeScript source
+│   ├── tests/                 # Vitest test suite
+│   └── server/                # Dev server (Vite)
+├── tactical-map-server/       # Production server (Node.js)
+│   └── middleware/            # Security middleware (TypeScript reference)
+├── ventureos-rpg/             # RPG backend (SQLite + API)
+│   ├── api/                   # HTTP endpoints
+│   ├── components/            # UI components
+│   └── schema/                # SQLite schema
+├── scripts/                   # Utility scripts
+│   ├── spawn-with-verification.mjs  # Fresh context + dev↔verify loops
+│   ├── spawn-with-retry.mjs         # Retry logic for reliability
+│   └── estimation/            # Three-tier estimation framework
+└── .gitlab/
+    └── merge_request_templates/
+        └── Fix.md             # P0/P1 fix template with verification checklist
+```
+
+## Current Status
+
+### Completed
+- ✅ **Phase 4:** VOXYZ Integration (Role Cards, KPI Registry, Voice RULES, Security Infrastructure, Conversation Orchestration) — ~77 min total, 450/450 tests passing
+- ✅ **Phase 5.0:** Prerequisites (Session bridge, Security architecture, MapState contract, Assets licensing) — ~15h total
+- ✅ **Phase 5.1:** Foundation (Security middleware, Rendering core) — ~30 min, 56 tests, 88.57% coverage
+- ✅ **Phase 5.2:** Activity & Animation (Activity mapper, Building states, Unit sprites) — ~30 min, 172 tests, 88.58% coverage
+- ✅ **P0 Infrastructure Sprint:** Estimation framework, Cron fixes, SQLite hardening, Session handoff docs — ~1.5h vs 10-14h estimate
+
+### In Progress
+- 🔄 **Phase 5.3:** Khala Network (Bonds + Pylon Network visualization)
+- 🔄 **P0 Remediation:** Security (VULN-002, VULN-003), QA (QA-001, QA-002), Performance (PERF-003)
+
+### Next Up
+- **Phase 5.4:** Real-time Updates (WebSocket, SSE, optimistic UI)
+- **Phase 5.5:** Campaign Integration (Deep progression, Teaching XP, Innovation traits)
+
+## Development
+
+### Prerequisites
+- Node.js 25+ (for tactical-map)
+- SQLite 3.x (for ventureos-rpg)
+- GitLab access (http://slurpnet:9080)
+
+### Running the Tactical Map (Dev)
+```bash
+cd tactical-map
+npm install
+npm run dev  # Vite dev server on port 5174
+```
+
+### Running Tests
+```bash
+cd tactical-map
+npm test  # Vitest
+```
+
+### Production Dashboard
+Tactical map integrates with openclaw-dashboard on port 7001:
+```bash
+# Dashboard serves tactical map at /map
+http://192.168.225.149:7001/map
+```
+
+## GitLab Workflow
+
+All P0 and P1 fixes **MUST** go through GitLab MRs with verification:
+
+1. **Issue created** (acceptance criteria + verification steps)
+2. **MR opened** (use `.gitlab/merge_request_templates/Fix.md`)
+3. **Verification** (actual testing, not just code review)
+4. **Merge** (only after verification passes)
+5. **Announce** (only after merge)
+
+See [docs/GITLAB_PROCESS.md](docs/GITLAB_PROCESS.md) for full workflow.
+
+## Architecture
+
+### Agent → Protoss Mapping
+
+| Agent ID | Protoss Unit | Role |
+|----------|--------------|------|
+| **echo** | Artanis | CEO Orchestrator |
+| **nexus** | Nexus | Mission Control Hub |
+| **oracle** | Zeratul | Research & Foresight |
+| **atlas** | Probe | Infrastructure Fabricator |
+| **sentinel** | Sentinel | Security Guardian |
+| **verifier** | Observer | Detection & QA |
+| **archivist** | High Templar | Knowledge Keeper |
+| **synth** | Dark Templar | Shadow Weaver / Creator |
+
+### Psionic Attributes
+
+6 real-time KPIs mapped to Protoss-themed stats:
+
+1. **Psionic Mastery** (WIS) — Memory depth + archive impact
+2. **Energy** (SPD) — Response time + recovery speed
+3. **Shields** (STR) — Error resilience + recovery capability
+4. **Strategic Vision** (INT) — Planning depth + foresight accuracy
+5. **Psionic Bonds** (CHA) — Collaboration + teaching impact
+6. **Templar Dedication** (CON) — Consistency + persistence
+
+See [docs/RPG_SYSTEM.md](docs/RPG_SYSTEM.md) for formulas.
+
+## Contributing
+
+1. Create issue in GitLab (use templates)
+2. Create branch (`git checkout -b fix/your-fix-name`)
+3. Make changes + tests
+4. Open MR (fill verification checklist)
+5. Wait for Mission Control verification
+6. Merge after verification passes
+
+## License
+
+Internal VentureOS project — not open source.
 
 ---
 
-If this project is done right, VentureOS becomes a durable, dependable operating system — not just a clever tool.
+**En Taro Adun, Executor.**
