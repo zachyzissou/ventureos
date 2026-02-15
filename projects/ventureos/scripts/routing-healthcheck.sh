@@ -1,14 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="/Users/zachgonser/clawd"
-REPO="$ROOT/projects/ventureos"
-CFG="$REPO/config/alert-routing.json"
-STATE_DIR="$ROOT/runtime/monitor"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/agent-env.sh
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+# shellcheck source=scripts/lib/agent-env.sh
+source "$REPO_ROOT/scripts/lib/agent-env.sh"
+
+AGENT_ID="$(agent_env_agent_id)"
+WORKSPACE_ROOT="$(agent_env_workspace_root)"
+TMPDIR="$(agent_env_tmp_dir)"
+export TMPDIR
+
+CFG="${ROUTING_CONFIG_PATH:-$WORKSPACE_ROOT/projects/ventureos/config/alert-routing.json}"
+STATE_DIR="${ROUTING_STATE_DIR:-$WORKSPACE_ROOT/runtime/monitor/$AGENT_ID}"
 STATE_FILE="$STATE_DIR/routing-healthcheck.json"
 
-# Existing sender (posts with webhook identity)
-WEBHOOK_SEND="$ROOT/scripts/discord-webhook-send.mjs"
+# Shared sender allowlist: workspace copy first, then shared canonical path(s).
+DEFAULT_WEBHOOK_SEND_WORKSPACE="$WORKSPACE_ROOT/scripts/discord-webhook-send.mjs"
+DEFAULT_WEBHOOK_SEND_SHARED="/Users/zachgonser/clawd/scripts/discord-webhook-send.mjs"
+WEBHOOK_SEND="${DISCORD_WEBHOOK_SEND:-}"
+if [[ -z "$WEBHOOK_SEND" ]]; then
+  if [[ -f "$DEFAULT_WEBHOOK_SEND_WORKSPACE" ]]; then
+    WEBHOOK_SEND="$DEFAULT_WEBHOOK_SEND_WORKSPACE"
+  else
+    WEBHOOK_SEND="$DEFAULT_WEBHOOK_SEND_SHARED"
+  fi
+fi
+
+DEFAULT_SHARED_ALLOWLIST=(
+  "$DEFAULT_WEBHOOK_SEND_WORKSPACE"
+  "$DEFAULT_WEBHOOK_SEND_SHARED"
+  "/Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/retry.sh"
+  "/Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/with-timeout.sh"
+)
+
+IFS=':' read -r -a EXTRA_SHARED_ALLOWLIST <<< "${SHARED_SCRIPT_ALLOWLIST:-}"
 
 now_epoch() { date +%s; }
 now_iso_utc() { date -u +%Y-%m-%dT%H:%M:%SZ; }
@@ -16,6 +43,63 @@ now_iso_utc() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 fail() {
   echo "P1: $1"
 }
+
+resolved_cfg="$(agent_env_resolve_path "$CFG")"
+resolved_state_file="$(agent_env_resolve_path "$STATE_FILE")"
+resolved_webhook_send="$(agent_env_resolve_path "$WEBHOOK_SEND")"
+
+is_in_workspace() {
+  local target="$1"
+  [[ "$(agent_env_is_within "$target" "$WORKSPACE_ROOT")" == "true" ]]
+}
+
+is_shared_allowlisted() {
+  local target="$1"
+  local candidate
+
+  for candidate in "${DEFAULT_SHARED_ALLOWLIST[@]}"; do
+    [[ -z "$candidate" ]] && continue
+    if [[ "$(agent_env_resolve_path "$candidate")" == "$target" ]]; then
+      return 0
+    fi
+  done
+
+  for candidate in "${EXTRA_SHARED_ALLOWLIST[@]:-}"; do
+    [[ -z "$candidate" ]] && continue
+    if [[ "$(agent_env_resolve_path "$candidate")" == "$target" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+assert_workspace_or_allowlisted() {
+  local path="$1"
+  local purpose="$2"
+
+  if is_in_workspace "$path"; then
+    return 0
+  fi
+
+  if is_shared_allowlisted "$path"; then
+    return 0
+  fi
+
+  fail "PATH_ISOLATION_DENY:$purpose:$path"
+  exit 1
+}
+
+# Default deny outside workspace for mutable paths.
+if ! is_in_workspace "$resolved_cfg"; then
+  fail "PATH_ISOLATION_DENY:config_outside_workspace:$resolved_cfg"
+  exit 1
+fi
+if ! is_in_workspace "$resolved_state_file"; then
+  fail "PATH_ISOLATION_DENY:state_outside_workspace:$resolved_state_file"
+  exit 1
+fi
+assert_workspace_or_allowlisted "$resolved_webhook_send" "webhook_sender"
 
 mkdir -p "$STATE_DIR"
 
@@ -38,20 +122,39 @@ if [[ ! -f "$webhook_map_path" ]]; then
   exit 1
 fi
 
-# Required role channel ids (alerts channel is where we notify; a webhook for alerts is preferred but not required)
+# PERF-003: Batch-check all role channel IDs + alerts webhook in a single jq call.
+# Previous pattern: 1 jq call to list IDs + N jq calls to check each → N+1.
+# New pattern: 1 jq call to list IDs + 1 jq call to batch-check all → 2 total.
 role_ids=$(jq -r '.roleChannels | to_entries | map(.value) | unique | .[]' "$CFG")
 
-missing_roles=()
+# Collect all IDs to check (role channels + alerts channel) into a single jq query
+all_check_ids=()
 for cid in $role_ids; do
-  # webhook map is expected to be an object keyed by channelId
-  # (we treat presence of any value at that key as "configured")
-  present=$(jq -r --arg cid "$cid" 'has($cid)' "$webhook_map_path")
-  if [[ "$present" != "true" ]]; then
-    missing_roles+=("$cid")
-  fi
+  all_check_ids+=("$cid")
 done
+all_check_ids+=("$alerts_channel_id")
 
-has_alerts_webhook=$(jq -r --arg cid "$alerts_channel_id" 'has($cid)' "$webhook_map_path")
+# Single jq call: check presence of ALL channel IDs at once, output "id:true/false" pairs
+missing_roles=()
+has_alerts_webhook="false"
+
+if [[ ${#all_check_ids[@]} -gt 0 ]]; then
+  # Build JSON array of IDs to check
+  check_json=$(printf '%s\n' "${all_check_ids[@]}" | jq -R . | jq -s .)
+
+  # Single jq invocation: for each ID, output "id=present"
+  batch_result=$(jq -r --argjson ids "$check_json" \
+    '$ids[] as $cid | "\($cid)=\(has($cid))"' "$webhook_map_path")
+
+  while IFS='=' read -r cid present; do
+    [[ -z "$cid" ]] && continue
+    if [[ "$cid" == "$alerts_channel_id" ]]; then
+      has_alerts_webhook="$present"
+    elif [[ "$present" != "true" ]]; then
+      missing_roles+=("$cid")
+    fi
+  done <<< "$batch_result"
+fi
 
 status="ok"
 reason=""
@@ -86,6 +189,8 @@ if [[ "$should_alert" == "true" ]]; then
   text=$(
     cat <<EOF
 P1 Routing Healthcheck FAILED ($(now_iso_utc))
+- agent: ${AGENT_ID}
+- workspace: ${WORKSPACE_ROOT}
 - reason: ${reason}
 - cfg: ${CFG}
 - expected webhook map keys for alerts + role channels
@@ -108,7 +213,9 @@ jq -n \
   --arg lastStatus "$status" \
   --argjson lastAlertAt "$last_alert_at" \
   --arg reason "$reason" \
-  '{lastStatus:$lastStatus,lastAlertAt:$lastAlertAt,lastReason:$reason,updatedAt:(now|floor)}' \
+  --arg agentId "$AGENT_ID" \
+  --arg workspace "$WORKSPACE_ROOT" \
+  '{lastStatus:$lastStatus,lastAlertAt:$lastAlertAt,lastReason:$reason,agentId:$agentId,workspace:$workspace,updatedAt:(now|floor)}' \
   > "$STATE_FILE"
 
 if [[ "$status" == "ok" ]]; then

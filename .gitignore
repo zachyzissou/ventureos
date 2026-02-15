@@ -52,3 +52,6 @@ projects/openclaw-upgrade/
 
 # Root python scratch (avoid confusing with project-specific requirements.txt)
 /requirements.txt
+
+# Python bytecode
+__pycache__/
