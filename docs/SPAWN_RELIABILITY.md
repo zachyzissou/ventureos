@@ -2,7 +2,7 @@
 
 **GitHub Issue:** [#34 — Phantom Sessions: Silent Work Loss](https://github.com/zachyzissou/ventureos/issues/34)  
 **Priority:** P0  
-**Last updated:** 2026-02-15
+**Last updated:** 2026-02-15 (v2 — false positive fix)
 
 > **Definition:** A *phantom session* is a spawned session that returns `{ status: "accepted" }` / a `childSessionKey`, but never actually begins producing messages / doing work (or starts after an extreme delay), with no error surfaced to the spawning agent.
 
@@ -204,6 +204,45 @@ Cron wrapper: runs phantom detector + workspace health check.
 - [x] Root causes identified (workspace bloat + config errors + lane contention)
 - [x] Workspace health check script
 - [x] Spawn wrapper: health check + verify + retry
-- [x] Phantom detector
+- [x] Phantom detector (v2 — fixed false positives)
 - [x] Documentation (this file)
 - [ ] Cron jobs registered (health daily + phantom scan every 30min)
+
+---
+
+## v2 Fix: False Positive Elimination (2026-02-15)
+
+### Problem
+
+The phantom-detector.sh script was reporting **13 false positives** — sessions that were actually functioning normally (61-267 messages each) were being flagged as "zero_messages" phantoms.
+
+### Root Cause
+
+**Bug in message counting logic.** The detector's jq query looked for `.value.messages` array in the `sessions.json` index:
+
+```jq
+messageCount: ((.value.messages // []) | length),
+```
+
+But **`sessions.json` does NOT contain a `messages` array**. Messages are stored in separate `{sessionId}.jsonl` transcript files. The `.messages` field doesn't exist in the index, so `(.value.messages // []) | length` always returns `0`, flagging every subagent session as phantom.
+
+### Fix
+
+1. **Count messages from .jsonl files** — The detector now reads the actual transcript file (`{sessionId}.jsonl`) and counts lines with `"type":"message"`.
+2. **Fixed `grep -c` bug** — `grep -c` returns exit code 1 when count is 0 (even though it outputs "0"). Combined with `|| echo "0"`, this produced `"0\n0"` which broke bash arithmetic. Fixed to capture output first, then fallback.
+3. **Fixed empty PHANTOMS array** — JSON output was malformed when no phantoms found.
+4. **Added spawn-health-check.sh** — Post-spawn polling that verifies transcript file has messages within a configurable timeout.
+
+### Test Results
+
+16/16 tests passing including:
+- **Test 11:** Exact reproduction of the production false positive (0e84becd with 61 messages correctly NOT flagged)
+- **Test 2:** Session with messages correctly NOT flagged
+- **Test 3:** Session with zero messages correctly flagged
+- **Test 4:** Missing transcript file correctly flagged
+- **Test 9:** Transcript with only headers (no messages) correctly flagged
+
+### Impact
+
+- **Before fix:** 13 sessions falsely reported as phantoms, causing unnecessary panic alerts
+- **After fix:** 0 false positives, only real phantoms are detected
