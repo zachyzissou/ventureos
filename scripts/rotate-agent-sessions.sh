@@ -19,6 +19,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OPENCLAW_DIR="${HOME}/.openclaw"
+
+# Source HTTP timeout defaults (docs/TIMEOUT_POLICY.md)
+# shellcheck source=scripts/lib/http-defaults.sh
+[[ -f "$SCRIPT_DIR/lib/http-defaults.sh" ]] && source "$SCRIPT_DIR/lib/http-defaults.sh"
 AGENTS_DIR="${OPENCLAW_DIR}/agents"
 LOG_FILE="${OPENCLAW_DIR}/logs/session-rotation.log"
 
@@ -73,7 +77,9 @@ log() {
 send_discord_alert() {
   local message="$1"
   if [[ -n "$WEBHOOK_URL" ]]; then
-    curl -sS -H "Content-Type: application/json" \
+    # shellcheck disable=SC2086
+    curl -sS ${CURL_WEBHOOK_FLAGS:-"--connect-timeout 2 --max-time 10"} \
+      -H "Content-Type: application/json" \
       -d "{\"content\": \"$message\"}" \
       "$WEBHOOK_URL" >/dev/null 2>&1 || true
   fi

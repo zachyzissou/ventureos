@@ -181,21 +181,35 @@ function ensureSentencePeriod(s: string): string {
   return `${trimmed}.`;
 }
 
+function stripLeadingImperativeNegation(s: string): string {
+  // Avoid awkward double-negatives like "Never Do not …".
+  // Examples:
+  //   "Do not ignore tests!"  -> "ignore tests!"
+  //   "Don't ship secrets."   -> "ship secrets."
+  const m = s.match(/^(?:do\s+not|don't|dont)\b[,:]?\s*(.*)$/i);
+  if (!m) return s;
+
+  const rest = (m[1] ?? "").trim();
+
+  // If we can't confidently extract a meaningful imperative payload, bail out.
+  // (e.g., "Don't." -> would otherwise produce "Never .")
+  if (!rest || !/[\p{L}\p{N}]/u.test(rest)) return s;
+
+  return rest;
+}
+
 function formatNeverRule(raw: string): string {
-  const trimmed = String(raw || "").trim();
+  const trimmed = String(raw ?? "").trim();
   if (!trimmed) return "";
 
+  // If the author already started the rule with "never" (any case), normalize
+  // just the leading word's casing.
   if (/^never\b/i.test(trimmed)) {
-    // Normalize case of the leading word.
     return ensureSentencePeriod(trimmed.replace(/^never\b/i, "Never"));
   }
 
-  if (/^NEVER\b/.test(trimmed)) {
-    const rest = trimmed.replace(/^NEVER\b\s*/i, "");
-    return ensureSentencePeriod(`Never ${rest}`);
-  }
-
-  return ensureSentencePeriod(`Never ${trimmed}`);
+  const normalized = stripLeadingImperativeNegation(trimmed);
+  return ensureSentencePeriod(`Never ${normalized}`);
 }
 
 function formatWarpChannel(ch: WarpChannel): string {

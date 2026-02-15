@@ -40,6 +40,11 @@ LOG_DIR="${HOME}/clawd/ventureos/runtime/logs"
 LOG_FILE="${LOG_DIR}/workspace-health.jsonl"
 QUARANTINE_LOG="${LOG_DIR}/workspace-quarantine.jsonl"
 
+# Source HTTP timeout defaults (docs/TIMEOUT_POLICY.md)
+SCRIPT_DIR_SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/http-defaults.sh
+[[ -f "$SCRIPT_DIR_SELF/lib/http-defaults.sh" ]] && source "$SCRIPT_DIR_SELF/lib/http-defaults.sh"
+
 # ============================================================================
 # Parse args
 # ============================================================================
@@ -299,7 +304,9 @@ if [[ "${ALERT}" == "true" ]] && [[ ${UNHEALTHY_COUNT} -gt 0 ]]; then
   alert_msg+="\nRun \`check-workspace-health.sh --quarantine\` to auto-clean DB files."
 
   if [[ -n "${WEBHOOK_URL}" ]]; then
-    curl -s -H "Content-Type: application/json" \
+    # shellcheck disable=SC2086
+    curl -sS ${CURL_WEBHOOK_FLAGS:-"--connect-timeout 2 --max-time 10"} \
+      -H "Content-Type: application/json" \
       -d "{\"content\":\"${alert_msg}\"}" \
       "${WEBHOOK_URL}" >/dev/null 2>&1 || true
   fi

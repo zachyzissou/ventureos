@@ -35,6 +35,10 @@ done
 mkdir -p "${LOG_DIR}"
 NOW_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
+# Source HTTP timeout defaults (docs/TIMEOUT_POLICY.md)
+# shellcheck source=scripts/lib/http-defaults.sh
+[[ -f "${SCRIPTS_DIR}/lib/http-defaults.sh" ]] && source "${SCRIPTS_DIR}/lib/http-defaults.sh"
+
 # ============================================================================
 # 1. Run phantom detector
 # ============================================================================
@@ -119,7 +123,9 @@ if [[ "${ALERT}" == "true" ]] && [[ ${phantom_count} -gt 0 || ${health_unhealthy
   # Use openclaw message or webhook
   WEBHOOK_URL="${DISCORD_WEBHOOK_URL:-}"
   if [[ -n "${WEBHOOK_URL}" ]]; then
-    curl -s -H "Content-Type: application/json" \
+    # shellcheck disable=SC2086
+    curl -sS ${CURL_WEBHOOK_FLAGS:-"--connect-timeout 2 --max-time 10"} \
+      -H "Content-Type: application/json" \
       -d "{\"content\":\"${alert_msg}\"}" \
       "${WEBHOOK_URL}" >/dev/null 2>&1 || true
   fi
