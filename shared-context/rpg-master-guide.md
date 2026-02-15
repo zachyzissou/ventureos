@@ -1,8 +1,8 @@
 # VentureOS RPG System — Master Guide (Protoss Edition)
 ## *"En Taro Adun — Through the Khala, We Are One"*
 
-**Last Updated:** 2026-02-14 18:20 CST  
-**Status:** ✅ P0 Infrastructure Sprint complete | 🚀 Phase 2 ready to resume  
+**Last Updated:** 2026-02-14 19:15 CST  
+**Status:** ✅ P0 Sprint complete | ✅ Phase 5.1 complete | 🚀 Phase 5.2 in progress  
 **Lead:** Nexus (Mission Control)
 
 ---
@@ -911,7 +911,7 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 
 **Synthesized:** 2026-02-14  
 **Source:** 5 team reviews (Atlas, Sentinel, Verifier, Archivist, Synth) + original spec  
-**Status:** 🚀 Phase 5.0 Complete — Phase 5.1 Starting  
+**Status:** ✅ Phase 5.1 Complete — 🚀 Phase 5.2 In Progress  
 **Original Spec:** `~/clawd/shared-context/phase5-tactical-map-spec.md` (66KB)  
 **Team Reviews:** `~/clawd/shared-context/phase5-review-*.md` (5 files)
 
@@ -923,6 +923,17 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 - ✅ 6 spec ambiguities resolved (phase5-ambiguities-resolved.md)
 - ✅ Assets licensing policy created (ASSETS-LICENSING.md)
 - **Decisions locked:** Flat 2D, Full Vision scope, Security approved
+
+**Phase 5.1 Foundation Complete** (2026-02-14, ~30 min total):
+- ✅ Security middleware (Sentinel, 9m32s): auth, CORS, CSP, rate limiting, audit logging
+- ✅ Rendering core (Synth, 19m57s): terrain, buildings, Nexus, HUD, camera, API client
+- ✅ Tests: 56 passing, 88.57% coverage
+- ✅ Location: ~/clawd/ventureos/tactical-map
+- ✅ Dev server: http://127.0.0.1:5174/map/
+
+**Phase 5.2 Activity & Animation** (In Progress, session c4ff07b3):
+- 🔄 Synth dispatched (16-26h estimate)
+- Building state system, activity mapper, animations, particles, health/progress bars, input sanitization
 
 ---
 
