@@ -314,7 +314,13 @@ describe('KPI Registry - Batch Operations', () => {
     
     for (const agent of agents) {
       const results = await computeAgentKPIs(agent);
-      expect(results.size).toBeGreaterThan(0);
+      expect(results.size).toBeGreaterThanOrEqual(3);
+      
+      // Verify result structure for each computed KPI
+      for (const result of results.values()) {
+        expect(result.value).toBeDefined();
+        expect(result.threshold_level).toMatch(/excellent|good|acceptable|poor|critical/);
+      }
     }
   }, 15000);
 });
