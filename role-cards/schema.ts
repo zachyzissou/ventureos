@@ -182,17 +182,13 @@ function ensureSentencePeriod(s: string): string {
 }
 
 function formatNeverRule(raw: string): string {
-  const trimmed = String(raw || "").trim();
+  const trimmed = String(raw ?? "").trim();
   if (!trimmed) return "";
 
+  // If the author already started the rule with "never" (any case), normalize
+  // just the leading word's casing.
   if (/^never\b/i.test(trimmed)) {
-    // Normalize case of the leading word.
     return ensureSentencePeriod(trimmed.replace(/^never\b/i, "Never"));
-  }
-
-  if (/^NEVER\b/.test(trimmed)) {
-    const rest = trimmed.replace(/^NEVER\b\s*/i, "");
-    return ensureSentencePeriod(`Never ${rest}`);
   }
 
   return ensureSentencePeriod(`Never ${trimmed}`);
