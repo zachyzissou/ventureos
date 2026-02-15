@@ -174,21 +174,71 @@ export function validateCard(card: KhaydarinCard): KhaydarinCard {
 // SOUL.MD GENERATOR
 // ═══════════════════════════════════════════
 
+function ensureSentencePeriod(s: string): string {
+  const trimmed = s.trim();
+  if (!trimmed) return trimmed;
+  if (/[.!?]$/.test(trimmed)) return trimmed;
+  return `${trimmed}.`;
+}
+
+function formatNeverRule(raw: string): string {
+  const trimmed = String(raw || "").trim();
+  if (!trimmed) return "";
+
+  if (/^never\b/i.test(trimmed)) {
+    // Normalize case of the leading word.
+    return ensureSentencePeriod(trimmed.replace(/^never\b/i, "Never"));
+  }
+
+  if (/^NEVER\b/.test(trimmed)) {
+    const rest = trimmed.replace(/^NEVER\b\s*/i, "");
+    return ensureSentencePeriod(`Never ${rest}`);
+  }
+
+  return ensureSentencePeriod(`Never ${trimmed}`);
+}
+
+function formatWarpChannel(ch: WarpChannel): string {
+  return `- **${ch.type}** (_${ch.format}_): ${ch.description}`;
+}
+
+function formatMetric(m: Metric): string {
+  return `- **${m.name}:** ${m.measurement} (target: ${m.target})`;
+}
+
 export function generateSoulMd(card: KhaydarinCard): string {
   const sections: string[] = [];
 
   sections.push(`# SOUL.md — ${card.name} (${card.title})`);
   sections.push("");
+
+  sections.push("## Identity");
   sections.push(`${card.glyph} **${card.name}** — ${card.title} of the ${card.caste} caste.`);
   sections.push(`> ${card.nexusSphere.domain}`);
   sections.push("");
 
-  sections.push("## My Domain");
+  sections.push("## Jurisdiction");
   card.nexusSphere.jurisdiction.forEach((j) => sections.push(`- ${j}`));
   sections.push("");
 
-  sections.push("## Not My Domain");
+  sections.push("## NOT My Domain");
   card.nexusSphere.boundaries.forEach((b) => sections.push(`- ${b}`));
+  sections.push("");
+
+  sections.push("## How I Work");
+  sections.push("### Inputs I Accept");
+  card.warpChannels.inputs.forEach((i) => sections.push(formatWarpChannel(i)));
+  sections.push("");
+
+  sections.push("### What I Produce");
+  card.warpChannels.outputs.forEach((o) => sections.push(formatWarpChannel(o)));
+  sections.push("");
+
+  sections.push("### When I'm Done");
+  card.warpComplete.conditions.forEach((c) => sections.push(`- ${c}`));
+  sections.push("");
+  sections.push(`**Quality Gate:** ${card.warpComplete.qualityGate}`);
+  sections.push(`**Handoff Format:** ${card.warpComplete.handoffFormat}`);
   sections.push("");
 
   sections.push("## Voice");
@@ -199,7 +249,7 @@ export function generateSoulMd(card: KhaydarinCard): string {
   card.psionicSignature.personality.forEach((p) => sections.push(`- ${p}`));
   sections.push("");
 
-  sections.push("### Conflict Style");
+  sections.push("### Conflict Pattern");
   sections.push(card.psionicSignature.conflictPattern);
   if (card.psionicSignature.catchphrase) {
     sections.push("");
@@ -207,22 +257,39 @@ export function generateSoulMd(card: KhaydarinCard): string {
   }
   sections.push("");
 
-  sections.push("## Hard Rules (Non-Negotiable)");
-  card.voidInterdicts.hardBans.forEach((ban) => sections.push(`- ${ban}`));
+  sections.push("## NEVER (Void Interdicts — Non‑Negotiable)");
+  card.voidInterdicts.hardBans
+    .map(formatNeverRule)
+    .filter(Boolean)
+    .forEach((ban) => sections.push(`- ${ban}`));
   sections.push("");
 
-  sections.push("## When I'm Done");
-  card.warpComplete.conditions.forEach((c) => sections.push(`- ${c}`));
-  sections.push("");
-  sections.push(`**Quality Gate:** ${card.warpComplete.qualityGate}`);
-  sections.push("");
-
-  sections.push("## When to Escalate");
+  sections.push("## When to Escalate (Psionic Cascade)");
   sections.push(`**Escalate to:** ${card.psionicCascade.escalateTo.join(", ")}`);
   card.psionicCascade.escalateTriggers.forEach((t) => sections.push(`- ${t}`));
   sections.push("");
   sections.push(`**Timeout:** ${card.psionicCascade.timeout}`);
   sections.push(`**Fallback:** ${card.psionicCascade.fallback}`);
+  sections.push("");
+
+  sections.push("## My Standards (Resonance Readings)");
+  sections.push("### Metrics");
+  card.resonanceReadings.metrics.forEach((m) => sections.push(formatMetric(m)));
+  sections.push("");
+  sections.push(`**Health Check:** ${card.resonanceReadings.healthCheck}`);
+  sections.push(`**SLA:** ${card.resonanceReadings.sla}`);
+  sections.push("");
+
+  sections.push("## Tools I Can Use (Forge Access)");
+  card.forgeAccess.forEach((t) => sections.push(`- ${t}`));
+  sections.push("");
+
+  sections.push("## Memory & State (Crystal Memory)");
+  sections.push("### Persists");
+  card.crystalMemory.persists.forEach((p) => sections.push(`- ${p}`));
+  sections.push("");
+  sections.push("### Volatiles");
+  card.crystalMemory.volatiles.forEach((v) => sections.push(`- ${v}`));
 
   return sections.join("\n");
 }
