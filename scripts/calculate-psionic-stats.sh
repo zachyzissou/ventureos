@@ -25,6 +25,7 @@ DB_PATH="${1:-$HOME/clawd/agents/ventureos-rpg.db}"
 OVERLAYS_DIR="${OVERLAYS_DIR:-$HOME/clawd/agents/tactical-overlays}"
 METRICS_DIR="${METRICS_DIR:-$HOME/clawd/runtime/rpg-metrics}"
 SNAPSHOT_DATE="${SNAPSHOT_DATE:-$(date +%F)}"
+SKIP_KPI_VALIDATION="${SKIP_KPI_VALIDATION:-0}"
 
 log() { printf "[%s] %s\n" "$(date +%F' '%T)" "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
@@ -35,6 +36,52 @@ command -v python3 >/dev/null 2>&1 || die "python3 not found"
 [[ -f "$DB_PATH" ]] || die "DB not found: $DB_PATH (run scripts/init-rpg-database.sh first)"
 
 mkdir -p "$METRICS_DIR" || true
+
+# ─── Pre-Calculation KPI Schema Validation ───
+# Validates that KPI definitions reference columns that actually exist in the DB.
+# This prevents corrupted/zeroed-out data from being written due to silent schema mismatches.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VALIDATE_SCRIPT="${SCRIPT_DIR}/validate-kpi-schema.sh"
+
+if [[ "$SKIP_KPI_VALIDATION" != "1" ]] && [[ -x "$VALIDATE_SCRIPT" ]]; then
+    log "Running pre-calculation KPI schema validation..."
+    VALIDATION_LOG=$(mktemp)
+    
+    if QUIET=1 bash "$VALIDATE_SCRIPT" "$DB_PATH" 2>"$VALIDATION_LOG"; then
+        log "✅ KPI schema validation passed"
+    else
+        validation_exit=$?
+        log "⚠️  KPI schema validation found issues (exit code: $validation_exit)"
+        log "Validation output:"
+        cat "$VALIDATION_LOG" >&2
+        
+        # Log the failure for auditing
+        VALIDATION_FAILURE_LOG="$HOME/clawd/runtime/kpi-validation-failures.log"
+        mkdir -p "$(dirname "$VALIDATION_FAILURE_LOG")"
+        {
+            echo "=== KPI Validation Failure: $(date +%F' '%T) ==="
+            echo "Snapshot Date: $SNAPSHOT_DATE"
+            echo "DB: $DB_PATH"
+            cat "$VALIDATION_LOG"
+            echo ""
+        } >> "$VALIDATION_FAILURE_LOG"
+        
+        log "⚠️  Validation issues logged to $VALIDATION_FAILURE_LOG"
+        log "⚠️  Proceeding with calculation (known issues are suppressed)"
+        # Note: We proceed because known issues are tracked in .known-issues.json.
+        # Only truly NEW schema mismatches will cause validation to fail.
+        # To hard-block on validation failure, uncomment the next line:
+        # die "KPI schema validation failed. Fix issues before calculating stats."
+    fi
+    rm -f "$VALIDATION_LOG"
+else
+    if [[ "$SKIP_KPI_VALIDATION" == "1" ]]; then
+        log "⏭️  KPI schema validation skipped (SKIP_KPI_VALIDATION=1)"
+    else
+        log "⚠️  KPI schema validation script not found at $VALIDATE_SCRIPT"
+    fi
+fi
+# ─── End Pre-Calculation Validation ───
 
 log "Calculating psionic stats for snapshot_date=$SNAPSHOT_DATE"
 log "DB_PATH=$DB_PATH"

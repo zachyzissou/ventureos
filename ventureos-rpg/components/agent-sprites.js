@@ -418,8 +418,11 @@ export class AgentSprite extends HTMLElement {
     this.render();
   }
 
-  attributeChangedCallback() {
-    this.render();
+  attributeChangedCallback(name, oldValue, newValue) {
+    // Prevent infinite loop: only re-render if meaningful attributes changed
+    if (oldValue !== newValue && name !== 'state') {
+      this.render();
+    }
   }
 
   render() {
@@ -449,8 +452,10 @@ export class AgentSprite extends HTMLElement {
       ${showLabel ? `<div class="label">${agent}</div>` : ''}
     `;
 
-    // Set state attribute for CSS animations
-    this.setAttribute('state', state);
+    // Set state attribute for CSS animations (won't trigger re-render now)
+    if (this.getAttribute('state') !== state) {
+      this.setAttribute('state', state);
+    }
 
     const canvas = spriteToCanvas(grid, PALETTE, pixelSize);
     canvas.style.width = actualSize + 'px';
