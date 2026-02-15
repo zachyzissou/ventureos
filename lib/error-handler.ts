@@ -18,7 +18,6 @@ import crypto from 'node:crypto';
 export type ErrorCategory =
   | 'not_found'
   | 'bad_request'
-  | 'validation'
   | 'auth'
   | 'rate_limit'
   | 'internal';
@@ -81,7 +80,7 @@ const ERROR_PATTERNS: Array<{
   },
   {
     test: (msg) =>
-      /no role-card output contract/i.test(msg) || /no.*contract/i.test(msg),
+      /no role-card output contract/i.test(msg) || /no\s+(?:role-card\s+)?(?:output\s+)?contract/i.test(msg),
     classification: {
       category: 'bad_request',
       status: 400,
@@ -101,11 +100,19 @@ const ERROR_PATTERNS: Array<{
     },
   },
   {
-    test: (msg) => /unauthorized|authentication|forbidden/i.test(msg),
+    test: (msg) => /unauthorized|authentication/i.test(msg),
     classification: {
       category: 'auth',
       status: 401,
       safeMessage: 'Authentication required.',
+    },
+  },
+  {
+    test: (msg) => /forbidden/i.test(msg),
+    classification: {
+      category: 'auth',
+      status: 403,
+      safeMessage: 'Access denied.',
     },
   },
   {
@@ -224,7 +231,7 @@ export function containsSensitiveInfo(message: string): boolean {
     // Implementation details
     /role-card/i,
     /sendMessage requires/i,
-    /\.json/i,
+    /\/\S+\.json/i,
   ];
 
   return sensitivePatterns.some((pattern) => pattern.test(message));

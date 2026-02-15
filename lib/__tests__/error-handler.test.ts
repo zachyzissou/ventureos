@@ -116,6 +116,15 @@ describe('Error Classification', () => {
     expect(result.error).toBe('Authentication required.');
   });
 
+  test('forbidden errors return 403 (not 401)', () => {
+    const err = new Error('Forbidden: insufficient permissions');
+    const result = toSafeError(err);
+
+    expect(result.status).toBe(403);
+    expect(result.error).toBe('Access denied.');
+    expect(result.error).not.toContain('insufficient');
+  });
+
   test('rate limit errors return 429', () => {
     const err = new Error('Rate limit exceeded: too many requests from IP');
     const result = toSafeError(err);
@@ -327,7 +336,12 @@ describe('containsSensitiveInfo utility', () => {
       containsSensitiveInfo('sendMessage requires to or payload'),
     ).toBe(true);
     expect(containsSensitiveInfo('role-card not found')).toBe(true);
-    expect(containsSensitiveInfo('config.json')).toBe(true);
+    expect(containsSensitiveInfo('/etc/config.json')).toBe(true);
+  });
+
+  test('bare .json references without file paths are not flagged', () => {
+    expect(containsSensitiveInfo('Invalid JSON format')).toBe(false);
+    expect(containsSensitiveInfo('malformed request body.')).toBe(false);
   });
 
   test('safe messages pass', () => {
