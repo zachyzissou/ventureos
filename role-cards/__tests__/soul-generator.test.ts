@@ -35,6 +35,7 @@ describe("role-cards SOUL.md generator", () => {
       "NEVER deploy on friday",
       "Never break laws.",
       "Do not ignore tests!",
+      "Don't merge without review.",
     ];
     card.voidInterdicts.rationale = card.voidInterdicts.hardBans.map(() => "Because.");
 
@@ -49,7 +50,8 @@ describe("role-cards SOUL.md generator", () => {
       "Never ship secrets.",
       "Never deploy on friday.",
       "Never break laws.",
-      "Never Do not ignore tests!",
+      "Never ignore tests!",
+      "Never merge without review.",
     ]);
 
     // Spot-check other formatter helpers are being exercised.

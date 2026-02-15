@@ -59,12 +59,25 @@ CURL_LARGE_FLAGS="--connect-timeout ${HTTP_LARGE_CONNECT_TIMEOUT} --max-time ${H
 # Retry-safe curl wrapper
 # ============================================================================
 
-# curl_with_timeout <flag_set> <curl_args...>
-# Uses the provided flag set name or defaults to CURL_TIMEOUT_FLAGS.
-# Example: curl_with_timeout webhook -H "Content-Type: application/json" -d '{}' "$URL"
+# curl_with_timeout [profile] <curl_args...>
+# Uses the provided profile name (webhook|low-latency|cli|large|standard) or
+# defaults to standard when the first arg isn't a known profile.
+#
+# Examples:
+#   curl_with_timeout webhook -H "Content-Type: application/json" -d '{}' "$URL"
+#   curl_with_timeout https://example.com
 curl_with_timeout() {
-  local profile="${1:-standard}"
-  shift
+  local profile="standard"
+
+  case "${1-}" in
+    webhook|low-latency|cli|large|standard)
+      profile="$1"
+      shift
+      ;;
+    *)
+      # First arg is not a profile (likely a URL or curl flag). Keep args intact.
+      ;;
+  esac
 
   local flags
   case "$profile" in
