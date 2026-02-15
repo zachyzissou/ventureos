@@ -1,179 +1,209 @@
-# Spawn Reliability: Phantom Sessions Root Cause & Fix
+# Spawn Reliability — Preventing Phantom Sessions
 
-**GitHub Issue:** [#34 - Phantom Sessions: Silent Work Loss](https://github.com/zachyzissou/ventureos/issues/34)  
+**GitHub Issue:** [#34 — Phantom Sessions: Silent Work Loss](https://github.com/zachyzissou/ventureos/issues/34)  
 **Priority:** P0  
-**Author:** Atlas (Infrastructure/Ops Agent)  
-**Date:** 2026-02-15  
+**Last updated:** 2026-02-15
+
+> **Definition:** A *phantom session* is a spawned session that returns `{ status: "accepted" }` / a `childSessionKey`, but never actually begins producing messages / doing work (or starts after an extreme delay), with no error surfaced to the spawning agent.
 
 ---
 
 ## Executive Summary
 
-Phantom sessions occur when `sessions_spawn` returns `{ status: "accepted" }` but the spawned agent never starts executing. Investigation traced the root cause to **three architectural issues** in OpenClaw's gateway:
+We’ve observed multiple phantom-session incidents (Feb 14–15, 2026) where subagent work was silently lost or significantly delayed.
 
-1. **Global lane bottleneck** — All subagent runs share a single `"subagent"` lane with `maxConcurrent=1`
-2. **Silent error swallowing** — `waitForSubagentCompletion()` uses `catch {}`, silently losing errors
-3. **No start verification** — No mechanism exists to verify an agent actually began executing after spawn acceptance
+**Primary, VentureOS-controllable causes:**
+1. **Workspace bloat / oversized files** (especially SQLite DBs) causing session initialization to stall or fail without a propagated error.
+2. **Configuration mistakes** (unknown model/provider strings) that fail early in the gateway, again without being surfaced to the spawner.
+
+**Platform-level contributing cause (OpenClaw):**
+3. **Global lane contention** (all subagents queued through a single `subagent` lane with `maxConcurrent=1`) leading to long “accepted-but-not-started-yet” delays.
+4. **Silent error swallowing** in subagent completion waiting (`catch {}`), preventing the parent from learning about failures.
+
+**Mitigation (implemented in VentureOS):**
+- Workspace health monitoring + optional auto-quarantine of large DB files
+- Pre-spawn health checks (fail fast)
+- Post-spawn verification (ensure the child session produces output)
+- Retry with backoff + alerting when phantom rate increases
+
+---
+
+## Symptoms & Impact
+
+**Symptoms:**
+- `sessions_spawn` returns success + `childSessionKey`
+- Child session has **0 messages** indefinitely, or starts only after minutes
+- Spawning agent reports “dispatched” but no work arrives
+
+**Impact:**
+- Wasted time due to assuming work is executing
+- Lost subagent outputs (silent failure)
+- Reduced trust in multi-agent workflows
 
 ---
 
 ## Root Cause Analysis
 
-### Architecture: The Lane System
+### 1) Workspace Bloat (Primary) 🔴
 
-OpenClaw's gateway serializes agent work through a **lane-based queue system**:
+**Evidence:** Oversized SQLite files in agent workspaces blocked or destabilized spawn:
+- `main.sqlite` — ~49MB
+- `memory.sqlite` — ~49MB
+- `stanton-times.sqlite` — ~4.1MB
+
+**Mechanism:** During session initialization, large files in workspace context can trigger timeouts / memory pressure / slow scans. Critically, the spawn can be *accepted* while the child never actually begins executing.
+
+**Fix applied:** move large DB files to `QUARANTINE/` (or out of workspace). Spawns immediately recovered.
+
+**Prevention:** workspace health monitoring + auto-quarantine DB files > 10MB.
+
+### 2) Model Misconfiguration 🟡
+
+**Evidence:** Gateway logs (examples):
+```
+Error: Unknown model: anthropic/gpt-5.1-codex-mini
+Error: Unknown model: openai-codex/does-not-exist
+```
+
+**Mechanism:** Wrong provider/model string causes gateway task failure after a session key is allocated. Error is not reliably propagated back to the spawner.
+
+### 3) Global Lane Contention (OpenClaw) 🟡→🔴
+
+OpenClaw serializes agent work through a **lane-based queue system**. In observed builds, subagent runs share a global lane:
 
 ```
 Lane Types:
 ├── session:<sessionKey>   — per-session lane (maxConcurrent=1)
 ├── main                   — global main lane
-├── cron                   — global cron lane  
-├── subagent               — global subagent lane (maxConcurrent=1) ← THE BOTTLENECK
+├── cron                   — global cron lane
+├── subagent               — global subagent lane (maxConcurrent=1)  ← bottleneck
 └── nested                 — global nested lane
 ```
 
-Every `runEmbeddedPiAgent()` call goes through **double-queue serialization**:
+**Impact:** multiple subagent spawns can be “accepted” but sit queued behind a long-running task; the child may not start for 1–20 minutes.
 
-```javascript
-// pi-embedded-KOoEAxbq.js:66693
-return enqueueSession(() => enqueueGlobal(async () => {
-    // ... actual agent work
-}));
-```
+**Evidence from logs (example):** a child session started ~19 minutes after spawn acceptance.
 
-This means each agent run must:
-1. Acquire its **session lane** slot (usually fast — each subagent gets a unique session)
-2. Acquire the **global lane** slot (THIS IS THE BOTTLENECK)
+### 4) Silent Error Swallowing (OpenClaw)
 
-### The Bottleneck
-
-All subagent spawns use `lane: AGENT_LANE_SUBAGENT = "subagent"`:
-
-```javascript
-// pi-embedded-KOoEAxbq.js:34185
-lane: AGENT_LANE_SUBAGENT,  // = CommandLane.Subagent = "subagent"
-```
-
-The lane system initializes every lane with `maxConcurrent: 1`:
-
-```javascript
-// pi-embedded-KOoEAxbq.js:725
-const created = {
-    lane,
-    queue: [],
-    activeTaskIds: new Set(),
-    maxConcurrent: 1,  // ← ONLY ONE SUBAGENT AT A TIME, GLOBALLY
-    draining: false,
-    generation: 0
-};
-```
-
-**Impact:** If 3 subagents are spawned, they execute sequentially. If a subagent takes 5 minutes, the next one waits 5+ minutes just to start.
-
-### Evidence from Logs
-
-Session `9086ce25` full lifecycle:
-```
-01:22:59  PHANTOM: No JSONL file found              ← Agent checking for output
-01:25:06  Session not found in sessions list         ← Still not started
-01:32:22  Session Send failed: timeout               ← Send attempt times out
-01:41:31  [agent:nested] session=...9086ce25 output  ← FINALLY STARTS (19 min later!)
-07:32:11  lane wait exceeded: waitedMs=77235         ← Lane contention evidence
-```
-
-Lane contention evidence (24 hours):
-```
-lane=session:agent:nexus:... waitedMs=142717 queueAhead=1   ← 2.4 MINUTES
-lane=session:agent:nexus:... waitedMs=136631 queueAhead=0   ← 2.3 MINUTES  
-lane=session:agent:nexus:... waitedMs=120488 queueAhead=1   ← 2 MINUTES
-lane=session:agent:synth:... waitedMs=77235  queueAhead=0   ← 1.3 MINUTES
-```
-
-Discord listener slowness (cascading effect):
-```
-Slow listener: DiscordMessageListener took 309.6 seconds
-Slow listener: DiscordMessageListener took 255 seconds
-Slow listener: DiscordMessageListener took 251.9 seconds
-```
-
-### Silent Error Swallowing
-
-```javascript
-// pi-embedded-KOoEAxbq.js:10003
-async function waitForSubagentCompletion(runId, waitTimeoutMs) {
-    try {
-        // ... wait for agent.wait ...
-        // ... announce results ...
-    } catch {}  // ← SILENTLY SWALLOWS ALL ERRORS
-}
-```
-
-If `agent.wait` throws (timeout, connection error, etc.), the error vanishes. The spawning agent never learns that the subagent failed to complete.
-
-### No Start Verification
-
-The `sessions_spawn` tool returns immediately after the gateway accepts the request:
-
-```javascript
-// pi-embedded-KOoEAxbq.js:34175-34185  
-const response = await callGateway({
-    method: "agent",
-    params: { ... },
-    timeoutMs: 1e4  // 10 second timeout just for acceptance
-});
-// Returns immediately with { status: "accepted" }
-```
-
-There is no follow-up check that the agent actually started executing. The `registerSubagentRun` + `waitForSubagentCompletion` flow monitors for completion but doesn't detect the "never started" case.
+In some builds, subagent completion waiting logic swallows errors (`catch {}`), making failures invisible to the parent.
 
 ---
 
 ## Phantom Session Taxonomy
 
-| Type | Cause | Frequency | Duration |
-|------|-------|-----------|----------|
-| **Slow Start** | Global lane contention | High | 1-20 min |
-| **Timeout Kill** | Embedded run timeout (60-300s) | Medium | Session is killed |
-| **Silent Drop** | Error in `agentCommand` swallowed | Low | Permanent |
-| **Gateway Restart** | Gateway restarts mid-spawn | Rare | Permanent |
+| Type | Likely Cause | Frequency | Duration |
+|------|--------------|-----------|----------|
+| **Slow Start** | Global lane contention | High | 1–20 min |
+| **Init Stall** | Workspace bloat / large DBs | High | Permanent or long |
+| **Immediate Fail** | Unknown model / config error | Medium | Permanent |
+| **Silent Drop** | Gateway/agent error swallowed | Low | Permanent |
+| **Gateway Restart** | Restart mid-spawn | Rare | Permanent |
 
 ---
 
-## Mitigation Strategy
+## Mitigation Strategy (VentureOS Layer)
 
-### What We CAN Control (VentureOS Layer)
+### Prevention
+1. **Workspace Health Check** (scheduled + on-demand)
+   - Alert if workspace is over a threshold (e.g., 500MB)
+   - Detect large DB files and optionally quarantine
+2. **Pre-spawn Health Check**
+   - Fail fast if workspace is unhealthy
+3. **Model Pre-Validation**
+   - Validate `provider/model` strings
 
-Since the lane system is internal to OpenClaw (we can't modify it), our mitigation operates at the **spawn wrapper level**:
-
-1. **Post-spawn verification** — Check that the agent actually started producing output
-2. **Phantom detection** — Monitor for sessions that were spawned but never started
-3. **Retry with backoff** — Re-spawn if verification fails
-4. **Alerting** — Notify when phantom rate exceeds threshold
-
-### What Would Fix It (OpenClaw Layer)
-
-These are recommendations for the OpenClaw team:
-1. Increase `maxConcurrent` for the `subagent` lane (e.g., 3-5)
-2. Remove `catch {}` in `waitForSubagentCompletion`
-3. Add lifecycle events for "agent queued" vs "agent started"
-4. Add `agent.status` gateway method to check if a run has started
-
----
-
-## Incident Log
-
-| # | Date | Session | Agent | Wait Time | Outcome |
-|---|------|---------|-------|-----------|---------|
-| 1 | 2/14 22:01 | f7bad6fe | — | Unknown | Phantom (no JSONL) |
-| 2 | 2/15 00:20 | b68fdde1 | — | Unknown | Phantom (no JSONL) |
-| 3 | 2/15 01:09 | 8b16c606 | — | Unknown | Phantom (no JSONL) |
-| 4 | 2/15 01:22 | 9086ce25 | synth | ~19 min | Eventually started |
-| 5 | 2/15 ~10:30 | 6366fdfc | atlas | Unknown | Phantom (this dispatch) |
+### Detection & Recovery
+4. **Post-spawn verification**
+   - Poll child session for messages > 0 for up to N seconds
+5. **Retry with exponential backoff**
+   - Re-spawn if verification fails
+6. **Alerting + metrics**
+   - Track phantom rate; notify when above threshold
 
 ---
 
-## Files
+## Scripts
 
-- `scripts/phantom-detector.mjs` — Detects phantom sessions from gateway logs
-- `scripts/spawn-with-retry.mjs` — Enhanced spawn wrapper with retry/backoff (no verification; see `spawn-with-verification.mjs` for verification logic)
-- `docs/SPAWN_RELIABILITY.md` — This document
+### 1) `scripts/check-workspace-health.sh`
+Monitors all agent workspaces for total size and large files.
+
+Examples:
+```bash
+# Human report
+./scripts/check-workspace-health.sh
+
+# JSON
+./scripts/check-workspace-health.sh --json
+
+# Alert + auto-quarantine DB files > 10MB
+./scripts/check-workspace-health.sh --alert --quarantine
+```
+
+### 2) `scripts/spawn-with-health-check.mjs`
+Spawn wrapper: health check → spawn → verify → retry.
+
+Example:
+```bash
+node ./scripts/spawn-with-health-check.mjs \
+  --agent synth \
+  --prompt "Implement feature X" \
+  --model "anthropic/claude-sonnet-4-5" \
+  --max-retries 3 \
+  --verify-timeout 15000 \
+  --json
+```
+
+### 3) `scripts/phantom-detector.sh`
+Scans sessions for phantoms (0 messages, missing transcripts, etc.).
+
+### 4) `scripts/detect-phantom-sessions.sh`
+Cron wrapper: runs phantom detector + workspace health check.
+
+---
+
+## Agent Protocol: Dispatch Verification
+
+**MANDATORY when spawning subagents:**
+
+1. **Before dispatch**
+   - Check target workspace health (or use `spawn-with-health-check.mjs`)
+   - Validate model string
+   - Do **not** write “dispatched” to memory yet
+2. **Dispatch**
+   - Spawn
+   - Capture `childSessionKey`
+3. **Verify**
+   - Wait up to 15s (configurable)
+   - Confirm child produces at least 1 message
+4. **Document**
+   - Only after verification, record “dispatched (verified)”
+
+---
+
+## Recommendations (OpenClaw Layer)
+
+1. Increase `maxConcurrent` for the global `subagent` lane (e.g., 3–5)
+2. Remove / log swallowed errors in subagent wait logic
+3. Add lifecycle events: queued vs started vs running
+4. Add a gateway status API to confirm a session has actually started
+
+---
+
+## Incident History (Partial)
+
+| Date | Session | Agent | Root Cause | Notes |
+|------|---------|-------|------------|------|
+| Feb 14–15 | multiple | various | lane contention / init stall | 0 messages or extreme start delay |
+| Feb 15 | atlas | atlas | workspace bloat (SQLite) | resolved by quarantine |
+
+---
+
+## Acceptance Criteria Status
+
+- [x] Root causes identified (workspace bloat + config errors + lane contention)
+- [x] Workspace health check script
+- [x] Spawn wrapper: health check + verify + retry
+- [x] Phantom detector
+- [x] Documentation (this file)
+- [ ] Cron jobs registered (health daily + phantom scan every 30min)
