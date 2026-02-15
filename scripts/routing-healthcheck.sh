@@ -120,20 +120,39 @@ if [[ ! -f "$webhook_map_path" ]]; then
   exit 1
 fi
 
-# Required role channel ids (alerts channel is where we notify; a webhook for alerts is preferred but not required)
+# PERF-003: Batch-check all role channel IDs + alerts webhook in a single jq call.
+# Previous pattern: 1 jq call to list IDs + N jq calls to check each → N+1.
+# New pattern: 1 jq call to list IDs + 1 jq call to batch-check all → 2 total.
 role_ids=$(jq -r '.roleChannels | to_entries | map(.value) | unique | .[]' "$CFG")
 
-missing_roles=()
+# Collect all IDs to check (role channels + alerts channel) into a single jq query
+all_check_ids=()
 for cid in $role_ids; do
-  # webhook map is expected to be an object keyed by channelId
-  # (we treat presence of any value at that key as "configured")
-  present=$(jq -r --arg cid "$cid" 'has($cid)' "$webhook_map_path")
-  if [[ "$present" != "true" ]]; then
-    missing_roles+=("$cid")
-  fi
+  all_check_ids+=("$cid")
 done
+all_check_ids+=("$alerts_channel_id")
 
-has_alerts_webhook=$(jq -r --arg cid "$alerts_channel_id" 'has($cid)' "$webhook_map_path")
+# Single jq call: check presence of ALL channel IDs at once, output "id:true/false" pairs
+missing_roles=()
+has_alerts_webhook="false"
+
+if [[ ${#all_check_ids[@]} -gt 0 ]]; then
+  # Build JSON array of IDs to check
+  check_json=$(printf '%s\n' "${all_check_ids[@]}" | jq -R . | jq -s .)
+
+  # Single jq invocation: for each ID, output "id=present"
+  batch_result=$(jq -r --argjson ids "$check_json" \
+    '$ids[] as $cid | "\($cid)=\(has($cid))"' "$webhook_map_path")
+
+  while IFS='=' read -r cid present; do
+    [[ -z "$cid" ]] && continue
+    if [[ "$cid" == "$alerts_channel_id" ]]; then
+      has_alerts_webhook="$present"
+    elif [[ "$present" != "true" ]]; then
+      missing_roles+=("$cid")
+    fi
+  done <<< "$batch_result"
+fi
 
 status="ok"
 reason=""

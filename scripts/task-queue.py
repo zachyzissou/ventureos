@@ -36,6 +36,54 @@ except Exception:  # pragma: no cover
 DEFAULT_TZ = "America/Chicago"
 
 
+class PerfStats:
+    """Lightweight performance tracker for query/file-I/O operations.
+
+    Records wall-clock time, file read/write counts, and named marks
+    so we can measure and log N+1 elimination results.
+    """
+
+    def __init__(self, operation: str):
+        self.operation = operation
+        self.start_time = time.time()
+        self.end_time: float | None = None
+        self.reads = 0
+        self.writes = 0
+        self.marks: list[tuple[str, float]] = []
+
+    def file_read(self) -> None:
+        self.reads += 1
+
+    def file_write(self) -> None:
+        self.writes += 1
+
+    def mark(self, label: str) -> None:
+        self.marks.append((label, time.time()))
+
+    def finish(self) -> None:
+        self.end_time = time.time()
+
+    def elapsed_ms(self) -> float:
+        end = self.end_time or time.time()
+        return round((end - self.start_time) * 1000, 2)
+
+    def to_dict(self) -> dict:
+        return {
+            "operation": self.operation,
+            "elapsed_ms": self.elapsed_ms(),
+            "file_reads": self.reads,
+            "file_writes": self.writes,
+            "marks": {label: round((ts - self.start_time) * 1000, 2) for label, ts in self.marks},
+        }
+
+    def log_summary(self, stream=None) -> None:
+        import io
+        s = stream or io.StringIO()
+        d = self.to_dict()
+        s.write(f"[perf] {d['operation']}: {d['elapsed_ms']}ms, "
+                f"reads={d['file_reads']}, writes={d['file_writes']}\n")
+
+
 def current_agent_id() -> str:
     raw = os.getenv("OPENCLAW_AGENT_ID") or os.getenv("AGENT_ID") or "main"
     safe = "".join(c if c.isalnum() or c in "._-" else "-" for c in raw)
@@ -296,8 +344,19 @@ def run_command(command: list[str], timeout_s: int) -> tuple[int, str, str, floa
 
 
 def cmd_work(args: argparse.Namespace) -> int:
+    """Process due tasks from the queue.
+
+    PERF-003 fix: Previously used an N+1 pattern — 1 read to get the queue,
+    then N additional read+write cycles (one per task executed). Now uses a
+    two-phase approach:
+      Phase 1: Single read → claim all eligible tasks → single write
+      Phase 2: Execute all claimed tasks (no lock held)
+      Phase 3: Single read → batch-update all results → single write
+    Result: 2 reads + 2 writes total, regardless of task count (was 1 + 2N).
+    """
     qpath = Path(args.queue)
     cfg = load_engine_config(Path(args.config))
+    perf = PerfStats("cmd_work")
 
     if not cfg.enabled:
         print("HEARTBEAT_OK")
@@ -305,13 +364,16 @@ def cmd_work(args: argparse.Namespace) -> int:
 
     now_local = local_now(cfg.tz)
     quiet = in_quiet_hours(now_local, cfg.quiet_start, cfg.quiet_end)
-    ran = 0
 
+    # --- Phase 1: Single read, claim eligible tasks, single write ---
+    claimed: list[dict] = []  # Shallow copies of claimed items (id + command + timeout)
+
+    perf.mark("phase1_claim_start")
     with LockedQueue(qpath) as q:
+        perf.file_read()
         obj = q.read()
         items = queue_items(obj)
 
-        # Sort by tier then nextRunAt
         tier_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
 
         def key(it: dict):
@@ -321,7 +383,7 @@ def cmd_work(args: argparse.Namespace) -> int:
 
         now = now_utc()
         for it in items:
-            if ran >= cfg.max_tasks_per_tick:
+            if len(claimed) >= cfg.max_tasks_per_tick:
                 break
             if it.get("status") != "queued":
                 continue
@@ -336,73 +398,127 @@ def cmd_work(args: argparse.Namespace) -> int:
             tier = it.get("tier", "P3")
 
             if quiet and tier != "P0":
-                # push to next window start
                 nws = next_window_start(now_local, cfg.quiet_end)
-                # convert nws (local) to UTC iso if possible
                 if ZoneInfo is not None and nws.tzinfo is not None:
                     it["nextRunAt"] = iso(nws.astimezone(dt.timezone.utc))
                 else:
                     it["nextRunAt"] = iso(now + dt.timedelta(seconds=cfg.default_backoff_seconds))
                 continue
 
-            # Claim
+            # Claim in-place
             it["status"] = "running"
             it["runningAt"] = iso(now)
             it["attempts"] = int(it.get("attempts", 0)) + 1
 
+            claimed.append({
+                "id": it.get("id"),
+                "command": it.get("command"),
+                "timeoutSeconds": int(it.get("timeoutSeconds", 300)),
+                "title": it.get("title"),
+                "tier": it.get("tier"),
+                "attempts": it.get("attempts"),
+            })
+
+        # Single write for all claims (and quiet-hour deferrals)
+        if claimed or quiet:
+            obj["generated_at"] = now.date().isoformat()
+            obj["items"] = items
             q.write(obj)
+            perf.file_write()
+    perf.mark("phase1_claim_end")
 
-            # Execute outside lock to avoid holding during long runs
-            command = it.get("command")
-            if not isinstance(command, list) or not command:
-                rc, out, err, dur = 2, "", "Missing command", 0.0
+    if not claimed:
+        perf.finish()
+        perf.log_summary(sys.stderr)
+        print("HEARTBEAT_OK")
+        return 0
+
+    # --- Phase 2: Execute all claimed tasks (no lock held) ---
+    perf.mark("phase2_execute_start")
+    results: list[dict] = []
+    for task in claimed:
+        command = task.get("command")
+        if not isinstance(command, list) or not command:
+            rc, out, err, dur = 2, "", "Missing command", 0.0
+        else:
+            rc, out, err, dur = run_command(command, task["timeoutSeconds"])
+
+        results.append({
+            "id": task["id"],
+            "rc": rc,
+            "stdout": out,
+            "stderr": err,
+            "duration": dur,
+            "title": task["title"],
+            "tier": task["tier"],
+            "attempts": task["attempts"],
+            "command": command,
+        })
+    perf.mark("phase2_execute_end")
+
+    # --- Phase 3: Single read, batch-update all results, single write ---
+    perf.mark("phase3_update_start")
+    run_log_records: list[dict] = []
+
+    with LockedQueue(qpath) as q:
+        perf.file_read()
+        obj = q.read()
+        items = queue_items(obj)
+
+        # Build index for O(1) lookup instead of O(N) scan per result
+        item_index: dict[str, dict] = {it.get("id", ""): it for it in items if it.get("id")}
+
+        for result in results:
+            target = item_index.get(result["id"])
+            if target is None:
+                continue
+
+            record = {
+                "ts": iso(now_utc()),
+                "queueId": result["id"],
+                "title": result["title"],
+                "tier": result["tier"],
+                "status": "ok" if result["rc"] == 0 else "failed",
+                "exitCode": result["rc"],
+                "durationSeconds": round(result["duration"], 3),
+                "attempt": target.get("attempts"),
+                "command": result["command"],
+            }
+
+            if result["rc"] == 0:
+                target["status"] = "done"
+                target["finishedAt"] = iso(now_utc())
+                target["lastError"] = ""
             else:
-                rc, out, err, dur = run_command(command, int(it.get("timeoutSeconds", 300)))
-
-            # Re-lock and update
-            with LockedQueue(qpath) as q2:
-                obj2 = q2.read()
-                items2 = queue_items(obj2)
-                target = next((x for x in items2 if x.get("id") == it.get("id")), None)
-                if target is None:
-                    continue
-
-                record = {
-                    "ts": iso(now_utc()),
-                    "queueId": target.get("id"),
-                    "title": target.get("title"),
-                    "tier": target.get("tier"),
-                    "status": "ok" if rc == 0 else "failed",
-                    "exitCode": rc,
-                    "durationSeconds": round(dur, 3),
-                    "attempt": target.get("attempts"),
-                    "command": target.get("command"),
-                }
-
-                if rc == 0:
-                    target["status"] = "done"
+                max_attempts = int(target.get("maxAttempts", 3))
+                target["lastError"] = (result["stderr"] or result["stdout"])[-2000:]
+                if int(target.get("attempts", 0)) >= max_attempts:
+                    target["status"] = "failed"
                     target["finishedAt"] = iso(now_utc())
-                    target["lastError"] = ""
                 else:
-                    max_attempts = int(target.get("maxAttempts", 3))
-                    target["lastError"] = (err or out)[-2000:]
-                    if int(target.get("attempts", 0)) >= max_attempts:
-                        target["status"] = "failed"
-                        target["finishedAt"] = iso(now_utc())
-                    else:
-                        # Backoff (simple exponential)
-                        backoff = min(cfg.default_backoff_seconds * (2 ** (int(target.get("attempts", 1)) - 1)), 3600)
-                        target["status"] = "queued"
-                        target["nextRunAt"] = iso(now_utc() + dt.timedelta(seconds=backoff))
-                        target.pop("runningAt", None)
+                    backoff = min(
+                        cfg.default_backoff_seconds * (2 ** (int(target.get("attempts", 1)) - 1)),
+                        3600,
+                    )
+                    target["status"] = "queued"
+                    target["nextRunAt"] = iso(now_utc() + dt.timedelta(seconds=backoff))
+                    target.pop("runningAt", None)
 
-                obj2["items"] = items2
-                obj2["generated_at"] = now_utc().date().isoformat()
-                q2.write(obj2)
+            run_log_records.append(record)
 
-                append_task_run_log(Path(args.task_runs_dir), record)
+        # Single write for all updates
+        obj["items"] = items
+        obj["generated_at"] = now_utc().date().isoformat()
+        q.write(obj)
+        perf.file_write()
 
-                ran += 1
+    # Batch-append all run log records
+    for record in run_log_records:
+        append_task_run_log(Path(args.task_runs_dir), record)
+
+    perf.mark("phase3_update_end")
+    perf.finish()
+    perf.log_summary(sys.stderr)
 
     print("HEARTBEAT_OK")
     return 0
