@@ -175,5 +175,5 @@ These are recommendations for the OpenClaw team:
 ## Files
 
 - `scripts/phantom-detector.mjs` — Detects phantom sessions from gateway logs
-- `scripts/spawn-with-retry.mjs` — Enhanced spawn wrapper with verification (updated)
+- `scripts/spawn-with-retry.mjs` — Enhanced spawn wrapper with retry/backoff (no verification; see `spawn-with-verification.mjs` for verification logic)
 - `docs/SPAWN_RELIABILITY.md` — This document

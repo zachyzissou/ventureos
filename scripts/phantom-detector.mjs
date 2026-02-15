@@ -43,10 +43,11 @@ const sinceTs = new Date(SINCE).getTime();
 // ---------- Log Parsing ----------
 
 function parseTimestamp(line) {
-  // Matches ISO timestamps at start of line or in brackets
-  const m = line.match(/^(\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})?)/);
-  if (m) return new Date(m[1]).getTime();
-  return null;
+  // Matches ISO timestamps at start of line OR immediately after '[' (e.g., "[2026-02-15T01:02:03.456Z]")
+  const m = line.match(/(?:^|\[)(\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})?)/);
+  if (!m) return null;
+  const ts = Date.parse(m[1]);
+  return Number.isFinite(ts) ? ts : null;
 }
 
 function extractSessionUUID(line) {
@@ -77,12 +78,12 @@ async function detectPhantoms() {
   const laneWarnings = [];
   const runTimeouts = [];
   const slowListeners = [];
-  const sessionActivity = new Map(); // uuid -> { lastActivity, hasOutput }
 
   // Scan error log for PHANTOM markers and lane warnings
   for (const line of errLines) {
     const ts = parseTimestamp(line);
-    if (ts && ts < sinceTs) continue;
+    if (ts === null) continue;
+    if (ts < sinceTs) continue;
 
     // PHANTOM detection
     if (line.includes('PHANTOM:')) {
@@ -146,7 +147,8 @@ async function detectPhantoms() {
   // Scan main log for session activity (resolved phantoms)
   for (const line of logLines) {
     const ts = parseTimestamp(line);
-    if (ts && ts < sinceTs) continue;
+    if (ts === null) continue;
+    if (ts < sinceTs) continue;
 
     // Check if any phantom session eventually produced output
     for (const [uuid, entry] of phantoms) {
@@ -171,8 +173,13 @@ async function detectPhantoms() {
 // ---------- Analysis ----------
 
 function analyzeResults({ phantoms, laneWarnings, runTimeouts, slowListeners }) {
+  const nowTs = Date.now();
+  const thresholdMs = Math.max(0, THRESHOLD_MINUTES) * 60 * 1000;
+
   const activePhantoms = [...phantoms.entries()]
     .filter(([, v]) => !v.resolved)
+    // Only flag phantoms that have persisted longer than the threshold.
+    .filter(([, v]) => thresholdMs === 0 || (nowTs - v.firstSeen) >= thresholdMs)
     .map(([uuid, v]) => ({
       uuid,
       firstSeen: new Date(v.firstSeen).toISOString(),
