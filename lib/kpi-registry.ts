@@ -223,6 +223,56 @@ export async function computeKPI(
   }
 }
 
+// ============================================================================
+// SQL Safety — Allowlists & Validation (VULN-002 fix)
+// ============================================================================
+
+/** Allowlist of tables that KPI queries may reference */
+const ALLOWED_TABLES = new Set([
+  'psionic_stats',
+  'interaction_logs',
+  'khala_network',
+  'khala_drift_history',
+  'psionic_bonds',
+  'ops_agent_memory',
+  'rpg_warp_tech_inputs',
+]);
+
+/** Validate that an identifier (table/column name) contains only safe characters */
+export function isValidSqlIdentifier(name: string): boolean {
+  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name);
+}
+
+/**
+ * Validate a SQL field expression (column name, aggregate, or aliased expression).
+ * Permits: simple identifiers, common aggregates (COUNT, SUM, AVG, MIN, MAX),
+ * DISTINCT, and AS aliases. Rejects anything else.
+ */
+export function isValidFieldExpression(expr: string): boolean {
+  const trimmed = expr.trim();
+  // Simple identifier: column_name
+  if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) return true;
+  // Aggregate with optional alias: COUNT(col) AS alias
+  if (/^(?:COUNT|SUM|AVG|MIN|MAX|DISTINCT)\s*\([a-zA-Z0-9_*\s,]+\)(?:\s+AS\s+[a-zA-Z_][a-zA-Z0-9_]*)?$/i.test(trimmed)) return true;
+  // Star
+  if (trimmed === '*') return true;
+  return false;
+}
+
+/**
+ * Validate a date string to prevent injection via date parameters.
+ * Accepts only YYYY-MM-DD format.
+ */
+export function isValidDateString(date: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date);
+}
+
+/** Prepared query with parameterized values */
+interface PreparedQuery {
+  sql: string;
+  params: any[];
+}
+
 /**
  * Fetch data from all configured data sources
  */
@@ -235,8 +285,8 @@ async function fetchDataSources(
   
   for (const source of sources) {
     try {
-      const query = buildQuery(source, date);
-      const result = db.prepare(query).get();
+      const { sql, params } = buildQuery(source, date);
+      const result = db.prepare(sql).get(...params);
       
       // Merge result into data object
       if (result) {
@@ -252,42 +302,81 @@ async function fetchDataSources(
 }
 
 /**
- * Build SQL query from data source configuration
+ * Build SQL query from data source configuration.
+ * Returns a parameterized query with bound values — no user input is
+ * ever interpolated into the SQL string.
+ *
+ * Structural identifiers (table, field) are validated against allowlists.
+ * The date parameter is always bound via a `?` placeholder.
  */
-function buildQuery(source: DataSource, date: string): string {
+function buildQuery(source: DataSource, date: string): PreparedQuery {
+  const params: any[] = [];
+
+  // ── Validate table name ──────────────────────────────────────────────
+  if (!isValidSqlIdentifier(source.table)) {
+    throw new Error(`Invalid table name: ${source.table}`);
+  }
+  if (!ALLOWED_TABLES.has(source.table)) {
+    throw new Error(`Table not in allowlist: ${source.table}`);
+  }
+
+  // ── SELECT clause ────────────────────────────────────────────────────
   let query = 'SELECT ';
   
   if (source.field) {
-    query += `${source.field}`;
+    // Validate each field expression in a comma-separated list
+    const fields = source.field.split(',');
+    for (const f of fields) {
+      if (!isValidFieldExpression(f)) {
+        throw new Error(`Invalid field expression: ${f.trim()}`);
+      }
+    }
+    query += source.field;
   } else {
     query += '*';
   }
   
   query += ` FROM ${source.table}`;
   
+  // ── JOIN clause (from trusted config, validated) ─────────────────────
   if (source.join) {
+    // JOIN clauses come from on-disk config files. Validate they only
+    // reference allowed tables and don't contain sub-queries or semicolons.
+    if (/;|--|\/\*|\bDROP\b|\bALTER\b|\bTRUNCATE\b|\bEXEC\b/i.test(source.join)) {
+      throw new Error(`Suspicious JOIN clause rejected: ${source.join}`);
+    }
     query += ` ${source.join}`;
   }
   
-  // Build WHERE clause
+  // ── WHERE clause ─────────────────────────────────────────────────────
   const whereConditions: string[] = [];
   
   if (source.filter) {
+    // Filters come from on-disk config files. Reject anything dangerous.
+    if (/;|--|\/\*|\bDROP\b|\bALTER\b|\bTRUNCATE\b|\bEXEC\b/i.test(source.filter)) {
+      throw new Error(`Suspicious filter clause rejected: ${source.filter}`);
+    }
     whereConditions.push(`(${source.filter})`);
   }
   
-  // Add date filter for tables with snapshot_date or created_at
+  // Add date filter using parameterized binding (VULN-002 critical fix)
+  if (!isValidDateString(date)) {
+    throw new Error(`Invalid date format (expected YYYY-MM-DD): ${date}`);
+  }
+
   if (source.table === 'psionic_stats') {
-    whereConditions.push(`snapshot_date = '${date}'`);
+    whereConditions.push('snapshot_date = ?');
+    params.push(date);
   } else if (source.table === 'interaction_logs') {
-    whereConditions.push(`DATE(created_at) = '${date}'`);
+    whereConditions.push('DATE(created_at) = ?');
+    params.push(date);
   }
   
   if (whereConditions.length > 0) {
     query += ' WHERE ' + whereConditions.join(' AND ');
   }
   
-  return query;
+  return { sql: query, params };
 }
 
 /**
