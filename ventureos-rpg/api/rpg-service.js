@@ -187,22 +187,45 @@ async function getKhalaNetwork({ dbPath = defaultDbPath(), driftLimit = 8 } = {}
     return { id, ...meta, rank: rr.rank, xp: rr.xp };
   });
 
-  // Drift history per bond (small N; ok to do per-bond queries).
-  const edges = [];
-  for (const b of bonds) {
-    let drift = [];
-    if (lim > 0) {
-      const sql = `
-        SELECT old_affinity, new_affinity, delta, reason, interaction_type, related_mission_id, created_at
-        FROM khala_drift_history
-        WHERE (agent_a='${b.agent_a}' AND agent_b='${b.agent_b}')
-           OR (agent_a='${b.agent_b}' AND agent_b='${b.agent_a}')
-        ORDER BY created_at DESC
-        LIMIT ${lim};
-      `;
-      try { drift = await sqliteJson(dbPath, sql); } catch { drift = []; }
-    }
-    edges.push({
+  // PERF-003: Batch drift history fetch — single query replaces N per-bond
+  // queries (was 28+ queries, now 1). Uses ROW_NUMBER() window function to
+  // limit results per bond pair, then groups in memory. Bond pairs are
+  // normalised (agent_a < agent_b) by the khala_network CHECK constraint.
+  let driftByBond = new Map();
+  if (lim > 0) {
+    try {
+      const allDrift = await sqliteJson(dbPath, `
+        WITH ranked AS (
+          SELECT agent_a, agent_b,
+                 old_affinity, new_affinity, delta, reason,
+                 interaction_type, related_mission_id, created_at,
+                 ROW_NUMBER() OVER (
+                   PARTITION BY agent_a, agent_b
+                   ORDER BY created_at DESC
+                 ) AS rn
+          FROM khala_drift_history
+        )
+        SELECT agent_a, agent_b,
+               old_affinity, new_affinity, delta, reason,
+               interaction_type, related_mission_id, created_at
+        FROM ranked
+        WHERE rn <= ${lim}
+        ORDER BY agent_a, agent_b, created_at DESC;
+      `);
+      for (const d of allDrift) {
+        const key = `${d.agent_a}|${d.agent_b}`;
+        if (!driftByBond.has(key)) driftByBond.set(key, []);
+        driftByBond.get(key).push(d);
+      }
+    } catch { driftByBond = new Map(); }
+  }
+
+  const edges = bonds.map(b => {
+    const key = `${b.agent_a}|${b.agent_b}`;
+    // Also check reversed key in case drift history isn't normalised
+    const keyRev = `${b.agent_b}|${b.agent_a}`;
+    const drift = driftByBond.get(key) || driftByBond.get(keyRev) || [];
+    return {
       agentA: b.agent_a,
       agentB: b.agent_b,
       affinity: b.affinity,
@@ -219,8 +242,8 @@ async function getKhalaNetwork({ dbPath = defaultDbPath(), driftLimit = 8 } = {}
         relatedMissionId: d.related_mission_id,
         createdAt: d.created_at
       }))
-    });
-  }
+    };
+  });
 
   return { ok: true, dbPath, updatedAt: new Date().toISOString(), nodes, edges };
 }
