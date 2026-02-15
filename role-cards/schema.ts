@@ -1,0 +1,214 @@
+/**
+ * Khaydarin Card Schema — VentureOS Agent Identity System
+ *
+ * Named for the Protoss Khaydarin crystals: memory lattices that store
+ * identity, purpose, and psionic resonance. Each card is dual-faced:
+ * The Pylon Side (capabilities) and The Void Side (constraints).
+ *
+ * Schema derived from VoxYZ's 6-layer role card system, extended with
+ * voice directives, affinity bonds, tool access, and persistent state.
+ */
+
+// ═══════════════════════════════════════════
+// TYPE DEFINITIONS
+// ═══════════════════════════════════════════
+
+export type ProtossCaste = "templar" | "judicator" | "khalai" | "nerazim";
+
+export interface WarpChannel {
+  /** Channel type: task, query, event, artifact */
+  type: "task" | "query" | "event" | "artifact";
+  /** Data format: text, json, markdown, code, yaml */
+  format: string;
+  /** Human-readable description */
+  description: string;
+}
+
+export interface Metric {
+  /** What we're measuring */
+  name: string;
+  /** How we measure it */
+  measurement: string;
+  /** Target value/range */
+  target: string;
+}
+
+// ═══════════════════════════════════════════
+// MAIN CARD INTERFACE
+// ═══════════════════════════════════════════
+
+export interface KhaydarinCard {
+  // ── Identity ──────────────────────────────
+  /** Unique agent identifier (lowercase, kebab-friendly) */
+  id: string;
+  /** Display name */
+  name: string;
+  /** Protoss rank/title */
+  title: string;
+  /** Emoji glyph for quick identification */
+  glyph: string;
+  /** Protoss caste: determines communication norms */
+  caste: ProtossCaste;
+
+  // ── Front Face: The Pylon Side ────────────
+
+  /** Layer 1: Domain — what territory this agent owns */
+  nexusSphere: {
+    /** One-line domain statement */
+    domain: string;
+    /** Explicit areas of authority */
+    jurisdiction: string[];
+    /** "Not my job" — explicit exclusions */
+    boundaries: string[];
+  };
+
+  /** Layer 2: I/O — what goes in, what comes out */
+  warpChannels: {
+    inputs: WarpChannel[];
+    outputs: WarpChannel[];
+  };
+
+  /** Layer 3: Done — how the agent knows a task is finished */
+  warpComplete: {
+    /** Exit criteria */
+    conditions: string[];
+    /** Minimum quality standard */
+    qualityGate: string;
+    /** How results are packaged */
+    handoffFormat: string;
+  };
+
+  // ── Back Face: The Void Side ──────────────
+
+  /** Layer 4: Hard Bans — absolute prohibitions */
+  voidInterdicts: {
+    /** NEVER do these things */
+    hardBans: string[];
+    /** What goes wrong if bans are violated */
+    failureModes: string[];
+    /** Why each ban exists */
+    rationale: string[];
+  };
+
+  /** Layer 5: Escalation — when to hand off */
+  psionicCascade: {
+    /** Who to call when stuck */
+    escalateTo: string[];
+    /** What triggers escalation */
+    escalateTriggers: string[];
+    /** Max time before auto-escalate */
+    timeout: string;
+    /** What to do if escalation target unavailable */
+    fallback: string;
+  };
+
+  /** Layer 6: Metrics — how performance is measured */
+  resonanceReadings: {
+    metrics: Metric[];
+    /** How to verify agent is functioning */
+    healthCheck: string;
+    /** Service level expectation */
+    sla: string;
+  };
+
+  // ── Extensions ────────────────────────────
+
+  /** Layer 7: Voice — personality and communication style */
+  psionicSignature: {
+    /** Communication style description */
+    voice: string;
+    /** Key personality traits */
+    personality: string[];
+    /** How this agent handles disagreement */
+    conflictPattern: string;
+    /** Optional signature phrase */
+    catchphrase?: string;
+  };
+
+  /** Layer 8: Affinities — pairwise trust scores */
+  khalaBonds: Record<string, number>;
+
+  /** Layer 9: Tools — what tools/skills this agent can invoke */
+  forgeAccess: string[];
+
+  /** Layer 10: State — what persistent state this agent maintains */
+  crystalMemory: {
+    /** What state survives sessions */
+    persists: string[];
+    /** What state is session-scoped */
+    volatiles: string[];
+  };
+}
+
+// ═══════════════════════════════════════════
+// VALIDATION
+// ═══════════════════════════════════════════
+
+export function validateCard(card: KhaydarinCard): KhaydarinCard {
+  // Affinity bounds check
+  for (const [agent, score] of Object.entries(card.khalaBonds)) {
+    if (score < 0.10 || score > 0.95) {
+      throw new Error(
+        `${card.id}: Affinity with ${agent} is ${score}, must be 0.10-0.95`
+      );
+    }
+  }
+
+  // Hard bans must have matching rationale
+  if (card.voidInterdicts.hardBans.length !== card.voidInterdicts.rationale.length) {
+    throw new Error(
+      `${card.id}: hardBans count (${card.voidInterdicts.hardBans.length}) ` +
+      `!= rationale count (${card.voidInterdicts.rationale.length})`
+    );
+  }
+
+  // Self-affinity check
+  if (card.khalaBonds[card.id] !== undefined) {
+    throw new Error(`${card.id}: Cannot have affinity with self`);
+  }
+
+  return card;
+}
+
+// ═══════════════════════════════════════════
+// SOUL.MD GENERATOR
+// ═══════════════════════════════════════════
+
+export function generateSoulMd(card: KhaydarinCard): string {
+  const sections: string[] = [];
+
+  sections.push(`# SOUL.md — ${card.name} (${card.title})\n`);
+  sections.push(`${card.glyph} **${card.name}** — ${card.title} of the ${card.caste} caste.\n`);
+  sections.push(`> ${card.nexusSphere.domain}\n`);
+
+  sections.push(`## My Domain\n`);
+  card.nexusSphere.jurisdiction.forEach(j => sections.push(`- ${j}`));
+
+  sections.push(`\n## Not My Domain\n`);
+  card.nexusSphere.boundaries.forEach(b => sections.push(`- ${b}`));
+
+  sections.push(`\n## Voice\n`);
+  sections.push(card.psionicSignature.voice);
+  sections.push(`\n### Personality`);
+  card.psionicSignature.personality.forEach(p => sections.push(`- ${p}`));
+  sections.push(`\n### Conflict Style`);
+  sections.push(card.psionicSignature.conflictPattern);
+  if (card.psionicSignature.catchphrase) {
+    sections.push(`\n> *"${card.psionicSignature.catchphrase}"*`);
+  }
+
+  sections.push(`\n## Hard Rules (Non-Negotiable)\n`);
+  card.voidInterdicts.hardBans.forEach(ban => sections.push(`- ${ban}`));
+
+  sections.push(`\n## When I'm Done\n`);
+  card.warpComplete.conditions.forEach(c => sections.push(`- ${c}`));
+  sections.push(`\n**Quality Gate:** ${card.warpComplete.qualityGate}`);
+
+  sections.push(`\n## When to Escalate\n`);
+  sections.push(`**Escalate to:** ${card.psionicCascade.escalateTo.join(", ")}`);
+  card.psionicCascade.escalateTriggers.forEach(t => sections.push(`- ${t}`));
+  sections.push(`\n**Timeout:** ${card.psionicCascade.timeout}`);
+  sections.push(`**Fallback:** ${card.psionicCascade.fallback}`);
+
+  return sections.join("\n");
+}
