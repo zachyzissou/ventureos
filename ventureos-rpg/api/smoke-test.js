@@ -1,7 +1,14 @@
+const assert = require('assert/strict');
+const os = require('os');
+const path = require('path');
+const fs = require('fs');
+const { execFileSync } = require('child_process');
+const { sqliteJson } = require('./sqlite-cli');
+
 const base = process.env.RPG_BASE_URL || 'http://127.0.0.1:7001';
 
-async function check(path) {
-  const url = base + path;
+async function check(pathname) {
+  const url = base + pathname;
   const res = await fetch(url);
   const txt = await res.text();
   let json = null;
@@ -12,7 +19,38 @@ async function check(path) {
   return json;
 }
 
+async function sqlInjectionSelfTest() {
+  const dbPath = path.join(os.tmpdir(), `ventureos-rpg-sqlinj-${process.pid}-${Date.now()}.db`);
+
+  try {
+    execFileSync('sqlite3', [
+      dbPath,
+      [
+        'PRAGMA journal_mode=WAL;',
+        'CREATE TABLE users(name TEXT);',
+        "INSERT INTO users(name) VALUES ('alice'), ('bob');"
+      ].join('\n')
+    ], { stdio: 'ignore' });
+
+    const ok = await sqliteJson(dbPath, 'SELECT name FROM users WHERE name = $name;', { name: 'alice' });
+    assert.equal(ok.length, 1);
+    assert.equal(ok[0].name, 'alice');
+
+    // If the query is not parameterized, this input would typically turn the WHERE
+    // clause into a tautology and return both rows.
+    const injection = "alice' OR 1=1 --";
+    const attacked = await sqliteJson(dbPath, 'SELECT name FROM users WHERE name = $name;', { name: injection });
+    assert.equal(attacked.length, 0);
+
+    console.log('sql injection self-test ok');
+  } finally {
+    try { fs.rmSync(dbPath, { force: true }); } catch {}
+  }
+}
+
 (async () => {
+  await sqlInjectionSelfTest();
+
   const stats = await check('/api/rpg/stats');
   console.log('stats ok; agents:', stats.agents?.length);
 

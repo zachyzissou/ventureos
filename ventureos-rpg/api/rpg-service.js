@@ -55,18 +55,19 @@ function mapRankRow(row) {
 }
 
 async function getLatestStatsAll({ dbPath = defaultDbPath() } = {}) {
-  const sql = `
-    WITH latest AS (
-      SELECT agent_id, MAX(snapshot_date) AS snapshot_date
-      FROM psionic_stats
-      GROUP BY agent_id
-    )
-    SELECT s.*, r.rank, r.xp, r.xp_from_memory, r.xp_from_missions, r.next_rank_at, r.updated_at AS rank_updated_at
-    FROM psionic_stats s
-    JOIN latest l ON l.agent_id = s.agent_id AND l.snapshot_date = s.snapshot_date
-    LEFT JOIN psionic_ranks r ON r.agent_id = s.agent_id
-    ORDER BY s.agent_id ASC;
-  `;
+  const sql = [
+    'WITH latest AS (',
+    '  SELECT agent_id, MAX(snapshot_date) AS snapshot_date',
+    '  FROM psionic_stats',
+    '  GROUP BY agent_id',
+    ')',
+    'SELECT s.*, r.rank, r.xp, r.xp_from_memory, r.xp_from_missions, r.next_rank_at, r.updated_at AS rank_updated_at',
+    'FROM psionic_stats s',
+    'JOIN latest l ON l.agent_id = s.agent_id AND l.snapshot_date = s.snapshot_date',
+    'LEFT JOIN psionic_ranks r ON r.agent_id = s.agent_id',
+    'ORDER BY s.agent_id ASC;'
+  ].join('\n');
+
   const rows = await sqliteJson(dbPath, sql);
   const agents = rows.map(r => {
     const stats = mapStatsRow(r);
@@ -81,6 +82,7 @@ async function getLatestStatsAll({ dbPath = defaultDbPath() } = {}) {
     const meta = getAgentMeta(stats.agentId);
     return { ...meta, ...stats, rank };
   });
+
   return {
     ok: true,
     dbPath,
@@ -93,17 +95,19 @@ async function getLatestStatsAgent(agentId, { dbPath = defaultDbPath() } = {}) {
   const safe = sanitizeAgentId(agentId);
   if (!safe) return { ok: false, error: 'Bad agent id' };
 
-  const sql = `
-    SELECT s.*, r.rank, r.xp, r.xp_from_memory, r.xp_from_missions, r.next_rank_at, r.updated_at AS rank_updated_at
-    FROM psionic_stats s
-    LEFT JOIN psionic_ranks r ON r.agent_id = s.agent_id
-    WHERE s.agent_id = '${safe}'
-    ORDER BY s.snapshot_date DESC
-    LIMIT 1;
-  `;
-  const rows = await sqliteJson(dbPath, sql);
+  const sql = [
+    'SELECT s.*, r.rank, r.xp, r.xp_from_memory, r.xp_from_missions, r.next_rank_at, r.updated_at AS rank_updated_at',
+    'FROM psionic_stats s',
+    'LEFT JOIN psionic_ranks r ON r.agent_id = s.agent_id',
+    'WHERE s.agent_id = $agentId',
+    'ORDER BY s.snapshot_date DESC',
+    'LIMIT 1;'
+  ].join('\n');
+
+  const rows = await sqliteJson(dbPath, sql, { agentId: safe });
   const row = rows[0];
   if (!row) return { ok: false, error: 'Not found', agentId: safe };
+
   const stats = mapStatsRow(row);
   const rank = mapRankRow({
     rank: row.rank,
@@ -113,6 +117,7 @@ async function getLatestStatsAgent(agentId, { dbPath = defaultDbPath() } = {}) {
     next_rank_at: row.next_rank_at,
     updated_at: row.rank_updated_at
   });
+
   const meta = getAgentMeta(safe);
   return { ok: true, ...meta, ...stats, rank, updatedAt: new Date().toISOString() };
 }
@@ -120,15 +125,17 @@ async function getLatestStatsAgent(agentId, { dbPath = defaultDbPath() } = {}) {
 async function getActiveProtocols(agentId, { dbPath = defaultDbPath(), limit = 20 } = {}) {
   const safe = sanitizeAgentId(agentId);
   if (!safe) return { ok: false, error: 'Bad agent id' };
+
   const lim = Math.max(1, Math.min(200, sanitizeInt(limit, 20)));
-  const sql = `
-    SELECT agent_id, protocol_id, protocol_type, trigger_condition, activated_at, deactivated_at, mission_id
-    FROM personality_activations
-    WHERE agent_id = '${safe}' AND deactivated_at IS NULL
-    ORDER BY activated_at DESC
-    LIMIT ${lim};
-  `;
-  const rows = await sqliteJson(dbPath, sql);
+  const sql = [
+    'SELECT agent_id, protocol_id, protocol_type, trigger_condition, activated_at, deactivated_at, mission_id',
+    'FROM personality_activations',
+    'WHERE agent_id = $agentId AND deactivated_at IS NULL',
+    'ORDER BY activated_at DESC',
+    'LIMIT $limit;'
+  ].join('\n');
+
+  const rows = await sqliteJson(dbPath, sql, { agentId: safe, limit: lim });
   const protocols = rows.map(r => ({
     agentId: r.agent_id,
     protocolId: r.protocol_id,
@@ -139,6 +146,7 @@ async function getActiveProtocols(agentId, { dbPath = defaultDbPath(), limit = 2
     activatedAt: r.activated_at,
     missionId: r.mission_id
   }));
+
   return { ok: true, agentId: safe, updatedAt: new Date().toISOString(), protocols };
 }
 
@@ -166,19 +174,22 @@ async function getTacticalOverlay(agentId, { dbPath = defaultDbPath() } = {}) {
 
 async function getKhalaNetwork({ dbPath = defaultDbPath(), driftLimit = 8 } = {}) {
   const lim = Math.max(0, Math.min(50, sanitizeInt(driftLimit, 8)));
-  const bonds = await sqliteJson(dbPath, `
-    SELECT agent_a, agent_b, affinity, seed_value, last_interaction_at, interaction_count, updated_at
-    FROM khala_network
-    ORDER BY affinity DESC, agent_a ASC;
-  `);
+
+  const bondsSql = [
+    'SELECT agent_a, agent_b, affinity, seed_value, last_interaction_at, interaction_count, updated_at',
+    'FROM khala_network',
+    'ORDER BY affinity DESC, agent_a ASC;'
+  ].join('\n');
+  const bonds = await sqliteJson(dbPath, bondsSql);
 
   const nodesSet = new Set();
   for (const b of bonds) { nodesSet.add(b.agent_a); nodesSet.add(b.agent_b); }
 
-  const rankRows = await sqliteJson(dbPath, `
-    SELECT agent_id, rank, xp
-    FROM psionic_ranks;
-  `);
+  const rankSql = [
+    'SELECT agent_id, rank, xp',
+    'FROM psionic_ranks;'
+  ].join('\n');
+  const rankRows = await sqliteJson(dbPath, rankSql);
   const rankByAgent = new Map(rankRows.map(r => [r.agent_id, { rank: r.rank ?? null, xp: r.xp ?? null }]));
 
   const nodes = Array.from(nodesSet).sort().map(id => {
@@ -189,19 +200,31 @@ async function getKhalaNetwork({ dbPath = defaultDbPath(), driftLimit = 8 } = {}
 
   // Drift history per bond (small N; ok to do per-bond queries).
   const edges = [];
+  const driftSql = [
+    'SELECT old_affinity, new_affinity, delta, reason, interaction_type, related_mission_id, created_at',
+    'FROM khala_drift_history',
+    'WHERE (agent_a = $agentA1 AND agent_b = $agentB1)',
+    '   OR (agent_a = $agentA2 AND agent_b = $agentB2)',
+    'ORDER BY created_at DESC',
+    'LIMIT $limit;'
+  ].join('\n');
+
   for (const b of bonds) {
     let drift = [];
     if (lim > 0) {
-      const sql = `
-        SELECT old_affinity, new_affinity, delta, reason, interaction_type, related_mission_id, created_at
-        FROM khala_drift_history
-        WHERE (agent_a='${b.agent_a}' AND agent_b='${b.agent_b}')
-           OR (agent_a='${b.agent_b}' AND agent_b='${b.agent_a}')
-        ORDER BY created_at DESC
-        LIMIT ${lim};
-      `;
-      try { drift = await sqliteJson(dbPath, sql); } catch { drift = []; }
+      try {
+        drift = await sqliteJson(dbPath, driftSql, {
+          agentA1: b.agent_a,
+          agentB1: b.agent_b,
+          agentA2: b.agent_b,
+          agentB2: b.agent_a,
+          limit: lim
+        });
+      } catch {
+        drift = [];
+      }
     }
+
     edges.push({
       agentA: b.agent_a,
       agentB: b.agent_b,
@@ -242,33 +265,38 @@ async function getKhalaNetworkForAgent(agentId, opts = {}) {
 async function getEscalationStats(agentId, { dbPath = defaultDbPath(), windowDays = 30 } = {}) {
   const safe = sanitizeAgentId(agentId);
   if (!safe) return { ok: false, error: 'Bad agent id' };
+
   const days = Math.max(1, Math.min(365, sanitizeInt(windowDays, 30)));
 
-  const rows = await sqliteJson(dbPath, `
-    SELECT
-      COUNT(*) AS total,
-      SUM(CASE WHEN validated_as_real = 1 THEN 1 ELSE 0 END) AS validated_real,
-      SUM(CASE WHEN validated_as_real = 0 THEN 1 ELSE 0 END) AS validated_false,
-      SUM(CASE WHEN validated_as_real IS NULL THEN 1 ELSE 0 END) AS unvalidated
-    FROM escalations
-    WHERE escalated_by='${safe}'
-      AND created_at >= datetime('now', '-${days} days');
-  `);
+  const sqlTotals = [
+    'SELECT',
+    '  COUNT(*) AS total,',
+    '  SUM(CASE WHEN validated_as_real = 1 THEN 1 ELSE 0 END) AS validated_real,',
+    '  SUM(CASE WHEN validated_as_real = 0 THEN 1 ELSE 0 END) AS validated_false,',
+    '  SUM(CASE WHEN validated_as_real IS NULL THEN 1 ELSE 0 END) AS unvalidated',
+    'FROM escalations',
+    'WHERE escalated_by = $agentId',
+    "  AND created_at >= datetime('now', '-' || $days || ' days');"
+  ].join('\n');
+
+  const rows = await sqliteJson(dbPath, sqlTotals, { agentId: safe, days });
   const r = rows[0] || {};
   const total = r.total ?? 0;
   const validatedReal = r.validated_real ?? 0;
   const signalRatio = total ? validatedReal / total : null;
 
-  const bySeverity = await sqliteJson(dbPath, `
-    SELECT COALESCE(NULLIF(severity, ''), 'unspecified') AS severity,
-           COUNT(*) AS total,
-           SUM(CASE WHEN validated_as_real = 1 THEN 1 ELSE 0 END) AS validated_real
-    FROM escalations
-    WHERE escalated_by='${safe}'
-      AND created_at >= datetime('now', '-${days} days')
-    GROUP BY severity
-    ORDER BY total DESC;
-  `);
+  const sqlBySeverity = [
+    "SELECT COALESCE(NULLIF(severity, ''), 'unspecified') AS severity,",
+    '       COUNT(*) AS total,',
+    '       SUM(CASE WHEN validated_as_real = 1 THEN 1 ELSE 0 END) AS validated_real',
+    'FROM escalations',
+    'WHERE escalated_by = $agentId',
+    "  AND created_at >= datetime('now', '-' || $days || ' days')",
+    'GROUP BY severity',
+    'ORDER BY total DESC;'
+  ].join('\n');
+
+  const bySeverity = await sqliteJson(dbPath, sqlBySeverity, { agentId: safe, days });
 
   return {
     ok: true,
