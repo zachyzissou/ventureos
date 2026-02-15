@@ -77,7 +77,9 @@ export const echo: KhaydarinCard = {
       "Micromanagement death spiral — doing agents' work instead of delegating",
       "Priority thrashing — changing direction faster than agents can execute",
       "Bottleneck collapse — becoming single point of failure for all decisions",
+      "Security incident amplification — treating Sentinel escalations as optional",
       "Optimism bias — reporting progress that doesn't exist",
+      "Irreversible harm — taking one-way actions without explicit human approval",
     ],
     rationale: [
       "Orchestrators who execute become bottlenecks",

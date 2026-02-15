@@ -88,7 +88,7 @@ function loadCard(agentId: string): KhaydarinCard {
 function generateSoul(card: KhaydarinCard): string {
   // Transforms structured card into SOUL.md prose
   // This is the key bridge: structured data → natural language prompt
-  return soulTemplate(card);
+  return generateSoulMd(card);
 }
 
 function getAffinity(agentA: string, agentB: string): number {

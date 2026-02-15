@@ -5,7 +5,7 @@
  * identity, purpose, and psionic resonance. Each card is dual-faced:
  * The Pylon Side (capabilities) and The Void Side (constraints).
  *
- * Schema derived from VoxYZ's 6-layer role card system, extended with
+ * Schema derived from VoxYZ's 6-layer role card system, extended with 4 additional layers:
  * voice directives, affinity bonds, tool access, and persistent state.
  */
 
@@ -163,7 +163,7 @@ export function validateCard(card: KhaydarinCard): KhaydarinCard {
   }
 
   // Self-affinity check
-  if (card.khalaBonds[card.id] !== undefined) {
+  if (card.id in card.khalaBonds) {
     throw new Error(`${card.id}: Cannot have affinity with self`);
   }
 
@@ -177,37 +177,51 @@ export function validateCard(card: KhaydarinCard): KhaydarinCard {
 export function generateSoulMd(card: KhaydarinCard): string {
   const sections: string[] = [];
 
-  sections.push(`# SOUL.md — ${card.name} (${card.title})\n`);
-  sections.push(`${card.glyph} **${card.name}** — ${card.title} of the ${card.caste} caste.\n`);
-  sections.push(`> ${card.nexusSphere.domain}\n`);
+  sections.push(`# SOUL.md — ${card.name} (${card.title})`);
+  sections.push("");
+  sections.push(`${card.glyph} **${card.name}** — ${card.title} of the ${card.caste} caste.`);
+  sections.push(`> ${card.nexusSphere.domain}`);
+  sections.push("");
 
-  sections.push(`## My Domain\n`);
-  card.nexusSphere.jurisdiction.forEach(j => sections.push(`- ${j}`));
+  sections.push("## My Domain");
+  card.nexusSphere.jurisdiction.forEach((j) => sections.push(`- ${j}`));
+  sections.push("");
 
-  sections.push(`\n## Not My Domain\n`);
-  card.nexusSphere.boundaries.forEach(b => sections.push(`- ${b}`));
+  sections.push("## Not My Domain");
+  card.nexusSphere.boundaries.forEach((b) => sections.push(`- ${b}`));
+  sections.push("");
 
-  sections.push(`\n## Voice\n`);
+  sections.push("## Voice");
   sections.push(card.psionicSignature.voice);
-  sections.push(`\n### Personality`);
-  card.psionicSignature.personality.forEach(p => sections.push(`- ${p}`));
-  sections.push(`\n### Conflict Style`);
+  sections.push("");
+
+  sections.push("### Personality");
+  card.psionicSignature.personality.forEach((p) => sections.push(`- ${p}`));
+  sections.push("");
+
+  sections.push("### Conflict Style");
   sections.push(card.psionicSignature.conflictPattern);
   if (card.psionicSignature.catchphrase) {
-    sections.push(`\n> *"${card.psionicSignature.catchphrase}"*`);
+    sections.push("");
+    sections.push(`> *"${card.psionicSignature.catchphrase}"*`);
   }
+  sections.push("");
 
-  sections.push(`\n## Hard Rules (Non-Negotiable)\n`);
-  card.voidInterdicts.hardBans.forEach(ban => sections.push(`- ${ban}`));
+  sections.push("## Hard Rules (Non-Negotiable)");
+  card.voidInterdicts.hardBans.forEach((ban) => sections.push(`- ${ban}`));
+  sections.push("");
 
-  sections.push(`\n## When I'm Done\n`);
-  card.warpComplete.conditions.forEach(c => sections.push(`- ${c}`));
-  sections.push(`\n**Quality Gate:** ${card.warpComplete.qualityGate}`);
+  sections.push("## When I'm Done");
+  card.warpComplete.conditions.forEach((c) => sections.push(`- ${c}`));
+  sections.push("");
+  sections.push(`**Quality Gate:** ${card.warpComplete.qualityGate}`);
+  sections.push("");
 
-  sections.push(`\n## When to Escalate\n`);
+  sections.push("## When to Escalate");
   sections.push(`**Escalate to:** ${card.psionicCascade.escalateTo.join(", ")}`);
-  card.psionicCascade.escalateTriggers.forEach(t => sections.push(`- ${t}`));
-  sections.push(`\n**Timeout:** ${card.psionicCascade.timeout}`);
+  card.psionicCascade.escalateTriggers.forEach((t) => sections.push(`- ${t}`));
+  sections.push("");
+  sections.push(`**Timeout:** ${card.psionicCascade.timeout}`);
   sections.push(`**Fallback:** ${card.psionicCascade.fallback}`);
 
   return sections.join("\n");

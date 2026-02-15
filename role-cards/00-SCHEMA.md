@@ -2,7 +2,7 @@
 
 ## Reference
 - Inspired by VoxYZ Agent World's 6-layer role card system
-- Source: https://x.com/Voxyz_ai/status/2021370776926990530
+- Source: https://x.com/Voxyz_ai
 - VoxYZ: 6 AI agents running an autonomous company with affinity-scored relationships
 - Adapted for OpenClaw's Protoss-themed multi-agent architecture
 
