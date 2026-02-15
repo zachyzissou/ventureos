@@ -22,6 +22,7 @@ import {
   type SendMessageParams,
   type ConversationStatus,
 } from './conversation-engine';
+import { toSafeError } from './error-handler';
 
 export type ConversationEventMap = {
   conversation_started: { state: ConversationState };
@@ -140,7 +141,11 @@ export function createConversationRestServer(api: ConversationAPI, options: Conv
 
       return writeJson(res, 404, { error: 'not found' });
     } catch (err: any) {
-      return writeJson(res, 500, { error: String(err?.message ?? err) });
+      const safeError = toSafeError(err, { method: req.method, url: req.url });
+      return writeJson(res, safeError.status, {
+        error: safeError.error,
+        errorRef: safeError.errorRef,
+      });
     }
   });
 
