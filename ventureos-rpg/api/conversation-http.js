@@ -85,11 +85,9 @@ function ensureSchema(db) {
 }
 
 function sendJson(res, data, status = 200) {
+  // Phase 5.1: Removed wildcard CORS — handled by dashboard server middleware
   res.writeHead(status, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
   });
   res.end(JSON.stringify(data));
 }

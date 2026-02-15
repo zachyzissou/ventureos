@@ -10,21 +10,17 @@ const {
 } = require('./rpg-service');
 
 function sendJson(res, data, status = 200) {
+  // Phase 5.1: Removed wildcard CORS — handled by dashboard server middleware
   res.writeHead(status, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
+    'Content-Type': 'application/json'
   });
   res.end(JSON.stringify(data));
 }
 
 function handleOptions(req, res) {
-  res.writeHead(204, {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  });
+  // Phase 5.1: CORS preflight now handled by dashboard server middleware
+  // This function is kept for backward compatibility but headers come from middleware
+  res.writeHead(204);
   res.end();
 }
 
