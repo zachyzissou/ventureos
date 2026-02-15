@@ -3,8 +3,12 @@
 #
 # Scans all agent sessions for sessions that:
 # 1. Were created > MIN_AGE_MINUTES ago
-# 2. Have 0 messages (or no transcript file)
+# 2. Have 0 messages in their .jsonl transcript file
 # 3. Are subagent type (most vulnerable to phantom pattern)
+#
+# IMPORTANT: Message counts come from the actual .jsonl transcript files,
+# NOT from the sessions.json index (which does NOT contain a messages array).
+# The sessions.json index stores metadata; messages live in {sessionId}.jsonl.
 #
 # Usage:
 #   phantom-detector.sh [--alert] [--min-age <minutes>] [--json]
@@ -82,6 +86,24 @@ log_entry() {
 }
 
 # ============================================================================
+# Count messages in a .jsonl transcript file
+# ============================================================================
+
+count_messages_in_jsonl() {
+  local jsonl_file="$1"
+  if [[ ! -f "${jsonl_file}" ]]; then
+    echo "0"
+    return
+  fi
+  # Count lines with "type":"message" — these are actual agent messages
+  # Note: grep -c returns exit code 1 when count is 0, but still outputs "0".
+  # We capture its output (which may be "0") and fallback to "0" only if grep fails entirely.
+  local count
+  count=$(grep -c '"type":"message"' "${jsonl_file}" 2>/dev/null) || count="0"
+  echo "${count}"
+}
+
+# ============================================================================
 # Scan all agent sessions
 # ============================================================================
 
@@ -93,36 +115,40 @@ fi
 for agent_dir in "${AGENTS_DIR}"/*/; do
   agent_name=$(basename "${agent_dir}")
   sessions_file="${agent_dir}sessions/sessions.json"
+  sessions_dir="${agent_dir}sessions"
 
   if [[ ! -f "${sessions_file}" ]]; then
     continue
   fi
 
-  # Parse sessions from JSON - handle both wrapped and direct formats
-  # Extract subagent sessions with their details
+  # Parse sessions from JSON index
+  # NOTE: We extract sessionId to find the .jsonl file, NOT .value.messages
+  # The sessions.json index does NOT contain a messages array.
+  # Messages are stored in separate {sessionId}.jsonl files.
   sessions_data=$(jq -r '
     (if .sessions then .sessions else . end) |
     to_entries[] |
     select(.key | contains("subagent")) |
     {
       key: .key,
-      messageCount: ((.value.messages // []) | length),
+      sessionId: (.value.sessionId // ""),
       model: (.value.model // "unknown"),
       updatedAt: (.value.updatedAt // 0),
       createdAt: (.value.createdAt // .value.updatedAt // 0),
-      transcriptPath: (.value.transcriptPath // ""),
       label: (.value.label // .value.displayName // ""),
       totalTokens: (.value.totalTokens // 0),
+      inputTokens: (.value.inputTokens // 0),
+      outputTokens: (.value.outputTokens // 0),
       lastError: (.value.lastError // "")
     } |
-    "\(.key)|\(.messageCount)|\(.model)|\(.updatedAt)|\(.createdAt)|\(.transcriptPath)|\(.label)|\(.totalTokens)|\(.lastError)"
+    "\(.key)|\(.sessionId)|\(.model)|\(.updatedAt)|\(.createdAt)|\(.label)|\(.totalTokens)|\(.inputTokens)|\(.outputTokens)|\(.lastError)"
   ' "${sessions_file}" 2>/dev/null || true)
 
   if [[ -z "${sessions_data}" ]]; then
     continue
   fi
 
-  while IFS='|' read -r session_key msg_count model updated_at created_at transcript_path label total_tokens last_error; do
+  while IFS='|' read -r session_key session_id model updated_at created_at label total_tokens input_tokens output_tokens last_error; do
     # Skip empty lines
     [[ -z "${session_key}" ]] && continue
 
@@ -140,30 +166,34 @@ for agent_dir in "${AGENTS_DIR}"/*/; do
       continue
     fi
 
+    # Count ACTUAL messages from the .jsonl transcript file
+    jsonl_file="${sessions_dir}/${session_id}.jsonl"
+    msg_count=$(count_messages_in_jsonl "${jsonl_file}")
+
     # Check for phantom conditions
     is_phantom=false
     phantom_reason=""
 
-    # Condition 1: 0 messages
-    if [[ "${msg_count}" -eq 0 ]]; then
+    # Condition 1: .jsonl file doesn't exist at all
+    if [[ -n "${session_id}" ]] && [[ ! -f "${jsonl_file}" ]]; then
       is_phantom=true
-      phantom_reason="zero_messages"
+      phantom_reason="missing_transcript"
     fi
 
-    # Condition 2: 0 total tokens (even with "messages" array, no actual work done)
-    if [[ "${total_tokens}" -eq 0 ]] && [[ "${msg_count}" -le 1 ]]; then
+    # Condition 2: .jsonl file exists but has 0 messages
+    if [[ -f "${jsonl_file}" ]] && [[ "${msg_count}" -eq 0 ]]; then
+      is_phantom=true
+      phantom_reason="${phantom_reason:+${phantom_reason}+}zero_messages"
+    fi
+
+    # Condition 3: 0 total tokens AND 0 messages (truly did nothing)
+    if [[ "${total_tokens}" -eq 0 ]] && [[ "${msg_count}" -eq 0 ]]; then
       is_phantom=true
       phantom_reason="${phantom_reason:+${phantom_reason}+}zero_tokens"
     fi
 
-    # Condition 3: Transcript file doesn't exist
-    if [[ -n "${transcript_path}" ]] && [[ ! -f "${transcript_path}" ]]; then
-      is_phantom=true
-      phantom_reason="${phantom_reason:+${phantom_reason}+}missing_transcript"
-    fi
-
-    # Condition 4: Has error
-    if [[ -n "${last_error}" ]] && [[ "${last_error}" != "" ]]; then
+    # Condition 4: Has error AND 0 messages
+    if [[ -n "${last_error}" ]] && [[ "${last_error}" != "" ]] && [[ "${msg_count}" -eq 0 ]]; then
       is_phantom=true
       phantom_reason="${phantom_reason:+${phantom_reason}+}error:${last_error}"
     fi
@@ -184,6 +214,7 @@ for agent_dir in "${AGENTS_DIR}"/*/; do
         echo "   Agent: ${agent_name} | Messages: ${msg_count} | Tokens: ${total_tokens}"
         echo "   Model: ${model} | Age: ${age_minutes}m | Reason: ${phantom_reason}"
         echo "   Label: ${label}"
+        echo "   Transcript: ${jsonl_file}"
         echo ""
       fi
 
@@ -200,13 +231,13 @@ for agent_dir in "${AGENTS_DIR}"/*/; do
 done
 
 # ============================================================================
-# Also check gateway error log for recent PHANTOM entries
+# Also check gateway error log for recent PHANTOM markers
 # ============================================================================
 
 GATEWAY_ERR="${HOME}/.openclaw/logs/gateway.err.log"
 if [[ -f "${GATEWAY_ERR}" ]]; then
   # Count PHANTOM entries in last hour
-  recent_phantoms=$(grep -c "PHANTOM" "${GATEWAY_ERR}" 2>/dev/null || echo "0")
+  recent_phantoms=$(grep -c "PHANTOM" "${GATEWAY_ERR}" 2>/dev/null) || recent_phantoms="0"
   if [[ "${recent_phantoms}" -gt 0 ]] && [[ "${JSON_OUTPUT}" != "true" ]]; then
     echo "📊 Gateway log: ${recent_phantoms} total PHANTOM entries"
     echo ""
@@ -238,14 +269,17 @@ if [[ "${JSON_OUTPUT}" == "true" ]]; then
   # Build JSON array of phantoms
   json_phantoms="["
   first=true
-  for phantom in "${PHANTOMS[@]:-}"; do
-    IFS='|' read -r key agent msgs model age reason label <<< "${phantom}"
-    if [[ "${first}" != "true" ]]; then
-      json_phantoms+=","
-    fi
-    json_phantoms+="{\"sessionKey\":\"${key}\",\"agent\":\"${agent}\",\"messages\":${msgs},\"model\":\"${model}\",\"age\":\"${age}\",\"reason\":\"${reason}\",\"label\":\"${label}\"}"
-    first=false
-  done
+  if [[ ${#PHANTOMS[@]} -gt 0 ]]; then
+    for phantom in "${PHANTOMS[@]}"; do
+      [[ -z "${phantom}" ]] && continue
+      IFS='|' read -r key agent msgs model age reason label <<< "${phantom}"
+      if [[ "${first}" != "true" ]]; then
+        json_phantoms+=","
+      fi
+      json_phantoms+="{\"sessionKey\":\"${key}\",\"agent\":\"${agent}\",\"messages\":${msgs:-0},\"model\":\"${model}\",\"age\":\"${age}\",\"reason\":\"${reason}\",\"label\":\"${label}\"}"
+      first=false
+    done
+  fi
   json_phantoms+="]"
 
   echo "{\"phantomCount\":${PHANTOM_COUNT},\"phantoms\":${json_phantoms},\"checkedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
@@ -275,19 +309,24 @@ if [[ "${ALERT}" == "true" ]] && [[ "${PHANTOM_COUNT}" -gt 0 ]]; then
   alert_msg="🚨 **Phantom Session Alert**\n\n"
   alert_msg+="**${PHANTOM_COUNT}** phantom session(s) detected at $(date '+%Y-%m-%d %H:%M %Z')\n\n"
 
-  for phantom in "${PHANTOMS[@]:-}"; do
-    IFS='|' read -r key agent msgs model age reason label <<< "${phantom}"
-    short_key=$(echo "${key}" | grep -o '[a-f0-9-]*$' | head -c 8)
-    alert_msg+="• \`${short_key}\` (${agent}) — ${reason} — ${age} old\n"
-  done
+  if [[ ${#PHANTOMS[@]} -gt 0 ]]; then
+    for phantom in "${PHANTOMS[@]}"; do
+      [[ -z "${phantom}" ]] && continue
+      IFS='|' read -r key agent msgs model age reason label <<< "${phantom}"
+      short_key=$(echo "${key}" | grep -o '[a-f0-9-]*$' | head -c 8)
+      alert_msg+="• \`${short_key}\` (${agent}) — ${reason} — ${age} old\n"
+    done
+  fi
 
   alert_msg+="\nRun \`phantom-detector.sh\` for details."
 
   if [[ -n "${WEBHOOK_URL}" ]]; then
+    # Use jq for safe JSON encoding (prevents command injection)
+    payload=$(jq -n --arg msg "${alert_msg}" '{"content": $msg}')
     # shellcheck disable=SC2086
     curl -sS ${CURL_WEBHOOK_FLAGS:-"--connect-timeout 2 --max-time 10"} \
       -H "Content-Type: application/json" \
-      -d "{\"content\":\"${alert_msg}\"}" \
+      -d "${payload}" \
       "${WEBHOOK_URL}" >/dev/null 2>&1 || true
   fi
 fi
