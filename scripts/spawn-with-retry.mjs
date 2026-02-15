@@ -225,6 +225,73 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// --- Session file count pre-check (GitHub #34 prevention) ---
+const SESSION_COUNT_WARN = 200;
+const SESSION_COUNT_FAIL = 500;
+
+function getSessionFileCount(agentId) {
+  const sessionsDir = path.join(
+    os.homedir(),
+    ".openclaw",
+    "agents",
+    agentId,
+    "sessions"
+  );
+
+  try {
+    if (!fs.existsSync(sessionsDir)) return 0;
+    const entries = fs.readdirSync(sessionsDir);
+    // Count all files (jsonl + deleted) since both contribute to scan overhead
+    return entries.length;
+  } catch {
+    return -1; // unknown, don't block
+  }
+}
+
+function checkSessionCountBeforeSpawn(agentId, logFile) {
+  const count = getSessionFileCount(agentId);
+  const record = {
+    ts: new Date().toISOString(),
+    event: "session_count_check",
+    agentId,
+    sessionFileCount: count,
+  };
+
+  if (count < 0) {
+    record.status = "unknown";
+    appendLog(logFile, record);
+    process.stderr.write(
+      `[spawn-with-retry] ⚠️  Could not read session count for agent ${agentId}\n`
+    );
+    return true; // don't block on error
+  }
+
+  if (count >= SESSION_COUNT_FAIL) {
+    record.status = "critical";
+    record.threshold = SESSION_COUNT_FAIL;
+    appendLog(logFile, record);
+    process.stderr.write(
+      `[spawn-with-retry] 🚨 CRITICAL: Agent ${agentId} has ${count} session files (limit: ${SESSION_COUNT_FAIL}).\n` +
+      `  Spawn blocked to prevent phantom session. Run rotate-agent-sessions.sh first.\n`
+    );
+    return false; // block spawn
+  }
+
+  if (count >= SESSION_COUNT_WARN) {
+    record.status = "warning";
+    record.threshold = SESSION_COUNT_WARN;
+    appendLog(logFile, record);
+    process.stderr.write(
+      `[spawn-with-retry] ⚠️  WARNING: Agent ${agentId} has ${count} session files (warn: ${SESSION_COUNT_WARN}). Consider rotating.\n`
+    );
+  } else {
+    record.status = "ok";
+  }
+
+  appendLog(logFile, record);
+  return true; // allow spawn
+}
+
 function runCommand(commandLine, { quiet }) {
   return new Promise((resolve) => {
     const startedAt = Date.now();
@@ -273,6 +340,26 @@ async function main() {
     throw new Error("Missing spawn command. Use --spawn-cmd or SESSIONS_SPAWN_CMD.");
   }
 
+  // Pre-spawn session count check (GitHub #34 — phantom session prevention)
+  const sessionCountOk = checkSessionCountBeforeSpawn(CONTEXT.agentId, opts.logFile);
+  if (!sessionCountOk) {
+    const summary = {
+      ok: false,
+      agentId: CONTEXT.agentId,
+      workspace: CONTEXT.workspaceRoot,
+      reason: "session_file_count_exceeded",
+      sessionFileCount: getSessionFileCount(CONTEXT.agentId),
+      threshold: SESSION_COUNT_FAIL,
+      command: opts.spawnCmd,
+      args: passthrough,
+      logFile: opts.logFile,
+    };
+    if (opts.json) {
+      process.stdout.write(JSON.stringify(summary) + "\n");
+    }
+    process.exit(1);
+  }
+
   const cmd = [opts.spawnCmd, ...passthrough].map(shellEscape).join(" ");
   const totalAttempts = opts.maxRetries + 1;
 
@@ -294,6 +381,7 @@ async function main() {
         attempt,
         retriesUsed: attempt - 1,
         maxRetries: opts.maxRetries,
+        sessionFileCount: getSessionFileCount(CONTEXT.agentId),
         logFile: opts.logFile,
       };
 

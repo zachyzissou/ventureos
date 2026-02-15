@@ -1,6 +1,6 @@
 # Cron Specs
 
-> All jobs are **deterministic** (no wake‑only execution) for reliability.
+> All jobs are **deterministic** (no wake-only execution) for reliability.
 
 ## 1) Nightly Backup
 - **Schedule:** `0 2 * * *`
@@ -37,7 +37,7 @@
 ## 6) Update Window Reminder
 - **Schedule:** `0 3 * * 0`
 - **Session:** main (systemEvent)
-- **Payload:** “Update window open; reply ‘run update’ to proceed.”
+- **Payload:** "Update window open; reply 'run update' to proceed."
 
 ## 7) Archive Task Run Logs
 - **Schedule:** `0 3 1 * *` (monthly)
@@ -47,10 +47,26 @@
 ## 8) Fact Extraction (Entity Store)
 - **Schedule:** `*/30 * * * *`
 - **Session:** isolated
-- **Payload:** agentTurn “Fact Extraction (Three‑Layer Memory)”
+- **Payload:** agentTurn "Fact Extraction (Three-Layer Memory)"
 - **Output:** HEARTBEAT_OK when no new facts
 
 ## 9) Weekly Memory Synthesis
 - **Schedule:** `0 9 * * 0`
 - **Session:** isolated
-- **Payload:** agentTurn “Weekly Memory Synthesis (Three‑Layer)”
+- **Payload:** agentTurn "Weekly Memory Synthesis (Three‑Layer)"
+
+## 10) Workspace Health Check (P0 #34)
+- **Schedule:** `0 3 * * *`
+- **Session:** isolated
+- **Agent:** atlas
+- **Payload:** run `scripts/check-workspace-health.sh --alert --quarantine`
+- **Alert:** if any workspace > 500MB or DB files > 10MB found
+- **Added:** 2026-02-15
+
+## 11) Phantom Session Detector (P0 #34)
+- **Schedule:** `*/30 * * * *`
+- **Session:** isolated
+- **Agent:** atlas
+- **Payload:** run `scripts/detect-phantom-sessions.sh --alert`
+- **Alert:** if phantom sessions or unhealthy workspaces detected
+- **Added:** 2026-02-15

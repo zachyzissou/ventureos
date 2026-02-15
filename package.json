@@ -7,13 +7,16 @@
   "scripts": {
     "test": "jest --runInBand",
     "build": "tsc -p tsconfig.json --noEmit",
-    "role-cards:render": "node -r ts-node/register ./scripts/render-role-card-prompts.ts"
+    "role-cards:render": "node -r ts-node/register ./scripts/render-role-card-prompts.ts",
+    "test:e2e": "npx playwright test",
+    "test:e2e:xss": "npx playwright test --grep XSS"
   },
   "dependencies": {
     "ajv": "^8.17.1",
     "better-sqlite3": "^12.6.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.11.30",
