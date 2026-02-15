@@ -330,17 +330,126 @@ export class AffinityManager {
     });
   }
 
+  /**
+   * Batch-fetch affinities for multiple pairs in a single SQL query.
+   * Returns a Map keyed by "agentA:agentB" (normalized order) → affinity.
+   * Missing pairs get the defaultAffinity value.
+   *
+   * PERF-003: Replaces N individual SELECT queries with one batch query.
+   */
+  getAffinitiesBatch(pairs: Array<[AgentId, AgentId]>): Map<string, number> {
+    const result = new Map<string, number>();
+    if (pairs.length === 0) return result;
+
+    // Normalize all pairs and build lookup keys
+    const normalizedPairs = pairs.map(([a, b]) => normalizePair(a, b));
+    for (const [a, b] of normalizedPairs) {
+      result.set(`${a}:${b}`, this.config.defaultAffinity);
+    }
+
+    if (this.hasKhalaNetwork) {
+      this._batchFetchKhala(normalizedPairs, result);
+    } else if (this.hasLegacyPsionicBonds) {
+      this._batchFetchPsionic(normalizedPairs, result);
+    }
+
+    return result;
+  }
+
+  /**
+   * Batch-fetch affinities specifically from the legacy psionic_bonds table.
+   * Same interface as getAffinitiesBatch but targets the legacy table explicitly.
+   */
+  getLegacyAffinitiesBatch(pairs: Array<[AgentId, AgentId]>): Map<string, number> {
+    const result = new Map<string, number>();
+    if (pairs.length === 0) return result;
+
+    const normalizedPairs = pairs.map(([a, b]) => normalizePair(a, b));
+    for (const [a, b] of normalizedPairs) {
+      result.set(`${a}:${b}`, this.config.defaultAffinity);
+    }
+
+    if (this.hasLegacyPsionicBonds) {
+      this._batchFetchPsionic(normalizedPairs, result);
+    }
+
+    return result;
+  }
+
+  /**
+   * Internal: execute batch SELECT against khala_network and populate the result map.
+   * Uses a single query with WHERE (agent_a, agent_b) IN (...) for efficiency.
+   */
+  private _batchFetchKhala(
+    normalizedPairs: Array<[AgentId, AgentId]>,
+    result: Map<string, number>
+  ): void {
+    // SQLite has a variable limit (default 999). Chunk if needed.
+    const CHUNK_SIZE = 400; // 2 params per pair → 800 params per chunk, under limit
+    for (let offset = 0; offset < normalizedPairs.length; offset += CHUNK_SIZE) {
+      const chunk = normalizedPairs.slice(offset, offset + CHUNK_SIZE);
+      const placeholders = chunk.map(() => '(?, ?)').join(', ');
+      const params = chunk.flatMap(([a, b]) => [a, b]);
+
+      const sql = 'SELECT agent_a, agent_b, affinity FROM khala_network WHERE (agent_a, agent_b) IN (' + placeholders + ')';
+      const rows = this.db.prepare(sql).all(...params) as Array<{
+        agent_a: string;
+        agent_b: string;
+        affinity: number;
+      }>;
+
+      for (const row of rows) {
+        result.set(row.agent_a + ':' + row.agent_b, row.affinity);
+      }
+    }
+  }
+
+  /**
+   * Internal: execute batch SELECT against psionic_bonds and populate the result map.
+   * Uses a single query with WHERE (agent_a, agent_b) IN (...) for efficiency.
+   */
+  private _batchFetchPsionic(
+    normalizedPairs: Array<[AgentId, AgentId]>,
+    result: Map<string, number>
+  ): void {
+    const CHUNK_SIZE = 400;
+    for (let offset = 0; offset < normalizedPairs.length; offset += CHUNK_SIZE) {
+      const chunk = normalizedPairs.slice(offset, offset + CHUNK_SIZE);
+      const placeholders = chunk.map(() => '(?, ?)').join(', ');
+      const params = chunk.flatMap(([a, b]) => [a, b]);
+
+      const sql = 'SELECT agent_a, agent_b, affinity FROM psionic_bonds WHERE (agent_a, agent_b) IN (' + placeholders + ')';
+      const rows = this.db.prepare(sql).all(...params) as Array<{
+        agent_a: string;
+        agent_b: string;
+        affinity: number;
+      }>;
+
+      for (const row of rows) {
+        result.set(row.agent_a + ':' + row.agent_b, row.affinity);
+      }
+    }
+  }
+
   /** Compute stats for the participant set (all unique pairs). */
   computeStats(participants: AgentId[]): AffinityStats {
     const unique = [...new Set(participants)].filter(Boolean);
     const pairs: Array<{ a: AgentId; b: AgentId; affinity: number }> = [];
 
+    // PERF-003: Pre-compute all pairs and fetch affinities in a single batch query
+    const pairList: Array<[AgentId, AgentId]> = [];
     for (let i = 0; i < unique.length; i++) {
       for (let j = i + 1; j < unique.length; j++) {
-        const a = unique[i];
-        const b = unique[j];
-        pairs.push({ a, b, affinity: this.getAffinity(a, b) });
+        pairList.push([unique[i], unique[j]]);
       }
+    }
+
+    const affinityMap = this.getAffinitiesBatch(pairList);
+
+    for (const [a, b] of pairList) {
+      const [na, nb] = normalizePair(a, b);
+      const affinity = affinityMap.get(`${na}:${nb}`) ?? this.config.defaultAffinity;
+      pairs.push({ a, b, affinity });
     }
 
     if (pairs.length === 0) {
