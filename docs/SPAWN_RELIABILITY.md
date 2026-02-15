@@ -177,3 +177,59 @@ These are recommendations for the OpenClaw team:
 - `scripts/phantom-detector.mjs` — Detects phantom sessions from gateway logs
 - `scripts/spawn-with-retry.mjs` — Enhanced spawn wrapper with retry/backoff (no verification; see `spawn-with-verification.mjs` for verification logic)
 - `docs/SPAWN_RELIABILITY.md` — This document
+
+---
+
+## Appendix: Workspace Health & Post-Spawn Verification Tooling
+
+In addition to lane contention and error swallowing, we observed that **workspace bloat** and **model misconfiguration** can also produce "phantom" behavior (spawn accepted but no work occurs) in some environments.
+
+### Additional Observed Causes
+
+- **Workspace bloat (large DBs / artifacts):** oversized SQLite/DB files or large repos in an agent workspace can slow or break session initialization.
+- **Model misconfiguration:** invalid `provider/model` strings can cause the run to fail after a session key is allocated.
+
+### Supporting Scripts
+
+These scripts live in `scripts/` and are intended to prevent/detect phantom sessions and enforce workspace hygiene.
+
+1. **Workspace health check** — `scripts/check-workspace-health.sh`
+
+   ```bash
+   ./scripts/check-workspace-health.sh
+   ./scripts/check-workspace-health.sh --json
+   ./scripts/check-workspace-health.sh --alert
+   ./scripts/check-workspace-health.sh --quarantine
+   ```
+
+2. **Spawn wrapper with health-check + verification + retry** — `scripts/spawn-with-health-check.mjs`
+
+   ```bash
+   node ./scripts/spawn-with-health-check.mjs \
+     --agent synth \
+     --prompt "Implement feature X" \
+     --model "anthropic/claude-sonnet-4-5" \
+     --max-retries 3 \
+     --verify-timeout 15000
+   ```
+
+3. **Phantom detector** — `scripts/phantom-detector.sh`
+
+   ```bash
+   ./scripts/phantom-detector.sh
+   ./scripts/phantom-detector.sh --json
+   ./scripts/phantom-detector.sh --alert
+   ```
+
+4. **Combined cron wrapper** — `scripts/detect-phantom-sessions.sh`
+
+   ```bash
+   ./scripts/detect-phantom-sessions.sh --alert
+   ./scripts/detect-phantom-sessions.sh --json
+   ```
+
+5. **Reliability script test runner** — `scripts/test-spawn-reliability.sh`
+
+   ```bash
+   ./scripts/test-spawn-reliability.sh
+   ```
