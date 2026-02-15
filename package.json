@@ -7,7 +7,9 @@
   "scripts": {
     "test": "jest --runInBand",
     "build": "tsc -p tsconfig.json --noEmit",
-    "role-cards:render": "node -r ts-node/register ./scripts/render-role-card-prompts.ts"
+    "role-cards:render": "node -r ts-node/register ./scripts/render-role-card-prompts.ts",
+    "test:e2e": "npx playwright test",
+    "test:e2e:xss": "npx playwright test --grep XSS"
   },
   "dependencies": {
     "ajv": "^8.17.1",
