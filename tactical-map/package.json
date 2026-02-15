@@ -1,0 +1,30 @@
+{
+  "name": "ventureos-tactical-map",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "lint": "echo 'lint: not configured yet'"
+  },
+  "dependencies": {
+    "dompurify": "^3.0.11",
+    "pixi.js": "^8.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.1",
+    "@types/dompurify": "^3.0.5",
+    "@types/node": "^22.13.1",
+    "@vitest/coverage-v8": "^2.1.8",
+    "msw": "^2.7.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vitest": "^2.1.8"
+  }
+}
