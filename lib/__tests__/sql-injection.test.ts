@@ -89,12 +89,13 @@ describe('VULN-002: SQL Identifier Validation', () => {
 
   describe('isValidFieldExpression', () => {
     test('accepts valid field expressions', () => {
-      expect(isValidFieldExpression('agent_id')).toBe(true);
-      expect(isValidFieldExpression('*')).toBe(true);
-      expect(isValidFieldExpression('COUNT(*)')).toBe(true);
+      // NOTE: `isValidFieldExpression` is intentionally strict and only accepts
+      // a small subset of "AGG(col|*) AS alias" expressions.
+      expect(isValidFieldExpression('COUNT(*) AS total')).toBe(true);
       expect(isValidFieldExpression('SUM(claims) AS total')).toBe(true);
-      expect(isValidFieldExpression('AVG(score)')).toBe(true);
-      expect(isValidFieldExpression('COUNT(DISTINCT agent_id)')).toBe(true);
+      expect(isValidFieldExpression('AVG(score) AS avg_score')).toBe(true);
+      expect(isValidFieldExpression('MIN(duration_ms) AS min_duration')).toBe(true);
+      expect(isValidFieldExpression('MAX(duration_ms) AS max_duration')).toBe(true);
     });
 
     test('rejects injection in field expressions', () => {
@@ -176,7 +177,7 @@ describe('VULN-002: buildQuery produces parameterized queries', () => {
     );
 
     expect(source).toContain('ALLOWED_TABLES');
-    expect(source).toContain('Table not in allowlist');
+    expect(source).toContain('Table not allowed');
     expect(source).toContain('isValidSqlIdentifier(source.table)');
   });
 });

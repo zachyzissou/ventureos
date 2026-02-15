@@ -794,21 +794,26 @@ export function sanitizeForExternalChannel(
     text = text.replace(/<!(?:everyone|here|channel)>/g, '[mention]');
   }
 
-  // NOW apply HTML escaping as the final step (if enabled in config or by default)
-  const shouldEscapeHtml = config.escapeHtmlContent !== false;
-  if (shouldEscapeHtml) {
-    const xssCheck = detectHtmlXss(text);
-    if (xssCheck.dangerous) {
-      for (const pattern of xssCheck.patterns) {
-        extraRedactions.push({
-          type: 'injection',
-          offset: 0,
-          length: 0,
-          replacement: '[HTML escaped]',
-          reason: `Dangerous HTML pattern detected: ${pattern}`,
-        });
-      }
+  // HTML escaping:
+  // - For Discord/Slack delivery, we generally want to preserve literal `<...>` wrappers
+  //   (e.g. `<https://...>` to suppress embeds) and other non-dangerous angle brackets.
+  // - If we detect dangerous HTML/XSS patterns (e.g. <script>, onerror=), we MUST escape.
+  // - Callers can also force escaping via `config.escapeHtmlContent: true`.
+  const xssCheck = detectHtmlXss(text);
+  if (xssCheck.dangerous) {
+    for (const pattern of xssCheck.patterns) {
+      extraRedactions.push({
+        type: 'injection',
+        offset: 0,
+        length: 0,
+        replacement: '[HTML escaped]',
+        reason: `Dangerous HTML pattern detected: ${pattern}`,
+      });
     }
+  }
+
+  const shouldEscapeHtml = config.escapeHtmlContent === true || xssCheck.dangerous;
+  if (shouldEscapeHtml) {
     text = escapeHtml(text);
   }
 
