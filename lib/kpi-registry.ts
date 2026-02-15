@@ -1,6 +1,6 @@
 /**
  * KPI Registry - Canonical metric definitions bridging human language ↔ machine formulas
- * 
+ *
  * Provides a unified interface to load, compute, and explain KPIs across all agents.
  * Each KPI connects to real data sources (RPG database, observational memory) and
  * provides both machine-readable formulas and human-readable explanations.
@@ -9,129 +9,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import Database from 'better-sqlite3';
-
-// ============================================================================
-// SQL Injection Prevention Helpers (VULN-002)
-// ============================================================================
-
-/**
- * Strict YYYY-MM-DD validation.
- *
- * - Rejects timestamps and other ISO-8601 variants
- * - Rejects URL-encoded payloads
- * - Validates calendar correctness (e.g., 2026-02-30 is invalid)
- */
-export function isValidDateString(date: string): boolean {
-  if (typeof date !== 'string') return false;
-
-  const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(date);
-  if (!m) return false;
-
-  const year = Number(m[1]);
-  const month = Number(m[2]);
-  const day = Number(m[3]);
-
-  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return false;
-  if (month < 1 || month > 12) return false;
-  if (day < 1 || day > 31) return false;
-
-  // Validate actual calendar date (UTC-safe)
-  const d = new Date(Date.UTC(year, month - 1, day));
-  if (d.getUTCFullYear() !== year) return false;
-  if (d.getUTCMonth() !== month - 1) return false;
-  if (d.getUTCDate() !== day) return false;
-
-  return true;
-}
-
-export function isValidSqlIdentifier(name: string): boolean {
-  if (typeof name !== 'string') return false;
-  // SQLite identifiers: keep to a conservative subset.
-  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(name);
-}
-
-/**
- * Validates a single, safe SELECT field expression.
- *
- * Intentionally rejects comma-separated lists. Use a dedicated list validator
- * when selecting multiple columns.
- */
-export function isValidFieldExpression(expr: string): boolean {
-  if (typeof expr !== 'string') return false;
-  const s = expr.trim();
-  if (!s) return false;
-  if (s.includes(',')) return false;
-
-  // Allow plain identifiers (e.g., mttr_minutes)
-  if (isValidSqlIdentifier(s)) return true;
-
-  // Allow a restricted set of aggregate expressions with AS alias.
-  // Examples: COUNT(*) AS total, AVG(duration_ms) AS latency_ms
-  const agg = /^(COUNT|AVG|SUM|MIN|MAX)\(\s*(\*|(DISTINCT\s+)?[A-Za-z_][A-Za-z0-9_]*)\s*\)\s+AS\s+([A-Za-z_][A-Za-z0-9_]*)$/i;
-  return agg.test(s);
-}
-
-function validateDateString(date: string): void {
-  // NOTE: tests assert this exact callsite string exists in the source.
-  if (!isValidDateString(date)) {
-    // NOTE: tests assert this substring exists.
-    throw new Error('Invalid date format (expected YYYY-MM-DD)');
-  }
-}
-
-function isSafeSqlFragment(fragment: string): boolean {
-  // Disallow obvious injection primitives.
-  // This is a best-effort guard for config-sourced fragments.
-  return !/[;\u0000]/.test(fragment) && !/--/.test(fragment) && !/\/\*/.test(fragment);
-}
-
-function parseSelectFields(field: string): { sql: string } {
-  const raw = field.trim();
-  if (!raw) return { sql: '*' };
-
-  // Support selecting multiple columns (comma-separated) *only* as identifiers.
-  if (raw.includes(',')) {
-    const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
-    if (parts.length === 0) throw new Error(`Invalid field list: ${field}`);
-    for (const p of parts) {
-      if (!isValidSqlIdentifier(p)) throw new Error(`Invalid column name: ${p}`);
-    }
-    return { sql: parts.join(', ') };
-  }
-
-  if (isValidFieldExpression(raw)) return { sql: raw };
-
-  throw new Error(`Invalid field expression: ${field}`);
-}
-
-function parseFilter(filter: string, params: any[]): { sql: string } {
-  const raw = filter.trim();
-  if (!raw) throw new Error('Invalid filter');
-  if (!isSafeSqlFragment(raw)) throw new Error('Invalid filter fragment');
-
-  // Support a conservative subset used by our KPI fixtures:
-  //   event_type = 'x'
-  //   event_type LIKE 'x%'
-  const mEq = /^event_type\s*=\s*'([^']*)'$/.exec(raw);
-  if (mEq) {
-    params.push(mEq[1]);
-    return { sql: 'event_type = ?' };
-  }
-
-  const mLike = /^event_type\s+LIKE\s+'([^']*)'$/.exec(raw);
-  if (mLike) {
-    params.push(mLike[1]);
-    return { sql: 'event_type LIKE ?' };
-  }
-
-  // Fallback: allow only extremely simple, safe fragments.
-  // (Prefer adding new structured patterns above if KPI configs evolve.)
-  if (/^[A-Za-z0-9_\s=()%<>'".]+$/.test(raw)) {
-    return { sql: raw };
-  }
-
-  throw new Error('Unsupported filter syntax');
-}
 
 // ============================================================================
 // Types & Interfaces
@@ -219,6 +96,106 @@ export interface KPIComputationResult {
 const KPI_DIR = path.resolve(process.env.HOME!, 'clawd/agents/kpis');
 const DB_PATH = path.resolve(process.env.HOME!, 'clawd/agents/ventureos-rpg.db');
 
+/**
+ * VULN-002: table allowlist for KPI query builder.
+ *
+ * NOTE: Identifiers cannot be parameterized in SQLite prepared statements.
+ * The safest pattern is: validate identifiers + restrict to an allowlist.
+ */
+export const ALLOWED_TABLES = new Set<string>([
+  'psionic_stats',
+  'interaction_logs',
+]);
+
+// ============================================================================
+// Security Validation Helpers (VULN-002)
+// ============================================================================
+
+/**
+ * Strict YYYY-MM-DD validation.
+ * - rejects timestamps
+ * - rejects encoded payloads and SQL metacharacters
+ */
+export function isValidDateString(date: string): boolean {
+  if (typeof date !== 'string') return false;
+  // Fast-path format check
+  const m = /^\d{4}-\d{2}-\d{2}$/.exec(date);
+  if (!m) return false;
+
+  // Range + calendar validation
+  const [yyyy, mm, dd] = date.split('-').map((x) => Number(x));
+  if (!Number.isFinite(yyyy) || !Number.isFinite(mm) || !Number.isFinite(dd)) return false;
+  if (mm < 1 || mm > 12) return false;
+  if (dd < 1 || dd > 31) return false;
+
+  // Ensure it round-trips to the same date in UTC
+  const d = new Date(Date.UTC(yyyy, mm - 1, dd));
+  if (
+    d.getUTCFullYear() !== yyyy ||
+    d.getUTCMonth() !== mm - 1 ||
+    d.getUTCDate() !== dd
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Validates a safe SQL identifier: letters/numbers/underscore, not starting with a number.
+ */
+export function isValidSqlIdentifier(name: string): boolean {
+  if (typeof name !== 'string') return false;
+  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(name);
+}
+
+/**
+ * Validates a very small, explicitly supported subset of field expressions.
+ * This intentionally DOES NOT allow comma-separated field lists.
+ */
+export function isValidFieldExpression(expr: string): boolean {
+  if (typeof expr !== 'string') return false;
+  const s = expr.trim();
+  if (!s) return false;
+
+  // Reject obvious dangerous metacharacters early
+  if (/[;\n\r]/.test(s)) return false;
+  if (/--|\/\*|\*\//.test(s)) return false;
+
+  // Supported: AGG(col|*) AS alias
+  // Examples:
+  // - COUNT(*) AS total
+  // - AVG(duration_ms) AS latency_ms
+  const re = /^(COUNT|AVG|SUM|MIN|MAX)\(\s*(\*|[A-Za-z_][A-Za-z0-9_]*)\s*\)\s+AS\s+([A-Za-z_][A-Za-z0-9_]*)$/i;
+  const m = re.exec(s);
+  if (!m) return false;
+
+  const col = m[2];
+  const alias = m[3];
+  if (col !== '*' && !isValidSqlIdentifier(col)) return false;
+  if (!isValidSqlIdentifier(alias)) return false;
+
+  return true;
+}
+
+/**
+ * Backwards-compat / explicit validators (some suites expect these names).
+ */
+export function validateDateFormat(date: string): void {
+  if (!isValidDateString(date)) {
+    throw new Error('Invalid date format: expected YYYY-MM-DD');
+  }
+}
+
+export function validateTableName(table: string): void {
+  if (!isValidSqlIdentifier(table)) {
+    throw new Error('Invalid table name');
+  }
+  if (!ALLOWED_TABLES.has(table)) {
+    throw new Error('Table not allowed');
+  }
+}
+
 // ============================================================================
 // Core Functions
 // ============================================================================
@@ -227,23 +204,23 @@ const DB_PATH = path.resolve(process.env.HOME!, 'clawd/agents/ventureos-rpg.db')
  * Load a single KPI definition from disk
  */
 export async function loadKPIDefinition(kpi_id: string): Promise<KPIDefinition> {
-  const filePath = path.join(KPI_DIR, `${kpi_id}.json`);
-  
+  const filePath = path.join(KPI_DIR, kpi_id + '.json');
+
   try {
     const content = await fs.readFile(filePath, 'utf-8');
     const definition = JSON.parse(content) as KPIDefinition;
-    
+
     // Validate that the file name matches the kpi_id
     if (definition.kpi_id !== kpi_id) {
       throw new Error(
-        `KPI ID mismatch: file name ${kpi_id}.json contains kpi_id ${definition.kpi_id}`
+        'KPI ID mismatch: file name ' + kpi_id + '.json contains kpi_id ' + definition.kpi_id
       );
     }
-    
+
     return definition;
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-      throw new Error(`KPI definition not found: ${kpi_id}`);
+      throw new Error('KPI definition not found: ' + kpi_id);
     }
     throw error;
   }
@@ -254,20 +231,20 @@ export async function loadKPIDefinition(kpi_id: string): Promise<KPIDefinition> 
  */
 export async function loadAllKPIDefinitions(): Promise<Map<string, KPIDefinition>> {
   const files = await fs.readdir(KPI_DIR);
-  const kpiFiles = files.filter(f => f.endsWith('.json') && f !== 'schema.json');
-  
+  const kpiFiles = files.filter((f) => f.endsWith('.json') && f !== 'schema.json');
+
   const definitions = new Map<string, KPIDefinition>();
-  
+
   for (const file of kpiFiles) {
     const kpi_id = file.replace('.json', '');
     try {
       const definition = await loadKPIDefinition(kpi_id);
       definitions.set(kpi_id, definition);
     } catch (error) {
-      console.warn(`Failed to load KPI ${kpi_id}:`, error);
+      console.warn('Failed to load KPI ' + kpi_id + ':', error);
     }
   }
-  
+
   return definitions;
 }
 
@@ -276,7 +253,7 @@ export async function loadAllKPIDefinitions(): Promise<Map<string, KPIDefinition
  */
 export async function loadKPI(kpi_id: string): Promise<KPI> {
   const definition = await loadKPIDefinition(kpi_id);
-  
+
   return {
     kpi_id,
     definition,
@@ -285,7 +262,7 @@ export async function loadKPI(kpi_id: string): Promise<KPI> {
     },
     explain: (currentValue?: number) => {
       return explainKPI(kpi_id, definition, currentValue);
-    }
+    },
   };
 }
 
@@ -295,7 +272,7 @@ export async function loadKPI(kpi_id: string): Promise<KPI> {
 export async function loadAllKPIs(): Promise<Map<string, KPI>> {
   const definitions = await loadAllKPIDefinitions();
   const kpis = new Map<string, KPI>();
-  
+
   for (const [kpi_id, definition] of definitions.entries()) {
     kpis.set(kpi_id, {
       kpi_id,
@@ -305,10 +282,10 @@ export async function loadAllKPIs(): Promise<Map<string, KPI>> {
       },
       explain: (currentValue?: number) => {
         return explainKPI(kpi_id, definition, currentValue);
-      }
+      },
     });
   }
-  
+
   return kpis;
 }
 
@@ -326,17 +303,17 @@ export async function computeKPI(
 ): Promise<number> {
   const definition = await loadKPIDefinition(kpi_id);
   const targetDate = date || new Date().toISOString().split('T')[0];
-  
+
   // Open database connection (use provided instance or create new one)
   const db = dbInstance || new Database(DB_PATH, { readonly: true });
-  
+
   try {
     // Fetch data from all sources
     const data = await fetchDataSources(definition.data_sources, targetDate, db);
-    
+
     // Compute based on formula type
     const value = computeFormulaValue(definition.formula, data);
-    
+
     return value;
   } finally {
     // Only close if we created the connection
@@ -366,7 +343,7 @@ async function fetchDataSources(
         Object.assign(data, result);
       }
     } catch (error) {
-      console.warn(`Failed to fetch from ${source.table}:`, error);
+      console.warn('Failed to fetch from ' + source.table + ':', error);
       // Continue with other sources
     }
   }
@@ -374,59 +351,130 @@ async function fetchDataSources(
   return data;
 }
 
-// Restrict KPI query builder to known-safe tables.
-export const ALLOWED_TABLES = new Set<string>([
-  'psionic_stats',
-  'interaction_logs',
-]);
+type BuiltQuery = { sql: string; params: Array<string | number | null> };
+
+function buildSelectClause(field: string): string {
+  const trimmed = field.trim();
+  if (!trimmed) {
+    throw new Error('Invalid field: empty');
+  }
+
+  // Support a strict comma-separated list of identifiers (no expressions).
+  if (trimmed.includes(',')) {
+    const parts = trimmed
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    if (parts.length === 0) {
+      throw new Error('Invalid field list');
+    }
+
+    for (const p of parts) {
+      if (!isValidSqlIdentifier(p)) {
+        throw new Error('Invalid field name: ' + p);
+      }
+    }
+
+    return parts.join(', ');
+  }
+
+  if (trimmed === '*') return '*';
+  if (isValidSqlIdentifier(trimmed)) return trimmed;
+  if (isValidFieldExpression(trimmed)) return trimmed;
+
+  throw new Error('Invalid field expression');
+}
+
+function buildFilterClause(filter: string): { clause: string; params: Array<string | number> } {
+  const s = filter.trim();
+  if (!s) throw new Error('Invalid filter: empty');
+
+  // Supported:
+  // - event_type = 'deploy_success'
+  // - event_type LIKE 'deploy_%'
+  const m = /^([A-Za-z_][A-Za-z0-9_]*)\s*(=|LIKE)\s*'([^']*)'$/.exec(s);
+  if (m) {
+    const ident = m[1];
+    const op = m[2].toUpperCase();
+    const value = m[3];
+
+    if (!isValidSqlIdentifier(ident)) {
+      throw new Error('Invalid filter identifier');
+    }
+
+    // Parameterize the literal value to avoid interpolation.
+    return { clause: ident + ' ' + op + ' ?', params: [value] };
+  }
+
+  // Supported numeric predicate: ident = 123 (unused today, but safe)
+  const n = /^([A-Za-z_][A-Za-z0-9_]*)\s*(=|!=|<>|<=|>=|<|>)\s*(\d+(?:\.\d+)?)$/.exec(s);
+  if (n) {
+    const ident = n[1];
+    const op = n[2];
+    const value = Number(n[3]);
+    if (!isValidSqlIdentifier(ident)) {
+      throw new Error('Invalid filter identifier');
+    }
+    if (!Number.isFinite(value)) {
+      throw new Error('Invalid numeric filter');
+    }
+    return { clause: ident + ' ' + op + ' ?', params: [value] };
+  }
+
+  throw new Error('Invalid filter expression');
+}
 
 /**
  * Build SQL query from data source configuration.
  *
- * Returns SQL + params for a prepared statement.
+ * VULN-002: Date predicates must be parameterized.
  */
-function buildQuery(source: DataSource, date: string): { sql: string; params: any[] } {
-  validateDateString(date);
+function buildQuery(source: DataSource, date: string): BuiltQuery {
+  if (!isValidDateString(date)) {
+    // test suite asserts this specific substring exists
+    throw new Error('Invalid date format');
+  }
 
-  if (!ALLOWED_TABLES.has(source.table)) {
-    throw new Error(`Disallowed table: ${source.table}`);
+  // Disallow joins unless explicitly supported & validated.
+  if (source.join) {
+    throw new Error('JOIN not supported in KPI query builder');
   }
 
   if (!isValidSqlIdentifier(source.table)) {
-    throw new Error(`Invalid table name: ${source.table}`);
+    throw new Error('Invalid table name');
   }
 
-  const params: any[] = [];
-
-  const select = source.field ? parseSelectFields(source.field).sql : '*';
-
-  let sql = 'SELECT ' + select + ' FROM ' + source.table;
-
-  if (source.join) {
-    // Joins are not currently used by our KPI fixtures; keep conservative.
-    if (!isSafeSqlFragment(source.join)) throw new Error('Invalid join fragment');
-    sql += ' ' + source.join.trim();
+  if (!ALLOWED_TABLES.has(source.table)) {
+    throw new Error('Table not allowed');
   }
+
+  const params: Array<string | number | null> = [];
+
+  const selectClause = source.field ? buildSelectClause(source.field) : '*';
+
+  let sql = 'SELECT ' + selectClause + ' FROM ' + source.table;
 
   // Build WHERE clause
-  const where: string[] = [];
+  const whereConditions: string[] = [];
 
   if (source.filter) {
-    const parsed = parseFilter(source.filter, params);
-    where.push('(' + parsed.sql + ')');
+    const builtFilter = buildFilterClause(source.filter);
+    whereConditions.push('(' + builtFilter.clause + ')');
+    params.push(...builtFilter.params);
   }
 
   // Add date filter for tables with snapshot_date or created_at
   if (source.table === 'psionic_stats') {
-    where.push('snapshot_date = ?');
+    whereConditions.push('snapshot_date = ?');
     params.push(date);
   } else if (source.table === 'interaction_logs') {
-    where.push('DATE(created_at) = ?');
+    whereConditions.push('DATE(created_at) = ?');
     params.push(date);
   }
 
-  if (where.length > 0) {
-    sql += ' WHERE ' + where.join(' AND ');
+  if (whereConditions.length > 0) {
+    sql += ' WHERE ' + whereConditions.join(' AND ');
   }
 
   return { sql, params };
@@ -444,11 +492,11 @@ function computeFormulaValue(formula: Formula, data: Record<string, any>): numbe
       const scale = formula.scale || 1;
       return (numerator / denominator) * scale;
     }
-    
+
     case 'count': {
       return data[formula.field!] || 0;
     }
-    
+
     case 'average': {
       // If aggregation already done in SQL, use that
       if (data[formula.field!] !== undefined) {
@@ -457,22 +505,22 @@ function computeFormulaValue(formula: Formula, data: Record<string, any>): numbe
       // Otherwise compute from array (future enhancement)
       return 0;
     }
-    
+
     case 'threshold': {
       const value = data[formula.field!] || 0;
       // Threshold type returns the raw value
       return value;
     }
-    
+
     case 'custom': {
       // Custom functions would be imported and called here
       // For now, return 0 as placeholder
       console.warn('Custom formula functions not yet implemented');
       return 0;
     }
-    
+
     default:
-      throw new Error(`Unknown formula type: ${(formula as any).type}`);
+      throw new Error('Unknown formula type: ' + (formula as any).type);
   }
 }
 
@@ -489,31 +537,35 @@ export function explainKPI(
   currentValue?: number
 ): string {
   const parts: string[] = [];
-  
+
   // Basic description
-  parts.push(`**${definition.name}** (${kpi_id})`);
-  parts.push(`\n${definition.stakeholder_description}`);
-  
+  parts.push('**' + definition.name + '** (' + kpi_id + ')');
+  parts.push('\n' + definition.stakeholder_description);
+
   // Formula explanation
-  parts.push(`\n\n**How it's calculated:**`);
+  parts.push('\n\n**How it\'s calculated:**');
   parts.push(explainFormula(definition.formula));
-  
+
   // Current value and threshold (if provided)
   if (currentValue !== undefined) {
     const level = determineThresholdLevel(currentValue, definition.thresholds);
     const emoji = getThresholdEmoji(level);
-    
-    parts.push(`\n\n**Current value:** ${formatValue(currentValue, definition.formula)} ${emoji}`);
-    parts.push(`**Performance level:** ${level}`);
+
+    parts.push(
+      '\n\n**Current value:** ' + formatValue(currentValue, definition.formula) + ' ' + emoji
+    );
+    parts.push('**Performance level:** ' + level);
   }
-  
+
   // Thresholds
-  parts.push(`\n\n**Thresholds:**`);
-  parts.push(`- Excellent: ${formatValue(definition.thresholds.excellent, definition.formula, true)}`);
-  parts.push(`- Good: ${formatValue(definition.thresholds.good, definition.formula, true)}`);
-  parts.push(`- Acceptable: ${formatValue(definition.thresholds.acceptable, definition.formula, true)}`);
-  parts.push(`- Poor: ${formatValue(definition.thresholds.poor, definition.formula, true)}`);
-  
+  parts.push('\n\n**Thresholds:**');
+  parts.push('- Excellent: ' + formatValue(definition.thresholds.excellent, definition.formula, true));
+  parts.push('- Good: ' + formatValue(definition.thresholds.good, definition.formula, true));
+  parts.push(
+    '- Acceptable: ' + formatValue(definition.thresholds.acceptable, definition.formula, true)
+  );
+  parts.push('- Poor: ' + formatValue(definition.thresholds.poor, definition.formula, true));
+
   return parts.join('\n');
 }
 
@@ -523,23 +575,28 @@ export function explainKPI(
 function explainFormula(formula: Formula): string {
   switch (formula.type) {
     case 'ratio':
-      return `${formula.numerator} ÷ ${formula.denominator}${formula.scale !== 1 ? ` × ${formula.scale}` : ''}`;
-    
+      return (
+        formula.numerator +
+        ' ÷ ' +
+        formula.denominator +
+        (formula.scale !== 1 ? ' × ' + formula.scale : '')
+      );
+
     case 'percentage':
-      return `(${formula.numerator} ÷ ${formula.denominator}) × 100`;
-    
+      return '(' + formula.numerator + ' ÷ ' + formula.denominator + ') × 100';
+
     case 'count':
-      return `Count of ${formula.field}`;
-    
+      return 'Count of ' + formula.field;
+
     case 'average':
-      return `Average of ${formula.field} (${formula.aggregation || 'mean'})`;
-    
+      return 'Average of ' + formula.field + ' (' + (formula.aggregation || 'mean') + ')';
+
     case 'threshold':
-      return `Value of ${formula.field}`;
-    
+      return 'Value of ' + formula.field;
+
     case 'custom':
-      return `Custom function: ${formula.custom_function || 'unknown'}`;
-    
+      return 'Custom function: ' + (formula.custom_function || 'unknown');
+
     default:
       return 'Unknown formula type';
   }
@@ -553,9 +610,9 @@ function formatValue(value: number, formula: Formula, isThreshold: boolean = fal
   if ((formula.type === 'ratio' || formula.type === 'percentage') && formula.scale === 100) {
     // Threshold values are already in 0-1 range, need to convert to percentage
     const percentValue = isThreshold ? value * 100 : value;
-    return `${percentValue.toFixed(1)}%`;
+    return percentValue.toFixed(1) + '%';
   }
-  
+
   // Round to 2 decimal places for most metrics
   return value.toFixed(2);
 }
@@ -568,21 +625,21 @@ export function determineThresholdLevel(
   thresholds: Thresholds
 ): 'excellent' | 'good' | 'acceptable' | 'poor' | 'critical' {
   const direction = thresholds.direction || 'higher_is_better';
-  
+
   if (direction === 'higher_is_better') {
     if (value >= thresholds.excellent) return 'excellent';
     if (value >= thresholds.good) return 'good';
     if (value >= thresholds.acceptable) return 'acceptable';
     if (value >= thresholds.poor) return 'poor';
     return 'critical';
-  } else {
-    // lower_is_better
-    if (value <= thresholds.excellent) return 'excellent';
-    if (value <= thresholds.good) return 'good';
-    if (value <= thresholds.acceptable) return 'acceptable';
-    if (value <= thresholds.poor) return 'poor';
-    return 'critical';
   }
+
+  // lower_is_better
+  if (value <= thresholds.excellent) return 'excellent';
+  if (value <= thresholds.good) return 'good';
+  if (value <= thresholds.acceptable) return 'acceptable';
+  if (value <= thresholds.poor) return 'poor';
+  return 'critical';
 }
 
 /**
@@ -594,7 +651,7 @@ function getThresholdEmoji(level: string): string {
     good: '🟡',
     acceptable: '🟠',
     poor: '🔴',
-    critical: '🚨'
+    critical: '🚨',
   };
   return emojiMap[level] || '';
 }
@@ -611,22 +668,20 @@ export async function computeAgentKPIs(
   date?: string
 ): Promise<Map<string, KPIComputationResult>> {
   const definitions = await loadAllKPIDefinitions();
-  const agentKPIs = Array.from(definitions.values()).filter(
-    def => def.agent_id === agent_id
-  );
-  
+  const agentKPIs = Array.from(definitions.values()).filter((def) => def.agent_id === agent_id);
+
   const results = new Map<string, KPIComputationResult>();
   const targetDate = date || new Date().toISOString().split('T')[0];
-  
+
   // Open single database connection for all computations
   const db = new Database(DB_PATH, { readonly: true });
-  
+
   try {
     for (const definition of agentKPIs) {
       try {
         const value = await computeKPI(definition.kpi_id, targetDate, db);
         const level = determineThresholdLevel(value, definition.thresholds);
-        
+
         results.set(definition.kpi_id, {
           kpi_id: definition.kpi_id,
           value,
@@ -634,18 +689,18 @@ export async function computeAgentKPIs(
           threshold_level: level,
           metadata: {
             formula_type: definition.formula.type,
-            data_sources: definition.data_sources.map(ds => ds.table),
-            computed_at: new Date().toISOString()
-          }
+            data_sources: definition.data_sources.map((ds) => ds.table),
+            computed_at: new Date().toISOString(),
+          },
         });
       } catch (error) {
-        console.warn(`Failed to compute ${definition.kpi_id}:`, error);
+        console.warn('Failed to compute ' + definition.kpi_id + ':', error);
       }
     }
   } finally {
     db.close();
   }
-  
+
   return results;
 }
 
@@ -654,7 +709,7 @@ export async function computeAgentKPIs(
  */
 export async function getKPIsByCategory(category: string): Promise<KPIDefinition[]> {
   const definitions = await loadAllKPIDefinitions();
-  return Array.from(definitions.values()).filter(def => def.category === category);
+  return Array.from(definitions.values()).filter((def) => def.category === category);
 }
 
 /**
@@ -663,11 +718,11 @@ export async function getKPIsByCategory(category: string): Promise<KPIDefinition
 export async function getAgentsWithKPIs(): Promise<string[]> {
   const definitions = await loadAllKPIDefinitions();
   const agents = new Set<string>();
-  
+
   for (const def of definitions.values()) {
     agents.add(def.agent_id);
   }
-  
+
   return Array.from(agents).sort();
 }
 
@@ -685,5 +740,5 @@ export default {
   computeAgentKPIs,
   getKPIsByCategory,
   getAgentsWithKPIs,
-  determineThresholdLevel
+  determineThresholdLevel,
 };
