@@ -302,7 +302,8 @@ describe('KPI Registry - Batch Operations', () => {
     
     // Verify result structure
     for (const result of results.values()) {
-      expect(result.value).toBeDefined();
+      expect(typeof result.value).toBe('number');
+      expect(Number.isFinite(result.value)).toBe(true);
       expect(result.date).toBe('2026-02-14');
       expect(result.threshold_level).toMatch(/excellent|good|acceptable|poor|critical/);
       expect(result.metadata).toBeDefined();
@@ -318,7 +319,8 @@ describe('KPI Registry - Batch Operations', () => {
       
       // Verify result structure for each computed KPI
       for (const result of results.values()) {
-        expect(result.value).toBeDefined();
+        expect(typeof result.value).toBe('number');
+        expect(Number.isFinite(result.value)).toBe(true);
         expect(result.threshold_level).toMatch(/excellent|good|acceptable|poor|critical/);
       }
     }
