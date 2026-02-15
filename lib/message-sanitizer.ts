@@ -6,6 +6,7 @@
  * - Credential/secret redaction (paths, tokens, API keys, passwords)
  * - Prompt injection detection (pattern-based scoring)
  * - Message length enforcement
+ * - HTML/XSS sanitization (tag stripping for safe rendering)
  * - Special character / markdown / code block safety
  * - Structural validation before processing
  *
@@ -57,6 +58,8 @@ export interface SanitizerConfig {
   stripControlChars: boolean;
   /** Whether to normalize dangerous unicode. Default: true */
   normalizeUnicode: boolean;
+  /** Whether to escape HTML for safe rendering. Default: true */
+  escapeHtmlContent: boolean;
   /** Custom secret patterns (regex strings). */
   customSecretPatterns: RegExp[];
   /** Custom injection patterns (regex strings). */
@@ -97,6 +100,7 @@ const DEFAULT_CONFIG: SanitizerConfig = {
   detectInjection: true,
   stripControlChars: true,
   normalizeUnicode: true,
+  escapeHtmlContent: true,
   customSecretPatterns: [],
   customInjectionPatterns: [],
   maxCodeBlocks: 5,
@@ -294,6 +298,75 @@ const CONTROL_CHAR_PATTERN = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
 
 /** Zero-width and directional override characters used for evasion. */
 const DANGEROUS_UNICODE = /[\u200B-\u200F\u2028-\u202F\u2060-\u206F\uFEFF\uFFF9-\uFFFB]/g;
+
+// ─── HTML / XSS Sanitization ──────────────────────────────────────────────
+
+/** Map of characters that must be escaped in HTML context. */
+const HTML_ESCAPE_MAP: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#x27;',
+};
+
+const HTML_ESCAPE_RE = /[&<>"']/g;
+
+/**
+ * Escape HTML special characters so that the string is safe to embed
+ * inside innerHTML, attribute values, etc.
+ */
+export function escapeHtml(text: string): string {
+  return text.replace(HTML_ESCAPE_RE, (ch) => HTML_ESCAPE_MAP[ch] ?? ch);
+}
+
+/**
+ * Strip all HTML/XML tags from the string, returning only text content.
+ * Handles self-closing tags, attributes with quotes, and nested angle brackets.
+ */
+export function stripHtmlTags(text: string): string {
+  // Remove HTML comments first
+  let result = text.replace(/<!--[\s\S]*?-->/g, '');
+  // Remove all tags (including self-closing, with attributes)
+  result = result.replace(/<\/?[a-zA-Z][^>]*\/?>/g, '');
+  // Clean up any remaining orphaned closing angle brackets
+  return result;
+}
+
+/**
+ * Detect potentially dangerous HTML content in a string.
+ * Returns matched dangerous patterns for audit trail.
+ */
+export function detectHtmlXss(text: string): { dangerous: boolean; patterns: string[] } {
+  const patterns: string[] = [];
+
+  const XSS_PATTERNS: Array<{ name: string; pattern: RegExp }> = [
+    { name: 'script_tag', pattern: /<script[\s>]/i },
+    { name: 'event_handler', pattern: /\bon\w+\s*=/i },
+    { name: 'javascript_uri', pattern: /javascript\s*:/i },
+    { name: 'data_uri_html', pattern: /data\s*:\s*text\/html/i },
+    { name: 'vbscript_uri', pattern: /vbscript\s*:/i },
+    { name: 'iframe_tag', pattern: /<iframe[\s>]/i },
+    { name: 'object_tag', pattern: /<object[\s>]/i },
+    { name: 'embed_tag', pattern: /<embed[\s>]/i },
+    { name: 'svg_script', pattern: /<svg[\s\S]*?on\w+\s*=/i },
+    { name: 'img_onerror', pattern: /<img[^>]*onerror/i },
+    { name: 'body_onload', pattern: /<body[^>]*onload/i },
+    { name: 'meta_refresh', pattern: /<meta[^>]*http-equiv\s*=\s*['"]?refresh/i },
+    { name: 'base_tag', pattern: /<base[\s>]/i },
+    { name: 'form_action', pattern: /<form[^>]*action/i },
+    { name: 'expression_css', pattern: /expression\s*\(/i },
+    { name: 'import_css', pattern: /@import\s/i },
+  ];
+
+  for (const { name, pattern } of XSS_PATTERNS) {
+    if (pattern.test(text)) {
+      patterns.push(name);
+    }
+  }
+
+  return { dangerous: patterns.length > 0, patterns };
+}
 
 // ─── Core Functions ───────────────────────────────────────────────────────
 
@@ -588,6 +661,26 @@ export function sanitizeMessage(
     allRedactions.push(...ctrl.redactions);
   }
 
+  // 1.5. Escape HTML to prevent XSS when rendered in browser
+  if (cfg.escapeHtmlContent) {
+    const xssCheck = detectHtmlXss(text);
+    if (xssCheck.dangerous) {
+      for (const pattern of xssCheck.patterns) {
+        allRedactions.push({
+          type: 'injection',
+          offset: 0,
+          length: 0,
+          replacement: '[HTML escaped]',
+          reason: `Dangerous HTML pattern detected: ${pattern}`,
+        });
+      }
+    }
+    const escaped = escapeHtml(text);
+    if (escaped !== text) {
+      text = escaped;
+    }
+  }
+
   // 2. Redact system prompt fragments
   const sysprompt = redactSystemPromptFragments(text);
   text = sysprompt.text;
@@ -666,8 +759,9 @@ export function sanitizeForExternalChannel(
   channel: 'discord' | 'slack' | 'generic' = 'generic',
   config: Partial<SanitizerConfig> = {}
 ): SanitizedMessage {
-  // First run the standard pipeline
-  const sanitized = sanitizeMessage(content, config);
+  // Run the standard pipeline WITHOUT HTML escaping first,
+  // so channel-specific replacements can match raw content.
+  const sanitized = sanitizeMessage(content, { ...config, escapeHtmlContent: false });
   let text = sanitized.content;
   const extraRedactions: Redaction[] = [];
 
@@ -700,6 +794,24 @@ export function sanitizeForExternalChannel(
     text = text.replace(/<!(?:everyone|here|channel)>/g, '[mention]');
   }
 
+  // NOW apply HTML escaping as the final step (if enabled in config or by default)
+  const shouldEscapeHtml = config.escapeHtmlContent !== false;
+  if (shouldEscapeHtml) {
+    const xssCheck = detectHtmlXss(text);
+    if (xssCheck.dangerous) {
+      for (const pattern of xssCheck.patterns) {
+        extraRedactions.push({
+          type: 'injection',
+          offset: 0,
+          length: 0,
+          replacement: '[HTML escaped]',
+          reason: `Dangerous HTML pattern detected: ${pattern}`,
+        });
+      }
+    }
+    text = escapeHtml(text);
+  }
+
   return {
     content: text,
     modified: sanitized.modified || extraRedactions.length > 0,
@@ -720,4 +832,5 @@ export const _testing = {
   SYSTEM_PROMPT_MARKERS,
   VALID_AGENT_IDS,
   DEFAULT_CONFIG,
+  HTML_ESCAPE_MAP,
 };
