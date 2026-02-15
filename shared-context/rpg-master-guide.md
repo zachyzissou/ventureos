@@ -907,13 +907,22 @@ where quality_multiplier = 0 if acceptance < 0.7, else 1.0
 **Track 1 validation:** Verifier reviewing (in progress, 30-60 min estimated)
 
 
-### 🎯 Phase 5: StarCraft Tactical Command Center (Team Review Complete)
+### 🔄 Phase 5: StarCraft Tactical Command Center (In Progress)
 
 **Synthesized:** 2026-02-14  
 **Source:** 5 team reviews (Atlas, Sentinel, Verifier, Archivist, Synth) + original spec  
-**Status:** 📋 PLAN UPDATED — Decisions Required Before Implementation  
+**Status:** 🚀 Phase 5.0 Complete — Phase 5.1 Starting  
 **Original Spec:** `~/clawd/shared-context/phase5-tactical-map-spec.md` (66KB)  
 **Team Reviews:** `~/clawd/shared-context/phase5-review-*.md` (5 files)
+
+**Phase 5.0 Complete** (2026-02-14, ~15h total):
+- ✅ Session bridge running (578 sessions discovered, PID 50643)
+- ✅ Mission recording operational (4 missions logged)
+- ✅ Security architecture designed (SECURITY_ARCHITECTURE.md, 45KB)
+- ✅ MapState API contract defined (API_CONTRACTS.md, 1034 lines)
+- ✅ 6 spec ambiguities resolved (phase5-ambiguities-resolved.md)
+- ✅ Assets licensing policy created (ASSETS-LICENSING.md)
+- **Decisions locked:** Flat 2D, Full Vision scope, Security approved
 
 ---
 
