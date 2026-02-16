@@ -38,3 +38,4 @@ yarn-error.log*
 .tmp/
 tmp/
 runtime/logs/
+dashboard/data/
