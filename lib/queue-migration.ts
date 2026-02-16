@@ -27,13 +27,14 @@ import {
 
 export interface MigrationResult {
   /**
-   * Whether migration logic was conceptually applied.
+   * Whether migration changes were persisted to disk or intended for persistence.
    *
-   * Notes:
-   * - `true` also in dry-run mode (migration computed in memory).
-   * - `false` when no migration path exists, or document is already at target.
+   * - In `migrateQueueFile`, `true` means migrated content was written to disk.
+   * - In `migrateQueueDocument`, `true` means migration is non-dry-run and
+   *   should be persisted by the caller.
+   * - `false` in dry-run mode, or when no migration path exists.
    */
-  applied: boolean;
+  persisted: boolean;
   /** Source version. */
   fromVersion: number;
   /** Target version. */
@@ -94,7 +95,7 @@ export function migrateQueueDocument(
     return {
       document: doc,
       result: {
-        applied: false,
+        persisted: false,
         fromVersion,
         toVersion: targetVersion,
         tasksMigrated: 0,
@@ -106,7 +107,7 @@ export function migrateQueueDocument(
 
   if (fromVersion > targetVersion) {
     // Rollback path
-    return rollbackDocument(doc, targetVersion);
+    return rollbackDocument(doc, targetVersion, options);
   }
 
   // Forward migration chain
@@ -121,7 +122,7 @@ export function migrateQueueDocument(
       return {
         document: doc,
         result: {
-          applied: false,
+          persisted: false,
           fromVersion,
           toVersion: targetVersion,
           tasksMigrated: 0,
@@ -141,7 +142,7 @@ export function migrateQueueDocument(
   return {
     document: current,
     result: {
-      applied: true,
+      persisted: !options.dryRun,
       fromVersion,
       toVersion: targetVersion,
       tasksMigrated: totalMigrated,
@@ -177,7 +178,7 @@ export async function migrateQueueFile(
   const doc = parsed as QueueDocument;
   const { document, result } = migrateQueueDocument(doc, options);
 
-  if (result.applied && !options.dryRun) {
+  if (result.persisted && !options.dryRun) {
     // Create backup if requested
     if (options.createBackup !== false) {
       const backupPath = `${filePath}.v${result.fromVersion}.backup`;
@@ -278,7 +279,8 @@ const MIGRATIONS: Record<number, MigrationStep> = {
  */
 function rollbackDocument(
   doc: QueueDocument,
-  targetVersion: number
+  targetVersion: number,
+  options: MigrationOptions = {}
 ): { document: QueueDocument; result: MigrationResult } {
   const fromVersion = doc.version;
   const warnings: string[] = [];
@@ -300,7 +302,7 @@ function rollbackDocument(
         items: items as QueueTask[],
       },
       result: {
-        applied: true,
+        persisted: !options.dryRun,
         fromVersion,
         toVersion: targetVersion,
         tasksMigrated: items.length,
@@ -313,7 +315,7 @@ function rollbackDocument(
   return {
     document: doc,
     result: {
-      applied: false,
+      persisted: false,
       fromVersion,
       toVersion: targetVersion,
       tasksMigrated: 0,
