@@ -1,10 +1,17 @@
 import { Application, Container } from 'pixi.js';
-import { AGENT_ORDER, AGENTS, CANVAS, ECONOMY } from '@/config';
+import { AGENT_ORDER, AGENTS, CANVAS, ECONOMY, HEALTH, FEATURES } from '@/config';
 import type { AgentId, Point } from '@/config';
 import { createApiClient } from '@/data/api-client';
 import { createEconomyClient } from '@/data/economy-client';
+import { createHealthClient } from '@/data/health-client';
 import { classifyActivity, ActivityType } from '@/data/activity-mapper';
 import { createCameraController } from '@/interaction/camera';
+import { createSelectionRing } from '@/interaction/selection';
+import { createTooltipOverlay } from '@/interaction/tooltip';
+import { createDetailPanel } from '@/interaction/detail-panel';
+import { createMinimap } from '@/interaction/minimap';
+import { createKeyboardManager } from '@/interaction/keyboard';
+import { createHelpOverlay } from '@/interaction/help-overlay';
 import { createBuildingsLayer, RING_AGENT_IDS } from '@/renderer/buildings';
 import { createHud, pollKpis } from '@/renderer/hud';
 import { createNexus } from '@/renderer/nexus';
@@ -14,8 +21,20 @@ import { createUnitsLayer } from '@/renderer/units';
 import { createParticleSystem } from '@/renderer/particles';
 import { createKhalaNetworkLayer } from '@/renderer/khala-network';
 import { createResourceEconomyLayer } from '@/renderer/resource-economy';
+import { createHealthDiagnosticsLayer } from '@/renderer/health-diagnostics';
+import { createHealthDashboard } from '@/renderer/health-dashboard';
 import { deriveBuildingState } from '@/renderer/building-states';
 import { BudgetAlertManager } from '@/economy/alerts';
+import { AlertRouter } from '@/health/alert-router';
+import { createConnectivityMonitor } from '@/health/connectivity';
+import {
+  createEmptyHealthState,
+  applyAgentHealthUpdate,
+  applyAlertEvent,
+  applyAlertResolvedEvent,
+  applyDiagnosticsUpdate
+} from '@/health/normalize';
+import type { HealthState } from '@/health/types';
 import {
   applyAgentEconomyUpdate,
   applyEconomySnapshot,
@@ -24,7 +43,7 @@ import {
 } from '@/economy/state';
 import type { EconomyState } from '@/economy/types';
 import { createStore } from '@/state/store';
-import type { MapState } from '@/state/types';
+import type { MapState, SelectionState } from '@/state/types';
 
 function createInitialMapState(): MapState {
   const agents = {} as MapState['agents'];
@@ -41,6 +60,8 @@ function createInitialMapState(): MapState {
 
 const mapStore = createStore<MapState>(createInitialMapState());
 const economyStore = createStore<EconomyState>(createEmptyEconomyState());
+const healthStore = createStore<HealthState>(createEmptyHealthState());
+const selectionStore = createStore<SelectionState>({ selectedId: null, hoveredId: null });
 
 async function bootstrap() {
   const app = new Application();
@@ -88,16 +109,45 @@ async function bootstrap() {
   const resourceEconomy = createResourceEconomyLayer();
   world.addChild(resourceEconomy.worldContainer);
 
+  const healthDiagnostics = createHealthDiagnosticsLayer();
+  world.addChild(healthDiagnostics.worldContainer);
+
   // HUD overlays
   const hud = createHud();
   app.stage.addChild(hud.container);
   app.stage.addChild(resourceEconomy.overlayContainer);
+  app.stage.addChild(healthDiagnostics.alertContainer);
+  app.stage.addChild(healthDiagnostics.connectivityContainer);
+
+  const healthDashboard = createHealthDashboard();
+  app.stage.addChild(healthDashboard.container);
+
+  // Phase 5.7: Interactive Controls
+  const getAgentPosition = (id: AgentId): Point => mapStore.get().agents[id]?.position ?? { x: 0, y: 0 };
+
+  const selectionRing = createSelectionRing(selectionStore, getAgentPosition);
+  world.addChild(selectionRing.container);
+
+  const tooltip = createTooltipOverlay(selectionStore, getAgentPosition);
+  app.stage.addChild(tooltip.container);
+
+  const detailPanel = createDetailPanel(selectionStore);
+  app.stage.addChild(detailPanel.container);
+
+  const minimap = createMinimap(selectionStore);
+  app.stage.addChild(minimap.container);
+
+  const helpOverlay = createHelpOverlay();
+  app.stage.addChild(helpOverlay.container);
 
   const alertManager = new BudgetAlertManager({
     warningRatio: ECONOMY.WARNING_THRESHOLD,
     criticalRatio: ECONOMY.CRITICAL_THRESHOLD,
     cooldownMs: ECONOMY.ALERT_COOLDOWN_MS
   });
+
+  const healthAlertRouter = new AlertRouter();
+  const connectivityMonitor = createConnectivityMonitor();
 
   let cameraHome = { x: app.screen.width / 2, y: app.screen.height / 2 };
   world.position.set(cameraHome.x, cameraHome.y);
@@ -134,6 +184,17 @@ async function bootstrap() {
 
     hud.setSize(app.screen.width, app.screen.height);
     resourceEconomy.setViewport(app.screen.width, app.screen.height);
+    healthDiagnostics.setViewport(app.screen.width, app.screen.height);
+
+    // Position health dashboard on the right, below HUD bar
+    const dashX = Math.max(8, app.screen.width - HEALTH.DASHBOARD_WIDTH - 12);
+    const dashY = Math.max(50, Math.round(app.screen.height * 0.06) + 130);
+    healthDashboard.setPosition(dashX, dashY);
+
+    // Phase 5.7: Layout interactive controls
+    detailPanel.setViewport(app.screen.width, app.screen.height);
+    minimap.setViewport(app.screen.width, app.screen.height);
+    helpOverlay.setViewport(app.screen.width, app.screen.height);
   }
 
   // Pan only when dragging on the terrain surface.
@@ -148,6 +209,48 @@ async function bootstrap() {
     const now = performance.now();
     if (now - lastTap < 280) camera.reset();
     lastTap = now;
+  });
+
+  // Phase 5.7: Wire building click and hover events to selection store
+  for (const id of RING_AGENT_IDS) {
+    const view = buildingsLayer.buildings[id];
+    if (!view) continue;
+    view.container.eventMode = 'static';
+    view.container.cursor = 'pointer';
+    view.container.on('pointertap', () => {
+      selectionStore.update((s) => ({
+        ...s,
+        selectedId: s.selectedId === id ? null : id
+      }));
+    });
+    view.container.on('pointerenter', () => {
+      selectionStore.update((s) => ({ ...s, hoveredId: id }));
+    });
+    view.container.on('pointerleave', () => {
+      selectionStore.update((s) => {
+        if (s.hoveredId === id) return { ...s, hoveredId: null };
+        return s;
+      });
+    });
+  }
+
+  // Nexus click support
+  nexus.container.eventMode = 'static';
+  nexus.container.cursor = 'pointer';
+  nexus.container.on('pointertap', () => {
+    selectionStore.update((s) => ({
+      ...s,
+      selectedId: s.selectedId === 'nexus' ? null : 'nexus'
+    }));
+  });
+  nexus.container.on('pointerenter', () => {
+    selectionStore.update((s) => ({ ...s, hoveredId: 'nexus' }));
+  });
+  nexus.container.on('pointerleave', () => {
+    selectionStore.update((s) => {
+      if (s.hoveredId === 'nexus') return { ...s, hoveredId: null };
+      return s;
+    });
   });
 
   // Keep nexus centered in world space.
@@ -199,6 +302,33 @@ async function bootstrap() {
     }
   });
 
+  // Health store → renderers binding (Phase 5.6)
+  healthStore.subscribe((next) => {
+    // Update health diagnostics overlay
+    healthDiagnostics.setHealthState(next);
+    healthDiagnostics.setAlerts(next.alerts);
+
+    // Update dashboard panel
+    healthDashboard.setHealthState(next);
+    healthDashboard.setAlerts(next.alerts);
+
+    // Run client-side alert evaluation
+    const healthAlerts = healthAlertRouter.evaluate(next);
+    if (healthAlerts.length > 0) {
+      for (const alert of healthAlerts) {
+        console.warn('[tactical-map] health alert', alert.severity, alert.message);
+      }
+    }
+  });
+
+  // Connectivity monitor → health store
+  connectivityMonitor.onStatusChange((conn) => {
+    healthStore.update((curr) => ({
+      ...curr,
+      connectivity: conn
+    }));
+  });
+
   // API polling
   const api = createApiClient({
     onMapState: (s) => mapStore.set(s),
@@ -234,6 +364,66 @@ async function bootstrap() {
     onError: (e) => console.warn('[tactical-map] economy stream error', e)
   });
   economyClient.start();
+
+  // Health client (Phase 5.6)
+  const healthClient = createHealthClient({
+    onSnapshot: (snapshot) => {
+      healthStore.set(snapshot);
+    },
+    onAgentUpdate: (agentId, health) => {
+      healthStore.update((curr) => applyAgentHealthUpdate(curr, { ...health, agentId }, Date.now()));
+    },
+    onAlert: (alert) => {
+      healthStore.update((curr) => applyAlertEvent(curr, alert, HEALTH.MAX_ALERTS, Date.now()));
+    },
+    onAlertResolved: (alertId, resolvedAt) => {
+      healthStore.update((curr) => applyAlertResolvedEvent(curr, alertId, resolvedAt));
+    },
+    onDiagnostics: (diagnostics) => {
+      healthStore.update((curr) => applyDiagnosticsUpdate(curr, diagnostics, Date.now()));
+    },
+    onConnectionChange: (connected) => {
+      connectivityMonitor.setWsConnected(connected);
+    },
+    onError: (e) => console.warn('[tactical-map] health stream error', e)
+  });
+  healthClient.start();
+  connectivityMonitor.start();
+
+  // Phase 5.7: Keyboard manager
+  const keyboard = createKeyboardManager(selectionStore, {
+    onToggleHealthDashboard: () => healthDashboard.setVisible(!healthDashboard.isVisible()),
+    onToggleMinimap: () => minimap.setVisible(!minimap.isVisible()),
+    onToggleDetailPanel: () => {
+      // If no agent selected, select first one; otherwise toggle detail panel visibility
+      const sel = selectionStore.get();
+      if (!sel.selectedId) {
+        selectionStore.update((s) => ({ ...s, selectedId: 'oracle' }));
+      } else {
+        selectionStore.update((s) => ({ ...s, selectedId: null }));
+      }
+    },
+    onToggleHelp: () => helpOverlay.toggle()
+  });
+
+  // Phase 5.7: Minimap navigation
+  minimap.onNavigate((worldX, worldY) => {
+    // Center camera on the clicked world coordinate
+    const cx = app.screen.width / 2;
+    const cy = app.screen.height / 2;
+    camera.setState({
+      x: cx - worldX * camera.getState().zoom,
+      y: cy - worldY * camera.getState().zoom,
+      zoom: camera.getState().zoom
+    });
+  });
+
+  // HUD tab click handler (Phase 5.6 + 5.7)
+  hud.onTabClick((tabName) => {
+    if (tabName === 'Health') {
+      healthDashboard.setVisible(!healthDashboard.isVisible());
+    }
+  });
 
   // KPI ticker
   void pollKpis(() => api.fetchRpgStats(), (t) => hud.setKpiText(t));
@@ -301,12 +491,48 @@ async function bootstrap() {
     particles.update(elapsedMs);
     healthBars.update(elapsedMs);
     resourceEconomy.update(elapsedMs);
+
+    // Health renderers (Phase 5.6)
+    healthDiagnostics.setZoom(camera.getState().zoom);
+    healthDiagnostics.update(elapsedMs);
+    healthDashboard.update(elapsedMs);
+
+    // Interactive controls (Phase 5.7)
+    selectionRing.update(elapsedMs);
+
+    const camState = camera.getState();
+    tooltip.setWorldTransform(camState.x, camState.y, camState.zoom);
+    tooltip.setHealthData(healthStore.get().agents);
+    tooltip.setMapData(s);
+    tooltip.update(elapsedMs);
+
+    detailPanel.setHealthData(healthStore.get().agents);
+    detailPanel.setMapData(s);
+    detailPanel.setAlerts(healthStore.get().alerts);
+    detailPanel.update(elapsedMs);
+
+    minimap.setCameraState(camState);
+    const agentStatuses: Record<string, string> = {};
+    for (const id of AGENT_ORDER) {
+      const ah = healthStore.get().agents[id];
+      if (ah) agentStatuses[id] = ah.status;
+    }
+    minimap.setAgentStatuses(agentStatuses as Record<string, import('@/health/types').AgentStatus>);
+    minimap.update(elapsedMs);
   });
 
   window.addEventListener('resize', layout);
   window.addEventListener('beforeunload', () => {
     api.stop();
     economyClient.stop();
+    healthClient.stop();
+    connectivityMonitor.stop();
+    // Phase 5.7 cleanup
+    keyboard.destroy();
+    selectionRing.destroy();
+    tooltip.destroy();
+    detailPanel.destroy();
+    minimap.destroy();
   });
 
   layout();
@@ -317,13 +543,17 @@ async function bootstrap() {
     app,
     mapStore,
     economyStore,
+    healthStore,
+    selectionStore,
     api,
     economyClient,
+    healthClient,
     camera,
     pause: () => app.ticker.stop(),
     resume: () => app.ticker.start(),
     setMapState: (next: MapState) => mapStore.set(next),
     setEconomyState: (next: EconomyState) => economyStore.set(next),
+    setHealthState: (next: HealthState) => healthStore.set(next),
     // deterministic snapshot helper
     snapshot: () => {
       app.render();

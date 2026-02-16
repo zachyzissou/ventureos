@@ -138,7 +138,13 @@ export const API = {
   /** Reconnect backoff cap in ms. */
   WS_RECONNECT_MAX_MS: 30_000,
   /** Default fetch timeout in ms. */
-  TIMEOUT_MS: 8_000
+  TIMEOUT_MS: 8_000,
+  /** Health snapshot endpoint. */
+  HEALTH_BASE_URL: '/api/tactical-map/health',
+  /** Health WebSocket stream endpoint. */
+  HEALTH_WS_URL: '/api/tactical-map/health/stream',
+  /** Diagnostics endpoint. */
+  HEALTH_DIAGNOSTICS_URL: '/api/tactical-map/diagnostics'
 } as const;
 
 export const CAPACITY = {
@@ -178,6 +184,159 @@ export const PARTICLES = {
   MAX: 500,
   /** Persistent ambient particles. */
   AMBIENT_TARGET: 120
+} as const;
+
+export const HEALTH = {
+  /** Poll interval when WebSocket is connected (diagnostics only). */
+  DIAGNOSTICS_POLL_MS: 30_000,
+  /** Fallback poll cadence while WebSocket is disconnected. */
+  FALLBACK_POLL_MS: 3_000,
+  /** Maximum age before marking agent as "stale" (no heartbeat). */
+  STALE_THRESHOLD_MS: 30_000,
+  /** Maximum age before marking agent as "offline". */
+  OFFLINE_THRESHOLD_MS: 60_000,
+  /** Performance SLA: health check round-trip budget. */
+  HEALTH_CHECK_BUDGET_MS: 50,
+  /** Alert visibility SLA — from event to rendered overlay. */
+  ALERT_VISIBILITY_MS: 5_000,
+  /** Max alerts retained in state. */
+  MAX_ALERTS: 50,
+  /** Alert cooldown to prevent spam. */
+  ALERT_COOLDOWN_MS: 30_000,
+  /** CPU threshold for warning (%). */
+  CPU_WARNING_PCT: 70,
+  /** CPU threshold for critical (%). */
+  CPU_CRITICAL_PCT: 90,
+  /** Memory threshold for warning (% of limit). */
+  MEMORY_WARNING_PCT: 75,
+  /** Memory threshold for critical (% of limit). */
+  MEMORY_CRITICAL_PCT: 90,
+  /** Latency threshold for warning (ms). */
+  LATENCY_WARNING_MS: 150,
+  /** Latency threshold for critical (ms). */
+  LATENCY_CRITICAL_MS: 500,
+  /** Error rate threshold for warning (per min). */
+  ERROR_RATE_WARNING: 5,
+  /** Error rate threshold for critical (per min). */
+  ERROR_RATE_CRITICAL: 20,
+  /** Health indicator ring radius (px, around agent building). */
+  INDICATOR_RING_RADIUS: 52,
+  /** Pulse animation speed for error state (Hz). */
+  ERROR_PULSE_HZ: 2.0,
+  /** Pulse animation speed for warning state (Hz). */
+  WARNING_PULSE_HZ: 1.0,
+  /** Dashboard panel width (px). */
+  DASHBOARD_WIDTH: 320,
+  /** Dashboard panel max height (px). */
+  DASHBOARD_MAX_HEIGHT: 460,
+  /** Sparkline dimensions for dashboard. */
+  SPARKLINE_WIDTH: 80,
+  SPARKLINE_HEIGHT: 20,
+  /** History points retained per agent for sparklines. */
+  HISTORY_MAX_POINTS: 120
+} as const;
+
+export const CONNECTIVITY = {
+  /** Connectivity check interval (ms). */
+  CHECK_INTERVAL_MS: 10_000,
+  /** Response time for "degraded" classification (ms). */
+  DEGRADED_THRESHOLD_MS: 200,
+  /** Consecutive failures before "offline" status. */
+  OFFLINE_FAILURES: 3
+} as const;
+
+export const SELECTION = {
+  /** Selection ring radius around building (px). */
+  RING_RADIUS: 62,
+  /** Selection ring color (Protoss gold). */
+  RING_COLOR: 0xffd700,
+  /** Selection ring alpha. */
+  RING_ALPHA: 0.9,
+  /** Selection ring stroke width (px). */
+  RING_WIDTH: 3,
+  /** Selection ring pulse frequency (Hz). */
+  PULSE_HZ: 0.8,
+  /** Glow blur radius for selection ring. */
+  GLOW_BLUR: 6
+} as const;
+
+export const TOOLTIP = {
+  /** Tooltip width (px). */
+  WIDTH: 200,
+  /** Tooltip inner padding (px). */
+  PADDING: 10,
+  /** Tooltip vertical offset from building center (px, negative = above). */
+  OFFSET_Y: -90,
+  /** Delay before tooltip appears (ms). */
+  SHOW_DELAY_MS: 300,
+  /** Tooltip background color. */
+  BG_COLOR: 0x0a0a1a,
+  /** Tooltip background alpha. */
+  BG_ALPHA: 0.92,
+  /** Tooltip border color. */
+  BORDER_COLOR: 0x00d4ff,
+  /** Tooltip border alpha. */
+  BORDER_ALPHA: 0.6
+} as const;
+
+export const DETAIL_PANEL = {
+  /** Detail panel width (px). */
+  WIDTH: 340,
+  /** Slide animation duration (ms). */
+  ANIM_MS: 200,
+  /** Panel background color. */
+  BG_COLOR: 0x05070d,
+  /** Panel background alpha. */
+  BG_ALPHA: 0.94,
+  /** Panel border color. */
+  BORDER_COLOR: 0x00d4ff,
+  /** Panel border alpha. */
+  BORDER_ALPHA: 0.3,
+  /** Section heading color. */
+  HEADING_COLOR: 0xffd700,
+  /** Sparkline dimensions. */
+  SPARKLINE_WIDTH: 120,
+  SPARKLINE_HEIGHT: 28,
+  /** Max sessions shown in list. */
+  MAX_SESSIONS_SHOWN: 5,
+  /** Max errors shown in list. */
+  MAX_ERRORS_SHOWN: 3
+} as const;
+
+export const MINIMAP = {
+  /** Minimap size (px, square). */
+  SIZE: 160,
+  /** Margin from viewport edge (px). */
+  MARGIN: 12,
+  /** Background color. */
+  BG_COLOR: 0x05070d,
+  /** Background alpha. */
+  BG_ALPHA: 0.80,
+  /** Agent dot radius (px). */
+  DOT_RADIUS: 5,
+  /** Selected agent dot radius (px). */
+  SELECTED_DOT_RADIUS: 7,
+  /** Camera viewport rect color. */
+  VIEWPORT_COLOR: 0xffd700,
+  /** Camera viewport rect alpha. */
+  VIEWPORT_ALPHA: 0.5,
+  /** Border color. */
+  BORDER_COLOR: 0x00d4ff,
+  /** Border alpha. */
+  BORDER_ALPHA: 0.3,
+  /** Scale factor: how much of the world to show. */
+  WORLD_EXTENT: 500
+} as const;
+
+export const FEATURES = {
+  HEALTH_INDICATORS: true,
+  HEALTH_DASHBOARD: true,
+  ALERT_OVERLAYS: true,
+  CONNECTIVITY_BADGE: true,
+  INTERACTIVE_SELECTION: true,
+  TOOLTIP: true,
+  DETAIL_PANEL: true,
+  MINIMAP: true
 } as const;
 
 export const ECONOMY = {

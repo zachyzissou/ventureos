@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CANVAS, AGENTS, COLORS, BONDS, CAMERA, API, CAPACITY, ECONOMY, calculateCirclePositions } from '@/config';
+import { CANVAS, AGENTS, COLORS, BONDS, CAMERA, API, CAPACITY, ECONOMY, SELECTION, TOOLTIP, DETAIL_PANEL, MINIMAP, FEATURES, calculateCirclePositions } from '@/config';
 
 describe('config.ts', () => {
   it('exports core constant groups', () => {
@@ -13,6 +13,22 @@ describe('config.ts', () => {
     expect(ECONOMY.WARNING_THRESHOLD).toBeGreaterThan(0);
     expect(CAPACITY.MAX_SESSIONS.atlas).toBe(5);
     expect(AGENTS.POSITIONS.length).toBe(8);
+
+    // Phase 5.7 constants
+    expect(SELECTION.RING_RADIUS).toBeGreaterThan(0);
+    expect(SELECTION.RING_COLOR).toBeTypeOf('number');
+    expect(SELECTION.PULSE_HZ).toBeGreaterThan(0);
+    expect(TOOLTIP.WIDTH).toBeGreaterThan(0);
+    expect(TOOLTIP.SHOW_DELAY_MS).toBeGreaterThan(0);
+    expect(DETAIL_PANEL.WIDTH).toBeGreaterThan(0);
+    expect(DETAIL_PANEL.ANIM_MS).toBeGreaterThan(0);
+    expect(MINIMAP.SIZE).toBeGreaterThan(0);
+    expect(MINIMAP.DOT_RADIUS).toBeGreaterThan(0);
+    expect(MINIMAP.SELECTED_DOT_RADIUS).toBeGreaterThan(MINIMAP.DOT_RADIUS);
+    expect(FEATURES.INTERACTIVE_SELECTION).toBe(true);
+    expect(FEATURES.TOOLTIP).toBe(true);
+    expect(FEATURES.DETAIL_PANEL).toBe(true);
+    expect(FEATURES.MINIMAP).toBe(true);
   });
 
   it('calculateCirclePositions() returns evenly spaced points on a circle', () => {

@@ -1,5 +1,17 @@
 import type { AgentId, Point } from '@/config';
 
+// Re-export health types for convenience (Phase 5.6)
+export type {
+  AgentHealthState,
+  AgentStatus,
+  AlertSeverity,
+  ConnectivityState,
+  HealthAlert,
+  HealthMetrics,
+  HealthState,
+  SystemDiagnostics
+} from '@/health/types';
+
 export type BuildingState = 'IDLE' | 'ACTIVE' | 'OVERLOADED' | 'ERROR';
 
 export type AgentSession = {
@@ -37,3 +49,12 @@ export type MapState = {
 };
 
 export type RpgStats = Record<string, number>;
+
+// ── Selection state (Phase 5.7) ─────────────────────────────────
+
+export type SelectionState = {
+  /** Currently selected agent id (null = none). */
+  selectedId: AgentId | null;
+  /** Currently hovered agent id (null = none). */
+  hoveredId: AgentId | null;
+};
