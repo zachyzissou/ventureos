@@ -204,6 +204,14 @@ export class TaskQueue {
   /** Add a new task to the queue. Returns the created task. */
   enqueue(options: EnqueueOptions): QueueTask {
     const ts = this.now().toISOString();
+    const missionContext = options.missionContext
+      ? this.serializeMissionContext(options.missionContext)
+      : this.buildMissionContext(options);
+
+    const businessUnit = options.businessUnit ?? missionContext?.businessUnit;
+    const missionType = options.missionType ?? missionContext?.missionType;
+    const role = options.role ?? missionContext?.role;
+
     const task: QueueTask = {
       id: crypto.randomUUID(),
       createdAt: ts,
@@ -212,12 +220,10 @@ export class TaskQueue {
       status: 'queued',
       title: options.title,
       description: options.description,
-      businessUnit: options.businessUnit ?? options.missionContext?.businessUnit,
-      missionType: options.missionType ?? options.missionContext?.missionType,
-      role: options.role ?? options.missionContext?.role,
-      missionContext: options.missionContext
-        ? this.serializeMissionContext(options.missionContext)
-        : this.buildMissionContext(options),
+      businessUnit,
+      missionType,
+      role,
+      missionContext,
       jobId: options.jobId,
       nextRunAt: options.nextRunAt,
       attempts: 0,

@@ -87,9 +87,20 @@ export class BusinessUnitRegistry {
 
   /** Load registry from disk. */
   async load(): Promise<void> {
-    const raw = await fs.readFile(this.registryPath, 'utf8');
-    const doc: BusinessUnitRegistryDocument = JSON.parse(raw);
-    this.loadFromDocument(doc);
+    try {
+      const raw = await fs.readFile(this.registryPath, 'utf8');
+      const doc: BusinessUnitRegistryDocument = JSON.parse(raw);
+      this.loadFromDocument(doc);
+    } catch (err: any) {
+      const prefix = `Failed to load business unit registry at ${this.registryPath}`;
+      if (err?.code === 'ENOENT') {
+        throw new Error(`${prefix}: file not found`, { cause: err });
+      }
+      if (err instanceof SyntaxError) {
+        throw new Error(`${prefix}: invalid JSON (${err.message})`, { cause: err });
+      }
+      throw new Error(`${prefix}: ${err?.message ?? String(err)}`, { cause: err });
+    }
   }
 
   /** Load from an in-memory document. */

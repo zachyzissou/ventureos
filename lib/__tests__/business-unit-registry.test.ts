@@ -2,6 +2,10 @@
  * Business Unit Registry Tests — VentureOS Queue Integration (P1 #30)
  */
 
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
 import {
   BusinessUnitRegistry,
   type BusinessUnitRegistryDocument,
@@ -95,6 +99,24 @@ describe('BusinessUnitRegistry', () => {
 
       expect(reg.isLoaded()).toBe(true);
       expect(reg.has('test')).toBe(true);
+    });
+
+    it('throws descriptive error for invalid JSON', async () => {
+      const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'bu-registry-'));
+      const filePath = path.join(tmpDir, 'business-units.json');
+      await fs.writeFile(filePath, '{"version":2,"units":[}', 'utf8');
+
+      const reg = new BusinessUnitRegistry({ registryPath: filePath });
+      await expect(reg.load()).rejects.toThrow(`Failed to load business unit registry at ${filePath}: invalid JSON`);
+
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    });
+
+    it('throws descriptive error for missing file', async () => {
+      const filePath = path.join(os.tmpdir(), `missing-business-units-${Date.now()}.json`);
+      const reg = new BusinessUnitRegistry({ registryPath: filePath });
+
+      await expect(reg.load()).rejects.toThrow(`Failed to load business unit registry at ${filePath}: file not found`);
     });
   });
 
