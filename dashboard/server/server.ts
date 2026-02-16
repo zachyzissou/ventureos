@@ -52,6 +52,22 @@ import type {
   VentureOSKpiResponse,
 } from './types.js';
 
+// Shared VentureOS libraries (Issue #79)
+import { toSafeError } from '../../lib/error-handler.js';
+import {
+  VENTUREOS_ROOT as LIB_VENTUREOS_ROOT,
+  OPENCLAW_DIR as LIB_OPENCLAW_DIR,
+  SHARED_CONTEXT_DIR as LIB_SHARED_CONTEXT_DIR,
+  KPI_DIR as LIB_KPI_DIR,
+  OBSERVATIONS_DIR as LIB_OBSERVATIONS_DIR,
+  LOG_DIR as LIB_LOG_DIR,
+  RPG_ROOT as LIB_RPG_ROOT,
+  RPG_DB_PATH as LIB_RPG_DB_PATH,
+  ACTIVE_WORK_PATH as LIB_ACTIVE_WORK_PATH,
+  PRIORITIES_PATH as LIB_PRIORITIES_PATH,
+  agentSessionsDir as libAgentSessionsDir,
+} from '../../lib/paths.js';
+
 // Phase 5.1 Security Middleware
 import {
   authenticate,
@@ -74,19 +90,13 @@ import { handleAgentHealth } from './routes/agent-health.js';
 import { handleRpgApi } from './routes/rpg.js';
 import { handleConversationApi } from './routes/conversation.js';
 
-// Configuration
-import {
-  VENTUREOS_ROOT as CONFIG_VENTUREOS_ROOT,
-  SHARED_CONTEXT as CONFIG_SHARED_CONTEXT,
-  KPI_DIR as CONFIG_KPI_DIR,
-  OBSERVATIONS_DIR as CONFIG_OBSERVATIONS_DIR,
-} from './config.js';
-
 // ─── Configuration via environment variables ─────────────────────────────────
+// Issue #79: All VentureOS data paths now flow through lib/paths.ts.
+// No more os.homedir() or hardcoded ~/clawd/ in this file.
 
 export const PORT: number = parseInt(process.env.DASHBOARD_PORT ?? '8001');
 const HOST: string = process.env.DASHBOARD_HOST ?? '0.0.0.0';
-const OPENCLAW_DIR: string = process.env.OPENCLAW_DIR ?? path.join(os.homedir(), '.openclaw');
+const OPENCLAW_DIR: string = LIB_OPENCLAW_DIR;
 const WORKSPACE_DIR: string = process.env.WORKSPACE_DIR ?? process.env.OPENCLAW_WORKSPACE ?? process.cwd();
 const AGENT_ID: string = process.env.OPENCLAW_AGENT ?? 'main';
 const sessDir: string = path.join(OPENCLAW_DIR, 'agents', AGENT_ID, 'sessions');
@@ -103,40 +113,19 @@ const scrapeScript: string = path.join(WORKSPACE_DIR, 'scripts', 'scrape-claude-
 const htmlPath: string = path.join(import.meta.dirname, '..', 'client', 'index.html');
 const loginHtmlPath: string = path.join(import.meta.dirname, '..', 'client', 'login.html');
 
-// VentureOS RPG database path (still configurable via env var)
-const VENTUREOS_RPG_ROOT: string =
-  process.env.VENTUREOS_RPG_ROOT ?? path.join(os.homedir(), 'clawd', 'ventureos-rpg');
-const VENTUREOS_RPG_DB: string =
-  process.env.VENTUREOS_RPG_DB ?? path.join(os.homedir(), 'clawd', 'agents', 'ventureos-rpg.db');
+// VentureOS paths — all resolved via lib/paths.ts
+const VENTUREOS_RPG_ROOT: string = LIB_RPG_ROOT;
+const VENTUREOS_RPG_DB: string = LIB_RPG_DB_PATH;
+const VENTUREOS_ROOT: string = LIB_VENTUREOS_ROOT;
+const SHARED_CONTEXT: string = LIB_SHARED_CONTEXT_DIR;
+const KPI_DIR: string = LIB_KPI_DIR;
+const OBSERVATIONS_DIR: string = LIB_OBSERVATIONS_DIR;
 
-// VentureOS config paths (with fallbacks from config module)
-const VENTUREOS_ROOT: string =
-  CONFIG_VENTUREOS_ROOT ??
-  process.env.VENTUREOS_ROOT ??
-  path.join(os.homedir(), 'clawd', 'ventureos');
-const SHARED_CONTEXT: string =
-  CONFIG_SHARED_CONTEXT ??
-  process.env.SHARED_CONTEXT ??
-  process.env.VENTUREOS_SHARED_CONTEXT_DIR ??
-  path.join(os.homedir(), 'clawd', 'shared-context');
-const KPI_DIR: string =
-  CONFIG_KPI_DIR ??
-  process.env.KPI_DIR ??
-  process.env.VENTUREOS_KPI_DIR ??
-  path.join(SHARED_CONTEXT, 'kpis');
-const OBSERVATIONS_DIR: string =
-  CONFIG_OBSERVATIONS_DIR ??
-  process.env.OBSERVATIONS_DIR ??
-  process.env.VENTUREOS_OBSERVATIONS_DIR ??
-  path.join(OPENCLAW_DIR, 'workspace-archivist', 'observations');
-
-// VentureOS integration (optional; safe when files/dirs are missing)
+// VentureOS integration aliases (kept for compatibility within this file)
 const VENTUREOS_SHARED_CONTEXT_DIR: string = SHARED_CONTEXT;
 const VENTUREOS_KPI_DIR: string = KPI_DIR;
-const VENTUREOS_ACTIVE_WORK_PATH: string =
-  process.env.VENTUREOS_ACTIVE_WORK_PATH ?? path.join(VENTUREOS_SHARED_CONTEXT_DIR, 'active-work.md');
-const VENTUREOS_PRIORITIES_PATH: string =
-  process.env.VENTUREOS_PRIORITIES_PATH ?? path.join(VENTUREOS_SHARED_CONTEXT_DIR, 'priorities.md');
+const VENTUREOS_ACTIVE_WORK_PATH: string = LIB_ACTIVE_WORK_PATH;
+const VENTUREOS_PRIORITIES_PATH: string = LIB_PRIORITIES_PATH;
 const VENTUREOS_OBSERVATIONS_DIR: string = OBSERVATIONS_DIR;
 const VENTUREOS_AGENTS: string[] = (
   process.env.VENTUREOS_AGENTS ?? 'oracle,atlas,sentinel,verifier,archivist,synth'
@@ -330,10 +319,7 @@ function ventureCached<T>(key: string, computeFn: () => T): T {
 }
 
 function getAgentSessionsDir(agentId: string): string {
-  const safe: string = String(agentId || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\-_]/g, '');
-  return path.join(OPENCLAW_DIR, 'agents', safe, 'sessions');
+  return libAgentSessionsDir(agentId);
 }
 
 function parseJsonlAvgLatencyMs(jsonlPath: string, maxLines: number = 600): number | null {
@@ -2814,6 +2800,17 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
         KPI_DIR,
         OBSERVATIONS_DIR,
       },
+      capabilities: [
+        { id: 'dashboard', name: 'OpenClaw Dashboard', version: '1.0.0', port: PORT, status: 'active' },
+        { id: 'tactical-map', name: 'Tactical Map', status: 'active' },
+        { id: 'rpg-api', name: 'VentureOS RPG API', status: 'active' },
+        { id: 'conversation-api', name: 'Conversation API', status: 'active' },
+        { id: 'kpi-tracker', name: 'KPI Tracker', status: 'active' },
+        { id: 'observations', name: 'Observational Memory', status: 'active' },
+        { id: 'agent-health', name: 'Agent Health Monitor', status: 'active' },
+        { id: 'mission-control', name: 'Mission Control', status: 'active' },
+        { id: 'workflow-patterns', name: 'Workflow Patterns', status: 'active' },
+      ],
     });
     return;
   }
@@ -2863,14 +2860,14 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     return;
   }
 
-  // Action endpoints
+  // Action endpoints — use shared error handler (Issue #79) for safe responses
   if (req.url === '/api/action/restart-openclaw' && req.method === 'POST') {
     try {
       exec('systemctl restart openclaw', () => {});
       sendJson(res, { success: true });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      sendJson(res, { error: msg }, 500);
+      const safe = toSafeError(e, { action: 'restart-openclaw' });
+      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
     }
     return;
   }
@@ -2881,8 +2878,8 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
       }, 2000);
       sendJson(res, { success: true, message: 'Restarting in 2 seconds...' });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      sendJson(res, { error: msg }, 500);
+      const safe = toSafeError(e, { action: 'restart-dashboard' });
+      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
     }
     return;
   }
@@ -2894,8 +2891,8 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
       usageCacheTime = 0;
       sendJson(res, { success: true });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      sendJson(res, { error: msg }, 500);
+      const safe = toSafeError(e, { action: 'clear-cache' });
+      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
     }
     return;
   }
@@ -3163,8 +3160,8 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
         res.end('Not found');
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      sendJson(res, { error: msg }, 500);
+      const safe = toSafeError(e, { action: 'cron' });
+      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
     }
     return;
   }
@@ -3244,9 +3241,7 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
 
   // Serve Tactical Map static files
   const TACTICAL_MAP_DIST: string = path.join(
-    os.homedir(),
-    'clawd',
-    'ventureos',
+    VENTUREOS_ROOT,
     'tactical-map',
     'dist',
   );

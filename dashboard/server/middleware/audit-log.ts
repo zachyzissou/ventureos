@@ -5,19 +5,18 @@
  * See: SECURITY_ARCHITECTURE.md §7
  *
  * Logs security-relevant events (auth failures, rate limits, replay access)
- * to ~/clawd/logs/tactical-map-access.log in JSON Lines format.
+ * to the VentureOS log directory in JSON Lines format.
  *
  * Migrated from server/middleware/audit-log.js (Phase 3 — Issue #76).
+ * Issue #79: Path resolution delegated to lib/paths.ts.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
 
 import type { IncomingMessage } from 'node:http';
 import type { AuditLogEntry } from '../types.js';
-
-const LOG_DIR: string = path.join(os.homedir(), 'clawd', 'logs');
+import { LOG_DIR } from '../../../lib/paths.js';
 export const LOG_FILE: string = path.join(LOG_DIR, 'tactical-map-access.log');
 
 // Ensure log directory exists

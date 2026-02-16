@@ -46,6 +46,15 @@ export interface AgentHealthDeps {
 }
 
 // ─── Rate Limiting ───────────────────────────────────────────────────────────
+//
+// NOTE (Issue #79): These HTTP-level rate limit types are intentionally
+// distinct from `lib/rate-limiter.ts` RateLimitResult/RateLimitConfig.
+//
+// - Dashboard: per-IP, per-endpoint sliding windows for HTTP traffic
+// - lib/rate-limiter.ts: per-agent, per-conversation with backoff strategies
+//
+// The two domains have incompatible interfaces and different semantics.
+// See also: lib/http-types.ts for the canonical shared version of these types.
 
 /** Result of a rate limit check. */
 export interface RateLimitResult {

@@ -1,26 +1,27 @@
 /**
  * Dashboard configuration — environment-based paths.
  * Migrated from server/config.js (Phase 3 — Issue #76).
+ *
+ * Issue #79: Now delegates all path resolution to `lib/paths.ts`
+ * instead of computing paths locally with `os.homedir()`.
  */
 
-import os from 'node:os';
-import path from 'node:path';
+import {
+  VENTUREOS_ROOT as LIB_VENTUREOS_ROOT,
+  SHARED_CONTEXT_DIR,
+  KPI_DIR as LIB_KPI_DIR,
+  OBSERVATIONS_DIR as LIB_OBSERVATIONS_DIR,
+} from '../../lib/paths.js';
 
 import type { DashboardConfig } from './types.js';
 
-const homedir: string = os.homedir();
+export const VENTUREOS_ROOT: string = LIB_VENTUREOS_ROOT;
 
-export const VENTUREOS_ROOT: string =
-  process.env.VENTUREOS_ROOT ?? path.join(homedir, 'clawd', 'ventureos');
+export const SHARED_CONTEXT: string = SHARED_CONTEXT_DIR;
 
-export const SHARED_CONTEXT: string =
-  process.env.SHARED_CONTEXT ?? path.join(homedir, 'clawd', 'shared-context');
+export const KPI_DIR: string = LIB_KPI_DIR;
 
-export const KPI_DIR: string =
-  process.env.KPI_DIR ?? path.join(SHARED_CONTEXT, 'kpis');
-
-export const OBSERVATIONS_DIR: string =
-  process.env.OBSERVATIONS_DIR ?? path.join(homedir, '.openclaw', 'workspace-archivist', 'observations');
+export const OBSERVATIONS_DIR: string = LIB_OBSERVATIONS_DIR;
 
 export const config: DashboardConfig = {
   VENTUREOS_ROOT,
