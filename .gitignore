@@ -39,3 +39,6 @@ yarn-error.log*
 tmp/
 runtime/logs/
 dashboard/data/
+
+# API tokens
+**/.api-token
