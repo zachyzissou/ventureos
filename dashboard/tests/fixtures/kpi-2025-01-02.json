@@ -1,0 +1,10 @@
+{
+  "date": "2025-01-02",
+  "overall": {
+    "success_rate": 0.97,
+    "latency_ms": { "p50": 100, "p95": 400, "p99": 800 },
+    "handoff": { "success_rate": 0.92 },
+    "backup": { "age_hours": 1.8 }
+  },
+  "slo": { "success_rate": 0.9, "p95_latency_s": 1.0, "backup_age_h": 24 }
+}
