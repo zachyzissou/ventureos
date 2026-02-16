@@ -10,14 +10,13 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { CookieMap } from '../types.js';
+import { LOG_DIR } from '../../../lib/paths.js';
 
 const DATA_DIR: string = path.join(import.meta.dirname, '..', '..', 'data');
 const TOKEN_PATH: string = path.join(DATA_DIR, '.api-token');
-const LOG_DIR: string = path.join(os.homedir(), 'clawd', 'logs');
 const ACCESS_LOG: string = path.join(LOG_DIR, 'tactical-map-access.log');
 
 // Ensure directories exist
