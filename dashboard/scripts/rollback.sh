@@ -19,7 +19,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DASHBOARD_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-VENTUREOS_ROOT="$(cd "$DASHBOARD_DIR/.." && pwd)"
 
 # Service identifiers
 OLD_LABEL="com.openclaw.dashboard"
@@ -69,7 +68,7 @@ run_or_dry() {
   if $DRY_RUN; then
     echo "  [DRY RUN] $*"
   else
-    eval "$@"
+    "$@"
   fi
 }
 
