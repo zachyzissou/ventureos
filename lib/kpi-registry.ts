@@ -498,9 +498,11 @@ function computeFormulaValue(formula: Formula, data: Record<string, any>): numbe
     }
 
     case 'average': {
-      // If aggregation already done in SQL, use that
-      if (data[formula.field!] !== undefined) {
-        return data[formula.field!];
+      // If aggregation already done in SQL, use that.
+      // SQLite aggregates can return NULL when there are no rows; coerce to 0.
+      if (data[formula.field!] !== undefined && data[formula.field!] !== null) {
+        const v = Number(data[formula.field!]);
+        return Number.isFinite(v) ? v : 0;
       }
       // Otherwise compute from array (future enhancement)
       return 0;
