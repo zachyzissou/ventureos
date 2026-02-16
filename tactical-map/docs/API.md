@@ -19,7 +19,7 @@
 
 The Tactical Map API is served by the VentureOS Dashboard Server on port **8001** (configurable via `DASHBOARD_PORT`). All API routes are prefixed with `/api/tactical-map`.
 
-**Base URL:** `http://192.168.225.149:8001/api/tactical-map`
+**Base URL:** `http://localhost:8001/api/tactical-map`
 
 **Content Type:** All responses are `application/json` unless otherwise noted.
 
@@ -35,7 +35,7 @@ All `/api/*` endpoints require authentication via a pre-shared API key.
 
 **Token sources** (checked in order by the server):
 1. Environment variable `DASHBOARD_API_TOKEN`
-2. File at `tactical-map-server/data/.api-token` (auto-generated if missing)
+2. File at `dashboard/data/.api-token` (auto-generated if missing)
 
 **Request header:**
 ```
@@ -46,6 +46,8 @@ Authorization: Bearer <token>
 ```
 wss://host/api/tactical-map/resources/stream?token=<token>
 ```
+
+> ⚠️ **Security:** Query-parameter token auth is supported for backwards compatibility but not recommended — tokens may be logged by proxies. Prefer header-based auth (e.g. `Sec-WebSocket-Protocol` sub-protocol or an initial `auth` message after connection).
 
 **Client-side token resolution** (checked in order):
 1. `localStorage.getItem('token')`
@@ -79,7 +81,7 @@ wss://host/api/tactical-map/resources/stream?token=<token>
 
 ### GET `/api/tactical-map/state`
 
-Returns the current map state for all 8 agents.
+Returns the current map state for all agents (7 ring agents + 1 central Nexus).
 
 **Response: `200 OK`**
 
@@ -583,27 +585,27 @@ Rate limit headers are not exposed to the client. Exceeded limits return `429`.
 TOKEN="your-api-token-here"
 
 curl -s -H "Authorization: Bearer $TOKEN" \
-  http://192.168.225.149:8001/api/tactical-map/state | jq
+  http://localhost:8001/api/tactical-map/state | jq
 ```
 
 ### cURL: Fetch Economy Snapshot
 
 ```bash
 curl -s -H "Authorization: Bearer $TOKEN" \
-  http://192.168.225.149:8001/api/tactical-map/resources | jq
+  http://localhost:8001/api/tactical-map/resources | jq
 ```
 
 ### cURL: Fetch Health Status
 
 ```bash
 curl -s -H "Authorization: Bearer $TOKEN" \
-  http://192.168.225.149:8001/api/tactical-map/health | jq
+  http://localhost:8001/api/tactical-map/health | jq
 ```
 
 ### WebSocket: Connect to Economy Stream (wscat)
 
 ```bash
-wscat -c "ws://192.168.225.149:8001/api/tactical-map/resources/stream?token=$TOKEN"
+wscat -c "ws://localhost:8001/api/tactical-map/resources/stream?token=$TOKEN"
 
 # After connection, send subscribe:
 > {"type":"subscribe","topic":"resource_economy"}

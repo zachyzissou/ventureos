@@ -19,8 +19,8 @@
 
 The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and **TypeScript**. It visualizes the VentureOS multi-agent system as a Protoss-themed StarCraft-style map, showing:
 
-- **8 AI agents** as hexagonal buildings arranged in a ring
-- **Central Nexus** reflecting overall system health
+- **7 AI agents** as hexagonal buildings arranged in a ring
+- **1 Central Nexus** at the hub, reflecting overall system health
 - **Khala Network** — 28 bond lines showing inter-agent collaboration affinity
 - **Resource Economy** — token budgets, cost tracking, sparklines per agent
 - **Mission Tracking** — task cards, dependency arrows, progress indicators
@@ -92,7 +92,7 @@ The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and 
 │  │              │  │ {/stream}   │  │                       │  │
 │  └──────────────┘  └─────────────┘  └───────────────────────┘  │
 │                                                                 │
-│  Middleware: Auth (JWT/Bearer) → CORS → CSP → Rate Limiting     │
+│  Middleware: Auth (pre-shared Bearer token) → CORS → CSP → Rate Limiting │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -118,13 +118,13 @@ app.stage
 │   ├── terrain          Z=0   Hex grid, vignette, crystal clusters
 │   ├── khalaNetwork     Z=1   28 bond curves + collaboration particles
 │   ├── particles        Z=2   Activity/ambient particle system
-│   ├── buildings        Z=3   7 hexagonal agent buildings
+│   ├── buildings        Z=3   7 hexagonal ring-agent buildings
 │   ├── units            Z=4   Orbiting session sprites
 │   ├── nexus            Z=5   Central Nexus structure
 │   ├── healthBars       Z=6   Session capacity bars per agent
 │   ├── resourceEconomy  Z=7   Budget rings, sparklines, heat map
 │   │   (worldContainer)
-│   └── healthIndicators Z=8   Status rings, connectivity icons
+│   └── healthIndicators Z=8   Status rings, connectivity icons [in progress]
 │
 ├── hud                  Z=9   Top bar: tabs + KPI ticker (screen space)
 ├── resourceEconomy      Z=10  Economy panel overlay (screen space)
@@ -416,6 +416,8 @@ WebSocket connections pass the token as a query parameter:
 wss://host/api/tactical-map/resources/stream?token=<token>
 ```
 
+> **Security note:** Prefer sending the token via a `Sec-WebSocket-Protocol` sub-protocol header or an initial `auth` message after connection, rather than a query parameter. Query strings may be logged by proxies and appear in server access logs. The query-parameter method is supported for backwards compatibility but is not recommended for new integrations.
+
 ---
 
 ## Performance Optimization
@@ -563,7 +565,7 @@ Request → Auth (Bearer token) → CORS (origin whitelist) → CSP → Rate Lim
 | Middleware | File | Policy |
 |-----------|------|--------|
 | **Auth** | `tactical-map-server/middleware/auth.ts` | Pre-shared API key, timing-safe comparison |
-| **CORS** | `tactical-map-server/middleware/cors.ts` | Whitelist: `192.168.225.149:{7000,8001}`, `localhost:{5173,7000,8001}` |
+| **CORS** | `tactical-map-server/middleware/cors.ts` | Whitelist: `localhost:{8001,5174,5173}` |
 | **CSP** | `tactical-map-server/middleware/csp.ts` | `default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'` |
 
 ### Content Security Policy

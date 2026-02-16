@@ -83,7 +83,7 @@ npm install
 # Start development server
 npm run dev
 # → Vite dev server at http://localhost:5174/map/
-# → API requests proxied to http://192.168.225.149:8001
+# → API requests proxied to http://localhost:8001
 
 # Run unit + integration tests
 npm test
@@ -111,7 +111,7 @@ The dev server is configured in `vite.config.ts`:
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://192.168.225.149:8001',
+        target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false
       }
@@ -177,7 +177,7 @@ The dashboard server serves the built files at `/map/`:
 
 ```bash
 # Dashboard reads from tactical-map/dist/
-http://192.168.225.149:8001/map
+http://localhost:8001/map
 ```
 
 Configure with the `tryServeStatic` function in `dashboard/server/server.ts`:
@@ -199,7 +199,7 @@ cd ../dashboard
 node --experimental-strip-types server/server.ts
 
 # 3. Access the tactical map
-open http://192.168.225.149:8001/map
+open http://localhost:8001/map
 ```
 
 ### Process Management (systemd)
@@ -294,7 +294,7 @@ services:
       - VENTUREOS_AGENTS=oracle,atlas,sentinel,verifier,archivist,synth
     volumes:
       # Persist API token across restarts
-      - api-token:/app/tactical-map-server/data
+      - api-token:/app/dashboard/data
       # Mount OpenClaw data for session monitoring
       - ${OPENCLAW_DIR:-~/.openclaw}:/data/openclaw:ro
     restart: unless-stopped
@@ -370,10 +370,8 @@ All client configuration lives in `src/config.ts`. Key tunable values:
 Configured in `tactical-map-server/middleware/cors.ts`:
 
 ```
-http://192.168.225.149:8001
-http://192.168.225.149:7000
 http://localhost:8001
-http://localhost:7000
+http://localhost:5174
 http://localhost:5173
 ```
 
@@ -468,7 +466,7 @@ When behind a TLS proxy:
 | Dashboard server uptime | Process manager / healthcheck | Down > 30s |
 | API response time | Access logs | p95 > 2s |
 | WebSocket connections | Connection count metric | Abnormal disconnect spike |
-| Agent health status | `/api/tactical-map/health` | Any agent `red` for > 5min |
+| Agent health status | `/api/tactical-map/health` *(Phase 5.6 — in progress)* | Any agent `red` for > 5min |
 | Resource budget remaining | `/api/tactical-map/resources` | Pool < 15% remaining |
 | Browser error rate | Console errors | Any increase |
 | Memory usage | OS metrics | Dashboard process > 512MB |
@@ -530,7 +528,7 @@ curl -s -o /dev/null -w "%{http_code}" \
 
 | Data | Location | Frequency |
 |------|----------|-----------|
-| API token | `tactical-map-server/data/.api-token` | On change (persistent) |
+| API token | `dashboard/data/.api-token` | On change (persistent) |
 | Session data | `~/.openclaw/agents/*/sessions/` | Daily |
 | RPG database | `RPG_DB_PATH` (SQLite) | Daily |
 | KPI history | `KPI_DIR/*.json` | Daily |
@@ -545,7 +543,7 @@ BACKUP_DIR="/backups/ventureos/$(date +%Y-%m-%d)"
 mkdir -p "$BACKUP_DIR"
 
 # API token
-cp -p tactical-map-server/data/.api-token "$BACKUP_DIR/" 2>/dev/null
+cp -p dashboard/data/.api-token "$BACKUP_DIR/" 2>/dev/null
 
 # Session data (incremental)
 rsync -a ~/.openclaw/agents/ "$BACKUP_DIR/agents/"
@@ -560,7 +558,7 @@ echo "Backup complete: $BACKUP_DIR"
 
 ```bash
 # 1. Restore API token (or let it auto-generate)
-cp /backups/ventureos/latest/.api-token tactical-map-server/data/
+cp /backups/ventureos/latest/.api-token dashboard/data/
 
 # 2. Restore session data
 rsync -a /backups/ventureos/latest/agents/ ~/.openclaw/agents/
@@ -569,7 +567,7 @@ rsync -a /backups/ventureos/latest/agents/ ~/.openclaw/agents/
 sudo systemctl restart ventureos-dashboard
 
 # 4. Verify
-curl -s -H "Authorization: Bearer $(cat tactical-map-server/data/.api-token)" \
+curl -s -H "Authorization: Bearer $(cat dashboard/data/.api-token)" \
   http://localhost:8001/api/tactical-map/state | jq .updatedAt
 ```
 
@@ -593,7 +591,7 @@ lsof -i :8001
 # 2. Missing dependencies
 cd dashboard && npm ci
 # 3. Permissions
-ls -la tactical-map-server/data/.api-token  # Should be 600
+ls -la dashboard/data/.api-token  # Should be 600
 ```
 
 ---

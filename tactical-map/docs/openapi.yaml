@@ -12,8 +12,8 @@ info:
     identifier: LicenseRef-VentureOS
 
 servers:
-  - url: http://192.168.225.149:8001
-    description: Production dashboard server
+  - url: http://localhost:8001
+    description: Dashboard server (default port)
   - url: http://localhost:5174
     description: Vite dev server (proxied to dashboard)
 
@@ -35,7 +35,7 @@ paths:
     get:
       tags: [Map State]
       summary: Get current map state
-      description: Returns positions, building states, and active sessions for all 8 agents.
+      description: Returns positions, building states, and active sessions for all agents (7 ring agents + 1 central Nexus).
       operationId: getMapState
       responses:
         "200":
@@ -103,7 +103,12 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      description: Pre-shared API key. Also accepted as `?token=` query parameter on WebSocket connections.
+      description: >
+        Pre-shared API token passed via `Authorization: Bearer <token>` header.
+        WebSocket connections currently accept `?token=` as a query parameter for
+        backwards compatibility, but header-based authentication (e.g. via
+        Sec-WebSocket-Protocol sub-protocol or an initial auth message) is
+        recommended to avoid token exposure in server logs and proxy URLs.
 
   responses:
     Unauthorized:
