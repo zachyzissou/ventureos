@@ -83,11 +83,17 @@ dashboard/
 │   ├── .api-token    # Auto-generated auth token
 │   └── health-history.json
 ├── tests/            # Unit & integration tests
-├── scripts/          # Deployment scripts
-│   └── install.sh    # Linux systemd installer
+├── scripts/          # Deployment & migration scripts
+│   ├── install.sh              # Linux systemd installer
+│   ├── install-macos.sh        # macOS launchd installer
+│   ├── migrate-from-standalone.sh  # Standalone → monorepo migration
+│   └── rollback.sh             # Emergency rollback
 ├── docs/             # Dashboard-specific documentation
-│   └── API.md        # Complete API reference
-├── examples/         # Usage examples
+│   ├── API.md        # Complete API reference
+│   └── MIGRATION.md  # Full migration guide
+├── examples/         # Service templates
+│   ├── launchd.plist       # macOS service template
+│   └── systemd.service     # Linux service template
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -185,98 +191,68 @@ The dashboard reads data from disk (no database):
 
 ## Deployment
 
-### macOS (launchd)
-
-Create `~/Library/LaunchAgents/com.openclaw.dashboard.plist`:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.openclaw.dashboard</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/bin/node</string>
-        <string>/Users/YOU/clawd/ventureos/dashboard/dist/server.js</string>
-    </array>
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>DASHBOARD_PORT</key>
-        <string>8001</string>
-        <key>WORKSPACE_DIR</key>
-        <string>/Users/YOU/clawd</string>
-        <key>OPENCLAW_DIR</key>
-        <string>/Users/YOU/.openclaw</string>
-    </dict>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>StandardOutPath</key>
-    <string>/Users/YOU/clawd/logs/dashboard-stdout.log</string>
-    <key>StandardErrorPath</key>
-    <string>/Users/YOU/clawd/logs/dashboard-stderr.log</string>
-</dict>
-</plist>
-```
+### Automated Installation
 
 ```bash
-# Replace /Users/YOU with your home directory, then:
-launchctl load ~/Library/LaunchAgents/com.openclaw.dashboard.plist
+# macOS
+./dashboard/scripts/install-macos.sh
+
+# Linux
+sudo ./dashboard/scripts/install.sh
+
+# Custom port
+DASHBOARD_PORT=8002 ./dashboard/scripts/install-macos.sh
+```
+
+The install scripts will:
+1. Check Node.js ≥ 18
+2. Install npm dependencies
+3. Compile TypeScript → `dist/`
+4. Install the service (launchd or systemd)
+5. Start the service and verify health
+
+### macOS (launchd)
+
+Template: [`examples/launchd.plist`](examples/launchd.plist)
+
+```bash
+# Install via script
+./dashboard/scripts/install-macos.sh
+
+# Or manually
+cp examples/launchd.plist ~/Library/LaunchAgents/com.openclaw.dashboard.monorepo.plist
+# Edit placeholders, then:
+launchctl load -w ~/Library/LaunchAgents/com.openclaw.dashboard.monorepo.plist
 
 # Check status
 launchctl list | grep openclaw
 
-# Unload
-launchctl unload ~/Library/LaunchAgents/com.openclaw.dashboard.plist
+# Logs
+tail -f ~/Library/Logs/openclaw-dashboard.log
 ```
-
-**Note:** If using Homebrew Node.js, find the path with `which node` (likely `/opt/homebrew/bin/node`).
 
 ### Linux (systemd)
 
-Run the included installer:
+Template: [`examples/systemd.service`](examples/systemd.service)
 
 ```bash
-cd dashboard
-bash scripts/install.sh
-```
-
-Or create manually at `/etc/systemd/system/agent-dashboard.service`:
-
-```ini
-[Unit]
-Description=OpenClaw Agent Dashboard
-After=network.target
-
-[Service]
-Type=simple
-User=YOUR_USER
-WorkingDirectory=/home/YOUR_USER/clawd/ventureos/dashboard
-ExecStart=/usr/bin/node /home/YOUR_USER/clawd/ventureos/dashboard/dist/server.js
-Environment=DASHBOARD_PORT=8001
-Environment=WORKSPACE_DIR=/home/YOUR_USER/clawd
-Environment=OPENCLAW_DIR=/home/YOUR_USER/.openclaw
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable agent-dashboard
-sudo systemctl start agent-dashboard
+# Install via script
+sudo ./dashboard/scripts/install.sh
 
 # Check status
-sudo systemctl status agent-dashboard
+sudo systemctl status openclaw-dashboard
 
 # View logs
-journalctl -u agent-dashboard -f
+journalctl -u openclaw-dashboard -f
 ```
+
+### CI/CD
+
+GitHub Actions workflow (`.github/workflows/dashboard.yml`) runs on PRs touching `dashboard/**`:
+- TypeScript compilation on Node 18/20/22
+- Unit + integration tests
+- Deployment smoke test (start server, health check)
+- Shell script linting
 
 ## Troubleshooting
 
@@ -331,46 +307,50 @@ The server caches session cost data (re-scanned every 60s) and reads JSONL files
 
 ## Migration from Standalone Repo
 
-If you were running the standalone `openclaw-dashboard` repository:
+> **Full guide:** [docs/MIGRATION.md](docs/MIGRATION.md)
 
-1. **Stop the old service:**
-   ```bash
-   sudo systemctl stop agent-dashboard
-   # or: launchctl unload ~/Library/LaunchAgents/com.openclaw.dashboard.plist
-   ```
+### Quick Migration (zero-downtime)
 
-2. **Pull the monorepo:**
-   ```bash
-   cd ~/clawd/ventureos
-   git pull origin main
-   cd dashboard
-   npm install
-   ```
+```bash
+# 1. Start new dashboard in parallel (old untouched)
+./dashboard/scripts/migrate-from-standalone.sh
 
-3. **Build:**
-   ```bash
-   npm run compile
-   ```
+# 2. Validate parity (both running simultaneously)
+cd dashboard && npm run test:parity
 
-4. **Update service paths** to point to `~/clawd/ventureos/dashboard/dist/server.js` instead of the old standalone path.
+# 3. Switch over when ready
+./dashboard/scripts/migrate-from-standalone.sh --switchover
 
-5. **Start the new service:**
-   ```bash
-   sudo systemctl start agent-dashboard
-   # or: launchctl load ~/Library/LaunchAgents/com.openclaw.dashboard.plist
-   ```
+# 4. If anything goes wrong — immediate rollback (< 5 min)
+./dashboard/scripts/rollback.sh
+```
 
-6. **Verify:** Open `http://localhost:8001` — same auth token, same data.
+### What the migration script does:
+1. Detects old standalone service (plist/systemd)
+2. Extracts environment config (port, paths)
+3. Builds the monorepo dashboard
+4. Installs new service on parallel port (8002)
+5. Validates endpoint parity
+6. Provides switchover and rollback commands
+
+### Timeline
+| Day | Action |
+|-----|--------|
+| 0 | Parallel deploy (old on 7001, new on 8002) |
+| 1–3 | Parity validation |
+| 3–4 | Production switchover |
+| 4–10 | Monitoring period |
+| 10+ | Decommission old standalone |
 
 **What changed:**
 - Server is now TypeScript (was plain JS)
 - Paths resolve through `lib/paths.ts` (no more hardcoded `~/clawd/`)
-- Security middleware added (Phase 5.1): auth, CORS, rate limiting, CSP
+- Security middleware added: auth, CORS, rate limiting, CSP
 - Shared libraries: `lib/error-handler.ts`, `lib/paths.ts`
 - RPG and Conversation APIs integrated (Issue #78)
 
 **What didn't change:**
-- Same port, same endpoints, same data directory structure
+- Same endpoints, same data directory structure
 - Same auth token (reads from same `data/.api-token` location)
 - Frontend HTML unchanged
 
