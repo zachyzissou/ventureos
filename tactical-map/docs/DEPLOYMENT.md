@@ -8,12 +8,14 @@
 2. [Architecture Overview](#architecture-overview)
 3. [Development Setup](#development-setup)
 4. [Production Deployment](#production-deployment)
-5. [Docker Deployment](#docker-deployment)
-6. [Environment Configuration](#environment-configuration)
-7. [SSL/TLS Setup](#ssltls-setup)
-8. [Monitoring & Logging](#monitoring--logging)
-9. [Backup & Recovery](#backup--recovery)
-10. [Troubleshooting](#troubleshooting)
+5. [CI/CD Pipeline](#cicd-pipeline)
+6. [Docker Deployment](#docker-deployment)
+7. [Environment Configuration](#environment-configuration)
+8. [SSL/TLS Setup](#ssltls-setup)
+9. [Monitoring & Logging](#monitoring--logging)
+10. [Backup & Recovery](#backup--recovery)
+11. [Rollback](#rollback)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -230,6 +232,33 @@ sudo systemctl enable ventureos-dashboard
 sudo systemctl start ventureos-dashboard
 sudo systemctl status ventureos-dashboard
 ```
+
+---
+
+## CI/CD Pipeline
+
+GitHub Actions handles tactical map validation and staged promotion.
+
+### Workflows
+
+- `.github/workflows/tactical-map-ci.yml`
+  - Runs on PRs and pushes touching tactical map code.
+  - Executes `npm test` and `npm run build`.
+  - Uploads `tactical-map/dist` as a build artifact for review.
+
+- `.github/workflows/tactical-map-deploy.yml`
+  - Builds a deployable artifact.
+  - Deploys to **staging** on push to `main` and on manual dispatch.
+  - Deploys to **production** only on manual dispatch (`target=production`) with a protected environment gate.
+
+### Environment Gates
+
+Configure GitHub Environments for `staging` and `production`:
+
+- **staging**: Optional environment URL; no approvals required.
+- **production**: Require reviewers for manual approval before the job runs.
+
+Environment-level secrets (if needed) keep deployment credentials out of the repo. Replace the placeholder deploy steps with your sync/rsync, container registry, or hosting provider commands.
 
 ---
 
@@ -593,6 +622,45 @@ cd dashboard && npm ci
 # 3. Permissions
 ls -la dashboard/data/.api-token  # Should be 600
 ```
+
+---
+
+## Rollback
+
+The tactical map is served as static assets from `tactical-map/dist` by the dashboard server. Rollback is a fast swap to a previous known‑good build.
+
+### Bare Metal Rollback
+
+1. Preserve the current build (optional):
+   ```bash
+   mv tactical-map/dist tactical-map/dist.bad-$(date +%Y%m%d%H%M%S)
+   ```
+2. Restore the previous build (from an archive or CI artifact):
+   ```bash
+   rsync -a --delete /path/to/known-good/dist/ tactical-map/dist/
+   ```
+3. Restart the dashboard server:
+   ```bash
+   sudo systemctl restart ventureos-dashboard
+   ```
+4. Verify:
+   ```bash
+   curl -f http://localhost:8001/map/ > /dev/null
+   curl -f -H "Authorization: Bearer $TOKEN" http://localhost:8001/api/tactical-map/state > /dev/null
+   ```
+
+### Docker Rollback
+
+1. Re-deploy the last known‑good image tag (or digest).
+2. Restart the container:
+   ```bash
+   docker compose up -d
+   ```
+3. Verify `/map/` and `/api/tactical-map/state` respond as expected.
+
+### Artifact‑Based Rollback
+
+Download the last successful `tactical-map-dist-<sha>` artifact from GitHub Actions and extract it into `tactical-map/dist`. This provides a clean rollback path without a full rebuild.
 
 ---
 

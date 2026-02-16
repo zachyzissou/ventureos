@@ -4,7 +4,7 @@
  * Real HTTP requests verifying actual security headers on real responses.
  * No mocks — every header value is read from the actual HTTP response.
  */
-import { describe, it, before, after } from 'node:test';
+import { describe, it, beforeAll, afterAll } from 'vitest';
 import assert from 'node:assert/strict';
 import { createCspOnlyServer, createTestServer, getToken, CSP_POLICY, type TestServer } from './test-server.ts';
 
@@ -13,11 +13,11 @@ import { createCspOnlyServer, createTestServer, getToken, CSP_POLICY, type TestS
 describe('CSP Middleware — Content-Security-Policy Header', () => {
   let srv: TestServer;
 
-  before(async () => {
+  beforeAll(async () => {
     srv = await createCspOnlyServer();
   });
 
-  after(async () => {
+  afterAll(async () => {
     await srv.close();
   });
 
@@ -114,11 +114,11 @@ describe('CSP Middleware — Content-Security-Policy Header', () => {
 describe('CSP Middleware — Security Hardening Headers', () => {
   let srv: TestServer;
 
-  before(async () => {
+  beforeAll(async () => {
     srv = await createCspOnlyServer();
   });
 
-  after(async () => {
+  afterAll(async () => {
     await srv.close();
   });
 
@@ -158,12 +158,12 @@ describe('CSP Middleware — Full Stack Integration', () => {
   let srv: TestServer;
   let token: string;
 
-  before(async () => {
+  beforeAll(async () => {
     srv = await createTestServer();
     token = getToken();
   });
 
-  after(async () => {
+  afterAll(async () => {
     await srv.close();
   });
 
