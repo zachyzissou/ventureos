@@ -9,7 +9,12 @@
     "compile": "tsc",
     "dev": "tsx watch server/server.ts",
     "start": "node dist/server.js",
-    "test": "vitest run"
+    "test": "vitest run --config vitest.config.ts",
+    "test:unit": "vitest run --config vitest.config.ts tests/unit",
+    "test:integration": "vitest run --config vitest.config.ts tests/integration",
+    "test:parity": "vitest run --config vitest.config.ts tests/parity",
+    "test:coverage": "vitest run --config vitest.config.ts --coverage",
+    "test:watch": "vitest --config vitest.config.ts"
   },
   "dependencies": {
     "express": "^4.21.2"
@@ -19,6 +24,7 @@
     "@types/node": "^22.13.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
+    "@vitest/coverage-v8": "^4.0.18",
     "vitest": "^4.0.18"
   }
 }
