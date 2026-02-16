@@ -5,11 +5,11 @@
   "type": "module",
   "description": "OpenClaw operational dashboard — monitoring, session management, KPI tracking",
   "scripts": {
+    "build": "tsc --noEmit",
+    "compile": "tsc",
     "dev": "tsx watch server/server.ts",
-    "start": "node dist/server/server.js",
-    "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
-    "compile": "tsc -p tsconfig.json --noEmit"
+    "start": "node dist/server.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "express": "^4.21.2"
