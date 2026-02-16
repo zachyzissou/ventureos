@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "test": "jest --runInBand",
-    "build": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json --noEmit && npm run build --workspace=dashboard && cd tactical-map && npm run build",
     "role-cards:render": "node -r ts-node/register ./scripts/generate-souls.ts",
     "role-cards:deploy": "node -r ts-node/register ./scripts/generate-souls.ts --deploy-workspaces",
     "test:e2e": "npx playwright test",
