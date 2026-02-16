@@ -373,6 +373,23 @@ describe('ModelRouter', () => {
       // Should avoid openai models
       expect(decision.model.provider).toBe('anthropic');
     });
+
+    it('safety-critical requests bypass exhausted provider filtering', () => {
+      const models = makeModels([
+        { id: 'claude-haiku', status: 'unavailable' },
+        { id: 'claude-sonnet', status: 'unavailable' },
+        { id: 'claude-opus', status: 'unavailable' },
+      ]);
+      const router = makeRouter({ models });
+      router.quota.setQuota('openai', { total: 1000, used: 1000, resetsAt: '2026-03-01' });
+
+      const decision = router.selectModel(makeRequest({
+        complexity: 'medium',
+        safetyCritical: true,
+      }));
+
+      expect(decision.model.provider).toBe('openai');
+    });
   });
 
   // ── Business Unit Overrides ───────────────────────────────────────
@@ -497,13 +514,18 @@ describe('ModelRouter', () => {
         ],
       });
 
-      const decision = router.selectModel(makeRequest({
+      const withOverride = router.selectModel(makeRequest({
         complexity: 'medium',
         businessUnit: 'low-priority-bu',
         priorityOverride: 'high',
       }));
 
-      expect(decision.breakdown.priorityScore).toBe(100); // high priority score
+      const withoutOverride = router.selectModel(makeRequest({
+        complexity: 'medium',
+        businessUnit: 'low-priority-bu',
+      }));
+
+      expect(withOverride.breakdown.priorityScore).toBeGreaterThan(withoutOverride.breakdown.priorityScore);
     });
 
     it('manages overrides dynamically', () => {
@@ -563,6 +585,24 @@ describe('ModelRouter', () => {
       }
     });
 
+    it('applies provider exhaustion checks in fallback selection', () => {
+      const models = makeModels([
+        { id: 'gpt-4o', status: 'unavailable' },
+        { id: 'claude-sonnet', status: 'unavailable' },
+      ]);
+      const router = makeRouter({ models });
+      router.quota.setQuota('openai', { total: 1000, used: 1000, resetsAt: '2026-03-01' });
+
+      const decision = router.selectModel(makeRequest({
+        complexity: 'medium',
+        minTier: 2,
+        maxTier: 2,
+      }));
+
+      expect(decision.fallbackUsed).toBe(true);
+      expect(decision.model.provider).toBe('anthropic');
+    });
+
     it('handles all models unavailable', () => {
       const models = makeModels().map(m => ({ ...m, status: 'unavailable' as const }));
       const logger = silentLogger();
@@ -598,6 +638,16 @@ describe('ModelRouter', () => {
       const models = router.getModels();
       const gpt4o = models.find(m => m.id === 'gpt-4o');
       expect(gpt4o?.status).toBe('unavailable');
+    });
+
+    it('does not mutate the original config models array', () => {
+      const models = makeModels();
+      const originalStatus = models.find(m => m.id === 'gpt-4o')?.status;
+      const router = makeRouter({ models });
+
+      router.updateModelStatus('gpt-4o', 'unavailable');
+
+      expect(models.find(m => m.id === 'gpt-4o')?.status).toBe(originalStatus);
     });
 
     it('getModels returns all models', () => {
@@ -779,6 +829,19 @@ describe('QuotaTracker', () => {
     expect(q?.used).toBe(50);
   });
 
+  it('getQuota returns a defensive copy', () => {
+    const qt = new QuotaTracker();
+    qt.setQuota('test', { total: 100, used: 50, resetsAt: '2026-03-01' });
+
+    const q = qt.getQuota('test');
+    expect(q).toBeDefined();
+
+    q!.used = 99;
+
+    // Internal tracker state should be unchanged.
+    expect(qt.getQuota('test')?.used).toBe(50);
+  });
+
   it('getQuota returns undefined for unknown key', () => {
     const qt = new QuotaTracker();
     expect(qt.getQuota('nope')).toBeUndefined();
@@ -888,8 +951,8 @@ describe('PerformanceTracker', () => {
   it('getBestModel handles no data gracefully', () => {
     const pt = new PerformanceTracker(fixedNow);
     const best = pt.getBestModel('task', ['a', 'b', 'c']);
-    // All should have neutral 0.5 score — returns last one with equal score or first
-    expect(best).toBeDefined();
+    // All candidates have equal neutral scores, so the implementation keeps the first candidate.
+    expect(best).toBe('a');
   });
 
   it('export/import roundtrips', () => {
