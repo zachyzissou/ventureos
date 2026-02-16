@@ -8,6 +8,7 @@
  */
 
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
 import type {
   GateKind,
@@ -146,7 +147,7 @@ export function getDefaultGates(): GateDefinition[] {
           const walk = async (dir: string) => {
             const entries = await fs.readdir(dir, { withFileTypes: true });
             for (const ent of entries) {
-              const p = `${dir}/${ent.name}`;
+              const p = path.join(dir, ent.name);
               if (ent.isDirectory()) {
                 await walk(p);
               } else if (ent.isFile()) {

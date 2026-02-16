@@ -187,17 +187,43 @@ export class SquadCoordinator {
 
     const ctx: AgentTaskContext = { missionId, brief, plan };
 
+    const taskById = new Map(plan.tasks.map((t) => [t.taskId, t] as const));
+
+    // Dependency graph: taskId -> [dependentTaskId, ...]
+    const dependentsByTaskId = new Map<string, string[]>();
+    for (const t of plan.tasks) {
+      for (const depId of t.dependsOnTaskIds ?? []) {
+        const arr = dependentsByTaskId.get(depId) ?? [];
+        arr.push(t.taskId);
+        dependentsByTaskId.set(depId, arr);
+      }
+    }
+
     const canRun = (task: MissionTask) => {
       const deps = task.dependsOnTaskIds ?? [];
-      return deps.every((depId) => taskStatus[depId] === 'succeeded' || taskStatus[depId] === 'skipped');
+      // Dependencies are satisfied only when they succeeded (NOT skipped).
+      return deps.every((depId) => taskStatus[depId] === 'succeeded');
     };
 
-    const markSkippedDependents = (failedTaskId: string) => {
-      for (const task of plan.tasks) {
-        if (taskStatus[task.taskId] !== 'pending') continue;
-        const deps = task.dependsOnTaskIds ?? [];
-        if (deps.includes(failedTaskId)) {
-          taskStatus[task.taskId] = 'skipped';
+    // If a task fails or is skipped, all downstream dependents must be skipped (transitively).
+    const markSkippedDependents = (rootTaskId: string) => {
+      const queue: string[] = [rootTaskId];
+      const visited = new Set<string>();
+
+      while (queue.length) {
+        const cur = queue.shift()!;
+        if (visited.has(cur)) continue;
+        visited.add(cur);
+
+        for (const dependentId of dependentsByTaskId.get(cur) ?? []) {
+          const st = taskStatus[dependentId];
+          if (st === 'pending') {
+            taskStatus[dependentId] = 'skipped';
+            queue.push(dependentId);
+          } else if (st === 'skipped') {
+            // Already skipped, but still propagate further.
+            queue.push(dependentId);
+          }
         }
       }
     };
@@ -254,8 +280,9 @@ export class SquadCoordinator {
       for (const task of plan.tasks) {
         if (taskStatus[task.taskId] !== 'pending') continue;
         if (!canRun(task)) {
-          // If dependencies are not satisfied, mark skipped.
+          // If dependencies are not satisfied, mark skipped (and skip downstream dependents).
           taskStatus[task.taskId] = 'skipped';
+          markSkippedDependents(task.taskId);
           continue;
         }
         await runOne(task);
@@ -263,12 +290,11 @@ export class SquadCoordinator {
     } else {
       // Kahn-like execution loop.
       const pending = new Set(plan.tasks.map((t) => t.taskId));
-      const byId = new Map(plan.tasks.map((t) => [t.taskId, t]));
 
       while (pending.size) {
         const runnable: MissionTask[] = [];
         for (const id of pending) {
-          const t = byId.get(id)!;
+          const t = taskById.get(id)!;
           if (taskStatus[t.taskId] !== 'pending') {
             pending.delete(id);
             continue;

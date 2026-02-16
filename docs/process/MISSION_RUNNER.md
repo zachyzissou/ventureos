@@ -22,8 +22,8 @@ This module provides an end-to-end **mission execution workflow** for VentureOS 
 ## Usage
 
 ```ts
-import { MissionRunner } from '../lib/mission-runner';
-import type { SquadAgent } from '../lib/squad-coordinator';
+import { MissionRunner } from '../../lib/mission-runner';
+import type { SquadAgent } from '../../lib/squad-coordinator';
 
 const agents: SquadAgent[] = [
   {

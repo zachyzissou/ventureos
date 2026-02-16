@@ -12,6 +12,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import os from 'node:os';
 import crypto from 'node:crypto';
 
 export type MissionPhase =
@@ -207,7 +208,7 @@ export class JsonFileMissionStore implements MissionStore {
 }
 
 const DEFAULT_PERSIST_DIR = path.resolve(
-  process.env.HOME ?? '~',
+  os.homedir(),
   'clawd/ventureos/runtime/missions/state'
 );
 
@@ -287,6 +288,9 @@ export class MissionStateMachine {
       history: [...(record.history ?? []), { phase: next, enteredAt: ts, note }],
       metrics: {
         ...(record.metrics ?? { createdAt: record.createdAt, updatedAt: ts }),
+        ...(patch.metrics ?? {}),
+        // Always preserve createdAt and refresh updatedAt on every transition.
+        createdAt: record.metrics?.createdAt ?? record.createdAt,
         updatedAt: ts,
       },
     };
@@ -337,6 +341,8 @@ export class MissionStateMachine {
       history: [...(record.history ?? []), { phase: target, enteredAt: ts, note: note ?? 'rollback' }],
       metrics: {
         ...(record.metrics ?? { createdAt: record.createdAt, updatedAt: ts }),
+        // Preserve createdAt and refresh updatedAt on rollback.
+        createdAt: record.metrics?.createdAt ?? record.createdAt,
         updatedAt: ts,
       },
     };
