@@ -4,7 +4,7 @@
  * Real HTTP requests verifying actual CORS headers on real responses.
  * No mocks — headers come from the real middleware, checked on real HTTP responses.
  */
-import { describe, it, before, after } from 'node:test';
+import { describe, it, beforeAll, afterAll } from 'vitest';
 import assert from 'node:assert/strict';
 import { createCorsOnlyServer, createTestServer, ALLOWED_ORIGINS, getToken, type TestServer } from './test-server.ts';
 
@@ -13,11 +13,11 @@ import { createCorsOnlyServer, createTestServer, ALLOWED_ORIGINS, getToken, type
 describe('CORS Middleware — Origin Whitelist', () => {
   let srv: TestServer;
 
-  before(async () => {
+  beforeAll(async () => {
     srv = await createCorsOnlyServer();
   });
 
-  after(async () => {
+  afterAll(async () => {
     await srv.close();
   });
 
@@ -139,11 +139,11 @@ describe('CORS Middleware — Origin Whitelist', () => {
 describe('CORS Middleware — Preflight (OPTIONS)', () => {
   let srv: TestServer;
 
-  before(async () => {
+  beforeAll(async () => {
     srv = await createCorsOnlyServer();
   });
 
-  after(async () => {
+  afterAll(async () => {
     await srv.close();
   });
 
@@ -201,12 +201,12 @@ describe('CORS Middleware — Full Stack Integration', () => {
   let srv: TestServer;
   let token: string;
 
-  before(async () => {
+  beforeAll(async () => {
     srv = await createTestServer();
     token = getToken();
   });
 
-  after(async () => {
+  afterAll(async () => {
     await srv.close();
   });
 
