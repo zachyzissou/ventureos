@@ -85,5 +85,23 @@ describe('Audit Log Middleware', () => {
       flush();
       expect(appendFileCalls.length).toBe(countAfterFirst);
     });
+
+    it('redacts query params from logged path', () => {
+      const req = mockRequest({
+        url: '/api/live?token=super-secret-token&foo=bar',
+        method: 'GET',
+      });
+
+      auditLog('query_redaction_test', req);
+      flush();
+
+      const written = appendFileCalls.map(c => c.data).join('');
+      expect(written).not.toContain('super-secret-token');
+
+      const firstLine = written.split('\n').find(Boolean);
+      expect(firstLine).toBeTruthy();
+      const entry = JSON.parse(firstLine || '{}') as { path: string };
+      expect(entry.path).toBe('/api/live');
+    });
   });
 });
