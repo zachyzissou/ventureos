@@ -301,6 +301,24 @@ const PRIORITY_SCORES: Record<RoutingPriority, number> = {
   low: 20,
 };
 
+/** Priority → ideal tier mapping (used to differentiate model ranking). */
+const PRIORITY_TIER_MAP: Record<RoutingPriority, ModelTier> = {
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+
+/** Time sensitivity → ideal tier mapping (used to differentiate model ranking). */
+const TIME_SENSITIVITY_TIER_MAP: Record<TimeSensitivity, ModelTier> = {
+  urgent: 3,
+  normal: 2,
+  batch: 1,
+};
+
+/** Tier mismatch penalties for priority/time sensitivity alignment. */
+const PRIORITY_TIER_MISMATCH_PENALTY = 20;
+const TIME_SENSITIVITY_TIER_MISMATCH_PENALTY = 15;
+
 /** Default quota threshold (90%). */
 const DEFAULT_QUOTA_THRESHOLD = 0.9;
 
@@ -327,7 +345,8 @@ export class QuotaTracker {
 
   /** Get current quota state. */
   getQuota(key: string): QuotaState | undefined {
-    return this.quotas.get(key);
+    const quota = this.quotas.get(key);
+    return quota ? { ...quota } : undefined;
   }
 
   /** Get usage percentage (0-1). Returns 0 if no quota is set. */
@@ -517,7 +536,7 @@ export class ModelRouter {
   readonly performance: PerformanceTracker;
 
   constructor(config: ModelRouterConfig) {
-    this.models = [...config.models];
+    this.models = config.models.map(m => ({ ...m, capabilities: [...m.capabilities] }));
     this.quotaThreshold = config.quotaThreshold ?? DEFAULT_QUOTA_THRESHOLD;
     this.enforceQuota = config.enforceQuota ?? true;
     this.logger = config.logger ?? defaultLogger;
@@ -613,7 +632,7 @@ export class ModelRouter {
 
   /**
    * Build a fallback chain for a given tier.
-   * Returns models in fallback order (same tier first, then lower tiers).
+   * Returns models in fallback order (same tier first, then higher-quality tiers before lower tiers).
    */
   getFallbackChain(tier: ModelTier): ModelDefinition[] {
     const available = this.models.filter(m => m.status !== 'unavailable');
@@ -684,9 +703,6 @@ export class ModelRouter {
     request: RoutingRequest,
     override?: BusinessUnitOverride
   ): { minTier: ModelTier; maxTier: ModelTier } {
-    // Start with complexity-based tier
-    const baseTier = COMPLEXITY_TIER_MAP[request.complexity];
-
     let minTier: ModelTier = request.minTier ?? 1;
     let maxTier: ModelTier = request.maxTier ?? 3;
 
@@ -769,8 +785,10 @@ export class ModelRouter {
         if (!hasAll) return false;
       }
 
-      // Provider quota exhausted — skip
-      if (this.enforceQuota && this.quota.isExhausted(m.provider)) return false;
+      // Provider quota exhausted — skip (except safety-critical requests)
+      if (this.enforceQuota && !request.safetyCritical && this.quota.isExhausted(m.provider)) {
+        return false;
+      }
 
       return true;
     });
@@ -826,11 +844,17 @@ export class ModelRouter {
       ? usagePressure * 30  // Cheap models get bonus when quota is tight
       : -usagePressure * model.tier * 15;
 
-    // Priority: higher priority = favor better models
-    const priorityScore = PRIORITY_SCORES[priority];
+    // Priority: align tier preference to business importance so this factor affects ranking
+    const priorityIdealTier = PRIORITY_TIER_MAP[priority];
+    const priorityTierDiff = Math.abs(model.tier - priorityIdealTier);
+    const priorityScore = PRIORITY_SCORES[priority] - priorityTierDiff * PRIORITY_TIER_MISMATCH_PENALTY;
 
-    // Time sensitivity
-    const timeSensitivityScore = TIME_SENSITIVITY_SCORES[request.timeSensitivity];
+    // Time sensitivity: urgent prefers higher tiers, batch prefers lower tiers
+    const timeIdealTier = TIME_SENSITIVITY_TIER_MAP[request.timeSensitivity];
+    const timeTierDiff = Math.abs(model.tier - timeIdealTier);
+    const timeSensitivityScore =
+      TIME_SENSITIVITY_SCORES[request.timeSensitivity]
+      - timeTierDiff * TIME_SENSITIVITY_TIER_MISMATCH_PENALTY;
 
     // Performance: use historical data if available
     let performanceScore = 0;
@@ -847,7 +871,7 @@ export class ModelRouter {
           ? PROVIDER_PREFERENCE_BONUS
           : 0;
 
-    // Capability match: bonus for extra capabilities
+    // Capability match: bonus per required capability matched (defensive; filterCandidates enforces all)
     let capabilityMatchScore = 0;
     if (request.requiredCapabilities?.length) {
       const matched = request.requiredCapabilities.filter(c => model.capabilities.includes(c));
@@ -871,7 +895,13 @@ export class ModelRouter {
 
     // Try all models in fallback order (any tier, any provider)
     const allAvailable = this.models
-      .filter(m => m.status !== 'unavailable')
+      .filter(m => {
+        if (m.status === 'unavailable') return false;
+        if (this.enforceQuota && !request.safetyCritical && this.quota.isExhausted(m.provider)) {
+          return false;
+        }
+        return true;
+      })
       .sort((a, b) => a.costPer1kInput - b.costPer1kInput); // Cheapest first in emergency
 
     // Filter by required capabilities if possible
@@ -888,8 +918,13 @@ export class ModelRouter {
     }
 
     if (fallbacks.length === 0) {
-      // All models are unavailable — catastrophic scenario
-      this.logger.error('All models unavailable — cannot route request', { request });
+      // All models are unavailable or filtered out by quota — catastrophic scenario
+      const hasAvailableByStatus = this.models.some(m => m.status !== 'unavailable');
+      const failureReason = hasAvailableByStatus
+        ? 'No models available after quota filtering — cannot route request'
+        : 'All models unavailable — cannot route request';
+      this.logger.error(failureReason, { request });
+
       // Return the first model definition (even if unavailable) as a marker
       const marker = this.models[0] ?? {
         id: 'none',
@@ -902,9 +937,15 @@ export class ModelRouter {
         status: 'unavailable' as ModelStatus,
         capabilities: [],
       };
-      warnings.push('CRITICAL: All models unavailable');
+      warnings.push(
+        hasAvailableByStatus
+          ? 'CRITICAL: No models available after quota filtering'
+          : 'CRITICAL: All models unavailable'
+      );
       return this.buildDecision(marker, request, {
-        reason: 'All models unavailable — no routing possible',
+        reason: hasAvailableByStatus
+          ? 'No models available after quota filtering — no routing possible'
+          : 'All models unavailable — no routing possible',
         fallbackUsed: true,
         fallbackIndex: -1,
         quotaDowngraded: false,

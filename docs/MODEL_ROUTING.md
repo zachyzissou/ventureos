@@ -4,7 +4,7 @@
 
 ## Overview
 
-The Model Router (`lib/model-router.ts`) provides intelligent model selection based on multi-factor scoring. It replaces static model assignments with dynamic routing that considers task complexity, quota, business unit priority, time sensitivity, and historical performance.
+The Model Router (`lib/model-router.ts`) provides intelligent model selection based on multi-factor scoring. It enables dynamic routing for model selection by considering task complexity, quota, business unit priority, time sensitivity, and historical performance.
 
 ## Architecture
 
@@ -59,14 +59,13 @@ Adjusts model preference based on quota pressure:
 
 ### 3. Priority Score
 Based on business unit priority or explicit override:
-- `high` → 100 points
-- `medium` → 50 points
-- `low` → 20 points
+- Base score: `high` 100, `medium` 50, `low` 20
+- Tier alignment: score is reduced by 20 points per tier away from the priority's ideal tier (`high`→3, `medium`→2, `low`→1)
 
 ### 4. Time Sensitivity Score
-- `urgent` → 80 points (also boosts minTier to 2)
-- `normal` → 40 points
-- `batch` → 10 points
+- Base score: `urgent` 80, `normal` 40, `batch` 10
+- Tier alignment: score is reduced by 15 points per tier away from ideal sensitivity tier (`urgent`→3, `normal`→2, `batch`→1)
+- `urgent` requests also boost `minTier` to 2 as a hard floor
 
 ### 5. Performance Score
 Uses historical data (exponential moving average):
@@ -94,7 +93,7 @@ Uses historical data (exponential moving average):
 Tasks marked `safetyCritical: true` are **exempt** from quota restrictions. This ensures critical operations always get the best available model.
 
 ### Provider-Specific Quotas
-Quotas can be tracked per-provider (`openai`, `anthropic`) and globally (`global`). When a provider's quota is exhausted, its models are excluded from candidates.
+Quotas can be tracked per-provider (`openai`, `anthropic`) and globally (`global`). When a provider's quota is exhausted, its models are excluded from candidates and fallback selection (except for `safetyCritical` requests).
 
 ## Business Unit Overrides
 
@@ -123,7 +122,7 @@ When no candidates match the requested tier range:
 
 1. **Capability-matched models** (any tier, cheapest first)
 2. **Any available model** (cheapest first)
-3. **All models unavailable** → return error marker with `CRITICAL` warning
+3. **No fallback candidates remain** (all unavailable or excluded by exhausted-provider quota) → return error marker with `CRITICAL` warning
 
 Fallback decisions are logged with:
 - `fallbackUsed: true`
