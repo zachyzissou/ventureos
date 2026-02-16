@@ -127,6 +127,16 @@ export const API = {
   POLL_INTERVAL: 15_000,
   /** KPI polling interval for HUD ticker (ms). */
   KPI_POLL_INTERVAL: 30_000,
+  /** Resource economy snapshot endpoint. */
+  RESOURCE_BASE_URL: '/api/tactical-map/resources',
+  /** Resource economy websocket stream endpoint. */
+  RESOURCE_WS_URL: '/api/tactical-map/resources/stream',
+  /** Fallback poll cadence while websocket is disconnected. */
+  REALTIME_FALLBACK_POLL_MS: 2_000,
+  /** Reconnect backoff base in ms. */
+  WS_RECONNECT_BASE_MS: 1_000,
+  /** Reconnect backoff cap in ms. */
+  WS_RECONNECT_MAX_MS: 30_000,
   /** Default fetch timeout in ms. */
   TIMEOUT_MS: 8_000
 } as const;
@@ -168,6 +178,27 @@ export const PARTICLES = {
   MAX: 500,
   /** Persistent ambient particles. */
   AMBIENT_TARGET: 120
+} as const;
+
+export const ECONOMY = {
+  /** Trigger warning alerts at <= 30% remaining budget. */
+  WARNING_THRESHOLD: 0.30,
+  /** Trigger critical alerts at <= 15% remaining budget. */
+  CRITICAL_THRESHOLD: 0.15,
+  /** Alert resend cooldown for persistent low budget states. */
+  ALERT_COOLDOWN_MS: 45_000,
+  /** Maximum trend points retained per agent. */
+  HISTORY_MAX_POINTS: 64,
+  /** Maximum trend history age retained (ms). */
+  HISTORY_MAX_AGE_MS: 1000 * 60 * 60 * 6,
+  /** Indicator ring radius around each agent building. */
+  INDICATOR_RING_RADIUS: 60,
+  /** Sparkline width in pixels. */
+  SPARKLINE_WIDTH: 52,
+  /** Sparkline height in pixels. */
+  SPARKLINE_HEIGHT: 14,
+  /** Heat map redraw throttle in milliseconds. */
+  HEATMAP_REDRAW_MS: 90
 } as const;
 
 export const AGENT_ORDER = [

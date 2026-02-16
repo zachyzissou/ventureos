@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CANVAS, AGENTS, COLORS, BONDS, CAMERA, API, CAPACITY, calculateCirclePositions } from '@/config';
+import { CANVAS, AGENTS, COLORS, BONDS, CAMERA, API, CAPACITY, ECONOMY, calculateCirclePositions } from '@/config';
 
 describe('config.ts', () => {
   it('exports core constant groups', () => {
@@ -9,6 +9,8 @@ describe('config.ts', () => {
     expect(BONDS.TIER_COLORS.length).toBe(5);
     expect(CAMERA.MIN_ZOOM).toBeLessThan(CAMERA.MAX_ZOOM);
     expect(API.POLL_INTERVAL).toBeGreaterThan(0);
+    expect(API.RESOURCE_WS_URL).toContain('/resources/stream');
+    expect(ECONOMY.WARNING_THRESHOLD).toBeGreaterThan(0);
     expect(CAPACITY.MAX_SESSIONS.atlas).toBe(5);
     expect(AGENTS.POSITIONS.length).toBe(8);
   });

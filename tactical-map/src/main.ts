@@ -1,7 +1,8 @@
 import { Application, Container } from 'pixi.js';
-import { AGENT_ORDER, AGENTS, CANVAS } from '@/config';
+import { AGENT_ORDER, AGENTS, CANVAS, ECONOMY } from '@/config';
 import type { AgentId, Point } from '@/config';
 import { createApiClient } from '@/data/api-client';
+import { createEconomyClient } from '@/data/economy-client';
 import { classifyActivity, ActivityType } from '@/data/activity-mapper';
 import { createCameraController } from '@/interaction/camera';
 import { createBuildingsLayer, RING_AGENT_IDS } from '@/renderer/buildings';
@@ -12,7 +13,16 @@ import { createHealthBarsLayer } from '@/renderer/health-bars';
 import { createUnitsLayer } from '@/renderer/units';
 import { createParticleSystem } from '@/renderer/particles';
 import { createKhalaNetworkLayer } from '@/renderer/khala-network';
+import { createResourceEconomyLayer } from '@/renderer/resource-economy';
 import { deriveBuildingState } from '@/renderer/building-states';
+import { BudgetAlertManager } from '@/economy/alerts';
+import {
+  applyAgentEconomyUpdate,
+  applyEconomySnapshot,
+  applyPoolEconomyUpdate,
+  createEmptyEconomyState
+} from '@/economy/state';
+import type { EconomyState } from '@/economy/types';
 import { createStore } from '@/state/store';
 import type { MapState } from '@/state/types';
 
@@ -30,6 +40,7 @@ function createInitialMapState(): MapState {
 }
 
 const mapStore = createStore<MapState>(createInitialMapState());
+const economyStore = createStore<EconomyState>(createEmptyEconomyState());
 
 async function bootstrap() {
   const app = new Application();
@@ -74,9 +85,19 @@ async function bootstrap() {
   const healthBars = createHealthBarsLayer(RING_AGENT_IDS);
   world.addChild(healthBars.container);
 
+  const resourceEconomy = createResourceEconomyLayer();
+  world.addChild(resourceEconomy.worldContainer);
+
   // HUD overlays
   const hud = createHud();
   app.stage.addChild(hud.container);
+  app.stage.addChild(resourceEconomy.overlayContainer);
+
+  const alertManager = new BudgetAlertManager({
+    warningRatio: ECONOMY.WARNING_THRESHOLD,
+    criticalRatio: ECONOMY.CRITICAL_THRESHOLD,
+    cooldownMs: ECONOMY.ALERT_COOLDOWN_MS
+  });
 
   let cameraHome = { x: app.screen.width / 2, y: app.screen.height / 2 };
   world.position.set(cameraHome.x, cameraHome.y);
@@ -112,6 +133,7 @@ async function bootstrap() {
     camera.setHome(cameraHome);
 
     hud.setSize(app.screen.width, app.screen.height);
+    resourceEconomy.setViewport(app.screen.width, app.screen.height);
   }
 
   // Pan only when dragging on the terrain surface.
@@ -133,10 +155,11 @@ async function bootstrap() {
 
   // Store → view binding
   mapStore.subscribe((s) => {
-    // Khala bonds follow agent positions.
+    // Khala bonds + resource overlays follow agent positions.
     const pos = {} as Record<AgentId, Point>;
     for (const id of AGENT_ORDER) pos[id] = s.agents[id].position;
     khala.setAgentPositions(pos);
+    resourceEconomy.setAgentPositions(pos);
 
     // Ring buildings + units + health bars
     for (const id of RING_AGENT_IDS) {
@@ -164,12 +187,53 @@ async function bootstrap() {
     else nexus.setStateColor(0xffd700);
   });
 
+  economyStore.subscribe((next) => {
+    resourceEconomy.setEconomyState(next);
+
+    const alerts = alertManager.evaluate(next);
+    if (alerts.length > 0) {
+      resourceEconomy.setAlerts(alerts);
+      for (const alert of alerts) {
+        console.warn('[tactical-map] budget alert', alert.message);
+      }
+    }
+  });
+
   // API polling
   const api = createApiClient({
     onMapState: (s) => mapStore.set(s),
     onError: (e) => console.warn('[tactical-map] api error', e)
   });
   api.start();
+
+  const economyClient = createEconomyClient({
+    onSnapshot: (snapshot) => {
+      economyStore.update((curr) =>
+        applyEconomySnapshot(
+          curr,
+          snapshot,
+          { historyMaxPoints: ECONOMY.HISTORY_MAX_POINTS, historyMaxAgeMs: ECONOMY.HISTORY_MAX_AGE_MS },
+          Date.now()
+        )
+      );
+    },
+    onAgentUpdate: (agent) => {
+      economyStore.update((curr) =>
+        applyAgentEconomyUpdate(
+          curr,
+          agent,
+          { historyMaxPoints: ECONOMY.HISTORY_MAX_POINTS, historyMaxAgeMs: ECONOMY.HISTORY_MAX_AGE_MS },
+          Date.now()
+        )
+      );
+    },
+    onPoolUpdate: (pool) => {
+      economyStore.update((curr) => applyPoolEconomyUpdate(curr, pool, Date.now()));
+    },
+    onConnectionChange: (connected) => resourceEconomy.setConnectionStatus(connected),
+    onError: (e) => console.warn('[tactical-map] economy stream error', e)
+  });
+  economyClient.start();
 
   // KPI ticker
   void pollKpis(() => api.fetchRpgStats(), (t) => hud.setKpiText(t));
@@ -236,9 +300,15 @@ async function bootstrap() {
 
     particles.update(elapsedMs);
     healthBars.update(elapsedMs);
+    resourceEconomy.update(elapsedMs);
   });
 
   window.addEventListener('resize', layout);
+  window.addEventListener('beforeunload', () => {
+    api.stop();
+    economyClient.stop();
+  });
+
   layout();
 
   // Helpful dev surface
@@ -246,11 +316,14 @@ async function bootstrap() {
   window.__TACTICAL_MAP__ = {
     app,
     mapStore,
+    economyStore,
     api,
+    economyClient,
     camera,
     pause: () => app.ticker.stop(),
     resume: () => app.ticker.start(),
     setMapState: (next: MapState) => mapStore.set(next),
+    setEconomyState: (next: EconomyState) => economyStore.set(next),
     // deterministic snapshot helper
     snapshot: () => {
       app.render();
