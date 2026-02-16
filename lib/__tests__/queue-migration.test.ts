@@ -59,7 +59,7 @@ describe('Queue Migration', () => {
       const doc = v1Doc([V1_TASK_WITH_MISSION]);
       const { document, result } = migrateQueueDocument(doc);
 
-      expect(result.persisted).toBe(true);
+      expect(result.applied).toBe(true);
       expect(result.fromVersion).toBe(1);
       expect(result.toVersion).toBe(QUEUE_SCHEMA_VERSION);
       expect(result.tasksMigrated).toBe(1);
@@ -109,7 +109,7 @@ describe('Queue Migration', () => {
       const doc = v1Doc([]);
       const { document, result } = migrateQueueDocument(doc);
 
-      expect(result.persisted).toBe(true);
+      expect(result.applied).toBe(true);
       expect(result.tasksMigrated).toBe(0);
       expect(document.version).toBe(2);
       expect(document.items).toHaveLength(0);
@@ -119,7 +119,7 @@ describe('Queue Migration', () => {
       const doc = v2Doc([]);
       const { document, result } = migrateQueueDocument(doc);
 
-      expect(result.persisted).toBe(false);
+      expect(result.applied).toBe(false);
       expect(result.warnings).toContain('Document already at target version');
       expect(document).toBe(doc); // Same reference
     });
@@ -131,11 +131,11 @@ describe('Queue Migration', () => {
       expect(JSON.stringify(doc)).toBe(original);
     });
 
-    it('dry run reports without applying', () => {
+    it('dry run still reports migration as conceptually applied', () => {
       const doc = v1Doc([V1_TASK_WITH_MISSION]);
       const { result } = migrateQueueDocument(doc, { dryRun: true });
 
-      expect(result.persisted).toBe(false);
+      expect(result.applied).toBe(true);
       expect(result.tasksMigrated).toBe(1);
     });
   });
@@ -160,7 +160,7 @@ describe('Queue Migration', () => {
     it('strips missionContext on rollback', () => {
       const { document, result } = migrateQueueDocument(rollbackDoc, { targetVersion: 1 });
 
-      expect(result.persisted).toBe(true);
+      expect(result.applied).toBe(true);
       expect(result.fromVersion).toBe(2);
       expect(result.toVersion).toBe(1);
       expect(document.version).toBe(1);
@@ -169,9 +169,9 @@ describe('Queue Migration', () => {
       expect((document.items[0] as any).missionContext).toBeUndefined(); // Stripped
     });
 
-    it('marks rollback dry-run as not persisted', () => {
+    it('marks rollback dry-run as conceptually applied', () => {
       const { result } = migrateQueueDocument(rollbackDoc, { targetVersion: 1, dryRun: true });
-      expect(result.persisted).toBe(false);
+      expect(result.applied).toBe(true);
     });
   });
 
@@ -192,7 +192,7 @@ describe('Queue Migration', () => {
 
       const result = await migrateQueueFile(filePath);
 
-      expect(result.persisted).toBe(true);
+      expect(result.applied).toBe(true);
       expect(result.tasksMigrated).toBe(1);
       expect(result.backupPath).toBeDefined();
 
@@ -266,7 +266,7 @@ describe('Queue Migration', () => {
       const doc = { version: 99, generated_at: '2026-02-15', items: [] } as QueueDocument;
       const { result } = migrateQueueDocument(doc, { targetVersion: 100 });
 
-      expect(result.persisted).toBe(false);
+      expect(result.applied).toBe(false);
       expect(result.warnings.some((w) => w.includes('No migration path'))).toBe(true);
     });
   });

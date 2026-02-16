@@ -204,13 +204,7 @@ export class TaskQueue {
   /** Add a new task to the queue. Returns the created task. */
   enqueue(options: EnqueueOptions): QueueTask {
     const ts = this.now().toISOString();
-    const missionContext = options.missionContext
-      ? this.serializeMissionContext(options.missionContext)
-      : this.buildMissionContext(options);
-
-    const businessUnit = options.businessUnit ?? missionContext?.businessUnit;
-    const missionType = options.missionType ?? missionContext?.missionType;
-    const role = options.role ?? missionContext?.role;
+    const { businessUnit, missionType, role, missionContext } = this.deriveMissionMetadata(options);
 
     if (missionContext) {
       missionContext.businessUnit = businessUnit;
@@ -366,13 +360,45 @@ export class TaskQueue {
     return task;
   }
 
-  /** Build a MissionContext from enqueue options. */
-  private buildMissionContext(opts: EnqueueOptions): MissionContext | undefined {
-    if (!opts.businessUnit && !opts.missionType && !opts.role) return undefined;
+  /**
+   * Derive normalized mission metadata from enqueue options.
+   *
+   * Top-level mission fields take precedence over missionContext fields,
+   * and missionContext is rebuilt from the effective values to avoid
+   * redundant fallback chains and cross-field mismatches.
+   */
+  private deriveMissionMetadata(opts: EnqueueOptions): {
+    businessUnit?: string;
+    missionType?: MissionType;
+    role?: string;
+    missionContext?: MissionContext;
+  } {
+    const baseContext = opts.missionContext
+      ? this.serializeMissionContext(opts.missionContext)
+      : undefined;
+
+    const businessUnit = opts.businessUnit ?? baseContext?.businessUnit;
+    const missionType = opts.missionType ?? baseContext?.missionType;
+    const role = opts.role ?? baseContext?.role;
+    const tags = baseContext?.tags;
+
+    const hasMissionFields = Boolean(businessUnit || missionType || role);
+    const hasTags = tags !== undefined;
+
+    const missionContext = hasMissionFields || hasTags
+      ? {
+          ...(businessUnit ? { businessUnit } : {}),
+          ...(missionType ? { missionType } : {}),
+          ...(role ? { role } : {}),
+          ...(tags ? { tags } : {}),
+        }
+      : undefined;
+
     return {
-      businessUnit: opts.businessUnit,
-      missionType: opts.missionType,
-      role: opts.role,
+      businessUnit,
+      missionType,
+      role,
+      missionContext,
     };
   }
 

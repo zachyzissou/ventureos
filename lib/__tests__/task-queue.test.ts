@@ -104,6 +104,32 @@ describe('TaskQueue', () => {
       expect(task.missionContext?.tags).toEqual({ sprint: '6' });
     });
 
+    it('normalizes missionContext when top-level mission fields override context fields', () => {
+      const q = makeQueue();
+      const task = q.enqueue({
+        title: 'Override context task',
+        businessUnit: 'ventureos',
+        missionType: 'ops',
+        role: 'Helmsman',
+        missionContext: {
+          businessUnit: 'bloom',
+          missionType: 'content',
+          role: 'Producer',
+          tags: { sprint: '6' },
+        },
+      });
+
+      expect(task.businessUnit).toBe('ventureos');
+      expect(task.missionType).toBe('ops');
+      expect(task.role).toBe('Helmsman');
+      expect(task.missionContext).toEqual({
+        businessUnit: 'ventureos',
+        missionType: 'ops',
+        role: 'Helmsman',
+        tags: { sprint: '6' },
+      });
+    });
+
     it('deduplicates by dedupeKey', () => {
       const q = makeQueue();
       const first = q.enqueue({ title: 'Task A', dedupeKey: 'unique-key' });
