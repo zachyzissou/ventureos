@@ -58,13 +58,14 @@ jobs:
         working-directory: dashboard
         run: |
           # Start server in background (rootDir=".." → output under dist/dashboard/)
+          export DASHBOARD_PORT=7000
           node dist/dashboard/server/server.js &
           SERVER_PID=$!
           
           # Wait for startup
           sleep 3
           
-          # Health check
+          # Health check (port matches DASHBOARD_PORT above)
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:7000/api/health || echo "000")
           
           # Cleanup
@@ -96,7 +97,7 @@ jobs:
           done
 
       - name: ShellCheck lint
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@v2
         with:
           scandir: 'dashboard/scripts'
           severity: warning

@@ -14,6 +14,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DASHBOARD_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 VENTUREOS_ROOT="$(cd "$DASHBOARD_DIR/.." && pwd)"
 
+# NOTE: Uses com.openclaw.dashboard.monorepo to distinguish from the standalone
+# com.openclaw.dashboard during parallel migration. After migration completes,
+# the .monorepo suffix allows both services to coexist safely.
 LABEL="com.openclaw.dashboard.monorepo"
 PLIST_DEST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 PLIST_TEMPLATE="$DASHBOARD_DIR/examples/launchd.plist"
