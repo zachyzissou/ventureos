@@ -68,7 +68,7 @@ In **production**, the dashboard server serves the built static files at `/map/`
 
 | Requirement | Version | Notes |
 |------------|---------|-------|
-| Node.js | 25+ | Required for tactical-map |
+| Node.js | 18+ (tested with 25.x) | Required for tactical-map; see Vite/Vitest Node support |
 | npm | 10+ | Comes with Node.js |
 | Playwright | Auto-installed | For E2E tests |
 
@@ -139,10 +139,10 @@ window.__TACTICAL_MAP__ = {
   app,                  // PIXI.js Application
   mapStore,             // Reactive store for map state
   economyStore,         // Reactive store for economy
-  healthStore,          // Reactive store for health
+  // healthStore,       // [Phase 5.6 — planned] Reactive store for health
   api,                  // API client instance
   economyClient,        // Economy WebSocket client
-  healthClient,         // Health WebSocket client
+  // healthClient,      // [Phase 5.6 — planned] Health WebSocket client
   camera,               // Camera controller
   pause: () => {},      // Stop render loop
   resume: () => {},     // Resume render loop

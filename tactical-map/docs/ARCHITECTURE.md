@@ -62,6 +62,8 @@ The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and 
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │
 │  │ MapStore │  │ Economy  │  │ Health   │  │ Mission       │  │
 │  │          │  │ Store    │  │ Store    │  │ Tracker       │  │
+│  │          │  │          │  │ [Phase   │  │               │  │
+│  │          │  │          │  │  5.6]    │  │               │  │
 │  └─────┬────┘  └─────┬────┘  └─────┬────┘  └──────┬────────┘  │
 │        │             │             │               │            │
 │  ┌─────┴─────────────┴─────────────┴───────────────┴────────┐  │
