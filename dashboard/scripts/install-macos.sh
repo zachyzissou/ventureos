@@ -73,6 +73,11 @@ if [[ ! -f "$DASHBOARD_DIR/dist/dashboard/server/server.js" ]]; then
 fi
 echo "✅ Build complete → dashboard/dist/dashboard/server/server.js"
 
+# ─── Ensure log directory exists ──────────────────────────────────────────────
+
+mkdir -p "$DASHBOARD_DIR/logs"
+echo "✅ Log directory ready → dashboard/logs"
+
 # ─── Unload existing service (if any) ────────────────────────────────────────
 
 if launchctl list "$LABEL" &>/dev/null; then

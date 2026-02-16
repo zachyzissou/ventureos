@@ -35,6 +35,8 @@
       <string>__VENTUREOS_ROOT__</string>
       <key>OPENCLAW_DIR</key>
       <string>__OPENCLAW_DIR__</string>
+      <key>VENTUREOS_LOG_DIR</key>
+      <string>__VENTUREOS_ROOT__/dashboard/logs</string>
       <key>NODE_ENV</key>
       <string>production</string>
     </dict>
