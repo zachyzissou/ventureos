@@ -23,9 +23,10 @@ The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and 
 - **Central Nexus** reflecting overall system health
 - **Khala Network** — 28 bond lines showing inter-agent collaboration affinity
 - **Resource Economy** — token budgets, cost tracking, sparklines per agent
-- **Health & Diagnostics** — CPU, memory, latency, connectivity per agent
 - **Mission Tracking** — task cards, dependency arrows, progress indicators
 - **Particle System** — activity-driven visual effects
+
+> **Note:** Phase 5.6 (Health & Diagnostics with CPU, memory, latency, connectivity monitoring) is currently in development. The architecture described in this document includes the planned health monitoring infrastructure.
 
 ### Technology Stack
 
@@ -99,7 +100,7 @@ The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and 
 
 1. **API Client** polls `/api/tactical-map/state` every 15s → updates `MapStore`
 2. **Economy Client** connects via WebSocket to `/api/tactical-map/resources/stream`, falls back to polling → updates `EconomyStore`
-3. **Health Client** connects via WebSocket to `/api/tactical-map/health/stream`, polls every 10s → updates `HealthStore`
+3. **Health Client** *(Phase 5.6 - in development)* will connect via WebSocket to `/api/tactical-map/health/stream`, polls every 10s → updates `HealthStore`
 4. Stores notify subscribers → renderer layers update visuals
 5. PIXI.js ticker calls `update(elapsedMs)` on all layers at 60fps
 
@@ -128,9 +129,11 @@ app.stage
 ├── hud                  Z=9   Top bar: tabs + KPI ticker (screen space)
 ├── resourceEconomy      Z=10  Economy panel overlay (screen space)
 │   (overlayContainer)
-├── alertOverlay         Z=11  P0/P1 alert banners (screen space)
-└── healthDashboard      Z=12  Full health dashboard panel (screen space)
+├── alertOverlay         Z=11  P0/P1 alert banners (screen space) [planned]
+└── healthDashboard      Z=12  Full health dashboard panel (screen space) [planned]
 ```
+
+> **Implementation Note:** Layers Z=0-10 are currently implemented. Layers Z=8 (healthIndicators), Z=11 (alertOverlay), and Z=12 (healthDashboard) are planned as part of Phase 5.6.
 
 **World-space layers** (Z=0-8) are children of the `world` container, which receives camera pan/zoom transforms. **Screen-space layers** (Z=9-12) are direct children of `app.stage` and remain fixed regardless of camera position.
 
@@ -560,7 +563,7 @@ Request → Auth (Bearer token) → CORS (origin whitelist) → CSP → Rate Lim
 | Middleware | File | Policy |
 |-----------|------|--------|
 | **Auth** | `tactical-map-server/middleware/auth.ts` | Pre-shared API key, timing-safe comparison |
-| **CORS** | `tactical-map-server/middleware/cors.ts` | Whitelist: `192.168.225.149:{7000,7001}`, `localhost:{5173,7000,7001}` |
+| **CORS** | `tactical-map-server/middleware/cors.ts` | Whitelist: `192.168.225.149:{7000,8001}`, `localhost:{5173,7000,8001}` |
 | **CSP** | `tactical-map-server/middleware/csp.ts` | `default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'` |
 
 ### Content Security Policy

@@ -66,8 +66,11 @@ paths:
   /api/tactical-map/health:
     get:
       tags: [Health]
-      summary: Get health snapshot
-      description: Returns CPU, memory, latency, error rate, and connectivity for all agents plus system aggregates.
+      summary: Get health snapshot (⚠️ IN DEVELOPMENT - Phase 5.6)
+      description: |
+        **NOTE:** This endpoint is part of Phase 5.6 (Health & Diagnostics) and is not yet implemented.
+        
+        Returns CPU, memory, latency, error rate, and connectivity for all agents plus system aggregates.
       operationId: getHealthSnapshot
       responses:
         "200":
