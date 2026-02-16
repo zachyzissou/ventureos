@@ -35,7 +35,7 @@ npm run build      # Type-check only (noEmit)
 npm run compile    # Compile to dist/
 
 # Start production server
-npm run start      # Runs dist/server.js
+npm run start      # Runs dist/dashboard/server/server.js
 ```
 
 ### First Login
@@ -51,7 +51,7 @@ npm run start      # Runs dist/server.js
 | Script    | Command | Description |
 |-----------|---------|-------------|
 | `dev`     | `tsx watch server/server.ts` | Dev server with hot-reload |
-| `start`   | `node dist/server.js` | Run production build |
+| `start`   | `node dist/dashboard/server/server.js` | Run production build |
 | `build`   | `tsc --noEmit` | Type-check without emitting |
 | `compile` | `tsc` | Compile TypeScript to `dist/` |
 | `test`    | `vitest run` | Run tests via Vitest |
