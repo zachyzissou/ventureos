@@ -64,11 +64,11 @@ npx tsc -p tsconfig.json --outDir dist 2>&1 || {
   echo "⚠️  TypeScript compilation had warnings (non-fatal, continuing)"
 }
 
-if [[ ! -f "$DASHBOARD_DIR/dist/server.js" ]]; then
-  echo "❌ Build failed — dist/server.js not found"
+if [[ ! -f "$DASHBOARD_DIR/dist/dashboard/server/server.js" ]]; then
+  echo "❌ Build failed — dist/dashboard/server/server.js not found"
   exit 1
 fi
-echo "✅ Build complete → dashboard/dist/server.js"
+echo "✅ Build complete → dashboard/dist/dashboard/server/server.js"
 
 # ─── Unload existing service (if any) ────────────────────────────────────────
 

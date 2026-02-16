@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22]
 
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +40,8 @@ jobs:
 
       - name: Verify build output
         run: |
-          test -f dashboard/dist/server.js || (echo "❌ dist/server.js not found" && exit 1)
+          # rootDir=".." in tsconfig means output mirrors repo structure under dist/
+          test -f dashboard/dist/dashboard/server/server.js || (echo "❌ dist/dashboard/server/server.js not found" && ls -R dashboard/dist/ 2>/dev/null && exit 1)
           echo "✅ Build output verified"
 
       - name: Run unit tests
@@ -54,8 +55,8 @@ jobs:
       - name: Deployment smoke test
         working-directory: dashboard
         run: |
-          # Start server in background
-          node dist/server.js &
+          # Start server in background (rootDir=".." → output under dist/dashboard/)
+          node dist/dashboard/server/server.js &
           SERVER_PID=$!
           
           # Wait for startup

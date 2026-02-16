@@ -173,10 +173,10 @@ if ! $DRY_RUN; then
   cd "$DASHBOARD_DIR"
   npx tsc -p tsconfig.json --outDir dist 2>&1 || true
 
-  if [[ -f "$DASHBOARD_DIR/dist/server.js" ]]; then
-    ok "Build complete → dashboard/dist/server.js"
+  if [[ -f "$DASHBOARD_DIR/dist/dashboard/server/server.js" ]]; then
+    ok "Build complete → dashboard/dist/dashboard/server/server.js"
   else
-    fail "Build failed — dist/server.js not found"
+    fail "Build failed — dist/dashboard/server/server.js not found"
   fi
 else
   log "[DRY RUN] Would compile TypeScript → dashboard/dist/"

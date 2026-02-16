@@ -22,7 +22,7 @@
     <key>ProgramArguments</key>
     <array>
       <string>__NODE_PATH__</string>
-      <string>__VENTUREOS_ROOT__/dashboard/dist/server.js</string>
+      <string>__VENTUREOS_ROOT__/dashboard/dist/dashboard/server/server.js</string>
     </array>
 
     <key>EnvironmentVariables</key>
