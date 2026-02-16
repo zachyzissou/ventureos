@@ -7,6 +7,11 @@
 - **docs/templates/** – starter templates + schemas
 - **docs/archive/** – research notes + test results
 
+## Dashboard
+- **[dashboard/README.md](../dashboard/README.md)** – Quick start, build commands, deployment, configuration, migration guide
+- **[dashboard/docs/API.md](../dashboard/docs/API.md)** – Complete API reference (all endpoints, schemas, auth, rate limiting)
+- **[docs/DASHBOARD.md](DASHBOARD.md)** – VentureOS integration guide (data flow, caching, security, architecture)
+
 ## Core
 - **README.md** – project overview
 - **docs/roles/REPO_CHARTER.md** – VentureOS charter + scope boundaries
