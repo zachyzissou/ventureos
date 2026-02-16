@@ -62,6 +62,32 @@ ventureos/
 - **Phase 5.4:** Real-time Updates (WebSocket, SSE, optimistic UI)
 - **Phase 5.5:** Campaign Integration (Deep progression, Teaching XP, Innovation traits)
 
+## Roadmap
+
+Roadmap tracking lives in GitHub issue [#138: Roadmap: VentureOS delivery plan (living)](https://github.com/zachyzissou/ventureos/issues/138). That issue is the source of truth; this section is a high-level snapshot.
+
+### Now (active)
+
+- Interactive controls for Phase 5.7 tactical map (#19)
+- Tactical Map CI/CD pipeline and performance benchmarking (#23, #24)
+- Accessibility audit and Phase 5 completion wrap-up (#25, #115)
+- Dashboard logs page for incident and root-cause workflows (#137)
+
+### Next
+
+- Close observability gaps (structured logs, correlation hints, report bundles)
+- Harden deployment workflow for repeatable production rollouts
+- Improve dashboard ↔ tactical-map parity and operator runbooks
+
+### Later
+
+- Richer logs UX (tail/search/filter presets/export)
+- Expanded in-map mission editing and operational controls
+- Deeper diagnostics drill-downs from dashboard cards
+- Release notes / change log panel in the dashboard
+
+Now items map to currently open issues; see #138 and the linked issues for live status and details.
+
 ## Development
 
 ### Prerequisites
