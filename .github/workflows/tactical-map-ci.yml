@@ -1,0 +1,56 @@
+# Tactical Map CI — tests + build artifact
+# Runs on PRs touching tactical-map and on push to main.
+
+name: Tactical Map CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tactical-map/**'
+      - 'tactical-map-server/**'
+      - 'dashboard/**'
+      - 'lib/**'
+      - '.github/workflows/tactical-map-ci.yml'
+  pull_request:
+    paths:
+      - 'tactical-map/**'
+      - 'tactical-map-server/**'
+      - 'dashboard/**'
+      - 'lib/**'
+      - '.github/workflows/tactical-map-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
+          cache: 'npm'
+          cache-dependency-path: tactical-map/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tactical-map
+        run: npm ci
+
+      - name: Run unit + integration tests
+        working-directory: tactical-map
+        run: npm test
+
+      - name: Build tactical map
+        working-directory: tactical-map
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tactical-map-dist-${{ github.sha }}
+          path: tactical-map/dist
+          if-no-files-found: error
