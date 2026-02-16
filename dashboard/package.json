@@ -8,7 +8,7 @@
     "build": "tsc --noEmit",
     "compile": "tsc",
     "dev": "tsx watch server/server.ts",
-    "start": "node dist/server.js",
+    "start": "node dist/dashboard/server/server.js",
     "test": "vitest run --config vitest.config.ts",
     "test:unit": "vitest run --config vitest.config.ts tests/unit",
     "test:integration": "vitest run --config vitest.config.ts tests/integration",

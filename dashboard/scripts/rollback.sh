@@ -76,14 +76,14 @@ run_or_dry() {
 
 if [[ -z "$BACKUP_DIR" ]]; then
   # Find most recent migration backup
-  BACKUP_DIR=$(ls -dt "$DASHBOARD_DIR"/.migration-backup-* 2>/dev/null | head -1 || echo "")
+  BACKUP_DIR=$(find "$DASHBOARD_DIR" -maxdepth 1 -name ".migration-backup-*" -type d -print0 2>/dev/null | xargs -0 ls -dt 2>/dev/null | head -1 || echo "")
 fi
 
 if [[ -n "$BACKUP_DIR" ]] && [[ -d "$BACKUP_DIR" ]]; then
   ok "Found backup: $BACKUP_DIR"
   if [[ -f "$BACKUP_DIR/migration-info.json" ]]; then
     log "Migration info:"
-    cat "$BACKUP_DIR/migration-info.json" | sed 's/^/     /'
+    sed 's/^/     /' < "$BACKUP_DIR/migration-info.json"
     echo ""
   fi
 else
