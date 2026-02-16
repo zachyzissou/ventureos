@@ -191,6 +191,8 @@ Returns the current resource economy snapshot (token budgets + costs).
 
 ### GET `/api/tactical-map/health`
 
+> **⚠️ IN DEVELOPMENT:** This endpoint is part of Phase 5.6 (Health & Diagnostics) and is not yet implemented. The specification below describes the planned API contract.
+
 Returns the current health snapshot for all agents.
 
 **Response: `200 OK`**
@@ -367,6 +369,8 @@ During disconnection, client falls back to polling `GET /resources` every 2s.
 ---
 
 ### Health Stream
+
+> **⚠️ IN DEVELOPMENT:** This WebSocket endpoint is part of Phase 5.6 (Health & Diagnostics) and is not yet implemented. The specification below describes the planned protocol.
 
 **Endpoint:** `wss://host/api/tactical-map/health/stream?token=<token>`
 

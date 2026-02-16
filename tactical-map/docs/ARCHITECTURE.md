@@ -23,9 +23,10 @@ The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and 
 - **Central Nexus** reflecting overall system health
 - **Khala Network** — 28 bond lines showing inter-agent collaboration affinity
 - **Resource Economy** — token budgets, cost tracking, sparklines per agent
-- **Health & Diagnostics** — CPU, memory, latency, connectivity per agent
 - **Mission Tracking** — task cards, dependency arrows, progress indicators
 - **Particle System** — activity-driven visual effects
+
+> **Note:** Phase 5.6 (Health & Diagnostics with CPU, memory, latency, connectivity monitoring) is currently in development. The architecture described in this document includes the planned health monitoring infrastructure.
 
 ### Technology Stack
 
@@ -99,7 +100,7 @@ The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and 
 
 1. **API Client** polls `/api/tactical-map/state` every 15s → updates `MapStore`
 2. **Economy Client** connects via WebSocket to `/api/tactical-map/resources/stream`, falls back to polling → updates `EconomyStore`
-3. **Health Client** connects via WebSocket to `/api/tactical-map/health/stream`, polls every 10s → updates `HealthStore`
+3. **Health Client** *(Phase 5.6 - in development)* will connect via WebSocket to `/api/tactical-map/health/stream`, polls every 10s → updates `HealthStore`
 4. Stores notify subscribers → renderer layers update visuals
 5. PIXI.js ticker calls `update(elapsedMs)` on all layers at 60fps
 
