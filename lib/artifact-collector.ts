@@ -7,6 +7,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import os from 'node:os';
 import crypto from 'node:crypto';
 
 import type { DeliveryArtifactRef, SquadRole, TaskRunResult } from './mission-state-machine';
@@ -19,7 +20,7 @@ export interface ArtifactCollectorConfig {
 }
 
 const DEFAULT_BASE_DIR = path.resolve(
-  process.env.HOME ?? '~',
+  os.homedir(),
   'clawd/ventureos/runtime/missions/artifacts'
 );
 
@@ -28,6 +29,21 @@ export interface ArtifactManifest {
   version: string;
   createdAt: string;
   artifacts: DeliveryArtifactRef[];
+}
+
+function sanitizeArtifactFilename(name: string): string {
+  // Basename-only policy + conservative character set to prevent path traversal.
+  const trimmed = (name ?? '').trim();
+  if (!trimmed) throw new Error(`Invalid artifact name: ${JSON.stringify(name)}`);
+  if (trimmed.includes('/') || trimmed.includes('\\')) {
+    throw new Error(`Invalid artifact name (path segments not allowed): ${JSON.stringify(name)}`);
+  }
+
+  const safe = trimmed.replace(/[^a-zA-Z0-9._-]+/g, '_');
+  if (!safe || safe === '.' || safe === '..') {
+    throw new Error(`Invalid artifact name: ${JSON.stringify(name)}`);
+  }
+  return safe;
 }
 
 export class ArtifactCollector {
@@ -45,22 +61,38 @@ export class ArtifactCollector {
 
   /**
    * Create a new version directory (v0001, v0002, ...)
+   *
+   * Uses an atomic mkdir loop to avoid races when multiple deliveries happen concurrently.
    */
   async createNewVersionDir(missionId: string): Promise<{ version: string; dir: string }>{
     const missionDir = this.getMissionDir(missionId);
     await fs.mkdir(missionDir, { recursive: true });
 
+    // Start at (max existing + 1), but tolerate concurrent creators by retrying on EEXIST.
     const entries = await fs.readdir(missionDir, { withFileTypes: true });
-    const versions = entries
+    const nums = entries
       .filter((e) => e.isDirectory() && /^v\d{4}$/.test(e.name))
-      .map((e) => e.name)
-      .sort();
+      .map((e) => Number(e.name.slice(1)))
+      .filter((n) => Number.isFinite(n))
+      .sort((a, b) => a - b);
 
-    const nextNum = versions.length ? Number(versions[versions.length - 1].slice(1)) + 1 : 1;
-    const version = `v${String(nextNum).padStart(4, '0')}`;
-    const dir = path.join(missionDir, version);
-    await fs.mkdir(dir, { recursive: true });
-    return { version, dir };
+    let nextNum = nums.length ? nums[nums.length - 1] + 1 : 1;
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const version = `v${String(nextNum).padStart(4, '0')}`;
+      const dir = path.join(missionDir, version);
+      try {
+        await fs.mkdir(dir);
+        return { version, dir };
+      } catch (err: any) {
+        if (err?.code === 'EEXIST') {
+          nextNum += 1;
+          continue;
+        }
+        throw err;
+      }
+    }
   }
 
   /**
@@ -76,8 +108,15 @@ export class ArtifactCollector {
     const artifacts: DeliveryArtifactRef[] = [];
 
     const writeOne = async (name: string, content: string, producedBy?: SquadRole, taskId?: string) => {
-      const safeName = name.replace(/[^a-zA-Z0-9._-]+/g, '_');
-      const fp = path.join(dir, safeName);
+      const safeName = sanitizeArtifactFilename(name);
+
+      // Final defense: ensure the resolved path stays within the version dir.
+      const base = path.resolve(dir);
+      const fp = path.resolve(dir, safeName);
+      if (!fp.startsWith(`${base}${path.sep}`)) {
+        throw new Error(`Artifact path escape detected: ${JSON.stringify(name)} → ${fp}`);
+      }
+
       await fs.writeFile(fp, content, 'utf8');
       const bytes = Buffer.byteLength(content, 'utf8');
       const sha256 = crypto.createHash('sha256').update(content, 'utf8').digest('hex');
