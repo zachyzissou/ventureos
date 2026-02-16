@@ -26,7 +26,6 @@ import type { Animation, AnimationType, Point } from './types';
 export class AnimationManager {
   private animations: Map<string, Animation> = new Map();
   private idCounter = 0;
-  private particlePool: Particle[] = [];
 
   /** Maximum concurrent animations for performance */
   private readonly maxAnimations: number;
@@ -131,7 +130,6 @@ export class AnimationManager {
    */
   clear(): void {
     this.animations.clear();
-    this.particlePool = [];
   }
 
   private pruneOldest(): void {

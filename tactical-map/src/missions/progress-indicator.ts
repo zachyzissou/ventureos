@@ -13,10 +13,9 @@
 
 import type {
   MissionPhase,
-  MissionData,
   ColorScheme,
 } from './types';
-import { PHASE_COLORS, MISSION_PHASE_ORDER, PHASE_PROGRESS } from './types';
+import { PHASE_COLORS, MISSION_PHASE_ORDER } from './types';
 
 // ═══════════════════════════════════════════
 // Linear Progress Bar

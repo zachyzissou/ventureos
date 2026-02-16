@@ -15,11 +15,8 @@ import type {
   TaskSummary,
   Point,
   TaskTier,
-  TaskStatus,
-  SquadRole,
-  ColorScheme,
 } from './types';
-import { TIER_COLORS, PHASE_COLORS } from './types';
+import { TIER_COLORS } from './types';
 
 // ═══════════════════════════════════════════
 // Queue Depth Visualization
@@ -57,15 +54,13 @@ export interface AgentQueueStats {
   totalRunning: number;
   totalFailed: number;
   tierBreakdown: Record<TaskTier, number>;
-  oldestQueuedAge: number; // ms since oldest queued task was created
 }
 
 /**
  * Calculate per-agent queue statistics from mission data.
  */
 export function calculateAgentQueueStats(
-  missions: MissionData[],
-  now: number = Date.now()
+  missions: MissionData[]
 ): Map<string, AgentQueueStats> {
   const statsMap = new Map<string, AgentQueueStats>();
 
@@ -81,7 +76,6 @@ export function calculateAgentQueueStats(
           totalRunning: 0,
           totalFailed: 0,
           tierBreakdown: { P0: 0, P1: 0, P2: 0, P3: 0 },
-          oldestQueuedAge: 0,
         };
         statsMap.set(role, stats);
       }
@@ -140,7 +134,7 @@ export function renderQueueDepthBar(
   ctx.globalAlpha = 1;
 
   // ── Tier segments within the bar ──────────────────────
-  drawTierSegments(ctx, x, y, barWidth, maxBarHeight, stats, maxDepth);
+  drawTierSegments(ctx, x, y, barWidth, maxBarHeight, stats, totalActive, maxDepth);
 
   // ── Border ────────────────────────────────────────────
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
@@ -174,7 +168,7 @@ export function renderAllQueueDepthBars(
   config: QueueDepthConfig = DEFAULT_QUEUE_CONFIG,
   time: number = Date.now()
 ): void {
-  const statsMap = calculateAgentQueueStats(missions, time);
+  const statsMap = calculateAgentQueueStats(missions);
 
   for (const [role, stats] of statsMap) {
     const pos = agentPositions.get(role);
@@ -305,19 +299,32 @@ function drawTierSegments(
   barWidth: number,
   maxBarHeight: number,
   stats: AgentQueueStats,
+  totalActive: number,
   maxDepth: number
 ): void {
   const tiers: TaskTier[] = ['P0', 'P1', 'P2', 'P3'];
+  const clampedActiveDepth = Math.min(totalActive, maxDepth);
+  const clampedQueuedDepth = Math.min(stats.totalQueued, clampedActiveDepth);
+
+  if (stats.totalQueued <= 0 || clampedQueuedDepth <= 0) return;
+
+  const totalQueueHeight = (clampedQueuedDepth / maxDepth) * maxBarHeight;
   let currentY = y;
+  let remainingHeight = totalQueueHeight;
 
   for (const tier of tiers) {
     const count = stats.tierBreakdown[tier];
-    if (count === 0) continue;
+    if (count === 0 || remainingHeight <= 0) continue;
 
-    const segmentHeight = (count / maxDepth) * maxBarHeight;
+    const segmentHeight = Math.min(
+      (count / stats.totalQueued) * totalQueueHeight,
+      remainingHeight
+    );
+
     ctx.fillStyle = TIER_COLORS[tier] + '40'; // 25% opacity overlay
     ctx.fillRect(x, currentY - segmentHeight, barWidth, segmentHeight);
     currentY -= segmentHeight;
+    remainingHeight -= segmentHeight;
   }
 }
 

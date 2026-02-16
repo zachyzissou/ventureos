@@ -292,7 +292,9 @@ export function renderTimelinePanel(
     (a, b) => new Date(b.enteredAt).getTime() - new Date(a.enteredAt).getTime()
   );
 
-  const visibleEntries = allHistory.slice(0, timelineConfig.maxEntries);
+  const visibleEntries = timelineConfig.maxEntries > 0
+    ? allHistory.slice(0, timelineConfig.maxEntries)
+    : allHistory;
   const contentHeight = Math.min(
     visibleEntries.length * timelineConfig.entryHeight + 30,
     maxHeight

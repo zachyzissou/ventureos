@@ -34,7 +34,10 @@ export interface ArrowStyleConfig {
   curvature: number;
   /** Whether to show flowing particles */
   showParticles: boolean;
-  /** Particle speed (pixels per second) */
+  /**
+   * Particle speed as a normalized fraction of curve progress per second.
+   * Unitless factor; higher values move particles farther along the path.
+   */
   particleSpeed: number;
   /** Number of particles per arrow */
   particleCount: number;

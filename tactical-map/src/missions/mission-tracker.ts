@@ -110,8 +110,22 @@ export class MissionTracker {
   disconnect(): void {
     this.provider.offUpdate(this.handleDataUpdate);
     this.provider.disconnect();
+
+    // Reset render + animation state so a future reconnect starts cleanly.
     this.animationManager.clear();
     this.particles = [];
+    this.missions = [];
+    this.dependencies = [];
+    this.cardLayouts = [];
+    this.arrowPaths = [];
+
+    // Reset change detection caches.
+    this.previousPhases = new Map();
+    this.previousMissionIds = new Set();
+
+    // Reset performance metrics.
+    this.frameTimings = [];
+    this.lastFrameTime = 0;
   }
 
   /**
@@ -125,8 +139,8 @@ export class MissionTracker {
   ): void {
     const frameStart = performance.now();
 
-    // Update animation state
-    this.animationManager.update(performance.now());
+    // Update animation state once per frame and reuse the snapshot.
+    const activeAnimations = this.animationManager.update(frameStart);
 
     // Calculate layouts
     const visibleMissions = this.missions.slice(0, this.config.maxVisibleMissions);
@@ -166,7 +180,7 @@ export class MissionTracker {
     }
 
     // Layer 5: Phase transition ripples
-    for (const anim of this.animationManager.update()) {
+    for (const anim of activeAnimations) {
       if (anim.type === 'phase_transition' || anim.type === 'completion_burst') {
         const layout = layoutMap.get(anim.targetId);
         if (layout) {
