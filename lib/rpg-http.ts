@@ -61,19 +61,67 @@ function queryPsionicStats(db: Database.Database): PsionicStatSnapshot[] {
   return stmt.all() as PsionicStatSnapshot[];
 }
 
-function queryInteractionLogs(db: Database.Database, agentId?: string): InteractionLogEntry[] {
-  if (agentId) {
-    const stmt = db.prepare(
-      `SELECT created_at, agent_id, event_type, duration_ms
-       FROM interaction_logs WHERE agent_id = ? ORDER BY created_at DESC`,
-    );
-    return stmt.all(agentId) as InteractionLogEntry[];
+function getInteractionLogColumns(db: Database.Database): Set<string> {
+  try {
+    const rows = db.prepare(`PRAGMA table_info(interaction_logs)`).all() as Array<{ name?: string }>;
+    return new Set(rows.map((r) => String(r.name || '').trim()).filter(Boolean));
+  } catch {
+    return new Set();
   }
-  const stmt = db.prepare(
-    `SELECT created_at, agent_id, event_type, duration_ms
-     FROM interaction_logs ORDER BY created_at DESC`,
-  );
-  return stmt.all() as InteractionLogEntry[];
+}
+
+function queryInteractionLogs(db: Database.Database, agentId?: string): InteractionLogEntry[] {
+  const cols = getInteractionLogColumns(db);
+  const hasAgentId = cols.has('agent_id');
+  const hasEventType = cols.has('event_type');
+  const hasDuration = cols.has('duration_ms');
+  const hasInitiator = cols.has('initiator_agent');
+  const hasRecipient = cols.has('recipient_agent');
+  const hasInteractionType = cols.has('interaction_type');
+
+  if (hasAgentId && hasEventType) {
+    const durationExpr = hasDuration ? 'duration_ms' : '0';
+    if (agentId) {
+      const stmt = db.prepare(
+        `SELECT created_at, agent_id, event_type, ${durationExpr} AS duration_ms
+         FROM interaction_logs WHERE agent_id = ? ORDER BY created_at DESC`,
+      );
+      return stmt.all(agentId) as InteractionLogEntry[];
+    }
+    const stmt = db.prepare(
+      `SELECT created_at, agent_id, event_type, ${durationExpr} AS duration_ms
+       FROM interaction_logs ORDER BY created_at DESC`,
+    );
+    return stmt.all() as InteractionLogEntry[];
+  }
+
+  if (hasInitiator && hasInteractionType) {
+    if (agentId) {
+      const stmt = db.prepare(
+        `SELECT created_at,
+                ? AS agent_id,
+                interaction_type AS event_type,
+                ${hasDuration ? 'duration_ms' : '0'} AS duration_ms
+         FROM interaction_logs
+         WHERE initiator_agent = ?${hasRecipient ? ' OR recipient_agent = ?' : ''}
+         ORDER BY created_at DESC`,
+      );
+      return (hasRecipient
+        ? stmt.all(agentId, agentId, agentId)
+        : stmt.all(agentId, agentId)) as InteractionLogEntry[];
+    }
+    const stmt = db.prepare(
+      `SELECT created_at,
+              initiator_agent AS agent_id,
+              interaction_type AS event_type,
+              ${hasDuration ? 'duration_ms' : '0'} AS duration_ms
+       FROM interaction_logs
+       ORDER BY created_at DESC`,
+    );
+    return stmt.all() as InteractionLogEntry[];
+  }
+
+  return [] as InteractionLogEntry[];
 }
 
 function queryKhalaNetwork(db: Database.Database): KhalaNetworkEdge[] {
