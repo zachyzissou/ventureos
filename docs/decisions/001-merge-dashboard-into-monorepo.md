@@ -154,7 +154,7 @@ ventureos/
 
 ## Implementation Plan
 
-See: [GitHub Epic Issue — Merge openclaw-dashboard into VentureOS monorepo](https://github.com/zachyzissou/ventureos/issues/)
+See: [GitHub Epic Issue — Merge openclaw-dashboard into VentureOS monorepo](https://github.com/zachyzissou/ventureos/issues/84)
 
 ### Phases
 
