@@ -4,7 +4,7 @@
  * Real HTTP requests against a real server with actual auth middleware.
  * No mocks — every assertion validates real headers, status codes, and bodies.
  */
-import { describe, it, before, after } from 'node:test';
+import { describe, it, beforeAll, afterAll } from 'vitest';
 import assert from 'node:assert/strict';
 import { createTestServer, createAuthOnlyServer, getToken, type TestServer } from './test-server.ts';
 
@@ -14,12 +14,12 @@ describe('Auth Middleware — Full Stack (authenticate)', () => {
   let srv: TestServer;
   let token: string;
 
-  before(async () => {
+  beforeAll(async () => {
     srv = await createTestServer();
     token = getToken();
   });
 
-  after(async () => {
+  afterAll(async () => {
     await srv.close();
   });
 
@@ -137,12 +137,12 @@ describe('Auth Middleware — Callback Style (authMiddleware)', () => {
   let srv: TestServer;
   let token: string;
 
-  before(async () => {
+  beforeAll(async () => {
     srv = await createAuthOnlyServer();
     token = getToken();
   });
 
-  after(async () => {
+  afterAll(async () => {
     await srv.close();
   });
 
