@@ -111,7 +111,7 @@ Response 200:
         "activeConnections": 3
       },
       "errors": [],                   // recent errors (max 5)
-      "alertLevel": null              // null | "warning" | "critical" | "p0" | "p1"
+      "alertLevel": null              // null | "info" | "warning" | "p1" | "p0"
     },
     // ... other agents
   },
@@ -168,34 +168,29 @@ Authorization: Bearer <token>
 Response 200:
 {
   "updatedAt": "2026-02-16T15:12:00.000Z",
-  "uptime": {
-    "startedAt": "2026-02-16T11:00:00.000Z",
-    "uptimeMs": 15120000
-  },
-  "throughput": {
-    "totalRequestsPerSec": 42.6,
-    "peakRequestsPerSec": 120.3,
-    "totalRequestsLast1h": 153360
-  },
-  "errors": {
-    "totalErrorsPerMin": 0.3,
-    "errorRatePct": 0.007,
-    "topErrors": [
-      { "code": "ECONNRESET", "count": 12, "lastSeen": "..." }
-    ]
-  },
-  "resources": {
-    "totalCpuPercent": 34.2,
-    "totalMemoryMb": 2048,
-    "totalMemoryLimitMb": 8192
-  }
+  "overallStatus": "healthy",            // worst-of-all-agents
+  "uptimeMs": 15120000,
+  "totalRequestsPerSec": 42.6,
+  "peakRequestsPerSec": 120.3,
+  "totalErrorsPerMin": 0.3,
+  "agentCount": 8,
+  "healthyCount": 7,
+  "degradedCount": 1,
+  "unhealthyCount": 0,
+  "offlineCount": 0,
+  "totalCpuPercent": 34.2,
+  "totalMemoryMb": 2048,
+  "totalMemoryLimitMb": 8192
 }
 ```
 
 ### 2.4 WebSocket Stream
 
 ```
-WS /api/tactical-map/health/stream?token=<jwt>
+WS /api/tactical-map/health/stream
+Authorization: Bearer <jwt>
+// Token sent via `protocols` or `headers` param — NOT as a query-string
+// to avoid leaking credentials in server logs, browser history, or proxy caches.
 
 Client → Server:
   { "type": "subscribe", "topic": "health" }
@@ -260,13 +255,20 @@ Server → Client events:
 ### 2.5 Config Additions (`src/config.ts`)
 
 ```typescript
-export const HEALTH = {
+// ── URLs live alongside existing API paths ──────────────────────
+export const API = {
+  // ... existing API entries ...
+
   /** Health snapshot endpoint. */
-  BASE_URL: '/api/tactical-map/health',
+  HEALTH_BASE_URL: '/api/tactical-map/health',
   /** Health WebSocket stream endpoint. */
-  WS_URL: '/api/tactical-map/health/stream',
+  HEALTH_WS_URL: '/api/tactical-map/health/stream',
   /** Diagnostics endpoint. */
-  DIAGNOSTICS_URL: '/api/tactical-map/diagnostics',
+  HEALTH_DIAGNOSTICS_URL: '/api/tactical-map/diagnostics',
+} as const;
+
+// ── Thresholds & tuning knobs ───────────────────────────────────
+export const HEALTH = {
   /** Poll interval when WebSocket is connected (diagnostics only). */
   DIAGNOSTICS_POLL_MS: 30_000,
   /** Fallback poll cadence while WebSocket is disconnected. */
@@ -275,8 +277,8 @@ export const HEALTH = {
   STALE_THRESHOLD_MS: 30_000,
   /** Maximum age before marking agent as "offline". */
   OFFLINE_THRESHOLD_MS: 60_000,
-  /** Health check response time budget. */
-  HEALTH_CHECK_TIMEOUT_MS: 50,
+  /** Performance SLA: health check round-trip budget (not an AbortController timeout). */
+  HEALTH_CHECK_BUDGET_MS: 50,
   /** Alert visibility SLA — from event to rendered overlay. */
   ALERT_VISIBILITY_MS: 5_000,
   /** Max alerts retained in state. */
@@ -356,7 +358,7 @@ export type AgentError = {
   id: string;
   message: string;
   code?: string;
-  severity: 'info' | 'warning' | 'critical';
+  severity: AlertSeverity;
   occurredAt: string;
   count: number;
 };
