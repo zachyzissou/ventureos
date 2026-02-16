@@ -6,7 +6,7 @@
  *
  * Also includes HTTP integration tests using a server with rate limiting.
  */
-import { describe, it, before, after, beforeEach } from 'node:test';
+import { describe, it, beforeAll, afterAll, beforeEach } from 'vitest';
 import assert from 'node:assert/strict';
 import { createServer, IncomingMessage, ServerResponse, Server } from 'http';
 import { AddressInfo } from 'net';
@@ -415,7 +415,7 @@ describe('RateLimiter — HTTP Integration', () => {
   let url: string;
   let limiter: RateLimiter;
 
-  before(async () => {
+  beforeAll(async () => {
     limiter = new RateLimiter({
       agentPerMinute: 3,
       burstAllowance: false,
@@ -460,7 +460,7 @@ describe('RateLimiter — HTTP Integration', () => {
     });
   });
 
-  after(async () => {
+  afterAll(async () => {
     await new Promise<void>((res, rej) => server.close(err => err ? rej(err) : res()));
   });
 
