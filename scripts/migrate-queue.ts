@@ -39,8 +39,7 @@ async function main() {
     const result = await migrateQueueFile(filePath, { dryRun, createBackup, targetVersion });
 
     console.log(`Result:`);
-    console.log(`  Applied (conceptual): ${result.applied}`);
-    console.log(`  Written to disk: ${!dryRun && result.applied}`);
+    console.log(`  Persisted: ${result.persisted}`);
     console.log(`  From: v${result.fromVersion} → v${result.toVersion}`);
     console.log(`  Tasks migrated: ${result.tasksMigrated}`);
     console.log(`  Tasks with context: ${result.tasksWithContext}`);
@@ -57,7 +56,7 @@ async function main() {
     }
 
     // Dry-runs are informational and should not fail CI based on warnings.
-    const success = dryRun || result.applied || !result.warnings.length;
+    const success = dryRun ? true : (result.persisted || !result.warnings.length);
     process.exit(success ? 0 : 1);
   } catch (err: any) {
     console.error(`Migration failed: ${err.message}`);
