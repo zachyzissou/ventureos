@@ -55,17 +55,16 @@ import type {
 // Shared VentureOS libraries (Issue #79)
 import { toSafeError } from '../../lib/error-handler.js';
 import {
-  VENTUREOS_ROOT as LIB_VENTUREOS_ROOT,
-  OPENCLAW_DIR as LIB_OPENCLAW_DIR,
-  SHARED_CONTEXT_DIR as LIB_SHARED_CONTEXT_DIR,
-  KPI_DIR as LIB_KPI_DIR,
-  OBSERVATIONS_DIR as LIB_OBSERVATIONS_DIR,
-  LOG_DIR as LIB_LOG_DIR,
-  RPG_ROOT as LIB_RPG_ROOT,
-  RPG_DB_PATH as LIB_RPG_DB_PATH,
-  ACTIVE_WORK_PATH as LIB_ACTIVE_WORK_PATH,
-  PRIORITIES_PATH as LIB_PRIORITIES_PATH,
-  agentSessionsDir as libAgentSessionsDir,
+  VENTUREOS_ROOT,
+  OPENCLAW_DIR,
+  SHARED_CONTEXT_DIR as SHARED_CONTEXT,
+  KPI_DIR,
+  OBSERVATIONS_DIR,
+  RPG_ROOT,
+  RPG_DB_PATH,
+  ACTIVE_WORK_PATH,
+  PRIORITIES_PATH,
+  agentSessionsDir,
 } from '../../lib/paths.js';
 
 // Phase 5.1 Security Middleware
@@ -90,13 +89,11 @@ import { handleAgentHealth } from './routes/agent-health.js';
 import { handleRpgApi } from './routes/rpg.js';
 import { handleConversationApi } from './routes/conversation.js';
 
-// ─── Configuration via environment variables ─────────────────────────────────
-// Issue #79: All VentureOS data paths now flow through lib/paths.ts.
-// No more os.homedir() or hardcoded ~/clawd/ in this file.
+// ─── Configuration ───────────────────────────────────────────────────────────
+// All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
 
 export const PORT: number = parseInt(process.env.DASHBOARD_PORT ?? '8001');
 const HOST: string = process.env.DASHBOARD_HOST ?? '0.0.0.0';
-const OPENCLAW_DIR: string = LIB_OPENCLAW_DIR;
 const WORKSPACE_DIR: string = process.env.WORKSPACE_DIR ?? process.env.OPENCLAW_WORKSPACE ?? process.cwd();
 const AGENT_ID: string = process.env.OPENCLAW_AGENT ?? 'main';
 const sessDir: string = path.join(OPENCLAW_DIR, 'agents', AGENT_ID, 'sessions');
@@ -113,20 +110,6 @@ const scrapeScript: string = path.join(WORKSPACE_DIR, 'scripts', 'scrape-claude-
 const htmlPath: string = path.join(import.meta.dirname, '..', 'client', 'index.html');
 const loginHtmlPath: string = path.join(import.meta.dirname, '..', 'client', 'login.html');
 
-// VentureOS paths — all resolved via lib/paths.ts
-const VENTUREOS_RPG_ROOT: string = LIB_RPG_ROOT;
-const VENTUREOS_RPG_DB: string = LIB_RPG_DB_PATH;
-const VENTUREOS_ROOT: string = LIB_VENTUREOS_ROOT;
-const SHARED_CONTEXT: string = LIB_SHARED_CONTEXT_DIR;
-const KPI_DIR: string = LIB_KPI_DIR;
-const OBSERVATIONS_DIR: string = LIB_OBSERVATIONS_DIR;
-
-// VentureOS integration aliases (kept for compatibility within this file)
-const VENTUREOS_SHARED_CONTEXT_DIR: string = SHARED_CONTEXT;
-const VENTUREOS_KPI_DIR: string = KPI_DIR;
-const VENTUREOS_ACTIVE_WORK_PATH: string = LIB_ACTIVE_WORK_PATH;
-const VENTUREOS_PRIORITIES_PATH: string = LIB_PRIORITIES_PATH;
-const VENTUREOS_OBSERVATIONS_DIR: string = OBSERVATIONS_DIR;
 const VENTUREOS_AGENTS: string[] = (
   process.env.VENTUREOS_AGENTS ?? 'oracle,atlas,sentinel,verifier,archivist,synth'
 )
@@ -319,7 +302,7 @@ function ventureCached<T>(key: string, computeFn: () => T): T {
 }
 
 function getAgentSessionsDir(agentId: string): string {
-  return libAgentSessionsDir(agentId);
+  return agentSessionsDir(agentId);
 }
 
 function parseJsonlAvgLatencyMs(jsonlPath: string, maxLines: number = 600): number | null {
@@ -1410,12 +1393,12 @@ function getAgentMetrics(agentId: string): AgentMetrics {
 
 function getLatestKpiFiles(limitDays: number = 7): string[] {
   try {
-    if (!fs.existsSync(VENTUREOS_KPI_DIR)) return [];
+    if (!fs.existsSync(KPI_DIR)) return [];
     const files: string[] = fs
-      .readdirSync(VENTUREOS_KPI_DIR)
+      .readdirSync(KPI_DIR)
       .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
       .sort((a, b) => b.localeCompare(a));
-    return files.slice(0, limitDays).map((f) => path.join(VENTUREOS_KPI_DIR, f));
+    return files.slice(0, limitDays).map((f) => path.join(KPI_DIR, f));
   } catch {
     return [];
   }
@@ -1610,7 +1593,7 @@ interface ObsItem {
 }
 
 function listObservations(limit: number = 30): { items: ObsItem[]; tagCloud: TagCount[] } {
-  const obsDir: string = VENTUREOS_OBSERVATIONS_DIR;
+  const obsDir: string = OBSERVATIONS_DIR;
   const indexPath: string = path.join(obsDir, 'index.json');
   const index = safeReadJson(indexPath, null) as {
     dates?: Record<string, { topics?: string[]; tags?: string[] }>;
@@ -1679,7 +1662,7 @@ function listObservations(limit: number = 30): { items: ObsItem[]; tagCloud: Tag
 function getObservationFile(relPath: string): string | null {
   const safe: string = String(relPath || '').trim();
   if (!/^\d{4}-\d{2}-\d{2}\.md$/.test(safe)) return null;
-  const dir: string = path.resolve(VENTUREOS_OBSERVATIONS_DIR);
+  const dir: string = path.resolve(OBSERVATIONS_DIR);
   const full: string = path.resolve(path.join(dir, safe));
   if (!full.startsWith(dir + path.sep)) return null;
   if (!fs.existsSync(full)) return null;
@@ -1912,9 +1895,9 @@ function computeSloStatus(latest: KpiFileData): SloStatus {
 
 function listKpiFilesLocal(): string[] {
   try {
-    if (!fs.existsSync(VENTUREOS_KPI_DIR)) return [];
+    if (!fs.existsSync(KPI_DIR)) return [];
     return fs
-      .readdirSync(VENTUREOS_KPI_DIR)
+      .readdirSync(KPI_DIR)
       .filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
       .sort();
   } catch {
@@ -1932,7 +1915,7 @@ function getVentureOSKpis(): VentureOSKpiResponse {
   let latestRaw: { date: string; successRate: number | null; p95LatencySRaw: number | null } | null = null;
 
   for (const f of slice) {
-    const p: string = path.join(VENTUREOS_KPI_DIR, f);
+    const p: string = path.join(KPI_DIR, f);
     const j = safeReadJson(p, null) as KpiFileData | null;
     if (!j) continue;
 
@@ -1976,7 +1959,7 @@ function getVentureosKpis(days: number = 7): Record<string, unknown> {
   const slice: string[] = files.slice(-days);
   const history: KpiHistoryPoint[] = [];
   for (const f of slice) {
-    const p: string = path.join(VENTUREOS_KPI_DIR, f);
+    const p: string = path.join(KPI_DIR, f);
     const j = safeReadJson(p, null) as KpiFileData | null;
     if (!j) continue;
     const overall = j.overall ?? {};
@@ -1994,7 +1977,7 @@ function getVentureosKpis(days: number = 7): Record<string, unknown> {
     history.length > 0
       ? {
           ...history[history.length - 1],
-          raw: safeReadJson(path.join(VENTUREOS_KPI_DIR, slice[slice.length - 1]), null) as
+          raw: safeReadJson(path.join(KPI_DIR, slice[slice.length - 1]), null) as
             | KpiFileData
             | undefined,
         }
@@ -2250,8 +2233,8 @@ function getMissionControl(): MissionControlResponse {
   if (missionControlCache && now - missionControlCacheTime < 5000)
     return missionControlCache;
 
-  const activeWorkMd: string = safeReadText(VENTUREOS_ACTIVE_WORK_PATH, '');
-  const prioritiesMd: string = safeReadText(VENTUREOS_PRIORITIES_PATH, '');
+  const activeWorkMd: string = safeReadText(ACTIVE_WORK_PATH, '');
+  const prioritiesMd: string = safeReadText(PRIORITIES_PATH, '');
 
   const agentStats: VentureOSAgentsResponse = getVentureosAgents();
   const completions: Array<{
@@ -2367,7 +2350,7 @@ function getAllObservations(): {
   const now: number = Date.now();
   if (observationsCache && now - observationsCacheTime < 5000) return observationsCache;
 
-  const dir: string = VENTUREOS_OBSERVATIONS_DIR;
+  const dir: string = OBSERVATIONS_DIR;
   const files: string[] = [];
   try {
     if (fs.existsSync(dir)) {
@@ -2562,10 +2545,10 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   }
 
   // Conversation API (Issue #78 — monorepo integration)
-  if (handleConversationApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+  if (handleConversationApi(req, res, { dbPath: RPG_DB_PATH })) return;
 
   // VentureOS RPG APIs (Issue #78 — monorepo integration)
-  if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+  if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
 
   // VentureOS APIs
   if (req.url && req.url.startsWith('/api/ventureos-kpis')) {
@@ -2960,31 +2943,31 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   // RPG API compatibility routes (legacy non-prefixed aliases → canonical /api/rpg/*)
   if (req.url === '/api/psionic-stats') {
     (req as { url: string }).url = '/api/rpg/stats';
-    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
   }
   if (req.url && req.url.startsWith('/api/psionic-stats/')) {
     (req as { url: string }).url = req.url.replace('/api/psionic-stats/', '/api/rpg/stats/');
-    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
   }
   if (req.url === '/api/khala-network' || (req.url && req.url.startsWith('/api/khala-network?'))) {
     (req as { url: string }).url = (req.url ?? '').replace('/api/khala-network', '/api/rpg/khala-network');
-    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
   }
   if (req.url && req.url.startsWith('/api/khala-network/')) {
     (req as { url: string }).url = req.url.replace('/api/khala-network/', '/api/rpg/khala-network/');
-    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
   }
   if (req.url && req.url.startsWith('/api/tactical-overlay/')) {
     (req as { url: string }).url = req.url.replace('/api/tactical-overlay/', '/api/rpg/tactical-overlay/');
-    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
   }
   if (req.url && req.url.startsWith('/api/protocols/')) {
     (req as { url: string }).url = req.url.replace('/api/protocols/', '/api/rpg/protocols/');
-    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
   }
   if (req.url && req.url.startsWith('/api/escalations/')) {
     (req as { url: string }).url = req.url.replace('/api/escalations/', '/api/rpg/escalations/');
-    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
   }
 
   if (req.url === '/api/tailscale') {
@@ -3248,7 +3231,7 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   if (tryServeStatic(req, res, { urlPrefix: '/map/', rootDir: TACTICAL_MAP_DIST })) return;
 
   // Serve VentureOS RPG static modules/assets (optional)
-  if (tryServeStatic(req, res, { urlPrefix: '/rpg/', rootDir: VENTUREOS_RPG_ROOT })) return;
+  if (tryServeStatic(req, res, { urlPrefix: '/rpg/', rootDir: RPG_ROOT })) return;
 
   // Public login page
   if (req.method === 'GET' && (req.url === '/login' || (req.url && req.url.startsWith('/login?')))) {

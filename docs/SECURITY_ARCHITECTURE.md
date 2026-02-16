@@ -39,7 +39,7 @@ This document defines the complete security architecture for Phase 5. It address
 
 **Rationale:**
 
-OpenClaw does not expose a session management API or cookie infrastructure that the dashboard server can hook into. The dashboard is a standalone Node.js HTTP server (`~/clawd/openclaw-dashboard/server.js`) using raw `http.createServer()` — no Express, no session middleware, no cookie parser. Building session management from scratch would be over-engineered for a single-user system on a private LAN.
+OpenClaw does not expose a session management API or cookie infrastructure that the dashboard server can hook into. The dashboard is a standalone Node.js HTTP server (`ventureos/dashboard/server/server.ts`) using raw `http.createServer()` — no Express, no session middleware, no cookie parser. Building session management from scratch would be over-engineered for a single-user system on a private LAN.
 
 A pre-shared API key is the right choice because:
 
@@ -73,7 +73,7 @@ function getOrCreateToken() {
 const API_TOKEN = process.env.DASHBOARD_API_TOKEN || getOrCreateToken();
 ```
 
-**File location:** `~/clawd/openclaw-dashboard/data/.api-token`  
+**File location:** `ventureos/dashboard/data/.api-token`  
 **Permissions:** `0600` (owner read/write only)  
 **Environment override:** `DASHBOARD_API_TOKEN` env var takes precedence (for testing/rotation).
 
@@ -169,7 +169,7 @@ async function apiFetch(url, options = {}) {
 ```bash
 #!/bin/bash
 # scripts/rotate-dashboard-token.sh
-TOKEN_FILE="$HOME/clawd/openclaw-dashboard/data/.api-token"
+TOKEN_FILE="$VENTUREOS_ROOT/dashboard/data/.api-token"
 rm -f "$TOKEN_FILE"
 echo "[rotate] Old token deleted. Restart dashboard to generate new token."
 echo "[rotate] Run: launchctl kickstart -k gui/$(id -u)/com.openclaw.dashboard"
@@ -398,7 +398,7 @@ function setCorsHeaders(req, res) {
 
 Replace all three `sendJson()` functions to use a shared CORS setter. Best approach: create a shared middleware module.
 
-**File:** `~/clawd/openclaw-dashboard/server/middleware/cors.js`
+**File:** `ventureos/dashboard/server/middleware/cors.ts`
 
 ```javascript
 const ALLOWED_ORIGINS = new Set([
@@ -477,7 +477,7 @@ Referrer-Policy: strict-origin-when-cross-origin
 
 ### Implementation
 
-**File:** `~/clawd/openclaw-dashboard/server/middleware/security-headers.js`
+**File:** `ventureos/dashboard/server/middleware/security-headers.ts`
 
 ```javascript
 const CSP_DIRECTIVES = [
@@ -589,7 +589,7 @@ text: sanitizeText(m.text, FIELD_LIMITS.description),
 **Install DOMPurify locally** (do NOT use CDN — violates CSP):
 
 ```bash
-cd ~/clawd/openclaw-dashboard
+cd ~/clawd/ventureos/dashboard
 npm install dompurify
 # Or download the UMD bundle directly:
 curl -o public/vendor/purify.min.js https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js
@@ -686,7 +686,7 @@ Rate limiting prevents abuse (intentional or accidental) of expensive endpoints.
 
 ### 6.3 Implementation
 
-**File:** `~/clawd/openclaw-dashboard/server/middleware/rate-limit.js`
+**File:** `ventureos/dashboard/server/middleware/rate-limit.ts`
 
 ```javascript
 // Simple in-memory sliding window rate limiter
@@ -844,7 +844,7 @@ const POLL_INTERVALS = {
 
 ### 7.3 Implementation
 
-**File:** `~/clawd/openclaw-dashboard/server/middleware/audit-log.js`
+**File:** `ventureos/dashboard/server/middleware/audit-log.ts`
 
 ```javascript
 const fs = require('fs');

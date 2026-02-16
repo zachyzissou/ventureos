@@ -228,7 +228,7 @@ launchctl load -w ~/Library/LaunchAgents/com.openclaw.dashboard.monorepo.plist
 launchctl list | grep openclaw
 
 # Logs
-tail -f ~/Library/Logs/openclaw-dashboard.log
+tail -f ~/Library/Logs/ventureos-dashboard.log
 ```
 
 ### Linux (systemd)
@@ -240,10 +240,10 @@ Template: [`examples/systemd.service`](examples/systemd.service)
 sudo ./dashboard/scripts/install.sh
 
 # Check status
-sudo systemctl status openclaw-dashboard
+sudo systemctl status ventureos-dashboard
 
 # View logs
-journalctl -u openclaw-dashboard -f
+journalctl -u ventureos-dashboard -f
 ```
 
 ### CI/CD
