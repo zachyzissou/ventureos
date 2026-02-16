@@ -1,4 +1,5 @@
-import { fetchJson, clamp } from './rpg-utils.js';
+import { agentMeta, fetchJson, clamp } from './rpg-utils.js';
+import { loadD3 } from './vendor/d3-loader.js';
 
 const STYLE = `
 :host{
@@ -125,10 +126,10 @@ export class KhalaNetworkGraph extends HTMLElement {
     this.setState(`Loading Khala network…`);
 
     try {
-      this._d3 = this._d3 || (await import('https://cdn.jsdelivr.net/npm/d3@7/+esm'));
+      this._d3 = this._d3 || (await loadD3());
       const data = await fetchJson('/api/rpg/khala-network?driftLimit=6');
-      if (!data?.ok) throw new Error(data?.error || 'Bad response');
-      this._data = data;
+      if (data?.ok === false) throw new Error(data?.error || 'Bad response');
+      this._data = normalizeKhalaNetwork(data);
       this._loading = false;
       this.setState(null);
       this.renderGraph(true);
@@ -299,6 +300,66 @@ export class KhalaNetworkGraph extends HTMLElement {
     // Update header info
     this.shadowRoot.getElementById('details').dataset.edgesShown = String(links.length);
   }
+}
+
+function normalizeKhalaNetwork(data) {
+  const rawEdges = Array.isArray(data?.edges) ? data.edges : [];
+  const rawNodes = Array.isArray(data?.nodes) ? data.nodes : [];
+
+  const edges = rawEdges
+    .map((e) => {
+      const source = e?.agentA ?? e?.agent_a ?? e?.source?.id ?? e?.source;
+      const target = e?.agentB ?? e?.agent_b ?? e?.target?.id ?? e?.target;
+      if (!source || !target) return null;
+      return {
+        agentA: String(source),
+        agentB: String(target),
+        affinity: Number(e?.affinity ?? 0),
+        seedValue: e?.seedValue ?? e?.seed_value ?? null,
+        interactionCount: e?.interactionCount ?? e?.interaction_count ?? null,
+        lastInteractionAt: e?.lastInteractionAt ?? e?.last_interaction_at ?? null,
+        driftHistory: Array.isArray(e?.driftHistory) ? e.driftHistory : []
+      };
+    })
+    .filter(Boolean);
+
+  const nodeMap = new Map();
+
+  for (const n of rawNodes) {
+    const id = n?.id ?? n?.agentId ?? n?.agent_id;
+    if (!id) continue;
+    const meta = agentMeta(id);
+    nodeMap.set(String(id), {
+      id: String(id),
+      agentId: n?.agentId ?? n?.id ?? id,
+      unit: n?.unit ?? meta.unit,
+      role: n?.role ?? meta.role,
+      theme: n?.theme ?? { primary: meta.color },
+      rank: n?.rank ?? null
+    });
+  }
+
+  for (const e of edges) {
+    for (const id of [e.agentA, e.agentB]) {
+      if (!nodeMap.has(id)) {
+        const meta = agentMeta(id);
+        nodeMap.set(id, {
+          id,
+          agentId: id,
+          unit: meta.unit,
+          role: meta.role,
+          theme: { primary: meta.color },
+          rank: null
+        });
+      }
+    }
+  }
+
+  return {
+    ok: data?.ok ?? true,
+    nodes: Array.from(nodeMap.values()),
+    edges
+  };
 }
 
 function escapeHtml(s) {

@@ -83,8 +83,8 @@ export class AtlasReliabilityMetrics extends HTMLElement {
 
     try {
       const data = await fetchJson(`/api/rpg/stats/${encodeURIComponent(this.agent)}`);
-      if (!data?.ok) throw new Error(data?.error || 'Bad response');
-      this._data = data;
+      if (data?.ok === false) throw new Error(data?.error || 'Bad response');
+      this._data = normalizeStatsPayload(data, this.agent);
     } catch (e) {
       this._data = null;
       this._error = String(e?.message || e);
@@ -156,6 +156,24 @@ export class AtlasReliabilityMetrics extends HTMLElement {
       metricCard('Incident response', incident.label, incident.hint, `<span class="dot ${incident.level}"></span>`)
     ].join('');
   }
+}
+
+function normalizeStatsPayload(data, fallbackAgent) {
+  if (!data || typeof data !== 'object') return data;
+
+  const snapshotFromSeries =
+    (Array.isArray(data?.snapshots) ? data.snapshots[0] : null) ||
+    (Array.isArray(data?.stats?.snapshots) ? data.stats.snapshots[0] : null);
+
+  return {
+    ...data,
+    ok: data.ok ?? true,
+    agentId: data.agentId || fallbackAgent,
+    snapshotDate: data.snapshotDate || snapshotFromSeries?.snapshot_date || null,
+    raw: data.raw || data?.stats?.stats || data?.stats || {},
+    warpTechInputs: data.warpTechInputs || null,
+    rank: data.rank || null
+  };
 }
 
 function metricCard(label, value, hint, dotHtml) {

@@ -103,8 +103,8 @@ export class TacticalOverlayPanel extends HTMLElement {
 
     try {
       const data = await fetchJson(`/api/rpg/tactical-overlay/${encodeURIComponent(agent)}`);
-      if (!data?.ok) throw new Error(data?.error || 'Bad response');
-      this._data = data;
+      if (data?.ok === false) throw new Error(data?.error || 'Bad response');
+      this._data = normalizeTacticalOverlay(data, agent);
     } catch (e) {
       this._data = null;
       this._error = String(e?.message || e);
@@ -204,6 +204,29 @@ export class TacticalOverlayPanel extends HTMLElement {
       </details>
     `;
   }
+}
+
+function normalizeTacticalOverlay(data, fallbackAgent) {
+  if (!data || typeof data !== 'object') return data;
+
+  const snapshotDate =
+    data?.snapshotDate ||
+    (Array.isArray(data?.stats?.snapshots) ? data.stats.snapshots[0]?.snapshot_date : null) ||
+    null;
+
+  return {
+    ...data,
+    ok: data.ok ?? true,
+    agentId: data.agentId || data.view || fallbackAgent,
+    unit: data.unit,
+    role: data.role,
+    rank: data.rank || null,
+    attributes: data.attributes || {},
+    activeProtocols: Array.isArray(data.activeProtocols) ? data.activeProtocols : [],
+    warpTechInputs: data.warpTechInputs || null,
+    raw: data.raw || data?.stats?.stats || data?.stats || {},
+    snapshotDate
+  };
 }
 
 function escapeHtml(s) {
