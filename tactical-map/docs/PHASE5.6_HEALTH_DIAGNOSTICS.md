@@ -42,7 +42,7 @@ Phase 5.6 adds real-time system health monitoring and issue detection to the tac
                                │ HTTP poll + WebSocket
                                ▼
 ┌───────────────────────────────────────────────────────────────────┐
-│                    Dashboard Server (7001)                         │
+│                    Dashboard Server (8001)                         │
 │                                                                   │
 │  GET /api/tactical-map/health          (snapshot)                 │
 │  WS  /api/tactical-map/health/stream   (realtime)                │
