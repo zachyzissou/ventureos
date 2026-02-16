@@ -94,7 +94,7 @@ score = tierScore + businessUnitScore + missionTypeScore + ageBonus + approvalPe
 | **Business Unit** | critical=400, high=300, medium=200, low=100 | Portfolio priority boost |
 | **Mission Type** | infra=50, ops=40, build=30, content=20, research=10 | Type modifier |
 | **Age Bonus** | 0–100 (1pt/min) | Fairness: older tasks rise |
-| **Approval Penalty** | -200 | Tasks needing approval deprioritized |
+| **Approval Penalty** | -900 | Tasks needing approval strongly deprioritized |
 
 ### Example
 
@@ -105,7 +105,7 @@ A P1 VentureOS infra task created 30 minutes ago:
 
 A P2 FotoPress build task needing approval:
 ```
-500 (P2) + 100 (low) + 30 (build) + 0 (new) + (-200) (approval) = 430
+500 (P2) + 100 (low) + 30 (build) + 0 (new) + (-900) (approval) = -270
 ```
 
 ## Usage
