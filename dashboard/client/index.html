@@ -2277,6 +2277,7 @@ body {
 </div>
 
 <script type="module" src="/rpg/components/index.js"></script>
+<script src="/feed-search-highlight.js"></script>
 <script>
 // Authenticated fetch helper (Phase 5.1 security + P0-5 429 handling)
 // Uses an HttpOnly cookie set via /api/login. Token is never exposed to JS.
@@ -4010,21 +4011,26 @@ function applyFeedFilter() {
     const matchSession = sf === 'all' || el.dataset.session === sf;
     const matchRole = rf === 'all' || el.dataset.role === rf;
     let matchSearch = true;
-    if (feedSearchTerm) {
-      const content = el.querySelector('.feed-content');
-      if (content) {
-        const text = content.getAttribute('data-original') || content.textContent;
-        if (!content.getAttribute('data-original')) {
-          content.setAttribute('data-original', text);
-        }
+    const content = el.querySelector('.feed-content');
+
+    if (content) {
+      const text = content.getAttribute('data-original') || content.textContent || '';
+      if (!content.getAttribute('data-original')) {
+        content.setAttribute('data-original', text);
+      }
+
+      if (feedSearchTerm) {
         matchSearch = text.toLowerCase().includes(feedSearchTerm);
-        if (matchSearch && feedSearchTerm) {
-          content.innerHTML = highlightText(text, feedSearchTerm);
+        if (matchSearch) {
+          window.feedSearchHighlight?.renderHighlightedText(content, text, feedSearchTerm);
         } else {
           content.textContent = text;
         }
+      } else {
+        content.textContent = text;
       }
     }
+
     el.style.display = (matchSession && matchRole && matchSearch) ? '' : 'none';
   });
 }
@@ -4458,13 +4464,6 @@ function clearFeedSearch() {
   document.getElementById('feedSearchInput').value = '';
   feedSearchTerm = '';
   applyFeedFilter();
-}
-
-function highlightText(text, term) {
-  if (!term) return text;
-  const idx = text.toLowerCase().indexOf(term);
-  if (idx === -1) return text;
-  return text.substring(0, idx) + '<span class="search-highlight">' + text.substring(idx, idx + term.length) + '</span>' + text.substring(idx + term.length);
 }
 
 // Session comparison
