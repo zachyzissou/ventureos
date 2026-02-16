@@ -34,7 +34,7 @@ export interface MigrationResult {
    * - In `migrateQueueDocument`, `true` means migration is non-dry-run and
    *   should be persisted by the caller.
    */
-  applied: boolean;
+  persisted: boolean;
   /** Source version. */
   fromVersion: number;
   /** Target version. */
@@ -95,7 +95,7 @@ export function migrateQueueDocument(
     return {
       document: doc,
       result: {
-        applied: false,
+        persisted: false,
         fromVersion,
         toVersion: targetVersion,
         tasksMigrated: 0,
@@ -112,7 +112,7 @@ export function migrateQueueDocument(
       document: rollback.document,
       result: {
         ...rollback.result,
-        applied: rollback.result.applied && !options.dryRun,
+        persisted: rollback.result.persisted && !options.dryRun,
       },
     };
   }
@@ -129,7 +129,7 @@ export function migrateQueueDocument(
       return {
         document: doc,
         result: {
-          applied: false,
+          persisted: false,
           fromVersion,
           toVersion: targetVersion,
           tasksMigrated: 0,
@@ -149,7 +149,7 @@ export function migrateQueueDocument(
   return {
     document: current,
     result: {
-      applied: !options.dryRun,
+      persisted: !options.dryRun,
       fromVersion,
       toVersion: targetVersion,
       tasksMigrated: totalMigrated,
@@ -185,7 +185,7 @@ export async function migrateQueueFile(
   const doc = parsed as QueueDocument;
   const { document, result } = migrateQueueDocument(doc, options);
 
-  if (result.applied && !options.dryRun) {
+  if (result.persisted && !options.dryRun) {
     // Create backup if requested
     if (options.createBackup !== false) {
       const backupPath = `${filePath}.v${result.fromVersion}.backup`;
@@ -308,7 +308,7 @@ function rollbackDocument(
         items: items as QueueTask[],
       },
       result: {
-        applied: true,
+        persisted: true,
         fromVersion,
         toVersion: targetVersion,
         tasksMigrated: items.length,
@@ -321,7 +321,7 @@ function rollbackDocument(
   return {
     document: doc,
     result: {
-      applied: false,
+      persisted: false,
       fromVersion,
       toVersion: targetVersion,
       tasksMigrated: 0,
