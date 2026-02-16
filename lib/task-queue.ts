@@ -204,6 +204,19 @@ export class TaskQueue {
   /** Add a new task to the queue. Returns the created task. */
   enqueue(options: EnqueueOptions): QueueTask {
     const ts = this.now().toISOString();
+    
+    // Derive mission fields from missionContext if provided, otherwise from individual fields
+    const businessUnit = options.missionContext?.businessUnit ?? options.businessUnit;
+    const missionType = options.missionContext?.missionType ?? options.missionType;
+    const role = options.missionContext?.role ?? options.role;
+    
+    // Build missionContext from all available fields
+    const missionContext = options.missionContext
+      ? this.serializeMissionContext(options.missionContext)
+      : (businessUnit || missionType || role)
+        ? { businessUnit, missionType, role }
+        : undefined;
+    
     const task: QueueTask = {
       id: crypto.randomUUID(),
       createdAt: ts,
@@ -212,12 +225,10 @@ export class TaskQueue {
       status: 'queued',
       title: options.title,
       description: options.description,
-      businessUnit: options.businessUnit ?? options.missionContext?.businessUnit,
-      missionType: options.missionType ?? options.missionContext?.missionType,
-      role: options.role ?? options.missionContext?.role,
-      missionContext: options.missionContext
-        ? this.serializeMissionContext(options.missionContext)
-        : this.buildMissionContext(options),
+      businessUnit,
+      missionType,
+      role,
+      missionContext,
       jobId: options.jobId,
       nextRunAt: options.nextRunAt,
       attempts: 0,
@@ -352,16 +363,6 @@ export class TaskQueue {
     task.tier = task.tier ?? 'P2';
 
     return task;
-  }
-
-  /** Build a MissionContext from enqueue options. */
-  private buildMissionContext(opts: EnqueueOptions): MissionContext | undefined {
-    if (!opts.businessUnit && !opts.missionType && !opts.role) return undefined;
-    return {
-      businessUnit: opts.businessUnit,
-      missionType: opts.missionType,
-      role: opts.role,
-    };
   }
 
   /** Deep-copy mission context for serialization safety. */

@@ -55,7 +55,11 @@ async function main() {
       }
     }
 
-    process.exit(result.applied || !result.warnings.length ? 0 : 1);
+    // Exit code logic:
+    // - Dry run: always exit 0 (warnings are informational)
+    // - Real migration: exit 0 if applied successfully, exit 1 if failed
+    const success = dryRun ? true : result.applied;
+    process.exit(success ? 0 : 1);
   } catch (err: any) {
     console.error(`Migration failed: ${err.message}`);
     process.exit(1);

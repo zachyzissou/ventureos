@@ -90,8 +90,12 @@ const MAX_AGE_BONUS = 100;
 /** Age bonus accrual period (ms). Tasks get 1 point per minute up to MAX_AGE_BONUS. */
 const AGE_BONUS_RATE_MS = 60_000; // 1 point per minute
 
-/** Penalty applied to tasks awaiting approval (pushes them down). */
-const APPROVAL_PENDING_PENALTY = -200;
+/**
+ * Penalty applied to tasks awaiting approval.
+ * Strong enough to ensure ready-to-run tasks are preferred even across tiers
+ * in most cases (e.g., a P2 without approval would score higher than P1 with approval).
+ */
+const APPROVAL_PENDING_PENALTY = -600;
 
 // ============================================================================
 // Router
@@ -264,18 +268,36 @@ export class QueueRouter {
   validateTask(task: QueueTask): string[] {
     const errors: string[] = [];
 
+    // Validate top-level businessUnit
     if (task.businessUnit) {
       const err = this.registry.validate(task.businessUnit);
       if (err) errors.push(err);
     }
 
+    // Validate top-level missionType against businessUnit
     if (task.missionType && task.businessUnit) {
       const err = this.registry.validateMissionType(task.businessUnit, task.missionType);
       if (err) errors.push(err);
     }
 
-    // Cross-check missionContext consistency
+    // Validate missionContext fields when top-level fields are missing
     if (task.missionContext) {
+      // Validate missionContext.businessUnit if top-level is missing
+      if (task.missionContext.businessUnit && !task.businessUnit) {
+        const err = this.registry.validate(task.missionContext.businessUnit);
+        if (err) errors.push(`missionContext.${err}`);
+      }
+
+      // Validate missionContext.missionType against missionContext.businessUnit
+      if (task.missionContext.missionType && task.missionContext.businessUnit && !task.businessUnit) {
+        const err = this.registry.validateMissionType(
+          task.missionContext.businessUnit,
+          task.missionContext.missionType
+        );
+        if (err) errors.push(`missionContext: ${err}`);
+      }
+
+      // Cross-check consistency between top-level and missionContext
       if (task.missionContext.businessUnit && task.businessUnit && task.missionContext.businessUnit !== task.businessUnit) {
         errors.push(
           `Mismatch: task.businessUnit='${task.businessUnit}' vs missionContext.businessUnit='${task.missionContext.businessUnit}'`

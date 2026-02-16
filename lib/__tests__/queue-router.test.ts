@@ -115,7 +115,7 @@ describe('QueueRouter', () => {
       const approved = router.route(makeTask({ requiresApproval: true }));
       const noApproval = router.route(makeTask({ requiresApproval: false }));
 
-      expect(approved.breakdown.approvalPenalty).toBe(-200);
+      expect(approved.breakdown.approvalPenalty).toBe(-600);
       expect(noApproval.breakdown.approvalPenalty).toBe(0);
       expect(approved.score).toBeLessThan(noApproval.score);
     });

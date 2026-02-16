@@ -26,7 +26,7 @@ import {
 // ============================================================================
 
 export interface MigrationResult {
-  /** Whether the migration was applied. */
+  /** Whether the migration was persisted to disk (false for dry-run). */
   applied: boolean;
   /** Source version. */
   fromVersion: number;
@@ -49,6 +49,39 @@ export interface MigrationOptions {
   createBackup?: boolean;
   /** Target version. Default: QUEUE_SCHEMA_VERSION. */
   targetVersion?: number;
+}
+
+// ============================================================================
+// Validation
+// ============================================================================
+
+/**
+ * Validates that a parsed object is a valid QueueDocument.
+ * Throws if validation fails.
+ */
+function validateQueueDocument(data: any): asserts data is QueueDocument {
+  if (typeof data !== 'object' || data === null) {
+    throw new Error('Queue document must be an object');
+  }
+  if (typeof data.version !== 'number') {
+    throw new Error('Queue document missing "version" field');
+  }
+  if (!Array.isArray(data.items)) {
+    throw new Error('Queue document missing "items" array');
+  }
+  // Basic structural validation - deeper validation happens during migration
+  for (let i = 0; i < data.items.length; i++) {
+    const item = data.items[i];
+    if (typeof item !== 'object' || item === null) {
+      throw new Error(`Queue document item[${i}] is not an object`);
+    }
+    if (typeof item.id !== 'string') {
+      throw new Error(`Queue document item[${i}] missing "id" string field`);
+    }
+    if (typeof item.tier !== 'string') {
+      throw new Error(`Queue document item[${i}] missing "tier" string field`);
+    }
+  }
 }
 
 // ============================================================================
@@ -135,26 +168,37 @@ export async function migrateQueueFile(
   filePath: string,
   options: MigrationOptions = {}
 ): Promise<MigrationResult> {
-  const raw = await fs.readFile(filePath, 'utf8');
-  const doc: QueueDocument = JSON.parse(raw);
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    
+    // Validate the parsed document structure
+    validateQueueDocument(parsed);
+    const doc: QueueDocument = parsed;
 
-  const { document, result } = migrateQueueDocument(doc, options);
+    const { document, result } = migrateQueueDocument(doc, options);
 
-  if (result.applied && !options.dryRun) {
-    // Create backup if requested
-    if (options.createBackup !== false) {
-      const backupPath = `${filePath}.v${result.fromVersion}.backup`;
-      await fs.writeFile(backupPath, raw, 'utf8');
-      result.backupPath = backupPath;
+    if (result.applied && !options.dryRun) {
+      // Create backup if requested
+      if (options.createBackup !== false) {
+        const backupPath = `${filePath}.v${result.fromVersion}.backup`;
+        await fs.writeFile(backupPath, raw, 'utf8');
+        result.backupPath = backupPath;
+      }
+
+      // Write migrated document
+      const tmp = `${filePath}.tmp`;
+      await fs.writeFile(tmp, JSON.stringify(document, null, 2), 'utf8');
+      await fs.rename(tmp, filePath);
     }
 
-    // Write migrated document
-    const tmp = `${filePath}.tmp`;
-    await fs.writeFile(tmp, JSON.stringify(document, null, 2), 'utf8');
-    await fs.rename(tmp, filePath);
+    return result;
+  } catch (err: any) {
+    if (err instanceof SyntaxError) {
+      throw new Error(`Failed to parse queue document at ${filePath}: ${err.message}`);
+    }
+    throw err;
   }
-
-  return result;
 }
 
 // ============================================================================
