@@ -1012,7 +1012,7 @@ All 5 teams reviewed the spec. No team rated it RED; 4 of 5 rated YELLOW with sp
 ### Cross-Team Consensus
 
 All 5 teams independently recommended:
-1. **Integrate into existing `openclaw-dashboard`** — don't create a separate server/process
+1. **Integrate into existing VentureOS dashboard** — don't create a separate server/process
 2. **Procedural/geometric sprites for MVP** — decouple art pipeline from critical path
 3. **Polling over WebSocket for v1** — simpler, sufficient for 10–15s update intervals
 4. **Replay as v2/optional** — largest unknown, depends on data quality
@@ -1555,7 +1555,7 @@ Per Archivist's review. Documentation is a deliverable, not an afterthought.
 These emerged from cross-team agreement and should be recorded as ADRs:
 
 ### ADR-001: Extend Existing Dashboard (Not Separate Server)
-- **Decision:** Tactical map served as `/map` route in existing `openclaw-dashboard` on port 7001
+- **Decision:** Tactical map served as `/map` route in existing VentureOS dashboard on port 7001
 - **Rationale:** Single deployment, no CORS, shared DB connection, existing RPG APIs reusable
 - **Trade-off:** Monolith grows larger (acceptable at this scale)
 - **Agreed by:** Atlas, Synth (independently recommended same approach)
