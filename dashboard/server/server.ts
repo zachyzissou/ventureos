@@ -81,6 +81,7 @@ import { applyCors, handlePreflight } from './middleware/cors.js';
 import { applySecurityHeaders } from './middleware/security-headers.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import { auditLog } from './middleware/audit-log.js';
+import { authorizeActionRequest } from './middleware/action-guard.js';
 
 // Route handlers
 import { handleKpis } from './routes/kpis.js';
@@ -93,7 +94,7 @@ import { handleConversationApi } from './routes/conversation.js';
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
 
 export const PORT: number = parseInt(process.env.DASHBOARD_PORT ?? '8001');
-const HOST: string = process.env.DASHBOARD_HOST ?? '0.0.0.0';
+const HOST: string = process.env.DASHBOARD_HOST ?? '127.0.0.1';
 const WORKSPACE_DIR: string = process.env.WORKSPACE_DIR ?? process.env.OPENCLAW_WORKSPACE ?? process.cwd();
 const AGENT_ID: string = process.env.OPENCLAW_AGENT ?? 'main';
 const sessDir: string = path.join(OPENCLAW_DIR, 'agents', AGENT_ID, 'sessions');
@@ -2486,6 +2487,7 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   if (handlePreflight(req, res)) return;
   if (!authenticate(req, res)) return;
   if (!rateLimit(req, res)) return;
+  if (!authorizeActionRequest(req, res)) return;
   // ── End Security Middleware ───────────────────────────────────────
 
   // Auth session endpoints (cookie-based browser auth)
