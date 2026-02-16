@@ -560,7 +560,7 @@ Request → Auth (Bearer token) → CORS (origin whitelist) → CSP → Rate Lim
 | Middleware | File | Policy |
 |-----------|------|--------|
 | **Auth** | `tactical-map-server/middleware/auth.ts` | Pre-shared API key, timing-safe comparison |
-| **CORS** | `tactical-map-server/middleware/cors.ts` | Whitelist: `192.168.225.149:{7000,7001}`, `localhost:{5173,7000,7001}` |
+| **CORS** | `tactical-map-server/middleware/cors.ts` | Whitelist: `192.168.225.149:{7000,8001}`, `localhost:{5173,7000,8001}` |
 | **CSP** | `tactical-map-server/middleware/csp.ts` | `default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'` |
 
 ### Content Security Policy

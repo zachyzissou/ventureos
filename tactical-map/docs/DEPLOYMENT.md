@@ -52,7 +52,7 @@ npm run test:e2e     # Playwright visual regression
 │  ┌──────────────────────────────────────────────┐    │
 │  │        Vite Dev Server (:5174) [dev only]     │    │
 │  │                                               │    │
-│  │  Proxies /api/* → Dashboard Server :7001      │    │
+│  │  Proxies /api/* → Dashboard Server :8001      │    │
 │  │  Hot Module Replacement for TypeScript         │    │
 │  └──────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────┘
@@ -83,7 +83,7 @@ npm install
 # Start development server
 npm run dev
 # → Vite dev server at http://localhost:5174/map/
-# → API requests proxied to http://192.168.225.149:7001
+# → API requests proxied to http://192.168.225.149:8001
 
 # Run unit + integration tests
 npm test
@@ -111,7 +111,7 @@ The dev server is configured in `vite.config.ts`:
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://192.168.225.149:7001',
+        target: 'http://192.168.225.149:8001',
         changeOrigin: true,
         secure: false
       }
@@ -370,9 +370,9 @@ All client configuration lives in `src/config.ts`. Key tunable values:
 Configured in `tactical-map-server/middleware/cors.ts`:
 
 ```
-http://192.168.225.149:7001
+http://192.168.225.149:8001
 http://192.168.225.149:7000
-http://localhost:7001
+http://localhost:8001
 http://localhost:7000
 http://localhost:5173
 ```
