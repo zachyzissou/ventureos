@@ -14,7 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DASHBOARD_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 VENTUREOS_ROOT="$(cd "$DASHBOARD_DIR/.." && pwd)"
 
-SERVICE_NAME="openclaw-dashboard"
+SERVICE_NAME="${SERVICE_NAME:-openclaw-dashboard}"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 SERVICE_TEMPLATE="$DASHBOARD_DIR/examples/systemd.service"
 
@@ -32,7 +32,7 @@ if [[ -n "${OPENCLAW_DIR:-}" ]]; then
   : # use provided OPENCLAW_DIR
 else
   if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
-    TARGET_HOME="$(getent passwd "$RUN_USER" | cut -d: -f6 || true)"
+    TARGET_HOME="$(getent passwd "$RUN_USER" 2>/dev/null | cut -d: -f6)"
     if [[ -z "$TARGET_HOME" ]]; then
       echo "❌ Could not determine home directory for user '$RUN_USER'."
       echo "   Please set OPENCLAW_DIR explicitly when running this installer."
@@ -105,6 +105,11 @@ if [[ ! -f "$DASHBOARD_DIR/dist/dashboard/server/server.js" ]]; then
   exit 1
 fi
 echo "✅ Build complete → dashboard/dist/dashboard/server/server.js"
+
+# ─── Ensure logs directory exists ─────────────────────────────────────────────
+
+mkdir -p "$DASHBOARD_DIR/logs"
+echo "✅ Logs directory ready → dashboard/logs"
 
 # ─── Stop existing service (if running) ──────────────────────────────────────
 

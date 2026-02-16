@@ -96,7 +96,7 @@ echo "── Step 1: Stop New (Monorepo) Service ──"
 
 if [[ "$PLATFORM" == "Darwin" ]]; then
   if launchctl list "$NEW_LABEL" &>/dev/null 2>&1; then
-    run_or_dry sh -c 'launchctl unload "$1" 2>/dev/null' _ "$NEW_PLIST" || true
+    run_or_dry launchctl unload "$NEW_PLIST" 2>/dev/null || true
     ok "New service stopped ($NEW_LABEL)"
   else
     log "New service not running"

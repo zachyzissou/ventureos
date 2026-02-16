@@ -191,6 +191,7 @@ echo "── Step 4: Install New Service (parallel on port $PARALLEL_PORT) ─�
 
 export DASHBOARD_PORT="$PARALLEL_PORT"
 export OPENCLAW_DIR="$OLD_OPENCLAW_DIR"
+export SERVICE_NAME="$NEW_SYSTEMD"
 
 if [[ "$PLATFORM" == "Darwin" ]]; then
   if ! $DRY_RUN; then
@@ -217,7 +218,7 @@ else
   if ! $DRY_RUN; then
     # On Linux, install.sh writes to /etc/systemd/system and uses systemctl,
     # which typically requires root. Use sudo when not already running as root.
-    if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+    if [[ "$(id -u)" -ne 0 ]]; then
       run_or_dry sudo -E bash "$SCRIPT_DIR/install.sh"
     else
       run_or_dry bash "$SCRIPT_DIR/install.sh"
