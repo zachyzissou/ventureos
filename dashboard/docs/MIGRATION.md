@@ -23,12 +23,18 @@
 
 The new dashboard runs alongside the old one. Zero risk — old service is untouched.
 
+> **Linux:** Migration requires root privileges for systemd operations (`/etc/systemd/system`,
+> `systemctl`). Use `sudo -E` to preserve environment variables (OPENCLAW_DIR, PARALLEL_PORT, etc.).
+
 ```bash
 # From VentureOS root
 cd ~/clawd/ventureos
 
 # Run the migration script (starts new on port 8002)
+# macOS:
 ./dashboard/scripts/migrate-from-standalone.sh
+# Linux:
+sudo -E ./dashboard/scripts/migrate-from-standalone.sh
 
 # Or with custom parallel port
 PARALLEL_PORT=9000 ./dashboard/scripts/migrate-from-standalone.sh

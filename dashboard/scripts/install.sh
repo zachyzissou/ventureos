@@ -14,15 +14,36 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DASHBOARD_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 VENTUREOS_ROOT="$(cd "$DASHBOARD_DIR/.." && pwd)"
 
-SERVICE_NAME="openclaw-dashboard"
+SERVICE_NAME="${SERVICE_NAME:-openclaw-dashboard}"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 SERVICE_TEMPLATE="$DASHBOARD_DIR/examples/systemd.service"
 
 # Config — override via env
 DASHBOARD_PORT="${DASHBOARD_PORT:-7000}"
-OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw}"
 RUN_USER="${SUDO_USER:-$USER}"
 RUN_GROUP="$(id -gn "$RUN_USER")"
+
+# Determine OPENCLAW_DIR default:
+# - If OPENCLAW_DIR is explicitly provided, use it as-is.
+# - If running as root via sudo, derive the target user's home from RUN_USER
+#   (otherwise $HOME is /root, which is wrong).
+# - Otherwise, fall back to the current user's $HOME.
+if [[ -n "${OPENCLAW_DIR:-}" ]]; then
+  : # use provided OPENCLAW_DIR
+else
+  if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+    TARGET_HOME="$(getent passwd "$RUN_USER" 2>/dev/null | cut -d: -f6)"
+    if [[ -z "$TARGET_HOME" ]]; then
+      echo "❌ Could not determine home directory for user '$RUN_USER'."
+      echo "   Please set OPENCLAW_DIR explicitly when running this installer."
+      exit 1
+    fi
+    OPENCLAW_DIR="${TARGET_HOME}/.openclaw"
+  else
+    OPENCLAW_DIR="${HOME}/.openclaw"
+  fi
+fi
+
 NODE_PATH="${NODE_PATH_OVERRIDE:-$(command -v node)}"
 
 echo "🚀 OpenClaw Dashboard — Linux Installer"
@@ -33,6 +54,12 @@ echo ""
 
 if [[ "$(uname)" == "Darwin" ]]; then
   echo "❌ This installer is for Linux. Use install-macos.sh for macOS."
+  exit 1
+fi
+
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  echo "❌ This installer must be run as root (sudo)."
+  echo "   Usage: sudo ./dashboard/scripts/install.sh"
   exit 1
 fi
 
@@ -78,6 +105,11 @@ if [[ ! -f "$DASHBOARD_DIR/dist/dashboard/server/server.js" ]]; then
   exit 1
 fi
 echo "✅ Build complete → dashboard/dist/dashboard/server/server.js"
+
+# ─── Ensure logs directory exists ─────────────────────────────────────────────
+
+mkdir -p "$DASHBOARD_DIR/logs"
+echo "✅ Logs directory ready → dashboard/logs"
 
 # ─── Stop existing service (if running) ──────────────────────────────────────
 

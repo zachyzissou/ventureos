@@ -25,7 +25,7 @@ OLD_LABEL="com.openclaw.dashboard"
 OLD_PLIST="$HOME/Library/LaunchAgents/${OLD_LABEL}.plist"
 NEW_LABEL="com.openclaw.dashboard.monorepo"
 NEW_PLIST="$HOME/Library/LaunchAgents/${NEW_LABEL}.plist"
-NEW_SYSTEMD="openclaw-dashboard"
+NEW_SYSTEMD="openclaw-dashboard-monorepo"
 
 FULL=false
 DRY_RUN=false
@@ -132,7 +132,7 @@ if [[ "$PLATFORM" == "Darwin" ]]; then
     echo "   launchctl load -w ~/Library/LaunchAgents/com.openclaw.dashboard.plist"
   fi
 else
-  for svc in agent-dashboard openclaw-dashboard-old; do
+  for svc in agent-dashboard openclaw-dashboard openclaw-dashboard-old; do
     if [[ -f "/etc/systemd/system/${svc}.service" ]]; then
       run_or_dry sudo systemctl enable --now "$svc"
       ok "Old service re-enabled ($svc)"
