@@ -213,7 +213,7 @@ describe('Queue Integration', () => {
 
       // Migrate
       const { document: migratedDoc, result } = migrateQueueDocument(v1Doc);
-      expect(result.persisted).toBe(true);
+      expect(result.applied).toBe(true);
       expect(migratedDoc.version).toBe(2);
 
       // Load into queue

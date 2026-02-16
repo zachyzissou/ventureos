@@ -12,7 +12,6 @@
  */
 
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import Ajv from 'ajv';
 
 import {
@@ -28,13 +27,13 @@ import {
 
 export interface MigrationResult {
   /**
-   * Whether migration changes were marked for persistence.
+   * Whether migration logic was conceptually applied.
    *
-   * - In `migrateQueueFile`, `true` means migrated content was written to disk.
-   * - In `migrateQueueDocument`, `true` means migration is non-dry-run and
-   *   should be persisted by the caller.
+   * Notes:
+   * - `true` also in dry-run mode (migration computed in memory).
+   * - `false` when no migration path exists, or document is already at target.
    */
-  persisted: boolean;
+  applied: boolean;
   /** Source version. */
   fromVersion: number;
   /** Target version. */
@@ -95,7 +94,7 @@ export function migrateQueueDocument(
     return {
       document: doc,
       result: {
-        persisted: false,
+        applied: false,
         fromVersion,
         toVersion: targetVersion,
         tasksMigrated: 0,
@@ -107,14 +106,7 @@ export function migrateQueueDocument(
 
   if (fromVersion > targetVersion) {
     // Rollback path
-    const rollback = rollbackDocument(doc, targetVersion);
-    return {
-      document: rollback.document,
-      result: {
-        ...rollback.result,
-        persisted: rollback.result.persisted && !options.dryRun,
-      },
-    };
+    return rollbackDocument(doc, targetVersion);
   }
 
   // Forward migration chain
@@ -129,7 +121,7 @@ export function migrateQueueDocument(
       return {
         document: doc,
         result: {
-          persisted: false,
+          applied: false,
           fromVersion,
           toVersion: targetVersion,
           tasksMigrated: 0,
@@ -149,7 +141,7 @@ export function migrateQueueDocument(
   return {
     document: current,
     result: {
-      persisted: !options.dryRun,
+      applied: true,
       fromVersion,
       toVersion: targetVersion,
       tasksMigrated: totalMigrated,
@@ -185,7 +177,7 @@ export async function migrateQueueFile(
   const doc = parsed as QueueDocument;
   const { document, result } = migrateQueueDocument(doc, options);
 
-  if (result.persisted && !options.dryRun) {
+  if (result.applied && !options.dryRun) {
     // Create backup if requested
     if (options.createBackup !== false) {
       const backupPath = `${filePath}.v${result.fromVersion}.backup`;
@@ -308,7 +300,7 @@ function rollbackDocument(
         items: items as QueueTask[],
       },
       result: {
-        persisted: true,
+        applied: true,
         fromVersion,
         toVersion: targetVersion,
         tasksMigrated: items.length,
@@ -321,7 +313,7 @@ function rollbackDocument(
   return {
     document: doc,
     result: {
-      persisted: false,
+      applied: false,
       fromVersion,
       toVersion: targetVersion,
       tasksMigrated: 0,
