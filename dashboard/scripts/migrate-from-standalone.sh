@@ -169,7 +169,11 @@ echo "── Step 3: Build New Dashboard ──"
 
 if ! $DRY_RUN; then
   cd "$VENTUREOS_ROOT"
-  npm install --workspace=dashboard --include=dev 2>/dev/null || npm install
+  # Try workspace install first, fall back to regular install
+  if ! npm install --workspace=dashboard --include=dev 2>/dev/null; then
+    log "Workspace install not supported, trying regular npm install..."
+    npm install || fail "npm install failed"
+  fi
   cd "$DASHBOARD_DIR"
   npx tsc -p tsconfig.json --outDir dist 2>&1 || true
 
@@ -233,7 +237,20 @@ ENDPOINTS=(
 )
 
 if ! $DRY_RUN; then
-  sleep 3  # Let new service start
+  # Wait for new service to be ready (with retries)
+  log "Waiting for new service to be ready..."
+  for i in {1..10}; do
+    NEW_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${PARALLEL_PORT}/api/health" 2>/dev/null || echo "000")
+    if [[ "$NEW_HEALTH" == "200" ]]; then
+      ok "New service is ready (attempt $i)"
+      break
+    fi
+    if [[ $i -eq 10 ]]; then
+      warn "New service did not become ready after 10 attempts"
+    else
+      sleep 2
+    fi
+  done
 
   PARITY_OK=true
   for ep in "${ENDPOINTS[@]}"; do

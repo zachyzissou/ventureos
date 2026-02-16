@@ -57,7 +57,14 @@ echo ""
 echo "📦 Installing dependencies & compiling TypeScript…"
 
 cd "$VENTUREOS_ROOT"
-npm install --workspace=dashboard --include=dev 2>/dev/null || npm install
+# Try workspace install first (requires npm workspaces), fall back to regular install
+if ! npm install --workspace=dashboard --include=dev 2>/dev/null; then
+  log "Workspace install not supported, trying regular npm install..."
+  npm install || {
+    echo "❌ npm install failed"
+    exit 1
+  }
+fi
 
 cd "$DASHBOARD_DIR"
 npx tsc -p tsconfig.json --outDir dist 2>&1 || {

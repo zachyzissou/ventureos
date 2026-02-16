@@ -36,8 +36,9 @@ StartLimitBurst=5
 # Hardening
 NoNewPrivileges=true
 ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=__VENTUREOS_ROOT__/dashboard/dist
+ProtectHome=false
+ReadWritePaths=__VENTUREOS_ROOT__/dashboard/dist __VENTUREOS_ROOT__/dashboard/data __OPENCLAW_DIR__
+ReadWritePaths=%h/clawd/logs
 PrivateTmp=true
 
 [Install]

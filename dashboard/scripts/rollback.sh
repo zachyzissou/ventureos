@@ -85,9 +85,15 @@ if [[ -n "$BACKUP_DIR" ]] && [[ -d "$BACKUP_DIR" ]]; then
     log "Migration info:"
     cat "$BACKUP_DIR/migration-info.json" | sed 's/^/     /'
     echo ""
+  else
+    warn "Backup directory exists but migration-info.json is missing"
   fi
 else
-  warn "No migration backup found — will attempt rollback without backup"
+  warn "No migration backup found"
+  if [[ "$PLATFORM" == "Darwin" ]] && [[ ! -f "$OLD_PLIST" ]]; then
+    fail "Cannot rollback: no backup found and old plist does not exist at $OLD_PLIST"
+  fi
+  warn "Proceeding with rollback without backup (will attempt to use existing old service files)"
 fi
 
 # ─── Step 1: Stop new monorepo service ───────────────────────────────────────
