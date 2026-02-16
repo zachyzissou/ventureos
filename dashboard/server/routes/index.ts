@@ -1,5 +1,8 @@
 /**
  * Route barrel export.
- * Placeholder — routes will be migrated in Phase 3.
+ * Migrated from Phase 3 — Issue #76.
  */
-export {};
+
+export { handleKpis } from './kpis.js';
+export { handleObservations } from './observations.js';
+export { handleAgentHealth } from './agent-health.js';
