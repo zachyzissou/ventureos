@@ -27,6 +27,7 @@ Environment=DASHBOARD_PORT=__DASHBOARD_PORT__
 Environment=DASHBOARD_HOST=0.0.0.0
 Environment=VENTUREOS_ROOT=__VENTUREOS_ROOT__
 Environment=OPENCLAW_DIR=__OPENCLAW_DIR__
+Environment=VENTUREOS_LOG_DIR=__VENTUREOS_ROOT__/dashboard/logs
 
 Restart=always
 RestartSec=5
@@ -37,7 +38,7 @@ StartLimitBurst=5
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=__VENTUREOS_ROOT__/dashboard/dist __VENTUREOS_ROOT__/dashboard/data __OPENCLAW_DIR__ __VENTUREOS_ROOT__/logs
+ReadWritePaths=__VENTUREOS_ROOT__/dashboard/dist __VENTUREOS_ROOT__/dashboard/data __VENTUREOS_ROOT__/dashboard/logs __OPENCLAW_DIR__
 PrivateTmp=true
 
 [Install]
