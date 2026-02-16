@@ -32,6 +32,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     env:
       ARTIFACT_NAME: tactical-map-dist-${{ github.sha }}
 
@@ -68,6 +70,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: staging
+    permissions:
+      contents: read
     env:
       ARTIFACT_NAME: tactical-map-dist-${{ github.sha }}
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'staging')
@@ -88,6 +92,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      contents: read
     env:
       ARTIFACT_NAME: tactical-map-dist-${{ github.sha }}
     if: github.event_name == 'workflow_dispatch' && inputs.target == 'production'
