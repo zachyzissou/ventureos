@@ -1,0 +1,100 @@
+# Dashboard CI — build, test, smoke test
+# Runs on PRs touching dashboard/** and on push to main.
+
+name: Dashboard CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/**'
+      - 'lib/**'
+      - 'package.json'
+  pull_request:
+    paths:
+      - 'dashboard/**'
+      - 'lib/**'
+      - 'package.json'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: TypeScript compile
+        working-directory: dashboard
+        run: npx tsc -p tsconfig.json --outDir dist
+
+      - name: Verify build output
+        run: |
+          test -f dashboard/dist/server.js || (echo "❌ dist/server.js not found" && exit 1)
+          echo "✅ Build output verified"
+
+      - name: Run unit tests
+        working-directory: dashboard
+        run: npm run test:unit
+
+      - name: Run integration tests
+        working-directory: dashboard
+        run: npm run test:integration
+
+      - name: Deployment smoke test
+        working-directory: dashboard
+        run: |
+          # Start server in background
+          node dist/server.js &
+          SERVER_PID=$!
+          
+          # Wait for startup
+          sleep 3
+          
+          # Health check
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:7000/api/health || echo "000")
+          
+          # Cleanup
+          kill $SERVER_PID 2>/dev/null || true
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Smoke test passed (HTTP $HTTP_CODE)"
+          else
+            echo "❌ Smoke test failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+  install-scripts-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check scripts are executable
+        run: |
+          for script in dashboard/scripts/*.sh; do
+            if [ -f "$script" ]; then
+              if [ -x "$script" ]; then
+                echo "✅ $script is executable"
+              else
+                echo "❌ $script is not executable"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: ShellCheck lint
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: 'dashboard/scripts'
+          severity: warning
