@@ -129,9 +129,11 @@ app.stage
 ├── hud                  Z=9   Top bar: tabs + KPI ticker (screen space)
 ├── resourceEconomy      Z=10  Economy panel overlay (screen space)
 │   (overlayContainer)
-├── alertOverlay         Z=11  P0/P1 alert banners (screen space)
-└── healthDashboard      Z=12  Full health dashboard panel (screen space)
+├── alertOverlay         Z=11  P0/P1 alert banners (screen space) [planned]
+└── healthDashboard      Z=12  Full health dashboard panel (screen space) [planned]
 ```
+
+> **Implementation Note:** Layers Z=0-10 are currently implemented. Layers Z=8 (healthIndicators), Z=11 (alertOverlay), and Z=12 (healthDashboard) are planned as part of Phase 5.6.
 
 **World-space layers** (Z=0-8) are children of the `world` container, which receives camera pan/zoom transforms. **Screen-space layers** (Z=9-12) are direct children of `app.stage` and remain fixed regardless of camera position.
 
