@@ -39,3 +39,6 @@ yarn-error.log*
 tmp/
 runtime/logs/
 dashboard/data/
+
+# Tactical map server local secret
+tactical-map-server/data/.api-token
