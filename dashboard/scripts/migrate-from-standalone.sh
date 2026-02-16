@@ -33,7 +33,7 @@ OLD_STANDALONE_DIR="$HOME/clawd/openclaw-dashboard"
 # New monorepo identifiers
 NEW_LABEL="com.openclaw.dashboard.monorepo"
 NEW_PLIST="$HOME/Library/LaunchAgents/${NEW_LABEL}.plist"
-NEW_SYSTEMD="openclaw-dashboard"
+NEW_SYSTEMD="openclaw-dashboard-monorepo"
 
 # Defaults
 PARALLEL_PORT="${PARALLEL_PORT:-8002}"
@@ -109,7 +109,7 @@ if [[ "$PLATFORM" == "Darwin" ]]; then
   fi
 else
   for svc in "${OLD_SYSTEMD_NAMES[@]}"; do
-    if systemctl list-unit-files "${svc}.service" &>/dev/null; then
+    if systemctl list-unit-files "${svc}.service" 2>/dev/null | grep -q "^${svc}.service"; then
       ok "Found old systemd service: $svc"
       FOUND_OLD=true
 
@@ -171,7 +171,8 @@ if ! $DRY_RUN; then
   cd "$VENTUREOS_ROOT"
   npm install --workspace=dashboard --include=dev 2>/dev/null || npm install
   cd "$DASHBOARD_DIR"
-  npx tsc -p tsconfig.json --outDir dist 2>&1 || true
+  rm -rf dist
+  npx tsc -p tsconfig.json --outDir dist 2>&1
 
   if [[ -f "$DASHBOARD_DIR/dist/dashboard/server/server.js" ]]; then
     ok "Build complete → dashboard/dist/dashboard/server/server.js"
@@ -214,9 +215,15 @@ if [[ "$PLATFORM" == "Darwin" ]]; then
   fi
 else
   if ! $DRY_RUN; then
-    run_or_dry bash "$SCRIPT_DIR/install.sh"
+    # On Linux, install.sh writes to /etc/systemd/system and uses systemctl,
+    # which typically requires root. Use sudo when not already running as root.
+    if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+      run_or_dry sudo -E bash "$SCRIPT_DIR/install.sh"
+    else
+      run_or_dry bash "$SCRIPT_DIR/install.sh"
+    fi
   else
-    log "[DRY RUN] Would run install.sh with DASHBOARD_PORT=$PARALLEL_PORT"
+    log "[DRY RUN] Would run install.sh with DASHBOARD_PORT=$PARALLEL_PORT (via sudo if needed)"
   fi
 fi
 
@@ -286,10 +293,10 @@ if $SWITCHOVER; then
       launchctl load -w "$NEW_PLIST"
       ok "New service switched to port $OLD_PORT"
     else
-      systemctl stop agent-dashboard 2>/dev/null || true
-      sed -i "s|DASHBOARD_PORT=${PARALLEL_PORT}|DASHBOARD_PORT=${OLD_PORT}|" "/etc/systemd/system/${NEW_SYSTEMD}.service"
-      systemctl daemon-reload
-      systemctl restart "$NEW_SYSTEMD"
+      sudo systemctl stop agent-dashboard 2>/dev/null || true
+      sudo sed -i "s|DASHBOARD_PORT=${PARALLEL_PORT}|DASHBOARD_PORT=${OLD_PORT}|" "/etc/systemd/system/${NEW_SYSTEMD}.service"
+      sudo systemctl daemon-reload
+      sudo systemctl restart "$NEW_SYSTEMD"
       ok "New service switched to port $OLD_PORT"
     fi
 

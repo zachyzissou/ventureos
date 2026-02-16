@@ -25,7 +25,7 @@ OLD_LABEL="com.openclaw.dashboard"
 OLD_PLIST="$HOME/Library/LaunchAgents/${OLD_LABEL}.plist"
 NEW_LABEL="com.openclaw.dashboard.monorepo"
 NEW_PLIST="$HOME/Library/LaunchAgents/${NEW_LABEL}.plist"
-NEW_SYSTEMD="openclaw-dashboard"
+NEW_SYSTEMD="openclaw-dashboard-monorepo"
 
 FULL=false
 DRY_RUN=false
@@ -96,7 +96,7 @@ echo "── Step 1: Stop New (Monorepo) Service ──"
 
 if [[ "$PLATFORM" == "Darwin" ]]; then
   if launchctl list "$NEW_LABEL" &>/dev/null 2>&1; then
-    run_or_dry launchctl unload "$NEW_PLIST" 2>/dev/null || true
+    run_or_dry sh -c 'launchctl unload "$1" 2>/dev/null' _ "$NEW_PLIST" || true
     ok "New service stopped ($NEW_LABEL)"
   else
     log "New service not running"
@@ -132,7 +132,7 @@ if [[ "$PLATFORM" == "Darwin" ]]; then
     echo "   launchctl load -w ~/Library/LaunchAgents/com.openclaw.dashboard.plist"
   fi
 else
-  for svc in agent-dashboard openclaw-dashboard-old; do
+  for svc in agent-dashboard openclaw-dashboard openclaw-dashboard-old; do
     if [[ -f "/etc/systemd/system/${svc}.service" ]]; then
       run_or_dry sudo systemctl enable --now "$svc"
       ok "Old service re-enabled ($svc)"

@@ -311,6 +311,10 @@ The server caches session cost data (re-scanned every 60s) and reads JSONL files
 
 ### Quick Migration (zero-downtime)
 
+> **Linux note:** Migration and switchover scripts require root privileges for systemd
+> operations. Run with `sudo -E` to preserve environment variables:
+> `sudo -E ./dashboard/scripts/migrate-from-standalone.sh`
+
 ```bash
 # 1. Start new dashboard in parallel (old untouched)
 ./dashboard/scripts/migrate-from-standalone.sh

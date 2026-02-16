@@ -37,7 +37,7 @@ StartLimitBurst=5
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=__VENTUREOS_ROOT__/dashboard/dist __VENTUREOS_ROOT__/dashboard/data
+ReadWritePaths=__VENTUREOS_ROOT__/dashboard/dist __VENTUREOS_ROOT__/dashboard/data __OPENCLAW_DIR__ __VENTUREOS_ROOT__/logs
 PrivateTmp=true
 
 [Install]
