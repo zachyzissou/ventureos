@@ -86,7 +86,7 @@ npm test  # Vitest
 Tactical map integrates with the VentureOS dashboard on port 8001:
 ```bash
 # Dashboard serves tactical map at /map
-http://192.168.225.149:7001/map
+http://192.168.225.149:8001/map
 ```
 
 ## GitLab Workflow
