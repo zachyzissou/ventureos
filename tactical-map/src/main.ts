@@ -3,6 +3,7 @@ import { AGENT_ORDER, AGENTS, CANVAS, ECONOMY } from '@/config';
 import type { AgentId, Point } from '@/config';
 import { createApiClient } from '@/data/api-client';
 import { createEconomyClient } from '@/data/economy-client';
+import { createHealthClient } from '@/data/health-client';
 import { classifyActivity, ActivityType } from '@/data/activity-mapper';
 import { createCameraController } from '@/interaction/camera';
 import { createBuildingsLayer, RING_AGENT_IDS } from '@/renderer/buildings';
@@ -14,14 +15,26 @@ import { createUnitsLayer } from '@/renderer/units';
 import { createParticleSystem } from '@/renderer/particles';
 import { createKhalaNetworkLayer } from '@/renderer/khala-network';
 import { createResourceEconomyLayer } from '@/renderer/resource-economy';
+import { createHealthIndicatorsLayer } from '@/renderer/health-indicators';
+import { createAlertOverlay } from '@/renderer/alert-overlay';
+import { createHealthDashboard } from '@/renderer/health-dashboard';
 import { deriveBuildingState } from '@/renderer/building-states';
 import { BudgetAlertManager } from '@/economy/alerts';
+import { HealthAlertManager } from '@/health/alerts';
 import {
   applyAgentEconomyUpdate,
   applyEconomySnapshot,
   applyPoolEconomyUpdate,
   createEmptyEconomyState
 } from '@/economy/state';
+import {
+  applyHealthSnapshot,
+  applyAgentHealthUpdate,
+  addHealthAlert,
+  createEmptyHealthState,
+  expireAlerts,
+} from '@/health/state';
+import type { HealthState } from '@/health/types';
 import type { EconomyState } from '@/economy/types';
 import { createStore } from '@/state/store';
 import type { MapState } from '@/state/types';
@@ -41,6 +54,7 @@ function createInitialMapState(): MapState {
 
 const mapStore = createStore<MapState>(createInitialMapState());
 const economyStore = createStore<EconomyState>(createEmptyEconomyState());
+const healthStore = createStore<HealthState>(createEmptyHealthState());
 
 async function bootstrap() {
   const app = new Application();
@@ -85,6 +99,9 @@ async function bootstrap() {
   const healthBars = createHealthBarsLayer(RING_AGENT_IDS);
   world.addChild(healthBars.container);
 
+  const healthIndicators = createHealthIndicatorsLayer();
+  world.addChild(healthIndicators.container);
+
   const resourceEconomy = createResourceEconomyLayer();
   world.addChild(resourceEconomy.worldContainer);
 
@@ -93,11 +110,19 @@ async function bootstrap() {
   app.stage.addChild(hud.container);
   app.stage.addChild(resourceEconomy.overlayContainer);
 
+  const alertOverlay = createAlertOverlay();
+  app.stage.addChild(alertOverlay.container);
+
+  const healthDashboard = createHealthDashboard();
+  app.stage.addChild(healthDashboard.container);
+
   const alertManager = new BudgetAlertManager({
     warningRatio: ECONOMY.WARNING_THRESHOLD,
     criticalRatio: ECONOMY.CRITICAL_THRESHOLD,
     cooldownMs: ECONOMY.ALERT_COOLDOWN_MS
   });
+
+  const healthAlertManager = new HealthAlertManager();
 
   let cameraHome = { x: app.screen.width / 2, y: app.screen.height / 2 };
   world.position.set(cameraHome.x, cameraHome.y);
@@ -134,6 +159,8 @@ async function bootstrap() {
 
     hud.setSize(app.screen.width, app.screen.height);
     resourceEconomy.setViewport(app.screen.width, app.screen.height);
+    alertOverlay.setViewport(app.screen.width, app.screen.height);
+    healthDashboard.setViewport(app.screen.width, app.screen.height);
   }
 
   // Pan only when dragging on the terrain surface.
@@ -187,6 +214,53 @@ async function bootstrap() {
     else nexus.setStateColor(0xffd700);
   });
 
+  healthStore.subscribe((next) => {
+    // Update per-agent health indicators
+    const mapState = mapStore.get();
+    for (const id of AGENT_ORDER) {
+      const agent = next.agents[id];
+      const pos = mapState.agents[id]?.position ?? { x: 0, y: 0 };
+      healthIndicators.setAgentHealth(
+        id,
+        pos,
+        agent.status,
+        agent.connectivity,
+        agent.metrics.cpuUsage,
+        agent.metrics.memoryUsage,
+        agent.metrics.latencyMs
+      );
+    }
+
+    // Update alert overlay
+    alertOverlay.setAlerts(next.alerts);
+
+    // Update health dashboard
+    healthDashboard.setHealthState(next);
+
+    // Evaluate alerts
+    const agentAlerts = healthAlertManager.evaluate(next);
+    const systemAlerts = healthAlertManager.evaluateSystemAlerts(next);
+    const allAlerts = [...agentAlerts, ...systemAlerts];
+
+    if (allAlerts.length > 0) {
+      healthStore.update((curr) => {
+        let state = curr;
+        for (const alert of allAlerts) {
+          state = addHealthAlert(state, alert);
+          console.warn('[tactical-map] health alert', alert.message);
+        }
+        return state;
+      });
+    }
+
+    // Expire old alerts
+    const nowMs = Date.now();
+    const expired = expireAlerts(next, nowMs);
+    if (expired !== next) {
+      healthStore.set(expired);
+    }
+  });
+
   economyStore.subscribe((next) => {
     resourceEconomy.setEconomyState(next);
 
@@ -234,6 +308,41 @@ async function bootstrap() {
     onError: (e) => console.warn('[tactical-map] economy stream error', e)
   });
   economyClient.start();
+
+  const healthClient = createHealthClient({
+    onSnapshot: (snapshot) => {
+      healthStore.update((curr) =>
+        applyHealthSnapshot(curr, snapshot, undefined, undefined, Date.now())
+      );
+    },
+    onAgentUpdate: (agent) => {
+      healthStore.update((curr) =>
+        applyAgentHealthUpdate(curr, agent, undefined, undefined, Date.now())
+      );
+    },
+    onAlert: (rawAlert) => {
+      if (!rawAlert) return;
+      const alert = {
+        id: rawAlert.id ?? `server-alert-${Date.now()}`,
+        severity: (rawAlert.severity === 'P0' ? 'P0' : 'P1') as 'P0' | 'P1',
+        state: 'active' as const,
+        agentId: (rawAlert.agentId ?? 'system') as AgentId | 'system',
+        title: rawAlert.severity === 'P0' ? '🔴 Critical Alert' : '🟡 Warning',
+        message: rawAlert.message ?? rawAlert.title ?? 'Health alert',
+        metric: rawAlert.metric,
+        value: rawAlert.value,
+        threshold: rawAlert.threshold,
+        createdAt: typeof rawAlert.createdAt === 'number' ? rawAlert.createdAt : Date.now(),
+        ttlMs: rawAlert.ttlMs ?? 0,
+      };
+      healthStore.update((curr) => addHealthAlert(curr, alert));
+    },
+    onConnectionChange: (connected) => {
+      console.log(`[tactical-map] health WS ${connected ? 'connected' : 'disconnected'}`);
+    },
+    onError: (e) => console.warn('[tactical-map] health stream error', e),
+  });
+  healthClient.start();
 
   // KPI ticker
   void pollKpis(() => api.fetchRpgStats(), (t) => hud.setKpiText(t));
@@ -300,6 +409,9 @@ async function bootstrap() {
 
     particles.update(elapsedMs);
     healthBars.update(elapsedMs);
+    healthIndicators.update(elapsedMs);
+    alertOverlay.update(elapsedMs);
+    healthDashboard.update(elapsedMs);
     resourceEconomy.update(elapsedMs);
   });
 
@@ -307,6 +419,7 @@ async function bootstrap() {
   window.addEventListener('beforeunload', () => {
     api.stop();
     economyClient.stop();
+    healthClient.stop();
   });
 
   layout();
@@ -317,13 +430,17 @@ async function bootstrap() {
     app,
     mapStore,
     economyStore,
+    healthStore,
     api,
     economyClient,
+    healthClient,
     camera,
     pause: () => app.ticker.stop(),
     resume: () => app.ticker.start(),
     setMapState: (next: MapState) => mapStore.set(next),
     setEconomyState: (next: EconomyState) => economyStore.set(next),
+    setHealthState: (next: HealthState) => healthStore.set(next),
+    toggleHealthDashboard: () => healthDashboard.setVisible(!healthDashboard.isVisible()),
     // deterministic snapshot helper
     snapshot: () => {
       app.render();
