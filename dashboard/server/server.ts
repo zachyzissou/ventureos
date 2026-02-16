@@ -71,6 +71,8 @@ import { auditLog } from './middleware/audit-log.js';
 import { handleKpis } from './routes/kpis.js';
 import { handleObservations } from './routes/observations.js';
 import { handleAgentHealth } from './routes/agent-health.js';
+import { handleRpgApi } from './routes/rpg.js';
+import { handleConversationApi } from './routes/conversation.js';
 
 // Configuration
 import {
@@ -101,33 +103,11 @@ const scrapeScript: string = path.join(WORKSPACE_DIR, 'scripts', 'scrape-claude-
 const htmlPath: string = path.join(import.meta.dirname, '..', 'client', 'index.html');
 const loginHtmlPath: string = path.join(import.meta.dirname, '..', 'client', 'login.html');
 
-// VentureOS RPG (Phase 3) API + component static serving (optional; safe when missing)
+// VentureOS RPG database path (still configurable via env var)
 const VENTUREOS_RPG_ROOT: string =
   process.env.VENTUREOS_RPG_ROOT ?? path.join(os.homedir(), 'clawd', 'ventureos-rpg');
 const VENTUREOS_RPG_DB: string =
   process.env.VENTUREOS_RPG_DB ?? path.join(os.homedir(), 'clawd', 'agents', 'ventureos-rpg.db');
-
-interface RpgModule {
-  handleRpgApi?: (req: IncomingMessage, res: ServerResponse, opts: { dbPath: string }) => boolean;
-}
-interface ConversationModule {
-  handleConversationApi?: (req: IncomingMessage, res: ServerResponse, opts: { dbPath: string }) => boolean;
-}
-
-let rpgRoute: RpgModule | null = null;
-try {
-  rpgRoute = await import(path.join(VENTUREOS_RPG_ROOT, 'api', 'rpg-http.js')) as RpgModule;
-} catch {
-  // optional module
-}
-let conversationRoute: ConversationModule | null = null;
-try {
-  conversationRoute = await import(
-    path.join(VENTUREOS_RPG_ROOT, 'api', 'conversation-http.js')
-  ) as ConversationModule;
-} catch {
-  // optional module
-}
 
 // VentureOS config paths (with fallbacks from config module)
 const VENTUREOS_ROOT: string =
@@ -2595,19 +2575,11 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     return;
   }
 
-  // Conversation API (Phase 4 Track 5)
-  try {
-    if (conversationRoute?.handleConversationApi?.(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
-  } catch {
-    // optional
-  }
+  // Conversation API (Issue #78 — monorepo integration)
+  if (handleConversationApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
 
-  // VentureOS RPG APIs (optional)
-  try {
-    if (rpgRoute?.handleRpgApi?.(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
-  } catch {
-    // optional
-  }
+  // VentureOS RPG APIs (Issue #78 — monorepo integration)
+  if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
 
   // VentureOS APIs
   if (req.url && req.url.startsWith('/api/ventureos-kpis')) {
@@ -2988,34 +2960,34 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     return;
   }
 
-  // RPG API compatibility routes (non-prefixed versions)
+  // RPG API compatibility routes (legacy non-prefixed aliases → canonical /api/rpg/*)
   if (req.url === '/api/psionic-stats') {
     (req as { url: string }).url = '/api/rpg/stats';
-    if (rpgRoute?.handleRpgApi?.(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
   }
   if (req.url && req.url.startsWith('/api/psionic-stats/')) {
     (req as { url: string }).url = req.url.replace('/api/psionic-stats/', '/api/rpg/stats/');
-    if (rpgRoute?.handleRpgApi?.(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
   }
   if (req.url === '/api/khala-network' || (req.url && req.url.startsWith('/api/khala-network?'))) {
     (req as { url: string }).url = (req.url ?? '').replace('/api/khala-network', '/api/rpg/khala-network');
-    if (rpgRoute?.handleRpgApi?.(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
   }
   if (req.url && req.url.startsWith('/api/khala-network/')) {
     (req as { url: string }).url = req.url.replace('/api/khala-network/', '/api/rpg/khala-network/');
-    if (rpgRoute?.handleRpgApi?.(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
   }
   if (req.url && req.url.startsWith('/api/tactical-overlay/')) {
     (req as { url: string }).url = req.url.replace('/api/tactical-overlay/', '/api/rpg/tactical-overlay/');
-    if (rpgRoute?.handleRpgApi?.(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
   }
   if (req.url && req.url.startsWith('/api/protocols/')) {
     (req as { url: string }).url = req.url.replace('/api/protocols/', '/api/rpg/protocols/');
-    if (rpgRoute?.handleRpgApi?.(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
   }
   if (req.url && req.url.startsWith('/api/escalations/')) {
     (req as { url: string }).url = req.url.replace('/api/escalations/', '/api/rpg/escalations/');
-    if (rpgRoute?.handleRpgApi?.(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
+    if (handleRpgApi(req, res, { dbPath: VENTUREOS_RPG_DB })) return;
   }
 
   if (req.url === '/api/tailscale') {
