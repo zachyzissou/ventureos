@@ -83,7 +83,7 @@ npm test  # Vitest
 ```
 
 ### Production Dashboard
-Tactical map integrates with openclaw-dashboard on port 7001:
+Tactical map integrates with the VentureOS dashboard on port 8001:
 ```bash
 # Dashboard serves tactical map at /map
 http://192.168.225.149:7001/map

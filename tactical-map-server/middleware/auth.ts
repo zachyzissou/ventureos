@@ -1,11 +1,7 @@
 /**
  * Auth Middleware — Pre-shared API Key (Bearer Token)
  * Phase 5.1 Security Implementation
- * 
- * TypeScript version for tactical-map-server.
- * The canonical implementation lives in ~/clawd/openclaw-dashboard/server/middleware/auth.js
- * This module re-exports the same logic for use in TypeScript contexts.
- * 
+ *
  * See: SECURITY_ARCHITECTURE.md §1
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
@@ -13,12 +9,11 @@ import { randomBytes, timingSafeEqual } from 'crypto';
 import { IncomingMessage, ServerResponse } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { homedir } from 'os';
+import { LOG_DIR } from '../../lib/paths.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', 'data');
 const TOKEN_PATH = join(DATA_DIR, '.api-token');
-const LOG_DIR = join(homedir(), 'clawd', 'logs');
 const ACCESS_LOG = join(LOG_DIR, 'tactical-map-access.log');
 
 // Ensure directories exist

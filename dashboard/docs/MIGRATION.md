@@ -1,6 +1,9 @@
 # Dashboard Migration Guide
 
-> Migrating from standalone `openclaw-dashboard` to the VentureOS monorepo dashboard.
+> **✅ Migration Complete (Feb 2026).** The standalone `openclaw-dashboard` repo is now archived.
+> The dashboard runs exclusively from `ventureos/dashboard/`. This document is retained as historical reference.
+
+> Originally: Migrating from standalone `openclaw-dashboard` to the VentureOS monorepo dashboard.
 
 ## Overview
 
