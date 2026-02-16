@@ -4,13 +4,19 @@
   "private": true,
   "type": "commonjs",
   "description": "VentureOS core libraries (role cards, enforcement, handoff validation)",
+  "workspaces": [
+    "dashboard"
+  ],
   "scripts": {
     "test": "jest --runInBand",
     "build": "tsc -p tsconfig.json --noEmit",
     "role-cards:render": "node -r ts-node/register ./scripts/generate-souls.ts",
     "role-cards:deploy": "node -r ts-node/register ./scripts/generate-souls.ts --deploy-workspaces",
     "test:e2e": "npx playwright test",
-    "test:e2e:xss": "npx playwright test --grep XSS"
+    "test:e2e:xss": "npx playwright test --grep XSS",
+    "dashboard:dev": "npm run dev --workspace=dashboard",
+    "dashboard:start": "npm run start --workspace=dashboard",
+    "dashboard:build": "npm run build --workspace=dashboard"
   },
   "dependencies": {
     "ajv": "^8.17.1",
