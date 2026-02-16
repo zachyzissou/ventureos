@@ -318,9 +318,35 @@ export class QAFramework {
     });
 
     // Run all validators (independent — can parallelize).
-    const results = await Promise.all(
-      applicable.map((v) => v.validate(input))
-    );
+    // Guard against individual validator runtime exceptions so one failure
+    // does not reject the entire quality report.
+    const validatorPromises = applicable.map(async (v) => {
+      const validatorStart = performance.now();
+      try {
+        return await v.validate(input);
+      } catch (error) {
+        const durationMs = Math.round(performance.now() - validatorStart);
+        const message = error instanceof Error ? error.message : 'Unknown validator runtime error';
+
+        const fallbackFinding: ValidationFinding = {
+          ruleId: 'validator.runtime.error',
+          severity: 'error',
+          message,
+        };
+
+        const fallbackResult: ValidationResult = {
+          validatorId: (v as any).id ?? 'unknown-validator',
+          passed: false,
+          score: 0,
+          findings: [fallbackFinding],
+          durationMs,
+        };
+
+        return fallbackResult;
+      }
+    });
+
+    const results = await Promise.all(validatorPromises);
 
     // Compute dimension scores.
     const dimensionIds = this.scoringEngine.getConfig().dimensions.map((d) => d.dimensionId);
