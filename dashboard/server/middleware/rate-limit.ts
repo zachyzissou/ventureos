@@ -12,6 +12,14 @@
  * consuming the global quota and locking out every other client.
  *
  * Migrated from server/middleware/rate-limit.js (Phase 3 — Issue #76).
+ *
+ * NOTE (Issue #79 — Consolidation Audit):
+ * This module is intentionally NOT consolidated with `lib/rate-limiter.ts`.
+ * They serve fundamentally different domains:
+ *   - THIS: HTTP middleware — per-client-IP, per-endpoint sliding windows
+ *   - lib/rate-limiter.ts: Agent conversation — per-agent, per-conversation,
+ *     with challenge limits, pair overrides, and backoff strategies
+ * Merging them would add complexity without benefit.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
