@@ -13,6 +13,7 @@ VentureOS layers **policy + ops infrastructure** around OpenClaw. It does not re
 7. **Memory System**: three‑layer memory (daily logs → entity facts → synthesized memory).
 8. **Business Unit Registry (VentureOS):** a structured catalog of companies/products/brands and their automations, KPIs, and canonical notes.
 9. **Mission Control (VentureOS):** mission briefs → squads → safety/QA gates → durable artifacts.
+10. **Dashboard** (`dashboard/`): operational monitoring HTTP server — KPI tracking, agent health, session management, cost analysis, and real-time SSE feed. Zero external dependencies (Node.js `http` module). See [DASHBOARD.md](DASHBOARD.md) and [API reference](../dashboard/docs/API.md).
 
 ---
 
@@ -26,9 +27,21 @@ Human intent ──> Policy docs (guardrails, quota policy)
                     ↓
              Ops scripts run
                     ↓
-          Logs + Alerts output
-                    ↓
-          Human visibility + action
+          Logs + Alerts output ──> Dashboard (HTTP API + SSE)
+                    ↓                    ↓
+          Human visibility         Tactical Map (/map/)
+                    ↓                    ↓
+               Human action        Browser UI
+```
+
+### Dashboard Data Flow
+```
+KPI JSON files ──────────┐
+Agent sessions (JSONL) ──┤
+Observations (.md) ──────┼──> Dashboard Server ──> REST API
+Shared context ──────────┤         ↓                  ↓
+System stats (OS) ───────┘    SSE /api/live      Browser UI
+                                                 Tactical Map
 ```
 
 ---

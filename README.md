@@ -7,6 +7,7 @@ VentureOS is a Protoss-themed RPG system overlay for multi-agent coordination, m
 ## Quick Links
 
 - **Master Plan:** [docs/RPG_SYSTEM.md](docs/RPG_SYSTEM.md) — Full spec, phases, KPIs, formulas
+- **Dashboard:** [dashboard/](dashboard/) — Operational monitoring, KPI tracking, agent health ([API docs](dashboard/docs/API.md))
 - **GitLab Integration:** [docs/GITLAB_PROCESS.md](docs/GITLAB_PROCESS.md) — MR workflow for P0/P1 fixes
 - **Phase 5 Tactical Map:** [tactical-map/](tactical-map/) — Real-time 2D StarCraft-style command center
 
@@ -14,21 +15,27 @@ VentureOS is a Protoss-themed RPG system overlay for multi-agent coordination, m
 
 ```
 ventureos/
+├── dashboard/                 # Operational monitoring dashboard
+│   ├── server/                # HTTP server & API (Node.js, no Express)
+│   │   ├── routes/            # Modular API handlers (KPIs, observations, health)
+│   │   └── middleware/        # Auth, CORS, rate-limit, security headers
+│   ├── client/                # Static frontend (SPA)
+│   ├── docs/API.md            # Complete API reference
+│   └── scripts/install.sh     # Deployment installer
 ├── docs/
 │   ├── RPG_SYSTEM.md          # Master plan (Protoss RPG spec)
+│   ├── DASHBOARD.md           # Dashboard integration guide
 │   ├── GITLAB_PROCESS.md      # Verification workflow
-│   ├── PHASE4_TRACK6_REPORT.md # Track 6 completion report
 │   └── CRON_SPECS.md          # Cron job specifications
+├── lib/                       # Shared libraries
+│   ├── paths.ts               # Centralized path resolution
+│   └── error-handler.ts       # Safe error serialization
 ├── tactical-map/              # Phase 5 StarCraft command center
 │   ├── src/                   # TypeScript source
 │   ├── tests/                 # Vitest test suite
 │   └── server/                # Dev server (Vite)
 ├── tactical-map-server/       # Production server (Node.js)
 │   └── middleware/            # Security middleware (TypeScript reference)
-├── ventureos-rpg/             # RPG backend (SQLite + API)
-│   ├── api/                   # HTTP endpoints
-│   ├── components/            # UI components
-│   └── schema/                # SQLite schema
 ├── scripts/                   # Utility scripts
 │   ├── spawn-with-verification.mjs  # Fresh context + dev↔verify loops
 │   ├── spawn-with-retry.mjs         # Retry logic for reliability
