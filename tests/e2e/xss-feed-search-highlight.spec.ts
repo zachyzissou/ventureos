@@ -1,13 +1,17 @@
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
 import path from 'node:path';
 
-const helperScriptPath = path.resolve(process.cwd(), 'dashboard/client/feed-search-highlight.js');
+const helperScriptPath = path.resolve(process.cwd(), 'dashboard/client/assets/feed-search-highlight.js');
+const helperScript = fs.readFileSync(helperScriptPath, 'utf8');
+const APP_ORIGIN = 'http://feed-highlight.test';
 
 const HARNESS_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>Feed Search Highlight Harness</title></head>
 <body>
   <div id="root"></div>
+  <script src="/assets/feed-search-highlight.js"></script>
   <script>
     window.__feed_highlight_xss = 0;
   </script>
@@ -15,8 +19,31 @@ const HARNESS_HTML = `<!DOCTYPE html>
 </html>`;
 
 async function loadHarness(page: import('@playwright/test').Page) {
-  await page.setContent(HARNESS_HTML, { waitUntil: 'domcontentloaded' });
-  await page.addScriptTag({ path: helperScriptPath });
+  await page.route(`${APP_ORIGIN}/**`, async (route) => {
+    const url = new URL(route.request().url());
+
+    if (url.pathname === '/' || url.pathname === '/index.html') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html; charset=utf-8',
+        body: HARNESS_HTML,
+      });
+      return;
+    }
+
+    if (url.pathname === '/assets/feed-search-highlight.js') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/javascript; charset=utf-8',
+        body: helperScript,
+      });
+      return;
+    }
+
+    await route.fulfill({ status: 404, body: 'not found' });
+  });
+
+  await page.goto(`${APP_ORIGIN}/`, { waitUntil: 'domcontentloaded' });
 }
 
 const payloadCases: Array<{ name: string; payload: string; term: string }> = [
