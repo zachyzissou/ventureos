@@ -212,6 +212,12 @@ export class TaskQueue {
     const missionType = options.missionType ?? missionContext?.missionType;
     const role = options.role ?? missionContext?.role;
 
+    if (missionContext) {
+      missionContext.businessUnit = businessUnit;
+      missionContext.missionType = missionType;
+      missionContext.role = role;
+    }
+
     const task: QueueTask = {
       id: crypto.randomUUID(),
       createdAt: ts,
