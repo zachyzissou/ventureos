@@ -79,6 +79,12 @@ if [[ ! -f "$DASHBOARD_DIR/dist/dashboard/server/server.js" ]]; then
 fi
 echo "✅ Build complete → dashboard/dist/dashboard/server/server.js"
 
+# ─── Ensure log directory exists ──────────────────────────────────────────────
+
+mkdir -p "$DASHBOARD_DIR/logs"
+chown "$RUN_USER:$RUN_GROUP" "$DASHBOARD_DIR/logs"
+echo "✅ Log directory ready → dashboard/logs (owner: $RUN_USER)"
+
 # ─── Stop existing service (if running) ──────────────────────────────────────
 
 if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then

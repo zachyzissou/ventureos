@@ -75,8 +75,16 @@ run_or_dry() {
 # ─── Find backup dir if not specified ────────────────────────────────────────
 
 if [[ -z "$BACKUP_DIR" ]]; then
-  # Find most recent migration backup
-  BACKUP_DIR=$(find "$DASHBOARD_DIR" -maxdepth 1 -name ".migration-backup-*" -type d -print0 2>/dev/null | xargs -0 ls -dt 2>/dev/null | head -1 || echo "")
+  # Find most recent migration backup (newest by mtime)
+  best=""
+  for d in "$DASHBOARD_DIR"/.migration-backup-*/; do
+    [[ -d "$d" ]] || continue
+    if [[ -z "$best" ]] || [[ "$d" -nt "$best" ]]; then
+      best="$d"
+    fi
+  done
+  # Strip trailing slash for consistency
+  BACKUP_DIR="${best%/}"
 fi
 
 if [[ -n "$BACKUP_DIR" ]] && [[ -d "$BACKUP_DIR" ]]; then
