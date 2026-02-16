@@ -31,6 +31,7 @@ type TacticalMapStateResponse = {
       sessions?: number;
       position?: Point;
       activeSessions?: Array<{ id?: string; label?: string; startedAt?: string; estimatedMs?: number; progress?: number }>;
+      paused?: boolean;
     }
   >;
 };
@@ -84,7 +85,8 @@ function parseMapState(resp: TacticalMapStateResponse): MapState {
             startedAt: String(s.startedAt ?? new Date().toISOString()),
             estimatedMs: typeof s.estimatedMs === 'number' ? s.estimatedMs : undefined,
             progress: typeof s.progress === 'number' ? s.progress : undefined
-          })) ?? undefined
+          })) ?? undefined,
+      paused: node?.paused === true
     };
   }
 

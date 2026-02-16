@@ -262,6 +262,72 @@ Returns the current health snapshot for all agents.
 
 ---
 
+### GET `/api/tactical-map/control-state`
+
+Returns persisted interactive-control state (paused agents, budget overrides, saved config).
+
+**Response: `200 OK`**
+
+```json
+{
+  "ok": true,
+  "updatedAt": "2026-02-16T15:30:00.000Z",
+  "pausedAgents": ["synth"],
+  "budgets": {
+    "synth": 75000,
+    "oracle": 100000
+  },
+  "configs": {
+    "synth": { "maxSessions": 3 }
+  }
+}
+```
+
+### POST `/api/tactical-map/agents/:agentId/pause`
+
+Pause an agent (requires authenticated API access).
+
+### POST `/api/tactical-map/agents/:agentId/resume`
+
+Resume a previously paused agent.
+
+### POST `/api/tactical-map/agents/:agentId/budget`
+
+Persist an updated budget for an agent.
+
+**Request Body**
+
+```json
+{
+  "newBudget": 90000,
+  "previousBudget": 100000
+}
+```
+
+### POST `/api/tactical-map/missions/spawn`
+
+Create a mission from the tactical map mission-spawn UI.
+
+**Request Body**
+
+```json
+{
+  "title": "Investigate build regression",
+  "description": "Focus on tactical map controls",
+  "assignee": "synth",
+  "priority": "high",
+  "tokenBudget": 32000
+}
+```
+
+### POST `/api/tactical-map/missions/:missionId/priority`
+
+Update mission priority.
+
+### POST `/api/tactical-map/agents/:agentId/config`
+
+Persist agent-specific configuration edits.
+
 ### GET `/api/rpg/stats`
 
 Returns the RPG KPI statistics for the HUD ticker.

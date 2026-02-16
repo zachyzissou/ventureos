@@ -93,6 +93,7 @@ import { handleObservations } from './routes/observations.js';
 import { handleAgentHealth } from './routes/agent-health.js';
 import { handleRpgApi } from './routes/rpg.js';
 import { handleConversationApi } from './routes/conversation.js';
+import { handleTacticalMapControls } from './routes/tactical-map-controls.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -2689,6 +2690,18 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   }
   try {
     if (handleAgentHealth(req, res, { OPENCLAW_DIR, WORKSPACE_DIR, sendJson })) return;
+  } catch {
+    // ignore
+  }
+  try {
+    if (
+      await handleTacticalMapControls(req, res, {
+        dataDir,
+        sendJson,
+        readRequestBody,
+      })
+    )
+      return;
   } catch {
     // ignore
   }
