@@ -219,9 +219,9 @@ else
     # On Linux, install.sh writes to /etc/systemd/system and uses systemctl,
     # which typically requires root. Use sudo when not already running as root.
     if [[ "$(id -u)" -ne 0 ]]; then
-      run_or_dry sudo -E bash "$SCRIPT_DIR/install.sh"
+      run_or_dry sudo -E SERVICE_NAME="$NEW_SYSTEMD" bash "$SCRIPT_DIR/install.sh"
     else
-      run_or_dry bash "$SCRIPT_DIR/install.sh"
+      run_or_dry SERVICE_NAME="$NEW_SYSTEMD" bash "$SCRIPT_DIR/install.sh"
     fi
   else
     log "[DRY RUN] Would run install.sh with DASHBOARD_PORT=$PARALLEL_PORT (via sudo if needed)"
