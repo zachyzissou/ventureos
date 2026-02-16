@@ -13,6 +13,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import Ajv from 'ajv';
 
 import {
   type QueueDocument,
@@ -26,7 +27,13 @@ import {
 // ============================================================================
 
 export interface MigrationResult {
-  /** Whether the migration was applied. */
+  /**
+   * Whether migration changes were marked for persistence.
+   *
+   * - In `migrateQueueFile`, `true` means migrated content was written to disk.
+   * - In `migrateQueueDocument`, `true` means migration is non-dry-run and
+   *   should be persisted by the caller.
+   */
   applied: boolean;
   /** Source version. */
   fromVersion: number;
@@ -50,6 +57,23 @@ export interface MigrationOptions {
   /** Target version. Default: QUEUE_SCHEMA_VERSION. */
   targetVersion?: number;
 }
+
+const ajv = new Ajv({ allErrors: true, strict: false });
+const validateQueueDocument = ajv.compile({
+  type: 'object',
+  required: ['version', 'generated_at', 'items'],
+  additionalProperties: true,
+  properties: {
+    version: { type: 'integer', minimum: 1 },
+    generated_at: { type: 'string' },
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+      },
+    },
+  },
+});
 
 // ============================================================================
 // Migration Functions
@@ -83,7 +107,14 @@ export function migrateQueueDocument(
 
   if (fromVersion > targetVersion) {
     // Rollback path
-    return rollbackDocument(doc, targetVersion);
+    const rollback = rollbackDocument(doc, targetVersion);
+    return {
+      document: rollback.document,
+      result: {
+        ...rollback.result,
+        applied: rollback.result.applied && !options.dryRun,
+      },
+    };
   }
 
   // Forward migration chain
@@ -136,8 +167,22 @@ export async function migrateQueueFile(
   options: MigrationOptions = {}
 ): Promise<MigrationResult> {
   const raw = await fs.readFile(filePath, 'utf8');
-  const doc: QueueDocument = JSON.parse(raw);
 
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err: any) {
+    throw new Error(`Invalid queue JSON at ${filePath}: ${err.message}`, { cause: err });
+  }
+
+  if (!validateQueueDocument(parsed)) {
+    const details = (validateQueueDocument.errors ?? [])
+      .map((e) => `${e.instancePath || '/'} ${e.message ?? 'is invalid'}`)
+      .join('; ');
+    throw new Error(`Queue document schema validation failed at ${filePath}: ${details}`);
+  }
+
+  const doc = parsed as QueueDocument;
   const { document, result } = migrateQueueDocument(doc, options);
 
   if (result.applied && !options.dryRun) {

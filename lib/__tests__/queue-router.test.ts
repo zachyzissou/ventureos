@@ -115,7 +115,7 @@ describe('QueueRouter', () => {
       const approved = router.route(makeTask({ requiresApproval: true }));
       const noApproval = router.route(makeTask({ requiresApproval: false }));
 
-      expect(approved.breakdown.approvalPenalty).toBe(-200);
+      expect(approved.breakdown.approvalPenalty).toBe(-900);
       expect(noApproval.breakdown.approvalPenalty).toBe(0);
       expect(approved.score).toBeLessThan(noApproval.score);
     });
@@ -247,6 +247,29 @@ describe('QueueRouter', () => {
       const errors = router.validateTask(makeTask({ businessUnit: 'unknown' }));
       expect(errors).toHaveLength(1);
       expect(errors[0]).toContain('Unknown business unit');
+    });
+
+    it('validates mission metadata from missionContext when top-level fields are missing', () => {
+      const router = makeRouter();
+      const errors = router.validateTask(makeTask({
+        missionContext: {
+          businessUnit: 'ventureos',
+          missionType: 'content', // not allowed for ventureos
+        },
+      }));
+
+      expect(errors.some((e) => e.includes('not allowed'))).toBe(true);
+    });
+
+    it('flags missionType without businessUnit when only missionContext provides mission type', () => {
+      const router = makeRouter();
+      const errors = router.validateTask(makeTask({
+        missionContext: {
+          missionType: 'build',
+        },
+      }));
+
+      expect(errors).toContain("Mission type 'build' provided without business unit");
     });
 
     it('detects missionContext mismatch', () => {

@@ -141,24 +141,24 @@ describe('Queue Migration', () => {
   });
 
   describe('rollback v2 → v1', () => {
-    it('strips missionContext on rollback', () => {
-      const doc = v2Doc([
-        {
-          id: 'task-1',
-          createdAt: '2026-02-15',
-          tier: 'P1',
-          status: 'queued',
-          title: 'Test',
-          businessUnit: 'bloom',
-          missionType: 'build',
-          role: 'Producer',
-          missionContext: { businessUnit: 'bloom', missionType: 'build', role: 'Producer' },
-          attempts: 0,
-          maxAttempts: 3,
-        },
-      ]);
+    const rollbackDoc = v2Doc([
+      {
+        id: 'task-1',
+        createdAt: '2026-02-15',
+        tier: 'P1',
+        status: 'queued',
+        title: 'Test',
+        businessUnit: 'bloom',
+        missionType: 'build',
+        role: 'Producer',
+        missionContext: { businessUnit: 'bloom', missionType: 'build', role: 'Producer' },
+        attempts: 0,
+        maxAttempts: 3,
+      },
+    ]);
 
-      const { document, result } = migrateQueueDocument(doc, { targetVersion: 1 });
+    it('strips missionContext on rollback', () => {
+      const { document, result } = migrateQueueDocument(rollbackDoc, { targetVersion: 1 });
 
       expect(result.applied).toBe(true);
       expect(result.fromVersion).toBe(2);
@@ -167,6 +167,11 @@ describe('Queue Migration', () => {
       expect(document.items[0].businessUnit).toBe('bloom'); // Preserved
       expect(document.items[0].missionType).toBe('build');  // Preserved
       expect((document.items[0] as any).missionContext).toBeUndefined(); // Stripped
+    });
+
+    it('marks rollback dry-run as not applied', () => {
+      const { result } = migrateQueueDocument(rollbackDoc, { targetVersion: 1, dryRun: true });
+      expect(result.applied).toBe(false);
     });
   });
 
@@ -210,6 +215,16 @@ describe('Queue Migration', () => {
 
       const after = await fs.readFile(filePath, 'utf8');
       expect(after).toBe(original);
+    });
+
+    it('fails with schema validation error for malformed queue document', async () => {
+      const filePath = path.join(tmpDir, 'queue-invalid.json');
+      await fs.writeFile(
+        filePath,
+        JSON.stringify({ version: 1, generated_at: '2026-02-15', items: 'not-an-array' })
+      );
+
+      await expect(migrateQueueFile(filePath)).rejects.toThrow('schema validation failed');
     });
 
     it('skips backup when disabled', async () => {

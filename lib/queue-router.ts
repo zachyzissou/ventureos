@@ -91,7 +91,7 @@ const MAX_AGE_BONUS = 100;
 const AGE_BONUS_RATE_MS = 60_000; // 1 point per minute
 
 /** Penalty applied to tasks awaiting approval (pushes them down). */
-const APPROVAL_PENDING_PENALTY = -200;
+const APPROVAL_PENDING_PENALTY = -900;
 
 // ============================================================================
 // Router
@@ -264,14 +264,19 @@ export class QueueRouter {
   validateTask(task: QueueTask): string[] {
     const errors: string[] = [];
 
-    if (task.businessUnit) {
-      const err = this.registry.validate(task.businessUnit);
+    const businessUnit = task.businessUnit ?? task.missionContext?.businessUnit;
+    const missionType = task.missionType ?? task.missionContext?.missionType;
+
+    if (businessUnit) {
+      const err = this.registry.validate(businessUnit);
       if (err) errors.push(err);
     }
 
-    if (task.missionType && task.businessUnit) {
-      const err = this.registry.validateMissionType(task.businessUnit, task.missionType);
+    if (missionType && businessUnit) {
+      const err = this.registry.validateMissionType(businessUnit, missionType);
       if (err) errors.push(err);
+    } else if (missionType && !businessUnit) {
+      errors.push(`Mission type '${missionType}' provided without business unit`);
     }
 
     // Cross-check missionContext consistency
