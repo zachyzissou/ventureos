@@ -108,6 +108,8 @@ A P2 FotoPress build task needing approval:
 500 (P2) + 100 (low) + 30 (build) + 0 (new) + (-900) (approval) = -270
 ```
 
+> **Note:** Negative scores are intentional. The strong approval penalty (-900) ensures that tasks requiring approval are deprioritized below ready-to-run tasks, even across priority tiers. Tasks are sorted by score (highest first), so a ready P3 task (score ~250+) will be picked before an approval-required P2 task (score potentially negative).
+
 ## Usage
 
 ### Enqueue a Task
