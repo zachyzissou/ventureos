@@ -106,4 +106,78 @@ test.describe('XSS: dashboard feed search highlighting', () => {
     await expect(page.locator('#feed-content .search-highlight')).toHaveCount(0);
     await expect(page.locator('#feed-content')).toContainText(payload);
   });
+
+  test('ReDoS protection — rejects search terms longer than 200 characters', async ({ page }) => {
+    await loadHarness(page);
+
+    const longTerm = 'a'.repeat(201);
+    const result = await page.evaluate(({ longTerm }) => {
+      const container = document.createElement('div');
+      container.id = 'feed-content';
+      document.getElementById('root')?.appendChild(container);
+
+      return (window as any).feedSearchHighlight.renderHighlightedText(
+        container,
+        'some text with ' + 'a'.repeat(201) + ' in it',
+        longTerm,
+      );
+    }, { longTerm });
+
+    expect(result).toBe(false);
+    await expect(page.locator('#feed-content .search-highlight')).toHaveCount(0);
+  });
+
+  test('Regex safety — special characters are escaped properly', async ({ page }) => {
+    await loadHarness(page);
+
+    const specials = '.*+?^${}()|[]\\';
+    const result = await page.evaluate(({ specials }) => {
+      const container = document.createElement('div');
+      container.id = 'feed-content';
+      document.getElementById('root')?.appendChild(container);
+
+      const text = 'before ' + specials + ' after';
+      return (window as any).feedSearchHighlight.renderHighlightedText(container, text, specials);
+    }, { specials });
+
+    expect(result).toBe(true);
+    await expect(page.locator('#feed-content .search-highlight')).toHaveText(specials);
+  });
+
+  test('Unicode support — emoji and accented characters', async ({ page }) => {
+    await loadHarness(page);
+
+    const result = await page.evaluate(() => {
+      const container = document.createElement('div');
+      container.id = 'feed-content';
+      document.getElementById('root')?.appendChild(container);
+
+      return (window as any).feedSearchHighlight.renderHighlightedText(
+        container,
+        'Hello café world 🌍',
+        'café',
+      );
+    });
+
+    expect(result).toBe(true);
+    await expect(page.locator('#feed-content .search-highlight')).toHaveText('café');
+  });
+
+  test('Error resilience — null/undefined inputs do not throw', async ({ page }) => {
+    await loadHarness(page);
+
+    const results = await page.evaluate(() => {
+      const container = document.createElement('div');
+      container.id = 'feed-content';
+      document.getElementById('root')?.appendChild(container);
+
+      const api = (window as any).feedSearchHighlight;
+      const r1 = api.renderHighlightedText(container, null, 'test');
+      const r2 = api.renderHighlightedText(container, 'text', null);
+      const r3 = api.renderHighlightedText(null, 'text', 'test');
+      return [r1, r2, r3];
+    });
+
+    expect(results).toEqual([false, false, false]);
+  });
 });
