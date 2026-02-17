@@ -53,9 +53,12 @@ function parseUrl(req: IncomingMessage): URL | null {
 
 function queryPsionicStats(db: Database.Database): PsionicStatSnapshot[] {
   const stmt = db.prepare(
-    `SELECT snapshot_date, claims_with_citations, total_claims,
-            knowledge_gaps, cross_domain_links, source_count,
-            mttr_minutes, freshness_hours
+    `SELECT snapshot_date, agent_id,
+            psionic_mastery, energy, shields, warp_technology, psi_reach,
+            memory_count, unique_domains, canonical_edits,
+            p95_latency_s, mttr_minutes,
+            acceptance_rate, success_rate, approval_accuracy,
+            tasks_completed, warp_tech_inputs
      FROM psionic_stats ORDER BY snapshot_date DESC`,
   );
   return stmt.all() as PsionicStatSnapshot[];
@@ -170,17 +173,20 @@ function handleStats(
     const latest = snapshots[0];
     const stats: Record<string, number> = {};
     if (latest) {
-      stats['claims_with_citations'] = latest.claims_with_citations;
-      stats['total_claims'] = latest.total_claims;
-      stats['knowledge_gaps'] = latest.knowledge_gaps;
-      stats['cross_domain_links'] = latest.cross_domain_links;
-      stats['source_count'] = latest.source_count;
+      stats['psionic_mastery'] = latest.psionic_mastery;
+      stats['energy'] = latest.energy;
+      stats['shields'] = latest.shields;
+      stats['warp_technology'] = latest.warp_technology;
+      stats['psi_reach'] = latest.psi_reach;
+      stats['memory_count'] = latest.memory_count;
+      stats['unique_domains'] = latest.unique_domains;
+      stats['canonical_edits'] = latest.canonical_edits;
+      stats['p95_latency_s'] = latest.p95_latency_s;
       stats['mttr_minutes'] = latest.mttr_minutes;
-      stats['freshness_hours'] = latest.freshness_hours;
-      if (latest.total_claims > 0) {
-        stats['citation_rate'] =
-          Math.round((latest.claims_with_citations / latest.total_claims) * 100) / 100;
-      }
+      stats['acceptance_rate'] = latest.acceptance_rate;
+      stats['success_rate'] = latest.success_rate;
+      stats['approval_accuracy'] = latest.approval_accuracy;
+      stats['tasks_completed'] = latest.tasks_completed;
     }
     const body: RpgStatsResponse = { stats, snapshots };
     sendJson(res, 200, body);
@@ -247,10 +253,11 @@ function handleTacticalOverlay(
   const latest = snapshots[0];
   const stats: Record<string, number> = {};
   if (latest) {
-    stats['claims_with_citations'] = latest.claims_with_citations;
-    stats['total_claims'] = latest.total_claims;
-    stats['knowledge_gaps'] = latest.knowledge_gaps;
-    stats['cross_domain_links'] = latest.cross_domain_links;
+    stats['psionic_mastery'] = latest.psionic_mastery;
+    stats['energy'] = latest.energy;
+    stats['shields'] = latest.shields;
+    stats['warp_technology'] = latest.warp_technology;
+    stats['psi_reach'] = latest.psi_reach;
   }
 
   const edges = queryKhalaNetwork(db);

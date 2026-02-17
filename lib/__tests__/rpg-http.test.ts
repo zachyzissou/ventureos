@@ -48,14 +48,26 @@ beforeAll((done) => {
   db = new Database(dbPath);
   db.exec(`
     CREATE TABLE psionic_stats (
-      snapshot_date TEXT NOT NULL,
-      claims_with_citations INTEGER DEFAULT 0,
-      total_claims INTEGER DEFAULT 0,
-      knowledge_gaps INTEGER DEFAULT 0,
-      cross_domain_links INTEGER DEFAULT 0,
-      source_count INTEGER DEFAULT 0,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id TEXT NOT NULL,
+      snapshot_date DATE NOT NULL,
+      psionic_mastery INTEGER DEFAULT 0,
+      energy INTEGER DEFAULT 0,
+      shields INTEGER DEFAULT 0,
+      warp_technology INTEGER DEFAULT 0,
+      psi_reach INTEGER DEFAULT 0,
+      memory_count INTEGER DEFAULT 0,
+      unique_domains INTEGER DEFAULT 0,
+      canonical_edits INTEGER DEFAULT 0,
+      p95_latency_s REAL DEFAULT 0,
       mttr_minutes REAL DEFAULT 0,
-      freshness_hours REAL DEFAULT 0
+      acceptance_rate REAL DEFAULT 0,
+      success_rate REAL DEFAULT 0,
+      approval_accuracy REAL DEFAULT 0,
+      tasks_completed INTEGER DEFAULT 0,
+      warp_tech_inputs TEXT,
+      calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(agent_id, snapshot_date)
     );
 
     CREATE TABLE interaction_logs (
@@ -79,8 +91,8 @@ beforeAll((done) => {
   `);
 
   // Seed data
-  db.prepare(`INSERT INTO psionic_stats VALUES ('2026-02-15', 4, 8, 1, 1, 3, 20.0, 10.0)`).run();
-  db.prepare(`INSERT INTO psionic_stats VALUES ('2026-02-14', 9, 10, 3, 2, 5, 12.5, 4.0)`).run();
+  db.prepare(`INSERT INTO psionic_stats (agent_id, snapshot_date, psionic_mastery, energy, shields, warp_technology, psi_reach, memory_count, unique_domains, canonical_edits, p95_latency_s, mttr_minutes, acceptance_rate, success_rate, approval_accuracy, tasks_completed) VALUES ('atlas', '2026-02-15', 72, 85, 60, 45, 55, 120, 8, 15, 1.2, 20.0, 0.85, 0.92, 0.88, 42)`).run();
+  db.prepare(`INSERT INTO psionic_stats (agent_id, snapshot_date, psionic_mastery, energy, shields, warp_technology, psi_reach, memory_count, unique_domains, canonical_edits, p95_latency_s, mttr_minutes, acceptance_rate, success_rate, approval_accuracy, tasks_completed) VALUES ('atlas', '2026-02-14', 68, 80, 58, 42, 50, 110, 7, 12, 1.5, 12.5, 0.82, 0.90, 0.85, 38)`).run();
   db.prepare(`INSERT INTO interaction_logs VALUES ('2026-02-14 12:00:00', 'atlas', 'deploy_success', 1200)`).run();
   db.prepare(`INSERT INTO interaction_logs VALUES ('2026-02-14 13:00:00', 'sentinel', 'escalation_true', 50)`).run();
   db.prepare(`INSERT INTO interaction_logs VALUES ('2026-02-15 09:00:00', 'oracle', 'verify', 900)`).run();
@@ -132,9 +144,11 @@ describe('RPG HTTP API', () => {
       const { status, body } = await fetch('/api/rpg/stats');
       expect(status).toBe(200);
       expect(body.stats).toBeDefined();
-      expect(body.stats.total_claims).toBe(8);
-      expect(body.stats.claims_with_citations).toBe(4);
-      expect(body.stats.citation_rate).toBe(0.5);
+      expect(body.stats.psionic_mastery).toBe(72);
+      expect(body.stats.energy).toBe(85);
+      expect(body.stats.shields).toBe(60);
+      expect(body.stats.warp_technology).toBe(45);
+      expect(body.stats.mttr_minutes).toBe(20.0);
       expect(body.snapshots).toHaveLength(2);
       expect(body.snapshots[0].snapshot_date).toBe('2026-02-15');
     });
