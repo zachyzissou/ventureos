@@ -826,6 +826,74 @@ function getRateLimitEvents(): Array<{ ts: number; type: string; detail: string 
 let usageCache: UsageWindowsResponse | null = null;
 let usageCacheTime: number = 0;
 
+// ─── CPU Sampler (delta-based, matches `top` semantics) ──────────────────────
+//
+// os.loadavg() counts ALL runnable threads including those blocked on I/O,
+// which inflates CPU% significantly on macOS (and multi-core Linux).
+// Instead we sample os.cpus() time deltas to measure actual CPU utilisation.
+
+interface CpuTimes {
+  user: number;
+  nice: number;
+  sys: number;
+  idle: number;
+  irq: number;
+}
+
+let _prevCpuSample: CpuTimes[] | null = null;
+let _prevCpuSampleTime: number = 0;
+let _lastCpuPercent: number = 0;
+
+/** Snapshot current aggregate CPU times from os.cpus(). */
+function _snapshotCpuTimes(): CpuTimes[] {
+  return os.cpus().map((c) => ({ ...c.times }));
+}
+
+/**
+ * Return CPU usage percentage based on the delta between two os.cpus() samples.
+ * Falls back to load-average heuristic only on the very first call (no prior sample).
+ */
+export function sampleCpuPercent(): number {
+  const now: number = Date.now();
+  const current: CpuTimes[] = _snapshotCpuTimes();
+
+  if (_prevCpuSample && _prevCpuSample.length === current.length) {
+    let totalDelta: number = 0;
+    let idleDelta: number = 0;
+    for (let i = 0; i < current.length; i++) {
+      const p: CpuTimes = _prevCpuSample[i];
+      const c: CpuTimes = current[i];
+      const pTotal: number = p.user + p.nice + p.sys + p.idle + p.irq;
+      const cTotal: number = c.user + c.nice + c.sys + c.idle + c.irq;
+      totalDelta += cTotal - pTotal;
+      idleDelta += c.idle - p.idle;
+    }
+    _prevCpuSample = current;
+    _prevCpuSampleTime = now;
+
+    if (totalDelta > 0) {
+      _lastCpuPercent = Math.min(Math.round(((totalDelta - idleDelta) / totalDelta) * 100), 100);
+    }
+    return _lastCpuPercent;
+  }
+
+  // First call — no prior sample; fall back to load-average as an approximation
+  _prevCpuSample = current;
+  _prevCpuSampleTime = now;
+
+  try {
+    const loadAvg1m: number = os.loadavg()[0];
+    const numCpus: number = current.length || 1;
+    _lastCpuPercent = Math.min(Math.round((loadAvg1m / numCpus) * 100), 100);
+  } catch {
+    _lastCpuPercent = 0;
+  }
+  return _lastCpuPercent;
+}
+
+// Seed the first sample so the first real call has a delta to work with.
+sampleCpuPercent();
+
 // ─── System Stats ────────────────────────────────────────────────────────────
 
 function getSystemStats(): SystemStats {
@@ -846,14 +914,8 @@ function getSystemStats(): SystemStats {
     const loadAvg: number[] = os.loadavg();
     const uptime: number = os.uptime();
 
-    let cpuUsage: number = 0;
-    try {
-      const loadAvg1m: number = os.loadavg()[0];
-      const numCpus: number = os.cpus().length;
-      cpuUsage = Math.min(Math.round((loadAvg1m / numCpus) * 100), 100);
-    } catch {
-      cpuUsage = 0;
-    }
+    // Delta-based CPU usage — see sampleCpuPercent() above.
+    const cpuUsage: number = sampleCpuPercent();
 
     let diskPercent: number = 0;
     let diskUsed: string = '';
