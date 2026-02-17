@@ -53,11 +53,14 @@ import type {
 } from './types.js';
 
 // Shared VentureOS libraries (Issue #79)
-import { toSafeError } from '../../lib/error-handler.js';
-import {
+import errors from '../../lib/error-handler.js';
+import paths from '../../lib/paths.js';
+
+const { toSafeError } = errors as typeof import('../../lib/error-handler.js');
+const {
   VENTUREOS_ROOT,
   OPENCLAW_DIR,
-  SHARED_CONTEXT_DIR as SHARED_CONTEXT,
+  SHARED_CONTEXT_DIR: SHARED_CONTEXT,
   KPI_DIR,
   OBSERVATIONS_DIR,
   RPG_ROOT,
@@ -65,7 +68,7 @@ import {
   ACTIVE_WORK_PATH,
   PRIORITIES_PATH,
   agentSessionsDir,
-} from '../../lib/paths.js';
+} = paths as typeof import('../../lib/paths.js');
 
 // Phase 5.1 Security Middleware
 import {
@@ -3288,6 +3291,8 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   res.writeHead(404);
   res.end('Not found');
 });
+
+export { server };
 
 server.listen(PORT, HOST, () => {
   console.log(`Dashboard: http://${HOST}:${PORT}`);

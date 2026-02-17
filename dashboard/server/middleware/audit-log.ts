@@ -16,7 +16,9 @@ import path from 'node:path';
 
 import type { IncomingMessage } from 'node:http';
 import type { AuditLogEntry } from '../types.js';
-import { LOG_DIR } from '../../../lib/paths.js';
+import paths from '../../../lib/paths.js';
+
+const { LOG_DIR } = paths as typeof import('../../../lib/paths.js');
 export const LOG_FILE: string = path.join(LOG_DIR, 'tactical-map-access.log');
 
 // Ensure log directory exists
