@@ -40,6 +40,16 @@ export interface SquadAgent {
   runTask(task: MissionTask, ctx: AgentTaskContext): Promise<AgentTaskOutput>;
 }
 
+/**
+ * Optional task-level lifecycle hooks for runtime integration.
+ * All hooks are optional and async-safe.
+ * Fixes #184 — ConversationEngine runtime integration.
+ */
+export interface SquadExecutionHooks {
+  onTaskStart?(task: MissionTask, agentId: string): Promise<void>;
+  onTaskComplete?(task: MissionTask, result: TaskRunResult): Promise<void>;
+}
+
 export interface SquadCoordinatorConfig {
   agents: SquadAgent[];
   /** If true, keep running remaining tasks after a failure. Default: true. */
@@ -178,7 +188,7 @@ export class SquadCoordinator {
    * - If parallelize=false: runs in listed order.
    * - If parallelize=true: runs tasks whose dependencies are satisfied.
    */
-  async executePlan(missionId: string, brief: MissionBrief, plan: MissionPlan): Promise<MissionExecution> {
+  async executePlan(missionId: string, brief: MissionBrief, plan: MissionPlan, hooks?: SquadExecutionHooks): Promise<MissionExecution> {
     const startedAt = iso(this.now);
     const taskStatus: Record<string, MissionTaskStatus> = {};
     for (const t of plan.tasks) taskStatus[t.taskId] = 'pending';
@@ -231,19 +241,25 @@ export class SquadCoordinator {
     const runOne = async (task: MissionTask): Promise<void> => {
       const agent = this.agentsById.get(task.role);
       if (!agent) {
-        taskStatus[task.taskId] = 'failed';
-        results.push({
+        const failResult: TaskRunResult = {
           taskId: task.taskId,
           agentId: task.role,
           startedAt: iso(this.now),
           finishedAt: iso(this.now),
           status: 'failed',
           error: { message: `No agent registered for role: ${task.role}` },
-        });
+        };
+        taskStatus[task.taskId] = 'failed';
+        results.push(failResult);
+        // Issue #184: Notify hooks of task failure
+        try { await hooks?.onTaskComplete?.(task, failResult); } catch { /* hook error ignored */ }
         markSkippedDependents(task.taskId);
         if (!this.continueOnFailure) throw new Error(`Task failed: ${task.title} (no agent for ${task.role})`);
         return;
       }
+
+      // Issue #184: Notify hooks of task start
+      try { await hooks?.onTaskStart?.(task, agent.id); } catch { /* hook error ignored */ }
 
       taskStatus[task.taskId] = 'running';
       const started = iso(this.now);
@@ -251,7 +267,7 @@ export class SquadCoordinator {
         const out = await agent.runTask(task, ctx);
         const finished = iso(this.now);
         taskStatus[task.taskId] = 'succeeded';
-        results.push({
+        const successResult: TaskRunResult = {
           taskId: task.taskId,
           agentId: agent.id,
           startedAt: started,
@@ -259,18 +275,24 @@ export class SquadCoordinator {
           status: 'succeeded',
           summary: out?.summary,
           artifacts: out?.artifacts,
-        });
+        };
+        results.push(successResult);
+        // Issue #184: Notify hooks of task completion
+        try { await hooks?.onTaskComplete?.(task, successResult); } catch { /* hook error ignored */ }
       } catch (err: any) {
         const finished = iso(this.now);
         taskStatus[task.taskId] = 'failed';
-        results.push({
+        const failResult: TaskRunResult = {
           taskId: task.taskId,
           agentId: agent.id,
           startedAt: started,
           finishedAt: finished,
           status: 'failed',
           error: { message: String(err?.message ?? err ?? 'Unknown error'), name: err?.name },
-        });
+        };
+        results.push(failResult);
+        // Issue #184: Notify hooks of task failure
+        try { await hooks?.onTaskComplete?.(task, failResult); } catch { /* hook error ignored */ }
         markSkippedDependents(task.taskId);
         if (!this.continueOnFailure) throw err;
       }
