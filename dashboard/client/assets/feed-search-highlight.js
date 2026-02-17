@@ -5,7 +5,9 @@
   }
 
   // Escape regex special characters to prevent regex injection and ReDoS attacks
-  // Note: hyphen doesn't need escaping outside character classes
+  // Note: Hyphen is NOT escaped because it only has special meaning inside character
+  // classes (e.g., [a-z]). Escaping it as `\-` with the `u` flag causes an error.
+  // All other regex metacharacters are properly escaped.
   function escapeRegex(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
