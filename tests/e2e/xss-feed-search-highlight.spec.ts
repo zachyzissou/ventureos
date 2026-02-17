@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const helperScriptPath = path.resolve(process.cwd(), 'dashboard/client/assets/feed-search-highlight.js');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const helperScriptPath = path.resolve(__dirname, '../../dashboard/client/assets/feed-search-highlight.js');
 const helperScript = fs.readFileSync(helperScriptPath, 'utf8');
 const APP_ORIGIN = 'http://feed-highlight.test';
 

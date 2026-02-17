@@ -1,7 +1,8 @@
 (function attachFeedSearchHighlight(globalScope) {
   function normalizeSearchTerm(term) {
     if (typeof term !== 'string') return '';
-    return term;
+    const trimmed = term.trim();
+    return trimmed;
   }
 
   // Escape regex special characters to prevent regex injection and ReDoS attacks

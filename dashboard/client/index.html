@@ -4020,10 +4020,10 @@ function applyFeedFilter() {
       }
 
       if (feedSearchTerm) {
-        matchSearch = text.toLowerCase().includes(feedSearchTerm);
-        if (matchSearch) {
-          window.feedSearchHighlight?.renderHighlightedText(content, text, feedSearchTerm);
-        } else {
+        matchSearch = window.feedSearchHighlight
+          ? window.feedSearchHighlight.renderHighlightedText(content, text, feedSearchTerm)
+          : text.toLowerCase().includes(feedSearchTerm);
+        if (!matchSearch) {
           content.textContent = text;
         }
       } else {
