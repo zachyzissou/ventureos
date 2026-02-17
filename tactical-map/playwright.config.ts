@@ -5,6 +5,7 @@ export default defineConfig({
   testMatch: [
     'e2e/**/*.spec.ts',
     'performance/**/*.test.ts',
+    'accessibility/**/*.test.ts',
   ],
   timeout: 30_000,
   use: {

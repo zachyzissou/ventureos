@@ -265,8 +265,43 @@ async function bootstrap() {
     interactionBus.emit({ type: 'agent:click', agentId: 'nexus', timestamp: performance.now() });
   });
 
+  // ── Accessibility: screen reader announcements ──────────────────
+  const srAnnouncements = document.getElementById('sr-announcements');
+  const srSummary = document.getElementById('sr-agent-summary');
+  let prevStates: Record<string, string> = {};
+
+  function announceStateChanges(s: MapState) {
+    const changes: string[] = [];
+    for (const id of AGENT_ORDER) {
+      const curr = s.agents[id].state;
+      if (prevStates[id] && prevStates[id] !== curr) {
+        changes.push(`${id} is now ${curr.toLowerCase()}`);
+      }
+      prevStates[id] = curr;
+    }
+    if (changes.length > 0 && srAnnouncements) {
+      srAnnouncements.textContent = changes.join('. ') + '.';
+    }
+    if (srSummary) {
+      const counts: Record<string, number> = {};
+      for (const id of AGENT_ORDER) {
+        const st = s.agents[id].state;
+        counts[st] = (counts[st] || 0) + 1;
+      }
+      const parts = Object.entries(counts).map(([k, v]) => `${v} ${k.toLowerCase()}`);
+      srSummary.textContent = `Agent status: ${parts.join(', ')}. Keyboard: R reset, +/- zoom, arrows pan.`;
+    }
+  }
+
+  // Accessible label on canvas element
+  if (app.canvas) {
+    app.canvas.setAttribute('role', 'img');
+    app.canvas.setAttribute('aria-label', 'Tactical map visualization showing agent positions, states, and network connections');
+  }
+
   // Store → view binding
   mapStore.subscribe((s) => {
+    announceStateChanges(s);
     // Khala bonds + resource overlays follow agent positions.
     const pos = {} as Record<AgentId, Point>;
     for (const id of AGENT_ORDER) pos[id] = s.agents[id].position;
