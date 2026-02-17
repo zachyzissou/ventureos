@@ -42,7 +42,9 @@ beforeAll(async () => {
   const openclawDir = path.join(tmpRoot, '.openclaw');
   const sessionsDir = path.join(openclawDir, 'agents', 'main', 'sessions');
 
-  workflowDir = path.join('/tmp', 'agent-smoke-workflows');
+  // Keep under /tmp (not tmpRoot) because listWorkflowLogFiles() scans /tmp for agent-* dirs.
+  // Use a unique suffix to avoid parallel-run conflicts.
+  workflowDir = path.join('/tmp', `agent-smoke-workflows-${process.pid}`);
   fs.mkdirSync(workflowDir, { recursive: true });
 
   fs.mkdirSync(kpiDir, { recursive: true });
