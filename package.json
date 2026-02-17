@@ -8,6 +8,7 @@
     "dashboard"
   ],
   "scripts": {
+    "postinstall": "bash scripts/ensure-native-modules.sh",
     "test": "jest --runInBand && npm run test --workspace=dashboard",
     "test:dashboard": "npm run test --workspace=dashboard",
     "test:dashboard:coverage": "npm run test:coverage --workspace=dashboard",
