@@ -7,6 +7,7 @@
 export { handleKpis } from './kpis.js';
 export { handleObservations } from './observations.js';
 export { handleAgentHealth } from './agent-health.js';
+export { handleLogs } from './logs.js';
 export { handleRpg, handleRpgApi } from './rpg.js';
 export { handleConversation, handleConversationApi } from './conversation.js';
 export { handleTacticalMapControls } from './tactical-map-controls.js';

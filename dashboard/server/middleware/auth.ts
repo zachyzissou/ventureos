@@ -21,7 +21,7 @@ const { LOG_DIR, DASHBOARD_DATA_DIR } = paths as typeof import('../../../lib/pat
  * Canonical data directory — resolves via lib/paths.ts → VENTUREOS_ROOT/dashboard/data.
  * Independent of import.meta.dirname so dev and dist modes use the same token.
  */
-const DATA_DIR: string = DASHBOARD_DATA_DIR;
+const DATA_DIR: string = DASHBOARD_DATA_DIR ?? path.join(import.meta.dirname, '..', '..', 'data');
 const TOKEN_PATH: string = path.join(DATA_DIR, '.api-token');
 const ACCESS_LOG: string = path.join(LOG_DIR, 'tactical-map-access.log');
 
