@@ -190,7 +190,7 @@ describe('Dashboard HTTP smoke tests', () => {
   });
 
   it('serves /rpg/ files to authenticated users (Issue #145)', async () => {
-    // This test runs after the login test populates authCookie
+    // This test logs in and derives its own auth cookie; it does not depend on other tests or execution order.
     const loginRes = await fetch(`${BASE_URL}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
