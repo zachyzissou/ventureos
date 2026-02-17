@@ -98,6 +98,7 @@ import { handleRpgApi } from './routes/rpg.js';
 import { handleConversationApi } from './routes/conversation.js';
 import { handleTacticalMapControls } from './routes/tactical-map-controls.js';
 import { handleLogs } from './routes/logs.js';
+import { handleTacticalMapReplay } from './routes/tactical-map-replay.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -2857,6 +2858,21 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
         dataDir,
         sendJson,
         readRequestBody,
+      })
+    )
+      return;
+  } catch {
+    // ignore
+  }
+
+  // Tactical Map Replay Sessions — Issue #193
+  try {
+    if (
+      await handleTacticalMapReplay(req, res, {
+        dataDir,
+        sendJson,
+        readRequestBody,
+        clampInt,
       })
     )
       return;

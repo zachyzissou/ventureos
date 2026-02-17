@@ -644,3 +644,33 @@ export interface WorkflowEvent {
   cyclesUsed?: string;
   [key: string]: unknown;
 }
+
+// ─── Tactical Map Replay Types ───────────────────────────────────────────────
+
+/** Stores captured during a replay session. */
+export type ReplayCapturedStore = 'map' | 'economy' | 'health';
+
+/** Metadata for a single replay session. */
+export interface ReplaySessionMeta {
+  id: string;
+  name: string;
+  description?: string;
+  startedAt: number;
+  endedAt: number | null;
+  durationMs: number;
+  eventCount: number;
+  checkpointCount: number;
+  chunkCount: number;
+  compressedBytes: number;
+  schemaVersion: number;
+  tags: string[];
+  capturedStores: ReplayCapturedStore[];
+}
+
+/** Paginated response for listing replay sessions. */
+export interface ReplaySessionListResponse {
+  sessions: ReplaySessionMeta[];
+  totalCount: number;
+  pageSize: number;
+  page: number;
+}
