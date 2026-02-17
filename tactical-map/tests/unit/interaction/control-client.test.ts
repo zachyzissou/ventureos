@@ -6,6 +6,7 @@ const mockFetch = vi.fn();
 
 describe('data/control-client', () => {
   beforeEach(() => {
+    mockFetch.mockReset();
     vi.stubGlobal('fetch', mockFetch);
     vi.stubGlobal('location', { origin: 'http://localhost:8001' });
     // Mock localStorage for auth token
