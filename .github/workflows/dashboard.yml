@@ -36,12 +36,17 @@ jobs:
 
       - name: TypeScript compile
         working-directory: dashboard
-        run: npx tsc -p tsconfig.json --outDir dist
+        run: |
+          npx tsc -p tsconfig.json --outDir dist
+          # Mark dist/lib/ as CommonJS — lib/*.ts compiles to CJS but dist/lib/
+          # lands under dashboard/ ("type": "module"). See LOCAL-DEPLOYMENT.md.
+          mkdir -p dist/lib
+          echo '{ "type": "commonjs" }' > dist/lib/package.json
 
       - name: Verify build output
         run: |
-          # rootDir=".." in tsconfig means output mirrors repo structure under dist/
           test -f dashboard/dist/dashboard/server/server.js || (echo "❌ dist/dashboard/server/server.js not found" && ls -R dashboard/dist/ 2>/dev/null && exit 1)
+          test -f dashboard/dist/lib/package.json || (echo "❌ dist/lib/package.json (CJS marker) not found" && exit 1)
           echo "✅ Build output verified"
 
       - name: Run unit tests
