@@ -1337,8 +1337,17 @@ body {
     
     <div class="page active" id="overview">
       <div class="page-header">
-        <h1 class="page-title">Overview</h1>
-        <p class="page-subtitle">Agent activity and system performance</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h1 class="page-title">Overview</h1>
+            <p class="page-subtitle">Agent activity and system performance</p>
+          </div>
+          <div id="liveIndicator" style="display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-muted);transition:all 0.3s;">
+            <span id="liveDot" style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);transition:all 0.3s;"></span>
+            <span id="liveLabel">Connecting…</span>
+            <span id="liveAge" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);"></span>
+          </div>
+        </div>
       </div>
 
       <div class="grid mb-24" style="grid-template-columns: repeat(3, 1fr);">
@@ -4986,6 +4995,175 @@ setTimeout(() => {
   if (costs.perDay) calculateStreak();
   updatePageTitle();
 }, 2000);
+
+// ─── Live Telemetry SSE (Live Data V1) ──────────────────────────────────────
+let telemetrySource = null;
+let telemetryLastTs = 0;
+let telemetryReconnectTimer = null;
+
+function connectLiveTelemetry() {
+  if (telemetrySource) return;
+  
+  const dot = document.getElementById('liveDot');
+  const label = document.getElementById('liveLabel');
+  const ageEl = document.getElementById('liveAge');
+  const indicator = document.getElementById('liveIndicator');
+  
+  if (label) label.textContent = 'Connecting…';
+  if (dot) dot.style.background = 'var(--yellow)';
+  
+  telemetrySource = new EventSource('/api/live-telemetry');
+  
+  telemetrySource.onopen = () => {
+    if (dot) { dot.style.background = 'var(--green)'; dot.style.boxShadow = '0 0 8px var(--green-glow)'; dot.style.animation = 'pulse 2s ease-in-out infinite'; }
+    if (label) label.textContent = 'LIVE';
+    if (indicator) { indicator.style.borderColor = 'rgba(16,185,129,0.4)'; indicator.style.color = 'var(--green)'; }
+  };
+  
+  telemetrySource.onmessage = (event) => {
+    try {
+      const snap = JSON.parse(event.data);
+      if (snap.type !== 'telemetry') return;
+      telemetryLastTs = snap.ts;
+      applyTelemetrySnapshot(snap);
+    } catch (e) {
+      console.error('Telemetry parse error:', e);
+    }
+  };
+  
+  telemetrySource.onerror = () => {
+    if (dot) { dot.style.background = 'var(--red)'; dot.style.boxShadow = 'none'; dot.style.animation = 'none'; }
+    if (label) label.textContent = 'Disconnected';
+    if (indicator) { indicator.style.borderColor = 'rgba(239,68,68,0.3)'; indicator.style.color = 'var(--red)'; }
+    
+    if (telemetrySource) {
+      telemetrySource.close();
+      telemetrySource = null;
+    }
+    
+    // Reconnect after 5 seconds
+    if (telemetryReconnectTimer) clearTimeout(telemetryReconnectTimer);
+    telemetryReconnectTimer = setTimeout(connectLiveTelemetry, 5000);
+  };
+}
+
+function applyTelemetrySnapshot(snap) {
+  // ── System stats ──
+  if (snap.system) {
+    const cpuPct = snap.system.cpuUsage || 0;
+    const sysEl = document.getElementById('systemCpu');
+    if (sysEl) sysEl.textContent = cpuPct + '%';
+    try { updateRadialGauge('cpuCircle', cpuPct); } catch {}
+    
+    const ramPct = snap.system.memoryPercent || 0;
+    const ramEl = document.getElementById('systemRam');
+    if (ramEl) ramEl.textContent = ramPct + '%';
+    try { updateRadialGauge('ramCircle', ramPct); } catch {}
+    
+    const ramDetail = document.getElementById('systemRamDetail');
+    if (ramDetail) ramDetail.textContent = `${snap.system.memoryUsedGB} / ${snap.system.memoryTotalGB} GB`;
+    
+    const diskPct = snap.system.diskPercent || 0;
+    const diskEl = document.getElementById('systemDisk');
+    if (diskEl) diskEl.textContent = diskPct + '%';
+    try { updateRadialGauge('diskCircle', diskPct); } catch {}
+    
+    const loadEl = document.getElementById('systemLoad');
+    if (loadEl) loadEl.textContent = 'Load: ' + snap.system.loadAvg1m;
+    
+    const uptime = snap.system.uptime || 0;
+    const days = Math.floor(uptime / 86400);
+    const hours = Math.floor((uptime % 86400) / 3600);
+    const uptimeStr = days > 0 ? `${days}d ${hours}h` : hours > 0 ? `${hours}h` : `${Math.floor(uptime / 60)}m`;
+    const uptimeEl = document.getElementById('systemUptime');
+    if (uptimeEl) uptimeEl.textContent = uptimeStr;
+  }
+  
+  // ── Session counts ──
+  if (snap.sessions) {
+    const runEl = document.getElementById('runningAgents');
+    if (runEl) runEl.textContent = snap.sessions.running;
+    const totalEl = document.getElementById('totalSessions');
+    if (totalEl) totalEl.textContent = snap.sessions.total;
+    const activeEl = document.getElementById('activeSessions');
+    if (activeEl) activeEl.textContent = snap.sessions.running;
+  }
+  
+  // ── Costs ──
+  if (snap.costs) {
+    const todayEl = document.getElementById('todaySpend');
+    if (todayEl) todayEl.textContent = '$' + (snap.costs.today || 0).toFixed(2);
+  }
+  
+  // ── Usage (5h window) ──
+  if (snap.usage) {
+    const opusPct = snap.usage.opusPct || 0;
+    const ovPctEl = document.getElementById('ovSessionPct');
+    if (ovPctEl) ovPctEl.textContent = opusPct + '%';
+    
+    const sBar = document.getElementById('overviewSessionBar');
+    if (sBar) {
+      sBar.style.width = opusPct + '%';
+      sBar.style.background = opusPct < 50 ? 'var(--green)' : opusPct < 80 ? 'var(--yellow)' : 'var(--red)';
+    }
+    
+    const warnIcon = document.getElementById('overviewUsageWarn');
+    if (warnIcon) warnIcon.style.display = opusPct > 70 ? 'inline' : 'none';
+    
+    // Notification for high usage from live stream
+    if (opusPct >= 80 && !window._usageNotifiedLive) {
+      sendNotification('High Usage Warning', `5h session usage at ${opusPct}%`);
+      window._usageNotifiedLive = true;
+    } else if (opusPct < 70) {
+      window._usageNotifiedLive = false;
+    }
+  }
+  
+  // ── KPI widget ──
+  if (snap.kpi) {
+    const kpiSuccEl = document.getElementById('kpiLatestSuccess');
+    if (kpiSuccEl && snap.kpi.successRate != null) {
+      kpiSuccEl.textContent = (snap.kpi.successRate * 100).toFixed(1) + '%';
+    }
+    const kpiP95El = document.getElementById('kpiLatestP95');
+    if (kpiP95El && snap.kpi.p95LatencyS != null) {
+      kpiP95El.textContent = snap.kpi.p95LatencyS.toFixed(1) + 's';
+    }
+    const kpiDateEl = document.getElementById('kpiLatestDate');
+    if (kpiDateEl && snap.kpi.date) {
+      kpiDateEl.textContent = snap.kpi.date;
+    }
+  }
+  
+  // ── Agent activity (Mission Control team grid updates) ──
+  if (snap.agents) {
+    const busyAgentsEl = document.getElementById('mcBusyAgents');
+    if (busyAgentsEl) busyAgentsEl.textContent = snap.agents.active;
+  }
+  
+  // ── Update age display ──
+  const ageEl = document.getElementById('liveAge');
+  if (ageEl) {
+    ageEl.textContent = new Date(snap.ts).toLocaleTimeString('en', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  }
+}
+
+// Update live age periodically
+setInterval(() => {
+  if (!telemetryLastTs) return;
+  const ageEl = document.getElementById('liveAge');
+  if (!ageEl) return;
+  const ageSec = Math.round((Date.now() - telemetryLastTs) / 1000);
+  if (ageSec > 15) {
+    ageEl.textContent = ageSec + 's ago';
+    ageEl.style.color = 'var(--yellow)';
+  } else {
+    ageEl.style.color = 'var(--text-muted)';
+  }
+}, 2000);
+
+// Start live telemetry connection
+connectLiveTelemetry();
 </script>
 </body>
 </html>

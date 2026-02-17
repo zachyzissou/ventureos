@@ -294,4 +294,58 @@ describe('Dashboard HTTP smoke tests', () => {
     expect(res.status).toBe(302);
     expect(res.headers.get('location')).toBe('/login');
   });
+
+  it('streams live telemetry via SSE with correct shape', async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/live-telemetry`, {
+        headers: authHeaders(),
+        signal: controller.signal,
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('content-type')).toContain('text/event-stream');
+
+      // Read the initial snapshot
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let snapshot: Record<string, unknown> | null = null;
+
+      while (!snapshot) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        for (const line of buffer.split('\n')) {
+          if (line.startsWith('data: ')) {
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.type === 'telemetry') {
+                snapshot = parsed;
+                break;
+              }
+            } catch {
+              // partial line
+            }
+          }
+        }
+      }
+
+      controller.abort();
+      expect(snapshot).not.toBeNull();
+      expect(snapshot!.type).toBe('telemetry');
+      expect(typeof (snapshot as any).ts).toBe('number');
+      expect(typeof (snapshot as any).system?.cpuUsage).toBe('number');
+      expect(typeof (snapshot as any).sessions?.total).toBe('number');
+      expect(typeof (snapshot as any).costs?.today).toBe('number');
+      expect(typeof (snapshot as any).usage?.opusPct).toBe('number');
+      expect('successRate' in ((snapshot as any).kpi ?? {})).toBe(true);
+    } finally {
+      clearTimeout(timeout);
+      controller.abort();
+    }
+  });
 });
