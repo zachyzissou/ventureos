@@ -21,6 +21,8 @@ import type {
 import { ConversationEngine } from './conversation-engine';
 import { ConversationAPI } from './conversation-api';
 import { toSafeError } from './error-handler';
+import { SqliteConversationStore } from './sqlite-conversation-store';
+import { InteractionLogger } from './interaction-logger';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -104,9 +106,17 @@ async function readJsonBody(
 // ─── Singleton API Instance ─────────────────────────────────────────────────
 
 let _apiInstance: ConversationAPI | null = null;
+let _interactionLogger: InteractionLogger | null = null;
 
-function getApi(_opts: ConversationHandlerOptions): ConversationAPI {
+function getApi(opts: ConversationHandlerOptions): ConversationAPI {
   if (_apiInstance) return _apiInstance;
+
+  // Issue #182: Use SQLite-backed store when dbPath is available,
+  // so conversations are persisted in the RPG database and visible
+  // to dashboard APIs (/api/rpg/conversations/active, etc.).
+  const store = opts.dbPath
+    ? new SqliteConversationStore(opts.dbPath)
+    : undefined;
 
   const engine = ConversationEngine.createWithDefaults({
     config: {
@@ -114,8 +124,66 @@ function getApi(_opts: ConversationHandlerOptions): ConversationAPI {
         process.env.CONVERSATION_PERSIST_DIR ??
         `${process.env.HOME ?? '~'}/clawd/ventureos/runtime/conversations`,
     },
+    store,
   });
   _apiInstance = new ConversationAPI(engine);
+
+  // Issue #181: Wire interaction logging into agent handoffs.
+  // Listen to ConversationAPI events and write to interaction_logs.
+  if (opts.dbPath) {
+    _interactionLogger = new InteractionLogger(opts.dbPath);
+
+    _apiInstance.on('message', (evt: { message: any; state: any }) => {
+      const msg = evt.message;
+      if (!msg || msg.from === 'system') return;
+
+      const recipients = msg.deliveredTo ?? msg.to ?? [];
+      const agentRecipients = recipients.filter(
+        (r: string) => r !== 'user' && r !== 'system' && r !== 'broadcast',
+      );
+      if (agentRecipients.length === 0) return;
+
+      _interactionLogger!.logHandoff({
+        from: msg.from,
+        to: agentRecipients,
+        type: msg.payload?.type ?? 'message',
+        outcome: msg.status ?? 'success',
+        conversationId: msg.conversationId,
+        description: msg.content?.slice(0, 200),
+      });
+    });
+
+    _apiInstance.on('conversation_started', (evt: { state: any }) => {
+      const state = evt.state;
+      if (!state || state.participants.length < 2) return;
+
+      // Log the conversation start as a collaboration interaction
+      // between the first two participants.
+      _interactionLogger!.logHandoff({
+        from: state.participants[0],
+        to: state.participants[1],
+        type: 'conversation_start',
+        outcome: 'success',
+        conversationId: state.conversationId,
+        description: `Conversation started with ${state.participants.length} participants`,
+      });
+    });
+
+    // Minimal observability: log stats periodically (every 50 interactions)
+    const origLog = _interactionLogger.logInteraction.bind(_interactionLogger);
+    let callCount = 0;
+    const wrappedLogger = _interactionLogger;
+    _apiInstance.on('message', () => {
+      callCount++;
+      if (callCount % 50 === 0) {
+        const stats = wrappedLogger.getStats();
+        console.log(
+          `[interaction-logger] stats: total=${stats.totalLogged} lastWrite=${stats.lastWriteAt}`,
+        );
+      }
+    });
+  }
+
   return _apiInstance;
 }
 
