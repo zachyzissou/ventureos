@@ -1,55 +1,289 @@
+/**
+ * Logs route handler tests — Issue #137.
+ */
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
-import type { IncomingMessage, ServerResponse } from 'node:http';
-import { handleLogs, redactSecrets } from '../../../server/routes/logs.js';
+import { mockRequest, mockResponse, parseJsonBody } from '../../helpers.js';
+import { handleLogs } from '../../../server/routes/logs.js';
+import type { LogsDeps, LogEntry, LogSourceMeta } from '../../../server/types.js';
 
-function mockReq(url: string, method = 'GET'): IncomingMessage { return { url, method, headers: {} } as unknown as IncomingMessage; }
-function mockRes() {
-  const r = { statusCode: 200, headers: {} as Record<string,string>, body: '', ended: false, writable: true,
-    writeHead(s: number, h?: Record<string,string>) { r.statusCode = s; if (h) Object.assign(r.headers, h); },
-    write(c: string) { r.body += c; return true; }, end(d?: string) { if (d) r.body += d; r.ended = true; },
-    setHeader(k: string, v: string) { r.headers[k] = v; } };
-  return r;
+// ─── Fixtures ────────────────────────────────────────────────────────────────
+
+const tmpBase = path.join('/tmp', 'test-logs-' + process.pid);
+const logDir = path.join(tmpBase, 'logs');
+const ventureosRoot = path.join(tmpBase, 'ventureos');
+const runtimeLogs = path.join(ventureosRoot, 'runtime', 'logs');
+const dashServerLog = path.join(ventureosRoot, 'dashboard', 'server.log');
+
+function createDeps(overrides: Partial<LogsDeps> = {}): LogsDeps {
+  return {
+    LOG_DIR: logDir,
+    VENTUREOS_ROOT: ventureosRoot,
+    sendJson: (res, data, status = 200) => {
+      res.writeHead(status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(data));
+    },
+    clampInt: (n, lo, hi, dflt) => {
+      const v = parseInt(String(n));
+      if (Number.isNaN(v)) return dflt;
+      return Math.max(lo, Math.min(hi, v));
+    },
+    ...overrides,
+  };
 }
-function json(r: ReturnType<typeof mockRes>) { return JSON.parse(r.body); }
-function sendJson(res: ServerResponse, data: unknown, status = 200) { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)); }
-function clampInt(n: string|number|null, lo: number, hi: number, dflt: number) { const v = parseInt(String(n)); return Number.isNaN(v) ? dflt : Math.max(lo, Math.min(hi, v)); }
 
-let tmp: string, oc: string, ld: string, deps: any;
-beforeEach(() => { tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lt-')); oc = path.join(tmp, '.oc'); ld = path.join(tmp, 'l'); fs.mkdirSync(path.join(oc, 'logs'), { recursive: true }); fs.mkdirSync(ld, { recursive: true }); deps = { OPENCLAW_DIR: oc, LOG_DIR: ld, sendJson, clampInt }; });
-afterEach(() => { try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {} });
+function writeFixture(dir: string, name: string, content: string): void {
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, name), content, 'utf8');
+}
 
-describe('redactSecrets', () => {
-  it('redacts Bearer tokens', () => { expect(redactSecrets('Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.x')).toContain('REDACTED'); });
-  it('redacts ghp tokens', () => { expect(redactSecrets('ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij')).toContain('REDACTED'); });
-  it('redacts home paths', () => { const r = redactSecrets('/Users/user1/data'); expect(r).not.toContain('user1'); expect(r).toContain('/Users/***'); });
-  it('preserves normal text', () => { expect(redactSecrets('hello world')).toBe('hello world'); });
+beforeEach(() => {
+  fs.mkdirSync(logDir, { recursive: true });
+  fs.mkdirSync(runtimeLogs, { recursive: true });
+  fs.mkdirSync(path.dirname(dashServerLog), { recursive: true });
+
+  // Create sample log files
+  writeFixture(runtimeLogs, 'phantom-detector.jsonl', [
+    '{"ts":"2026-02-15T19:33:07.000Z","event":"phantom_detected","agent":"synth","reason":"zero_messages"}',
+    '{"ts":"2026-02-15T19:33:08.000Z","event":"scan_complete","phantomCount":4}',
+    '{"ts":"2026-02-15T20:00:00.000Z","event":"phantom_detected","agent":"oracle","reason":"stale","level":"warn"}',
+  ].join('\n') + '\n');
+
+  writeFixture(runtimeLogs, 'dashboard.log', [
+    'Error: listen EADDRINUSE: address already in use 0.0.0.0:8001',
+    '  at Server.setupListenHandle',
+    'Server started on port 8001',
+    'Incoming request: GET /api/sessions',
+  ].join('\n') + '\n');
+
+  writeFixture(runtimeLogs, 'spawn-with-retry.log', [
+    '{"ts":"2026-02-15T20:30:45.059Z","event":"spawn_retry","agentId":"main","attempt":1,"exitCode":127}',
+    '{"ts":"2026-02-15T20:30:59.109Z","event":"spawn_failed","agentId":"main","attempt":4}',
+  ].join('\n') + '\n');
+
+  fs.writeFileSync(dashServerLog, 'Dashboard server error: port in use\nListening on 8001\n', 'utf8');
 });
 
-describe('/api/logs/sources', () => {
-  it('returns sources', () => { const r = mockRes(); handleLogs(mockReq('/api/logs/sources'), r as any, deps); const b = json(r); expect(b.sources.length).toBeGreaterThan(0); expect(b.sources.map((s:any)=>s.id)).toContain('gateway'); });
-  it('unavailable when missing', () => { const r = mockRes(); handleLogs(mockReq('/api/logs/sources'), r as any, deps); expect(json(r).sources.every((s:any)=>!s.available)).toBe(true); });
-  it('available when file exists', () => { fs.writeFileSync(path.join(oc,'logs','gateway.log'),'line\n'); const r = mockRes(); handleLogs(mockReq('/api/logs/sources'), r as any, deps); expect(json(r).sources.find((s:any)=>s.id==='gateway').available).toBe(true); });
+afterEach(() => {
+  fs.rmSync(tmpBase, { recursive: true, force: true });
 });
 
-describe('/api/logs/read', () => {
-  it('returns entries', () => { fs.writeFileSync(path.join(oc,'logs','gateway.log'),'2026-02-16T10:00:00Z [gw] ok\n2026-02-16T10:00:01Z [gw] error: fail\n'); const r = mockRes(); handleLogs(mockReq('/api/logs/read?sources=gateway&lines=100'), r as any, deps); const b = json(r); expect(b.count).toBe(2); expect(b.entries[1].level).toBe('error'); });
-  it('filters level', () => { fs.writeFileSync(path.join(oc,'logs','gateway.log'),'2026-02-16T10:00:00Z ok\n2026-02-16T10:00:01Z error bad\n'); const r = mockRes(); handleLogs(mockReq('/api/logs/read?sources=gateway&level=error'), r as any, deps); expect(json(r).entries.every((e:any)=>e.level==='error')).toBe(true); });
-  it('filters keyword', () => { fs.writeFileSync(path.join(oc,'logs','gateway.log'),'2026-02-16T10:00:00Z conn open\n2026-02-16T10:00:01Z timeout\n2026-02-16T10:00:02Z conn close\n'); const r = mockRes(); handleLogs(mockReq('/api/logs/read?sources=gateway&keyword=conn'), r as any, deps); expect(json(r).entries.length).toBe(2); });
-  it('reads JSONL', () => { fs.writeFileSync(path.join(ld,'tactical-map-access.log'),'{"ts":"2026-02-16T10:00:00Z","event":"auth_failure","ip":"1.2.3.4","method":"GET","path":"/","detail":"bad"}\n'); const r = mockRes(); handleLogs(mockReq('/api/logs/read?sources=access'), r as any, deps); expect(json(r).entries[0].level).toBe('error'); });
-  it('multi-source', () => { fs.writeFileSync(path.join(oc,'logs','gateway.log'),'2026-02-16T10:00:00Z gw\n'); fs.writeFileSync(path.join(ld,'tactical-map-access.log'),'{"ts":"2026-02-16T10:00:01Z","event":"ok","ip":"","method":"","path":"","detail":""}\n'); const r = mockRes(); handleLogs(mockReq('/api/logs/read?sources=gateway,access'), r as any, deps); expect(new Set(json(r).entries.map((e:any)=>e.source)).size).toBe(2); });
-  it('redacts secrets', () => { fs.writeFileSync(path.join(oc,'logs','gateway.log'),'2026-02-16T10:00:00Z ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij\n'); const r = mockRes(); handleLogs(mockReq('/api/logs/read?sources=gateway'), r as any, deps); expect(json(r).entries[0].message).toContain('REDACTED'); });
-  it('empty for unknown', () => { const r = mockRes(); handleLogs(mockReq('/api/logs/read?sources=xyz'), r as any, deps); expect(json(r).count).toBe(0); });
-  it('line limit', () => { const l = Array.from({length:50},(_,i)=>'2026-02-16T10:'+String(i).padStart(2,'0')+':00Z l'+i).join('\n'); fs.writeFileSync(path.join(oc,'logs','gateway.log'),l); const r = mockRes(); handleLogs(mockReq('/api/logs/read?sources=gateway&lines=10'), r as any, deps); expect(json(r).count).toBeLessThanOrEqual(10); });
-});
+// ─── Tests ───────────────────────────────────────────────────────────────────
 
-describe('legacy /api/logs', () => {
-  it('plaintext compat', () => { fs.writeFileSync(path.join(oc,'logs','gateway.log'),'2026-02-16T10:00:00Z started\n'); const r = mockRes(); handleLogs(mockReq('/api/logs?service=openclaw&lines=50'), r as any, deps); expect(r.headers['Content-Type']).toBe('text/plain'); expect(r.body).toContain('started'); });
-  it('POST returns false', () => { expect(handleLogs(mockReq('/api/logs/sources','POST'), mockRes() as any, deps)).toBe(false); });
-});
+describe('Logs Route Handler (Issue #137)', () => {
+  describe('routing', () => {
+    it('returns false for non-logs URLs', () => {
+      expect(handleLogs(mockRequest({ url: '/api/sessions' }), mockResponse(), createDeps())).toBe(false);
+    });
 
-describe('/api/logs/stream', () => {
-  it('SSE headers', () => { const req = mockReq('/api/logs/stream?sources=gateway'); const ls: Record<string,Function[]> = {}; (req as any).on = (e:string, fn:Function) => { (ls[e]??=[]).push(fn); }; const r = mockRes(); handleLogs(req, r as any, deps); expect(r.headers['Content-Type']).toBe('text/event-stream'); expect(r.body).toContain('"type":"connected"'); ls['close']?.forEach(fn=>fn()); });
+    it('returns false for POST requests', () => {
+      expect(handleLogs(mockRequest({ url: '/api/logs/sources', method: 'POST' }), mockResponse(), createDeps())).toBe(false);
+    });
+
+    it('returns false when req is null', () => {
+      expect(handleLogs(null as any, mockResponse(), createDeps())).toBe(false);
+    });
+
+    it('returns true for /api/logs/sources', () => {
+      expect(handleLogs(mockRequest({ url: '/api/logs/sources' }), mockResponse(), createDeps())).toBe(true);
+    });
+
+    it('returns true for /api/logs/entries', () => {
+      expect(handleLogs(mockRequest({ url: '/api/logs/entries?source=dashboard' }), mockResponse(), createDeps())).toBe(true);
+    });
+
+    it('returns true for /api/logs/tail', () => {
+      expect(handleLogs(mockRequest({ url: '/api/logs/tail?source=dashboard' }), mockResponse(), createDeps())).toBe(true);
+    });
+
+    it('returns true for legacy /api/logs?service=...', () => {
+      expect(handleLogs(mockRequest({ url: '/api/logs?service=dashboard' }), mockResponse(), createDeps())).toBe(true);
+    });
+  });
+
+  describe('GET /api/logs/sources', () => {
+    it('discovers log files from runtime/logs', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/sources' }), res, createDeps());
+      expect(res._ended).toBe(true);
+      const body = parseJsonBody<{ sources: LogSourceMeta[] }>(res);
+      expect(body.sources).toBeDefined();
+      expect(body.sources.length).toBeGreaterThanOrEqual(3); // phantom-detector, dashboard, spawn-with-retry
+      const ids = body.sources.map(s => s.id);
+      expect(ids).toContain('phantom-detector');
+      expect(ids).toContain('dashboard');
+    });
+
+    it('includes dashboard-server source when server.log exists', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/sources' }), res, createDeps());
+      const body = parseJsonBody<{ sources: LogSourceMeta[] }>(res);
+      expect(body.sources.find(s => s.id === 'dashboard-server')).toBeDefined();
+    });
+
+    it('reports format correctly', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/sources' }), res, createDeps());
+      const body = parseJsonBody<{ sources: LogSourceMeta[] }>(res);
+      const pd = body.sources.find(s => s.id === 'phantom-detector');
+      expect(pd?.format).toBe('jsonl');
+      const dl = body.sources.find(s => s.id === 'dashboard');
+      expect(dl?.format).toBe('text');
+    });
+
+    it('returns empty sources for nonexistent directory', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/sources' }), res, createDeps({
+        LOG_DIR: '/tmp/nonexistent-xyz',
+        VENTUREOS_ROOT: '/tmp/nonexistent-xyz',
+      }));
+      const body = parseJsonBody<{ sources: LogSourceMeta[] }>(res);
+      expect(body.sources).toEqual([]);
+    });
+
+    it('includes line count and size', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/sources' }), res, createDeps());
+      const body = parseJsonBody<{ sources: LogSourceMeta[] }>(res);
+      const pd = body.sources.find(s => s.id === 'phantom-detector');
+      expect(pd?.lines).toBeGreaterThan(0);
+      expect(pd?.size).toBeGreaterThan(0);
+    });
+  });
+
+  describe('GET /api/logs/entries', () => {
+    it('returns structured entries for JSONL source', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=phantom-detector' }), res, createDeps());
+      const body = parseJsonBody<{ entries: LogEntry[]; total: number }>(res);
+      expect(body.entries.length).toBe(3);
+      expect(body.entries[0].source).toBe('phantom-detector');
+      expect(body.entries[0].ts).toContain('2026');
+      expect(body.entries[0].fields).not.toBeNull();
+    });
+
+    it('returns structured entries for plain text source', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=dashboard' }), res, createDeps());
+      const body = parseJsonBody<{ entries: LogEntry[]; total: number }>(res);
+      expect(body.entries.length).toBeGreaterThan(0);
+      expect(body.entries[0].fields).toBeNull(); // plain text has no fields
+    });
+
+    it('infers error level from keywords', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=dashboard' }), res, createDeps());
+      const body = parseJsonBody<{ entries: LogEntry[] }>(res);
+      const errorEntries = body.entries.filter(e => e.level === 'error');
+      expect(errorEntries.length).toBeGreaterThan(0);
+      expect(errorEntries[0].message.toLowerCase()).toContain('error');
+    });
+
+    it('filters by level', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=dashboard&level=error' }), res, createDeps());
+      const body = parseJsonBody<{ entries: LogEntry[] }>(res);
+      expect(body.entries.length).toBeGreaterThan(0);
+      for (const e of body.entries) {
+        expect(e.level).toBe('error');
+      }
+    });
+
+    it('filters by search text', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=phantom-detector&search=oracle' }), res, createDeps());
+      const body = parseJsonBody<{ entries: LogEntry[] }>(res);
+      expect(body.entries.length).toBe(1);
+      // "oracle" appears in the raw JSONL line (agent field), matched via raw text search
+      expect(body.entries[0].raw).toContain('oracle');
+    });
+
+    it('returns 400 when source is missing', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries' }), res, createDeps());
+      expect(res._statusCode).toBe(400);
+      const body = parseJsonBody<{ error: string }>(res);
+      expect(body.error).toContain('Missing');
+    });
+
+    it('returns 404 for unknown source', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=nonexistent' }), res, createDeps());
+      expect(res._statusCode).toBe(404);
+    });
+
+    it('respects limit parameter', () => {
+      // Write many lines
+      const lines = Array.from({ length: 50 }, (_, i) =>
+        `{"ts":"2026-02-15T${String(i).padStart(2, '0')}:00:00Z","event":"test_${i}"}`
+      ).join('\n');
+      writeFixture(runtimeLogs, 'big-log.jsonl', lines);
+
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=big-log&limit=10' }), res, createDeps());
+      const body = parseJsonBody<{ entries: LogEntry[] }>(res);
+      expect(body.entries.length).toBe(10);
+    });
+
+    it('returns entries from dashboard-server source', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=dashboard-server' }), res, createDeps());
+      const body = parseJsonBody<{ entries: LogEntry[] }>(res);
+      expect(body.entries.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('GET /api/logs/tail', () => {
+    it('returns raw text for a source', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/tail?source=dashboard&lines=10' }), res, createDeps());
+      expect(res._ended).toBe(true);
+      expect(res._headers['content-type']).toContain('text/plain');
+      expect(res._body).toContain('Server');
+    });
+
+    it('returns 400 when source is missing', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/tail' }), res, createDeps());
+      expect(res._statusCode).toBe(400);
+    });
+
+    it('returns 404 for unknown source', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/tail?source=nonexistent' }), res, createDeps());
+      expect(res._statusCode).toBe(404);
+    });
+  });
+
+  describe('GET /api/logs (legacy compat)', () => {
+    it('serves logs for known service', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs?service=dashboard' }), res, createDeps());
+      expect(res._ended).toBe(true);
+      expect(res._body).toBeTruthy();
+    });
+
+    it('reports available sources for unknown service', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs?service=unknown-svc' }), res, createDeps());
+      expect(res._ended).toBe(true);
+      expect(res._body).toContain('Available sources');
+    });
+  });
+
+  describe('security', () => {
+    it('rejects path traversal in source parameter', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=../../etc/passwd' }), res, createDeps());
+      expect(res._statusCode).toBe(404);
+    });
+
+    it('rejects dotfile source names', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/entries?source=.env' }), res, createDeps());
+      expect(res._statusCode).toBe(404);
+    });
+  });
 });

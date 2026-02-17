@@ -45,6 +45,34 @@ export interface AgentHealthDeps {
   sendJson: (res: ServerResponse, data: unknown, status?: number) => void;
 }
 
+/** Dependencies injected into Logs route handlers (Issue #137). */
+export interface LogsDeps {
+  LOG_DIR: string;
+  VENTUREOS_ROOT: string;
+  sendJson: (res: ServerResponse, data: unknown, status?: number) => void;
+  clampInt: (n: string | number | null, lo: number, hi: number, dflt: number) => number;
+}
+
+/** A single structured log entry returned by the logs API. */
+export interface LogEntry {
+  ts: string;
+  level: 'error' | 'warn' | 'info' | 'debug';
+  source: string;
+  message: string;
+  raw: string;
+  fields: Record<string, unknown> | null;
+}
+
+/** Metadata for an available log source. */
+export interface LogSourceMeta {
+  id: string;
+  name: string;
+  format: 'jsonl' | 'text';
+  size: number;
+  modified: string;
+  lines: number;
+}
+
 // ─── Rate Limiting ───────────────────────────────────────────────────────────
 //
 // NOTE (Issue #79): These HTTP-level rate limit types are intentionally
