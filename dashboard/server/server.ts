@@ -50,6 +50,7 @@ import type {
   MessageContentBlock,
   CookieMap,
   VentureOSKpiResponse,
+  TelemetrySnapshot,
 } from './types.js';
 
 // Shared VentureOS libraries (Issue #79)
@@ -3152,6 +3153,108 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
       const safe = toSafeError(e, { action: 'cron' });
       sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
     }
+    return;
+  }
+
+  // ── Live Telemetry SSE (Issue #live-data-v1) ──────────────────────────────
+  if (req.url === '/api/live-telemetry') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    });
+
+    function buildTelemetrySnapshot(): TelemetrySnapshot {
+      const sys: SystemStats = getSystemStats();
+      const sess: SessionInfo[] = getSessionsJson();
+      const now: number = Date.now();
+      const running: number = sess.filter(
+        (s) => now - s.updatedAt < 300000 && !s.aborted,
+      ).length;
+
+      // Cost data (cached)
+      const nowMs: number = Date.now();
+      if (!costCache || nowMs - costCacheTime > 60000) {
+        costCache = getCostData();
+        costCacheTime = nowMs;
+      }
+
+      // Usage data (cached)
+      if (!usageCache || nowMs - usageCacheTime > 10000) {
+        usageCache = getUsageWindows();
+        usageCacheTime = nowMs;
+      }
+
+      // VentureOS agents
+      const vaResp: VentureOSAgentsResponse = getVentureosAgents();
+      const busyIds: string[] = Object.values(vaResp.agents ?? {})
+        .filter((a) => a.status === 'working')
+        .map((a) => a.agentId);
+
+      // KPI snapshot
+      const vKpis = getVentureOSKpis();
+      const kpiLatest = vKpis.latest;
+
+      return {
+        type: 'telemetry',
+        ts: nowMs,
+        system: {
+          cpuUsage: sys.cpu?.usage ?? 0,
+          memoryPercent: sys.memory?.percent ?? 0,
+          memoryUsedGB: sys.memory?.usedGB ?? '0.0',
+          memoryTotalGB: sys.memory?.totalGB ?? '0.0',
+          diskPercent: sys.disk?.percent ?? 0,
+          loadAvg1m: sys.loadAvg?.['1m'] ?? '0',
+          uptime: sys.uptime ?? 0,
+        },
+        agents: {
+          total: Object.keys(vaResp.agents ?? {}).length,
+          active: busyIds.length,
+          busyIds,
+        },
+        sessions: {
+          total: sess.length,
+          running,
+        },
+        costs: {
+          today: costCache?.today ?? 0,
+          week: costCache?.week ?? 0,
+        },
+        usage: {
+          opusPct: usageCache?.current?.opusPct ?? 0,
+          sonnetPct: usageCache?.current?.sonnetPct ?? 0,
+          totalCost5h: usageCache?.current?.totalCost ?? 0,
+          totalCalls5h: usageCache?.current?.totalCalls ?? 0,
+          burnTokensPerMin: usageCache?.burnRate?.tokensPerMinute ?? 0,
+          burnCostPerMin: usageCache?.burnRate?.costPerMinute ?? 0,
+        },
+        kpi: {
+          successRate: kpiLatest?.successRate ?? null,
+          p95LatencyS: kpiLatest?.p95LatencyS ?? null,
+          sloStatus: kpiLatest?.sloStatus ?? null,
+          date: kpiLatest?.date ?? null,
+        },
+      };
+    }
+
+    // Send initial snapshot immediately
+    const initial: TelemetrySnapshot = buildTelemetrySnapshot();
+    res.write(`data: ${JSON.stringify(initial)}\n\n`);
+
+    // Push updates every 5 seconds
+    const telemetryInterval: NodeJS.Timeout = setInterval(() => {
+      try {
+        const snap: TelemetrySnapshot = buildTelemetrySnapshot();
+        res.write(`data: ${JSON.stringify(snap)}\n\n`);
+      } catch {
+        // ignore
+      }
+    }, 5000);
+
+    req.on('close', () => {
+      clearInterval(telemetryInterval);
+    });
+
     return;
   }
 
