@@ -182,6 +182,9 @@ describe('/api/live-telemetry SSE endpoint', () => {
 
       const system = snapshot!.system as Record<string, unknown>;
       expect(typeof system.cpuUsage).toBe('number');
+      // CPU usage should be delta-based (0-100), not the inflated loadAvg heuristic
+      expect(system.cpuUsage as number).toBeGreaterThanOrEqual(0);
+      expect(system.cpuUsage as number).toBeLessThanOrEqual(100);
       expect(typeof system.memoryPercent).toBe('number');
       expect(typeof system.memoryUsedGB).toBe('string');
       expect(typeof system.memoryTotalGB).toBe('string');
