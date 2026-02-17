@@ -185,9 +185,19 @@ fi
 if [ "$UPDATE_BASELINES" = true ] && [ $EXIT_CODE -eq 0 ]; then
   echo -e "${YELLOW}Updating performance baselines...${NC}"
   echo -e "${YELLOW}Note: Baselines should only be updated after verified stable runs.${NC}"
-  # Baselines are updated by the test runner itself when PERF_UPDATE_BASELINES=1
+
+  # Re-run the benchmarks with the update flag so the reporter captures new baselines
   export PERF_UPDATE_BASELINES=1
-  echo -e "${GREEN}Baseline update flag set. Re-run with this flag to capture.${NC}"
+  echo -e "${BLUE}Re-running benchmarks to capture baselines...${NC}"
+  npx playwright test $TEST_FILES --reporter=list 2>&1
+  BASELINE_EXIT=$?
+
+  if [ $BASELINE_EXIT -eq 0 ]; then
+    echo -e "${GREEN}✅ Performance baselines updated in ${BASELINES_FILE}${NC}"
+    echo -e "${YELLOW}Review the changes and commit: git diff ${BASELINES_FILE}${NC}"
+  else
+    echo -e "${RED}❌ Baseline capture run failed (exit code: $BASELINE_EXIT). Baselines NOT updated.${NC}"
+  fi
 fi
 
 # Summary
