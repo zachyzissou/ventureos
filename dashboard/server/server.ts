@@ -3238,16 +3238,25 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     }
 
     // Send initial snapshot immediately
-    const initial: TelemetrySnapshot = buildTelemetrySnapshot();
-    res.write(`data: ${JSON.stringify(initial)}\n\n`);
+    try {
+      const initial: TelemetrySnapshot = buildTelemetrySnapshot();
+      res.write(`data: ${JSON.stringify(initial)}\n\n`);
+    } catch {
+      // If the client disconnects before the first write completes, safely stop.
+      return;
+    }
 
     // Push updates every 5 seconds
     const telemetryInterval: NodeJS.Timeout = setInterval(() => {
       try {
+        if (!res.writable) {
+          clearInterval(telemetryInterval);
+          return;
+        }
         const snap: TelemetrySnapshot = buildTelemetrySnapshot();
         res.write(`data: ${JSON.stringify(snap)}\n\n`);
       } catch {
-        // ignore
+        clearInterval(telemetryInterval);
       }
     }, 5000);
 
