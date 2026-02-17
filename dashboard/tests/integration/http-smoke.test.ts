@@ -47,11 +47,19 @@ beforeAll(async () => {
   workflowDir = path.join('/tmp', `agent-smoke-workflows-${process.pid}`);
   fs.mkdirSync(workflowDir, { recursive: true });
 
+  const rpgRootDir = path.join(tmpRoot, 'rpg-root');
+
   fs.mkdirSync(kpiDir, { recursive: true });
   fs.mkdirSync(obsDir, { recursive: true });
   fs.mkdirSync(sharedDir, { recursive: true });
   fs.mkdirSync(sessionsDir, { recursive: true });
   fs.mkdirSync(workspaceDir, { recursive: true });
+  fs.mkdirSync(rpgRootDir, { recursive: true });
+
+  // RPG test fixtures (Issue #145)
+  fs.writeFileSync(path.join(rpgRootDir, 'README.md'), '# RPG Test Fixture');
+  fs.mkdirSync(path.join(rpgRootDir, 'api'), { recursive: true });
+  fs.writeFileSync(path.join(rpgRootDir, 'api', 'secret.ts'), 'export const SECRET = "leaked";');
 
   const kpiBase = {
     overall: {
@@ -143,6 +151,7 @@ beforeAll(async () => {
   process.env.VENTUREOS_ACTIVE_WORK_PATH = path.join(sharedDir, 'active-work.md');
   process.env.VENTUREOS_PRIORITIES_PATH = path.join(sharedDir, 'priorities.md');
   process.env.RPG_DB_PATH = path.join(tmpRoot, 'rpg.sqlite');
+  process.env.VENTUREOS_RPG_ROOT = rpgRootDir;
   process.env.VENTUREOS_AGENTS = 'main,oracle';
 
   const mod = (await import('../../server/server.js')) as { server?: Server; default?: { server?: Server } };
@@ -165,6 +174,54 @@ describe('Dashboard HTTP smoke tests', () => {
   it('rejects unauthenticated API calls', async () => {
     const res = await fetch(`${BASE_URL}/api/kpis/latest`, { redirect: 'manual' });
     expect(res.status).toBe(401);
+  });
+
+  // ── Issue #145: RPG static file auth gate ──────────────────────────
+  it('redirects unauthenticated /rpg/ requests to /login (Issue #145)', async () => {
+    const res = await fetch(`${BASE_URL}/rpg/README.md`, { redirect: 'manual' });
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/login');
+  });
+
+  it('blocks unauthenticated access to nested RPG source files (Issue #145)', async () => {
+    const res = await fetch(`${BASE_URL}/rpg/api/secret.ts`, { redirect: 'manual' });
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/login');
+  });
+
+  it('serves /rpg/ files to authenticated users (Issue #145)', async () => {
+    // This test logs in and derives its own auth cookie; it does not depend on other tests or execution order.
+    const loginRes = await fetch(`${BASE_URL}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: TOKEN }),
+      redirect: 'manual',
+    });
+    const cookie = loginRes.headers.get('set-cookie')?.split(';')[0] ?? '';
+
+    const res = await fetch(`${BASE_URL}/rpg/README.md`, {
+      headers: { cookie },
+      redirect: 'manual',
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('RPG Test Fixture');
+  });
+
+  it('returns 404 for non-existent /rpg/ files when authenticated (Issue #145)', async () => {
+    const loginRes = await fetch(`${BASE_URL}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: TOKEN }),
+      redirect: 'manual',
+    });
+    const cookie = loginRes.headers.get('set-cookie')?.split(';')[0] ?? '';
+
+    const res = await fetch(`${BASE_URL}/rpg/nonexistent.txt`, {
+      headers: { cookie },
+      redirect: 'manual',
+    });
+    expect(res.status).toBe(404);
   });
 
   it('authenticates via /api/login and serves dashboard HTML', async () => {
