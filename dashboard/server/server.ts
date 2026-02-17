@@ -110,6 +110,7 @@ const scrapeScript: string = path.join(WORKSPACE_DIR, 'scripts', 'scrape-claude-
 // Client HTML paths — served from client/ directory
 const htmlPath: string = path.join(import.meta.dirname, '..', 'client', 'index.html');
 const loginHtmlPath: string = path.join(import.meta.dirname, '..', 'client', 'login.html');
+const clientAssetsDir: string = path.join(import.meta.dirname, '..', 'client', 'assets');
 
 const VENTUREOS_AGENTS: string[] = (
   process.env.VENTUREOS_AGENTS ?? 'oracle,atlas,sentinel,verifier,archivist,synth'
@@ -3223,6 +3224,9 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
 
     return;
   }
+
+  // Serve dashboard client static assets
+  if (tryServeStatic(req, res, { urlPrefix: '/assets/', rootDir: clientAssetsDir })) return;
 
   // Serve Tactical Map static files
   const TACTICAL_MAP_DIST: string = path.join(
