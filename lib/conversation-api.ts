@@ -142,6 +142,19 @@ async function readJson(
       writeJson(res, 400, { error: 'Request stream error' });
       resolve(null);
     });
+
+    // Handle client disconnections (aborted/close without end/error)
+    req.on('aborted', () => {
+      if (aborted) return;
+      aborted = true;
+      resolve(null);
+    });
+
+    req.on('close', () => {
+      if (aborted) return;
+      aborted = true;
+      resolve(null);
+    });
   });
 }
 
