@@ -3351,8 +3351,15 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   );
   if (tryServeStatic(req, res, { urlPrefix: '/map/', rootDir: TACTICAL_MAP_DIST })) return;
 
-  // Serve VentureOS RPG static modules/assets (optional)
-  if (tryServeStatic(req, res, { urlPrefix: '/rpg/', rootDir: RPG_ROOT })) return;
+  // Serve VentureOS RPG static modules/assets — auth-gated (Issue #145)
+  if (req.url && req.url.startsWith('/rpg/') && (req.method === 'GET' || req.method === 'HEAD')) {
+    if (!isAuthenticated(req)) {
+      res.writeHead(302, { Location: '/login' });
+      res.end();
+      return;
+    }
+    if (tryServeStatic(req, res, { urlPrefix: '/rpg/', rootDir: RPG_ROOT })) return;
+  }
 
   // Public login page
   if (req.method === 'GET' && (req.url === '/login' || (req.url && req.url.startsWith('/login?')))) {
