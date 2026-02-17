@@ -48,19 +48,33 @@ ventureos/
 ## Current Status
 
 ### Completed
-- ✅ **Phase 4:** VOXYZ Integration (Role Cards, KPI Registry, Voice RULES, Security Infrastructure, Conversation Orchestration) — ~77 min total, 450/450 tests passing
-- ✅ **Phase 5.0:** Prerequisites (Session bridge, Security architecture, MapState contract, Assets licensing) — ~15h total
-- ✅ **Phase 5.1:** Foundation (Security middleware, Rendering core) — ~30 min, 56 tests, 88.57% coverage
-- ✅ **Phase 5.2:** Activity & Animation (Activity mapper, Building states, Unit sprites) — ~30 min, 172 tests, 88.58% coverage
-- ✅ **P0 Infrastructure Sprint:** Estimation framework, Cron fixes, SQLite hardening, Session handoff docs — ~1.5h vs 10-14h estimate
+
+- ✅ **Phase 4:** VOXYZ Integration — Role Cards, KPI Registry, Voice RULES, Security Infrastructure, Conversation Orchestration (450+ lib tests)
+- ✅ **Phase 5.0:** Prerequisites — Session bridge, Security architecture, MapState contract, Assets licensing
+- ✅ **Phase 5.1:** Foundation — Security middleware, Rendering core
+- ✅ **Phase 5.2:** Activity & Animation — Activity mapper, Building states, Unit sprites
+- ✅ **Phase 5.3:** Khala Network — Bond visualization, affinity tiers, collaboration particles (#9)
+- ✅ **Phase 5.4:** Resource Economy — Token budgets, cost tracking, sparklines, budget alerts (#15)
+- ✅ **Phase 5.5:** Mission Tracking — Mission timeline, dependency arrows, completion animations, task queue (#16)
+- ✅ **Phase 5.6:** Health & Diagnostics — Health indicators, alert overlays, metrics dashboard (#18)
+- ✅ **Phase 5.7:** Interactive Controls — Agent detail panel, command palette, mission spawn, budget slider, undo/redo (#19)
+- ✅ **P0 Remediation:** All security (VULN-002/003, XSS, auth bypass), QA (phantom tests, XSS coverage), and performance (N+1 query) issues resolved (#2–#6, #142–#149)
+- ✅ **Dashboard Merge:** Monorepo consolidation — TypeScript migration, shared libraries, deployment procedures (epic #84)
+- ✅ **Security Hardening:** Auth bypass fix, query-token removal, XSS sanitization, RPG static auth gating, action endpoint defense-in-depth, DoS body-read bounding (#142–#149)
+- ✅ **Infrastructure:** CI/CD pipeline (#23), performance benchmarking suite (#24), accessibility audit WCAG 2.1 AA (#25), dashboard logs page (#137), live telemetry SSE, hybrid deployment design (#140)
+- ✅ **P0 Infrastructure Sprint:** Estimation framework, Cron fixes, SQLite hardening, Session handoff docs
 
 ### In Progress
-- 🔄 **Phase 5.3:** Khala Network (Bonds + Pylon Network visualization)
-- 🔄 **P0 Remediation:** Security (VULN-002, VULN-003), QA (QA-001, QA-002), Performance (PERF-003)
+
+- 🔄 **Phase 5.8:** Replay & History — client engine + storage complete; server mutating endpoints pending (read-only live, create/delete sessions return 501) (#17)
+- 🔄 **Live Data:** Conversation wiring + Pylon auto-refresh polling (PR#180 merged, integration ongoing — #181–#184)
+- 🔄 **Hybrid Deployment:** Containerized dashboard + bridge API — architecture designed, Dockerfile ready, not yet running in production (#140)
 
 ### Next Up
-- **Phase 5.4:** Real-time Updates (WebSocket, SSE, optimistic UI)
-- **Phase 5.5:** Campaign Integration (Deep progression, Teaching XP, Innovation traits)
+
+- **Phase 4.5:** Deep Progression System — extended levels, skill trees, XP diversification (design complete, implementation not started)
+- **Polish & Sound:** Audio atmosphere, voice lines, onboarding tour, help overlay (not started)
+- **Production Containerization:** Execute hybrid deployment plan with Docker Compose
 
 ## Roadmap
 
@@ -68,25 +82,25 @@ Roadmap tracking lives in GitHub issue [#138: Roadmap: VentureOS delivery plan (
 
 ### Now (active)
 
-- Interactive controls for Phase 5.7 tactical map (#19)
-- Tactical Map CI/CD pipeline and performance benchmarking (#23, #24)
-- Accessibility audit and Phase 5 completion wrap-up (#25, #115)
-- Dashboard logs page for incident and root-cause workflows (#137)
+- Phase 5.8 server-side replay endpoints — promote 501 stubs to real implementations (#17)
+- Live data integration — wire real conversation ingest + interaction logging (#181–#184)
+- Hybrid deployment execution — Docker Compose + production cutover (#140)
 
 ### Next
 
-- Close observability gaps (structured logs, correlation hints, report bundles)
-- Harden deployment workflow for repeatable production rollouts
-- Improve dashboard ↔ tactical-map parity and operator runbooks
+- Deep Progression System (Phase 4.5) — skill trees, XP diversification, prestige ranks
+- Polish & Sound — audio atmosphere, onboarding tour, guided help
+- Close observability gaps (correlation IDs, report bundles)
+- Repeatable production rollout workflow
 
 ### Later
 
-- Richer logs UX (tail/search/filter presets/export)
-- Expanded in-map mission editing and operational controls
+- Richer logs UX (filter presets, export)
+- Expanded in-map mission editing (#135)
 - Deeper diagnostics drill-downs from dashboard cards
-- Release notes / change log panel in the dashboard
+- Release notes / change log panel in dashboard
 
-Now items map to currently open issues; see #138 and the linked issues for live status and details.
+Now items map to currently open issues; see #138 and linked issues for live status.
 
 ## Development
 
