@@ -63,6 +63,7 @@ const {
   OPENCLAW_DIR,
   SHARED_CONTEXT_DIR: SHARED_CONTEXT,
   KPI_DIR,
+  DASHBOARD_DATA_DIR,
   OBSERVATIONS_DIR,
   RPG_ROOT,
   RPG_DB_PATH,
@@ -3475,6 +3476,29 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
 
 export { server };
 
+// ─── Startup Diagnostics ─────────────────────────────────────────────────────
+
+function logStartupDiagnostics(): void {
+  const runtimeMode: string = import.meta.dirname.includes('/dist/')
+    ? 'dist (compiled)'
+    : 'source (tsx/dev)';
+  console.log('[STARTUP] Dashboard runtime diagnostics');
+  console.log(`[STARTUP]   mode:              ${runtimeMode}`);
+  console.log(`[STARTUP]   VENTUREOS_ROOT:    ${VENTUREOS_ROOT}`);
+  console.log(`[STARTUP]   DASHBOARD_DATA_DIR:${DASHBOARD_DATA_DIR}`);
+  console.log(`[STARTUP]   TOKEN_PATH:        ${path.join(DASHBOARD_DATA_DIR, '.api-token')}`);
+  console.log(`[STARTUP]   PORT:              ${PORT}`);
+
+  // Drift guard: warn if a stale dist-relative token exists
+  const canonical: string = path.resolve(path.join(DASHBOARD_DATA_DIR, '.api-token'));
+  const distRelative: string = path.resolve(path.join(import.meta.dirname, '..', '..', 'data', '.api-token'));
+  if (canonical !== distRelative && fs.existsSync(distRelative)) {
+    console.warn(`[STARTUP] ⚠️  DRIFT: stale token at ${distRelative}`);
+    console.warn(`[STARTUP]    Canonical: ${canonical}`);
+  }
+}
+
 server.listen(PORT, HOST, () => {
   console.log(`Dashboard: http://${HOST}:${PORT}`);
+  logStartupDiagnostics();
 });
