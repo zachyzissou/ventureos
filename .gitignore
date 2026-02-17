@@ -9,6 +9,7 @@ build/
 
 # Test coverage
 coverage/
+test-results/
 
 # Environment
 .env
