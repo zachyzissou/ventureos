@@ -88,7 +88,12 @@ import { applySecurityHeaders } from './middleware/security-headers.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import { auditLog } from './middleware/audit-log.js';
 import { authorizeActionRequest } from './middleware/action-guard.js';
+import { withCorrelationId, CORRELATION_HEADER } from './middleware/correlation-id.js';
 import { proxyBridgeJson } from './bridge-proxy.js';
+
+// Structured logging (Issue #195 — Observability)
+import structuredLogger from '../../lib/structured-logger.js';
+const { logInfo, logWarn, logError: slogError } = structuredLogger as typeof import('../../lib/structured-logger.js');
 
 // Route handlers
 import { handleKpis } from './routes/kpis.js';
@@ -2562,7 +2567,7 @@ let lifetimeStatsCacheTime: number = 0;
 
 // ─── HTTP Server ─────────────────────────────────────────────────────────────
 
-const server: Server = http.createServer(async (req: IncomingMessage, res: ServerResponse) => {
+const server: Server = http.createServer((req: IncomingMessage, res: ServerResponse) => {
   // ── Phase 5.1 Security Middleware Pipeline ────────────────────────
   applySecurityHeaders(res);
   applyCors(req, res);
@@ -2571,6 +2576,29 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   if (!rateLimit(req, res)) return;
   if (!authorizeActionRequest(req, res)) return;
   // ── End Security Middleware ───────────────────────────────────────
+
+  // ── Correlation ID (Issue #195) — wraps the async handler ─────────
+  const handleRequest = async () => {
+    const reqStart = Date.now();
+
+    logInfo('dashboard', 'request_received', `${req.method} ${(req.url ?? '/').split('?')[0]}`, {
+      method: req.method ?? 'UNKNOWN',
+      path: (req.url ?? '/').split('?')[0],
+      ip: req.socket?.remoteAddress ?? 'unknown',
+    });
+
+    // Log on response finish for latency tracking
+    res.on('finish', () => {
+      const latencyMs = Date.now() - reqStart;
+      const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info';
+      const logFn = level === 'error' ? slogError : level === 'warn' ? logWarn : logInfo;
+      logFn('dashboard', 'request_completed', `${req.method} ${(req.url ?? '/').split('?')[0]} → ${res.statusCode}`, {
+        method: req.method ?? 'UNKNOWN',
+        path: (req.url ?? '/').split('?')[0],
+        statusCode: res.statusCode,
+        latencyMs,
+      });
+    });
 
   // ── Health Check (unauthenticated — for container healthchecks) ─── Issue #191
   if (req.url === '/api/health' && req.method === 'GET') {
@@ -2615,6 +2643,7 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
 
       if (!providedToken || !timingSafeStringEqual(providedToken, validToken)) {
         logAuthEvent('login_failure', req, providedToken ? 'Invalid token' : 'Missing token');
+        logWarn('auth', 'login_failure', 'Login attempt failed', { reason: providedToken ? 'invalid_token' : 'missing_token' });
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: false, error: 'Unauthorized' }));
         return;
@@ -2622,6 +2651,7 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
 
       res.setHeader('Set-Cookie', buildAuthCookie(req, validToken));
       logAuthEvent('login_success', req, 'Auth cookie issued');
+      logInfo('auth', 'login_success', 'User authenticated via login');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
       return;
@@ -3110,6 +3140,26 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     sendJson(res, { avgSeconds: getAvgResponseTime() });
     return;
   }
+  // Incident Report Bundle — Issue #195: Observability
+  if (req.url && req.url.startsWith('/api/incident-report') && req.method === 'POST') {
+    try {
+      logInfo('dashboard', 'incident_report_requested', 'Incident report bundle generation started');
+      const params = new URL(req.url, 'http://localhost').searchParams;
+      const windowMinutes = clampInt(params.get('window') ?? '30', 1, 1440, 30);
+
+      // Dynamic import to avoid loading at startup
+      const { generateIncidentBundle } = await import('../../scripts/incident-report.js');
+      const bundle = await generateIncidentBundle(windowMinutes);
+      logInfo('dashboard', 'incident_report_generated', `Bundle generated (${windowMinutes}m window, ${bundle.sections.structuredLogs.length} log entries)`);
+      sendJson(res, bundle);
+    } catch (e: unknown) {
+      const safe = toSafeError(e, { action: 'incident-report' });
+      slogError('dashboard', 'incident_report_failed', 'Failed to generate incident bundle', { errorRef: safe.errorRef });
+      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
+    }
+    return;
+  }
+
   // Logs API — Issue #137: Observability Logs Page
   try {
     if (handleLogs(req, res, { LOG_DIR, VENTUREOS_ROOT, sendJson, clampInt })) return;
@@ -3120,10 +3170,12 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   // Action endpoints — use shared error handler (Issue #79) for safe responses
   if (req.url === '/api/action/restart-openclaw' && req.method === 'POST') {
     try {
+      logInfo('dashboard', 'action_invoked', 'restart-openclaw requested', { action: 'restart-openclaw' });
       exec('systemctl restart openclaw', () => {});
       sendJson(res, { success: true });
     } catch (e: unknown) {
       const safe = toSafeError(e, { action: 'restart-openclaw' });
+      slogError('dashboard', 'action_failed', 'restart-openclaw failed', { action: 'restart-openclaw', errorRef: safe.errorRef });
       sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
     }
     return;
@@ -3690,6 +3742,11 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
 
   res.writeHead(404);
   res.end('Not found');
+
+  }; // end handleRequest
+
+  // Run with correlation context (Issue #195)
+  withCorrelationId(req, res, handleRequest);
 });
 
 export { server };
