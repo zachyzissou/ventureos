@@ -24,6 +24,7 @@ import {
 import { SquadCoordinator, type SquadAgent } from './squad-coordinator';
 import { GateChecks, type GateDefinition } from './gate-checks';
 import { ArtifactCollector } from './artifact-collector';
+import type { MissionRunnerHooks } from './runtime-conversation-bridge';
 
 export interface MissionRunnerConfig {
   /** Directory where mission state is persisted. */
@@ -44,6 +45,13 @@ export interface MissionRunnerConfig {
 
   /** Optional approval callback for approval gates. */
   approve?: () => Promise<boolean>;
+
+  /**
+   * Optional lifecycle hooks for runtime integration.
+   * Errors in hooks are caught and do NOT affect mission execution.
+   * Fixes #184 — ConversationEngine runtime integration.
+   */
+  hooks?: MissionRunnerHooks;
 }
 
 export interface MissionRunResult {
@@ -80,12 +88,14 @@ export class MissionRunner {
   private readonly artifacts: ArtifactCollector;
   private readonly now: () => Date;
   private readonly approve?: () => Promise<boolean>;
+  private readonly hooks?: MissionRunnerHooks;
 
   constructor(config: MissionRunnerConfig) {
     if (!config?.agents?.length) throw new Error('MissionRunner requires agents[]');
 
     this.now = config.now ?? (() => new Date());
     this.approve = config.approve;
+    this.hooks = config.hooks;
 
     this.sm = new MissionStateMachine({
       persistDir: config.persistDir,
@@ -117,12 +127,17 @@ export class MissionRunner {
 
     let mission = await this.sm.createMission(brief);
 
+    // Issue #184: Notify hooks of mission creation
+    await this.safeHook('onMissionCreated', () => this.hooks?.onMissionCreated?.(mission));
+
     try {
       mission = await this.runFromPhase(mission);
       return this.toRunResult(mission);
     } catch (err) {
       // If something threw outside of phase transitions, mark mission as failed.
       const failed = await this.sm.fail(mission, err);
+      // Issue #184: Notify hooks of mission error
+      await this.safeHook('onMissionError', () => this.hooks?.onMissionError?.(failed, err));
       return this.toRunResult(failed);
     }
   }
@@ -166,12 +181,24 @@ export class MissionRunner {
 
     if (m.phase === 'brief') {
       const plan = this.squad.createPlanFromBrief(m.brief!);
+      const prevPhase = m.phase;
       m = await this.sm.transition(m, 'plan', { plan }, 'auto-planned');
+      await this.safeHook('onPhaseTransition', () => this.hooks?.onPhaseTransition?.(m, prevPhase, 'plan'));
     }
 
     if (m.phase === 'plan') {
-      const execution = await this.squad.executePlan(m.missionId, m.brief!, m.plan!);
+      // Issue #184: Notify hooks of task dispatch/completion during execution
+      const execution = await this.squad.executePlan(m.missionId, m.brief!, m.plan!, {
+        onTaskStart: async (task, agentId) => {
+          await this.safeHook('onTaskStart', () => this.hooks?.onTaskStart?.(m, task, agentId));
+        },
+        onTaskComplete: async (task, result) => {
+          await this.safeHook('onTaskComplete', () => this.hooks?.onTaskComplete?.(m, task, result));
+        },
+      });
+      const prevPhase = m.phase;
       m = await this.sm.transition(m, 'execute', { execution }, 'executed plan');
+      await this.safeHook('onPhaseTransition', () => this.hooks?.onPhaseTransition?.(m, prevPhase, 'execute'));
     }
 
     if (m.phase === 'execute') {
@@ -191,15 +218,21 @@ export class MissionRunner {
         overall,
       };
 
+      const prevPhase = m.phase;
       m = await this.sm.transition(m, 'verify', { verification }, 'gate checks');
+      await this.safeHook('onPhaseTransition', () => this.hooks?.onPhaseTransition?.(m, prevPhase, 'verify'));
     }
 
     if (m.phase === 'verify') {
       if (m.verification?.overall === 'fail') {
-        return this.sm.fail(m, new Error('Gate checks failed'), 'gates_failed', 'execute');
+        const failed = await this.sm.fail(m, new Error('Gate checks failed'), 'gates_failed', 'execute');
+        await this.safeHook('onMissionError', () => this.hooks?.onMissionError?.(failed, new Error('Gate checks failed')));
+        return failed;
       }
       if (m.verification?.overall === 'require_approval') {
-        return this.sm.fail(m, new Error('Human approval required'), 'requires_approval', 'verify');
+        const failed = await this.sm.fail(m, new Error('Human approval required'), 'requires_approval', 'verify');
+        await this.safeHook('onMissionError', () => this.hooks?.onMissionError?.(failed, new Error('Human approval required')));
+        return failed;
       }
 
       const reports = this.generateReports(m);
@@ -220,7 +253,9 @@ export class MissionRunner {
         },
       };
 
+      const prevPhase = m.phase;
       m = await this.sm.transition(m, 'deliver', { delivery }, 'delivered artifacts');
+      await this.safeHook('onPhaseTransition', () => this.hooks?.onPhaseTransition?.(m, prevPhase, 'deliver'));
     }
 
     if (m.phase === 'deliver') {
@@ -240,9 +275,26 @@ export class MissionRunner {
         },
         'mission closed'
       );
+
+      // Issue #184: Notify hooks of mission close
+      await this.safeHook('onMissionClosed', () => this.hooks?.onMissionClosed?.(m));
     }
 
     return m;
+  }
+
+  /**
+   * Safely invoke a lifecycle hook. Errors are caught and logged
+   * so that hook failures never break mission execution.
+   * Fixes #184.
+   */
+  private async safeHook(name: string, fn: () => Promise<void> | void | undefined): Promise<void> {
+    try {
+      await fn();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[mission-runner] Hook ${name} error (ignored): ${msg}`);
+    }
   }
 
   private validateBrief(brief: MissionBrief) {

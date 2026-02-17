@@ -23,6 +23,7 @@ import { ConversationAPI } from './conversation-api';
 import { toSafeError } from './error-handler';
 import { SqliteConversationStore } from './sqlite-conversation-store';
 import { InteractionLogger } from './interaction-logger';
+import { RuntimeConversationBridge } from './runtime-conversation-bridge';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -107,6 +108,7 @@ async function readJsonBody(
 
 let _apiInstance: ConversationAPI | null = null;
 let _interactionLogger: InteractionLogger | null = null;
+let _runtimeBridge: RuntimeConversationBridge | null = null;
 
 function getApi(opts: ConversationHandlerOptions): ConversationAPI {
   if (_apiInstance) return _apiInstance;
@@ -184,7 +186,39 @@ function getApi(opts: ConversationHandlerOptions): ConversationAPI {
     });
   }
 
+  // Issue #184: Create runtime conversation bridge for mission integration.
+  // This bridge is accessible via getRuntimeBridge() so MissionRunner
+  // callers can pass bridge.hooks to their config.
+  if (!_runtimeBridge) {
+    _runtimeBridge = new RuntimeConversationBridge(_apiInstance);
+  }
+
   return _apiInstance;
+}
+
+/**
+ * Get the singleton RuntimeConversationBridge instance.
+ * Returns null if getApi() hasn't been called yet (i.e., no DB path configured).
+ *
+ * Usage in MissionRunner callers:
+ *   const bridge = getRuntimeBridge();
+ *   const runner = new MissionRunner({ ..., hooks: bridge ?? undefined });
+ *
+ * Fixes #184
+ */
+export function getRuntimeBridge(): RuntimeConversationBridge | null {
+  return _runtimeBridge;
+}
+
+/**
+ * Reset the singleton instances. Primarily for testing.
+ * @internal
+ */
+export function resetSingletons(): void {
+  _apiInstance = null;
+  _interactionLogger?.close();
+  _interactionLogger = null;
+  _runtimeBridge = null;
 }
 
 // ─── Route Handlers (async) ─────────────────────────────────────────────────
@@ -383,4 +417,4 @@ export function createConversationRouter(dbPath: string) {
   };
 }
 
-export default { handleConversationApi, createConversationRouter };
+export default { handleConversationApi, createConversationRouter, getRuntimeBridge, resetSingletons };
