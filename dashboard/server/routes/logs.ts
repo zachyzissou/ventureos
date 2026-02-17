@@ -23,6 +23,34 @@ import type { LogsDeps, LogEntry, LogSourceMeta } from '../types.js';
 /** Allowlisted extensions for log files. */
 const LOG_EXTENSIONS = new Set(['.jsonl', '.log', '.txt']);
 
+// ─── Secret Redaction ────────────────────────────────────────────────────────
+
+const SECRET_PATTERNS: RegExp[] = [
+  /Bearer\s+[A-Za-z0-9\-_=.]{8,}/gi,
+  /(?:token|key|secret|password|authorization|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9\-_=.]{16,}["']?/gi,
+  /ghp_[A-Za-z0-9]{36,}/g,
+  /gho_[A-Za-z0-9]{36,}/g,
+  /github_pat_[A-Za-z0-9_]{20,}/g,
+  /npm_[A-Za-z0-9]{36,}/g,
+  /sk-[A-Za-z0-9]{20,}/g,
+];
+
+/** Redact known secret/token patterns from log text. */
+function redactSecrets(text: string): string {
+  let r = text;
+  for (const p of SECRET_PATTERNS) {
+    p.lastIndex = 0;
+    r = r.replace(p, (m) =>
+      m.length > 12 ? m.substring(0, 8) + '***REDACTED***' : '***REDACTED***',
+    );
+  }
+  return r;
+}
+
+// ─── Line count cache ────────────────────────────────────────────────────────
+
+const _lineCountCache = new Map<string, { mtimeMs: number; count: number }>();
+
 /** Characters that indicate a directory-traversal attempt. */
 function isSafeFilename(name: string): boolean {
   return !/[\/\\]/.test(name) && !name.startsWith('.') && name.length > 0 && name.length < 256;
@@ -91,9 +119,18 @@ function extractTimestamp(parsed: Record<string, unknown> | null, raw: string): 
   return '';
 }
 
-/** Count lines in a file by scanning newlines (buffered). */
+/** Count lines in a file (cached by mtime, skips files >50MB). */
 function countLines(filePath: string): number {
   try {
+    const stat = fs.statSync(filePath);
+    // Skip counting for very large files — estimate instead
+    if (stat.size > 50 * 1024 * 1024) {
+      return Math.round(stat.size / 200); // ~200 bytes/line estimate
+    }
+    // Check cache
+    const cached = _lineCountCache.get(filePath);
+    if (cached && cached.mtimeMs === stat.mtimeMs) return cached.count;
+
     const BUF_SIZE = 64 * 1024;
     const fd = fs.openSync(filePath, 'r');
     const buf = Buffer.allocUnsafe(BUF_SIZE);
@@ -105,6 +142,7 @@ function countLines(filePath: string): number {
       }
     }
     fs.closeSync(fd);
+    _lineCountCache.set(filePath, { mtimeMs: stat.mtimeMs, count });
     return count;
   } catch {
     return 0;
@@ -281,7 +319,14 @@ function parseLines(
       if (!haystack.includes(searchLower)) continue;
     }
 
-    entries.push({ ts, level, source: sourceId, message, raw: trimmed, fields: parsed });
+    entries.push({
+      ts,
+      level,
+      source: sourceId,
+      message: redactSecrets(message),
+      raw: redactSecrets(trimmed),
+      fields: parsed,
+    });
   }
 
   return entries;

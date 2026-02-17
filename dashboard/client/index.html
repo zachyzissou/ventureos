@@ -4946,7 +4946,7 @@ function renderLogEntry(entry, idx) {
       .slice(0, 12)
       .map(([k, v]) => {
         const val = typeof v === 'object' ? JSON.stringify(v).slice(0, 120) : String(v).slice(0, 120);
-        return `<span style="color:var(--cyan);">${k}</span>=<span style="color:var(--text-secondary);">${val.replace(/</g,'&lt;')}</span>`;
+        return `<span style="color:var(--cyan);">${k.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>=<span style="color:var(--text-secondary);">${val.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`;
       }).join('  ');
     if (fieldLines) {
       fieldsHtml = `<div class="log-fields" id="logFields${idx}" style="display:none;margin-top:6px;padding:8px 10px;background:var(--bg-secondary);border-radius:6px;font-size:11px;line-height:1.6;word-break:break-all;">${fieldLines}</div>`;
