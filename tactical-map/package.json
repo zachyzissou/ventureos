@@ -17,6 +17,7 @@
     "test:perf:memory": "PERF=1 playwright test tests/performance/memory-leak.test.ts",
     "test:perf:network": "PERF=1 playwright test tests/performance/network-latency.test.ts",
     "bench": "./scripts/run-benchmarks.sh",
+    "test:a11y": "playwright test tests/accessibility/",
     "lint": "echo 'lint: not configured yet'"
   },
   "dependencies": {
@@ -24,6 +25,7 @@
     "pixi.js": "^8.2.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@playwright/test": "^1.50.1",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^22.13.1",
