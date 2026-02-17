@@ -30,6 +30,21 @@ try {
 let _buffer: string[] = [];
 let _flushTimer: ReturnType<typeof setTimeout> | null = null;
 
+function sanitizePathForLog(rawUrl: string | undefined): string {
+  if (!rawUrl) return '-';
+  try {
+    return new URL(rawUrl, 'http://localhost').pathname;
+  } catch {
+    const qIdx: number = rawUrl.indexOf('?');
+    return qIdx >= 0 ? rawUrl.slice(0, qIdx) : rawUrl;
+  }
+}
+
+function getPeerIp(req: IncomingMessage | null): string {
+  if (!req) return 'unknown';
+  return req.socket?.remoteAddress ?? 'unknown';
+}
+
 /**
  * Log an audit event.
  *
@@ -45,11 +60,9 @@ export function auditLog(
   const entry: AuditLogEntry = {
     ts: new Date().toISOString(),
     event,
-    ip: req
-      ? ((req.headers['x-forwarded-for'] as string | undefined) ?? req.socket?.remoteAddress ?? 'unknown')
-      : 'internal',
+    ip: req ? getPeerIp(req) : 'internal',
     method: req?.method ?? '-',
-    path: req?.url ?? '-',
+    path: sanitizePathForLog(req?.url),
     userAgent: ((req?.headers?.['user-agent'] as string | undefined) ?? '-').substring(0, 200),
     ...detail,
   };
