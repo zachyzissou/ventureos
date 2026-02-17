@@ -100,6 +100,10 @@ npx tsc -p tsconfig.json --outDir dist 2>&1 || {
   echo "⚠️  TypeScript compilation had warnings (non-fatal, continuing)"
 }
 
+# Mark dist/lib/ as CommonJS — see install-macos.sh for rationale.
+mkdir -p "$DASHBOARD_DIR/dist/lib"
+echo '{ "type": "commonjs" }' > "$DASHBOARD_DIR/dist/lib/package.json"
+
 if [[ ! -f "$DASHBOARD_DIR/dist/dashboard/server/server.js" ]]; then
   echo "❌ Build failed — dist/dashboard/server/server.js not found"
   exit 1

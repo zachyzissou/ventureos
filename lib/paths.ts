@@ -41,6 +41,10 @@ export const KPI_DIR: string =
   process.env.VENTUREOS_KPI_DIR ??
   path.join(SHARED_CONTEXT_DIR, 'kpis');
 
+/** Dashboard data directory (tokens, health history, etc.). */
+export const DASHBOARD_DATA_DIR: string =
+  process.env.DASHBOARD_DATA_DIR ?? path.join(VENTUREOS_ROOT, 'dashboard', 'data');
+
 /** Observations markdown directory. */
 export const OBSERVATIONS_DIR: string =
   process.env.OBSERVATIONS_DIR ??
@@ -74,6 +78,7 @@ export const paths = {
   openclawDir: OPENCLAW_DIR,
   sharedContextDir: SHARED_CONTEXT_DIR,
   kpiDir: KPI_DIR,
+  dashboardDataDir: DASHBOARD_DATA_DIR,
   observationsDir: OBSERVATIONS_DIR,
   logDir: LOG_DIR,
   rpgRoot: RPG_ROOT,
@@ -110,6 +115,7 @@ const defaultPathsExport = {
   OPENCLAW_DIR,
   SHARED_CONTEXT_DIR,
   KPI_DIR,
+  DASHBOARD_DATA_DIR,
   OBSERVATIONS_DIR,
   LOG_DIR,
   RPG_ROOT,
