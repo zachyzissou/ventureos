@@ -236,3 +236,5 @@ export function containsSensitiveInfo(message: string): boolean {
 
   return sensitivePatterns.some((pattern) => pattern.test(message));
 }
+
+export default { toSafeError, logError, containsSensitiveInfo };

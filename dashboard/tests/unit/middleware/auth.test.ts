@@ -15,6 +15,14 @@ vi.mock('../../../../lib/paths.js', () => ({
   SHARED_CONTEXT_DIR: '/tmp/test-shared-context',
   KPI_DIR: '/tmp/test-kpis',
   OBSERVATIONS_DIR: '/tmp/test-observations',
+  default: {
+    LOG_DIR: '/tmp/test-logs',
+    OPENCLAW_DIR: '/tmp/test-openclaw',
+    VENTUREOS_ROOT: '/tmp/test-ventureos',
+    SHARED_CONTEXT_DIR: '/tmp/test-shared-context',
+    KPI_DIR: '/tmp/test-kpis',
+    OBSERVATIONS_DIR: '/tmp/test-observations',
+  },
 }));
 
 // Mock fs to prevent real file writes

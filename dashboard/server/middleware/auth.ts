@@ -13,8 +13,9 @@ import path from 'node:path';
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { CookieMap } from '../types.js';
-import { LOG_DIR } from '../../../lib/paths.js';
+import paths from '../../../lib/paths.js';
 
+const { LOG_DIR } = paths as typeof import('../../../lib/paths.js');
 const DATA_DIR: string = path.join(import.meta.dirname, '..', '..', 'data');
 const TOKEN_PATH: string = path.join(DATA_DIR, '.api-token');
 const ACCESS_LOG: string = path.join(LOG_DIR, 'tactical-map-access.log');

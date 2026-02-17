@@ -8,9 +8,10 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { handleRpgApi } from '../../../lib/rpg-http.js';
 import type { RpgHandlerOptions } from '../../../lib/types/rpg.js';
+import rpgHttp from '../../../lib/rpg-http.js';
 
+const { handleRpgApi } = rpgHttp as typeof import('../../../lib/rpg-http.js');
 export { handleRpgApi };
 export type { RpgHandlerOptions };
 

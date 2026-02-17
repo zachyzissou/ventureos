@@ -9,6 +9,10 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'text-summary', 'lcov', 'json-summary'],
       reportsDirectory: './coverage',
+      lines: 50,
+      functions: 50,
+      branches: 40,
+      statements: 50,
       include: [
         'server/middleware/**/*.ts',
         'server/routes/**/*.ts',

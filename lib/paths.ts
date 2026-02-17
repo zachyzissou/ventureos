@@ -103,3 +103,22 @@ export function agentWorkspaceDir(agentId: string): string {
     .replace(/[^a-z0-9\-_]/g, '');
   return path.join(OPENCLAW_DIR, `workspace-${safe}`);
 }
+
+
+const defaultPathsExport = {
+  VENTUREOS_ROOT,
+  OPENCLAW_DIR,
+  SHARED_CONTEXT_DIR,
+  KPI_DIR,
+  OBSERVATIONS_DIR,
+  LOG_DIR,
+  RPG_ROOT,
+  RPG_DB_PATH,
+  ACTIVE_WORK_PATH,
+  PRIORITIES_PATH,
+  agentSessionsDir,
+  agentWorkspaceDir,
+  paths,
+} as const;
+
+export default defaultPathsExport;
