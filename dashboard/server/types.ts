@@ -338,6 +338,48 @@ export interface LiveEvent {
   content: string;
 }
 
+/** Live telemetry snapshot pushed via SSE. */
+export interface TelemetrySnapshot {
+  type: 'telemetry';
+  ts: number;
+  system: {
+    cpuUsage: number;
+    memoryPercent: number;
+    memoryUsedGB: string;
+    memoryTotalGB: string;
+    diskPercent: number;
+    loadAvg1m: string;
+    uptime: number;
+  };
+  agents: {
+    total: number;
+    active: number;
+    busyIds: string[];
+  };
+  sessions: {
+    total: number;
+    running: number;
+  };
+  costs: {
+    today: number;
+    week: number;
+  };
+  usage: {
+    opusPct: number;
+    sonnetPct: number;
+    totalCost5h: number;
+    totalCalls5h: number;
+    burnTokensPerMin: number;
+    burnCostPerMin: number;
+  };
+  kpi: {
+    successRate: number | null;
+    p95LatencyS: number | null;
+    sloStatus: string | null;
+    date: string | null;
+  };
+}
+
 // ─── Cron Domain ─────────────────────────────────────────────────────────────
 
 /** Cron job info as returned from the API. */
