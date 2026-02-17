@@ -273,6 +273,75 @@ export async function handleTacticalMapControls(
     }
   }
 
+  // PATCH /api/tactical-map/missions/:missionId
+  {
+    const match = pathname.match(/^\/api\/tactical-map\/missions\/([^/]+)$/);
+    if ((req.method === 'PATCH' || req.method === 'POST') && match && !pathname.endsWith('/priority') && !pathname.endsWith('/spawn')) {
+      try {
+        const missionId = decodeURIComponent(match[1]);
+        const body = await parseJsonBody(req, deps.readRequestBody);
+
+        const store = readStore(storePath, nowIso);
+        const mission = store.missions[missionId];
+        if (!mission) return sendNotFound('Mission not found'), true;
+
+        let changed = false;
+
+        if (typeof body.title === 'string') {
+          const title = body.title.trim();
+          if (!title) return sendBadRequest('Mission title cannot be empty'), true;
+          mission.title = title;
+          changed = true;
+        }
+
+        if (typeof body.description === 'string') {
+          mission.description = body.description.trim();
+          changed = true;
+        }
+
+        if (typeof body.assignee === 'string') {
+          const assigneeRaw = body.assignee.trim();
+          if (!isAgentId(assigneeRaw) || assigneeRaw === 'nexus') {
+            return sendBadRequest('Mission assignee must be a valid non-nexus agent'), true;
+          }
+          mission.assignee = assigneeRaw;
+          changed = true;
+        }
+
+        if (typeof body.priority === 'string') {
+          const priorityRaw = body.priority.trim().toLowerCase();
+          if (!isMissionPriority(priorityRaw)) {
+            return sendBadRequest('Mission priority must be one of: low, normal, high, critical'), true;
+          }
+          mission.priority = priorityRaw;
+          changed = true;
+        }
+
+        if (typeof body.tokenBudget === 'number') {
+          if (!Number.isFinite(body.tokenBudget) || body.tokenBudget <= 0) {
+            return sendBadRequest('tokenBudget must be a positive number'), true;
+          }
+          mission.tokenBudget = Math.max(1, Math.round(body.tokenBudget));
+          changed = true;
+        }
+
+        if (!changed) {
+          return sendBadRequest('No valid fields to update'), true;
+        }
+
+        mission.updatedAt = nowIso;
+        store.updatedAt = nowIso;
+        writeStore(storePath, store);
+
+        deps.sendJson(res, { ok: true, missionId, mission }, 200);
+        return true;
+      } catch {
+        sendBadRequest('Invalid JSON body');
+        return true;
+      }
+    }
+  }
+
   // POST /api/tactical-map/agents/:agentId/pause|resume
   {
     const match = pathname.match(/^\/api\/tactical-map\/agents\/([^/]+)\/(pause|resume)$/);

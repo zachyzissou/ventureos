@@ -25,10 +25,12 @@ import { createInitialUIState } from './types';
 import { canPerformAction, validatePermission } from './permissions';
 import { createUndoStack, pushUndo, undo, redo, canUndo, canRedo } from './undo';
 import type { UndoStack } from './types';
-import type { ControlClient } from '@/data/control-client';
+import type { ControlClient, PersistedMission, MissionUpdateRequest } from '@/data/control-client';
 import type { AgentDetailPanelLayer } from '@/renderer/agent-detail-panel';
 import type { ConfirmationDialogLayer } from '@/renderer/confirmation-dialog';
 import type { MissionSpawnModalLayer } from '@/renderer/mission-spawn-modal';
+import type { MissionEditModalLayer } from '@/renderer/mission-edit-modal';
+import type { MissionListPanelLayer } from '@/renderer/mission-list-panel';
 import type { CommandPaletteLayer } from '@/renderer/command-palette';
 import type { BudgetSliderLayer } from '@/renderer/budget-slider';
 
@@ -41,6 +43,8 @@ export type InteractionControllerOptions = {
   detailPanel: AgentDetailPanelLayer;
   confirmDialog: ConfirmationDialogLayer;
   missionModal: MissionSpawnModalLayer;
+  missionEditModal?: MissionEditModalLayer;
+  missionListPanel?: MissionListPanelLayer;
   commandPalette: CommandPaletteLayer;
   budgetSlider: BudgetSliderLayer;
   canvas: HTMLCanvasElement;
@@ -62,6 +66,14 @@ export type InteractionController = {
   resumeAgent: (agentId: AgentId) => void;
   /** Open mission spawn modal. */
   openMissionSpawn: (defaultAssignee?: AgentId) => void;
+  /** Open the mission list panel (for in-map editing). */
+  openMissionList: () => void;
+  /** Close the mission list panel. */
+  closeMissionList: () => void;
+  /** Open mission edit modal for a specific mission. */
+  openMissionEdit: (mission: PersistedMission) => void;
+  /** Close mission edit modal. */
+  closeMissionEdit: () => void;
   /** Open command palette. */
   openCommandPalette: () => void;
   /** Close command palette. */
@@ -319,6 +331,86 @@ export function createInteractionController(opts: InteractionControllerOptions):
     updateUI({ missionSpawnOpen: false });
   });
 
+  // ─── Mission List / Edit (Issue #135) ───
+
+  function openMissionList() {
+    const err = validatePermission(uiState.userRole, 'mission:priority');
+    if (err) { console.warn(err); return; }
+
+    if (!opts.missionListPanel) {
+      console.warn('[interactive] Mission list panel not available');
+      return;
+    }
+
+    // Fetch missions from backend
+    void opts.controlClient.fetchMissions?.().then((result) => {
+      if (!result?.ok || !result.missions) {
+        console.warn('[interactive] Failed to fetch missions:', result?.error);
+        opts.missionListPanel!.show([]);
+        return;
+      }
+      opts.missionListPanel!.show(result.missions);
+    }).catch((err) => {
+      console.warn('[interactive] Failed to fetch missions:', err);
+      opts.missionListPanel!.show([]);
+    });
+
+    updateUI({ missionListOpen: true });
+  }
+
+  function closeMissionList() {
+    opts.missionListPanel?.hide();
+    updateUI({ missionListOpen: false });
+  }
+
+  function openMissionEdit(mission: PersistedMission) {
+    const err = validatePermission(uiState.userRole, 'mission:priority');
+    if (err) { console.warn(err); return; }
+
+    if (!opts.missionEditModal) {
+      console.warn('[interactive] Mission edit modal not available');
+      return;
+    }
+
+    // Close list panel if open
+    closeMissionList();
+
+    opts.missionEditModal.show(mission);
+    updateUI({ missionEditOpen: true });
+  }
+
+  function closeMissionEdit() {
+    opts.missionEditModal?.hide();
+    updateUI({ missionEditOpen: false });
+  }
+
+  // Wire mission list panel → edit
+  if (opts.missionListPanel) {
+    opts.missionListPanel.onEdit((mission) => {
+      openMissionEdit(mission);
+    });
+  }
+
+  // Wire mission edit modal submit
+  if (opts.missionEditModal) {
+    opts.missionEditModal.onSubmit(async (missionId, updates) => {
+      const result = await opts.controlClient.updateMission(missionId, updates);
+      if (result.ok) {
+        console.log(`[interactive] Mission updated: ${missionId}`);
+        const action: ControlAction = {
+          type: 'mission:priority',
+          target: (updates.assignee ?? 'system') as AgentId | 'system',
+          payload: { missionId, ...updates },
+          createdAt: new Date().toISOString(),
+        };
+        undoStack = pushUndo(undoStack, action, {});
+      } else {
+        console.warn(`Failed to update mission ${missionId}:`, result.error);
+      }
+      updateUI({ missionEditOpen: false });
+    });
+  }
+
   // Agent detail panel action wiring
   opts.detailPanel.onTogglePauseResume((agentId, paused) => {
     if (paused) resumeAgent(agentId);
@@ -490,6 +582,16 @@ export function createInteractionController(opts: InteractionControllerOptions):
       keywords: ['create', 'new', 'launch', 'task'],
     });
 
+    cmds.push({
+      id: 'edit-missions',
+      label: 'Edit Mission Priorities',
+      shortcut: '⌘+E',
+      category: 'mission',
+      requiredRole: 'operator',
+      execute: () => openMissionList(),
+      keywords: ['edit', 'modify', 'change', 'priority', 'list', 'missions', 'update'],
+    });
+
     // System commands
     cmds.push({
       id: 'undo',
@@ -553,9 +655,19 @@ export function createInteractionController(opts: InteractionControllerOptions):
       return;
     }
 
-    // ESC — Close whatever is open
+    // Mission edit modal submit shortcut
+    if (!meta && uiState.missionEditOpen && e.key === 'Enter') {
+      e.preventDefault();
+      opts.missionEditModal?.submit();
+      updateUI({ missionEditOpen: false });
+      return;
+    }
+
+    // ESC — Close whatever is open (ordered by z-index)
     if (e.key === 'Escape') {
       if (uiState.paletteOpen) { closeCommandPalette(); return; }
+      if (uiState.missionEditOpen) { closeMissionEdit(); return; }
+      if (uiState.missionListOpen) { closeMissionList(); return; }
       if (uiState.confirmation) { opts.confirmDialog.hide(); updateUI({ confirmation: null }); return; }
       if (uiState.missionSpawnOpen) { opts.missionModal.hide(); updateUI({ missionSpawnOpen: false }); return; }
       if (uiState.selectedAgent) { closeAgentDetail(); return; }
@@ -579,6 +691,26 @@ export function createInteractionController(opts: InteractionControllerOptions):
     if (meta && e.key === 'm') {
       e.preventDefault();
       openMissionSpawn();
+      return;
+    }
+
+    // Cmd+E — Edit Missions (open list)
+    if (meta && e.key === 'e') {
+      e.preventDefault();
+      if (uiState.missionListOpen) closeMissionList();
+      else openMissionList();
+      return;
+    }
+
+    // Mission list keyboard nav
+    if (uiState.missionListOpen && opts.missionListPanel) {
+      if (e.key === 'ArrowUp') { e.preventDefault(); opts.missionListPanel.selectUp(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); opts.missionListPanel.selectDown(); }
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        const selected = opts.missionListPanel.selectedMission();
+        if (selected) openMissionEdit(selected);
+      }
       return;
     }
 
@@ -672,6 +804,10 @@ export function createInteractionController(opts: InteractionControllerOptions):
     pauseAgent,
     resumeAgent,
     openMissionSpawn,
+    openMissionList,
+    closeMissionList,
+    openMissionEdit,
+    closeMissionEdit,
     openCommandPalette,
     closeCommandPalette,
     undoAction,

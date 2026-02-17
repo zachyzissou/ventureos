@@ -102,6 +102,57 @@ function mockBudgetSlider() {
   };
 }
 
+function mockMissionListPanel() {
+  let editCb: any = null;
+  return {
+    container: { visible: false } as any,
+    show: vi.fn(),
+    hide: vi.fn(),
+    setViewport: vi.fn(),
+    update: vi.fn(),
+    isVisible: vi.fn(() => false),
+    selectUp: vi.fn(),
+    selectDown: vi.fn(),
+    selectedIndex: vi.fn(() => 0),
+    selectedMission: vi.fn(() => null),
+    onEdit: vi.fn((cb: any) => { editCb = cb; }),
+    missionCount: vi.fn(() => 0),
+    _getEditCb: () => editCb,
+  };
+}
+
+function mockMissionEditModal() {
+  let submitCb: any = null;
+  return {
+    container: { visible: false } as any,
+    show: vi.fn(),
+    hide: vi.fn(),
+    setViewport: vi.fn(),
+    update: vi.fn(),
+    isVisible: vi.fn(() => false),
+    getFormState: vi.fn(() => ({
+      title: 'Test',
+      description: '',
+      assignee: 'synth' as AgentId,
+      priority: 'normal' as const,
+      tokenBudget: '',
+    })),
+    setField: vi.fn(),
+    onSubmit: vi.fn((cb: any) => { submitCb = cb; }),
+    submit: vi.fn(() => {
+      if (!submitCb) return;
+      submitCb('mission-test-1', {
+        title: 'Updated',
+        priority: 'high',
+        assignee: 'synth',
+        description: '',
+      });
+    }),
+    editingMissionId: vi.fn(() => null),
+    _getSubmitCb: () => submitCb,
+  };
+}
+
 function mockControlClient() {
   return {
     pauseAgent: vi.fn(async () => ({ ok: true })),
@@ -111,6 +162,21 @@ function mockControlClient() {
     setMissionPriority: vi.fn(async () => ({ ok: true })),
     updateConfig: vi.fn(async () => ({ ok: true })),
     fetchControlState: vi.fn(async () => ({ ok: true, pausedAgents: [], budgets: {} })),
+    fetchMissions: vi.fn(async () => ({
+      ok: true,
+      missions: [
+        {
+          missionId: 'mission-test-1',
+          title: 'Test Mission',
+          description: 'Desc',
+          assignee: 'synth',
+          priority: 'normal',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+    })),
+    updateMission: vi.fn(async () => ({ ok: true, missionId: 'mission-test-1' })),
   };
 }
 
@@ -139,6 +205,8 @@ describe('interaction/controller', () => {
   let missionModal: ReturnType<typeof mockMissionModal>;
   let commandPalette: ReturnType<typeof mockCommandPalette>;
   let budgetSlider: ReturnType<typeof mockBudgetSlider>;
+  let missionListPanel: ReturnType<typeof mockMissionListPanel>;
+  let missionEditModal: ReturnType<typeof mockMissionEditModal>;
   let controller: ReturnType<typeof createInteractionController>;
 
   beforeEach(() => {
@@ -152,6 +220,8 @@ describe('interaction/controller', () => {
     missionModal = mockMissionModal();
     commandPalette = mockCommandPalette();
     budgetSlider = mockBudgetSlider();
+    missionListPanel = mockMissionListPanel();
+    missionEditModal = mockMissionEditModal();
 
     controller = createInteractionController({
       eventBus,
@@ -162,6 +232,8 @@ describe('interaction/controller', () => {
       detailPanel,
       confirmDialog,
       missionModal,
+      missionEditModal,
+      missionListPanel,
       commandPalette,
       budgetSlider,
       canvas: { addEventListener: vi.fn(), removeEventListener: vi.fn() } as any,
@@ -363,6 +435,100 @@ describe('interaction/controller', () => {
       }));
 
       expect(detailPanel.updateData).toHaveBeenCalled();
+    });
+  });
+
+  describe('openMissionList (Issue #135)', () => {
+    it('fetches missions and opens the list panel', async () => {
+      controller.openMissionList();
+      expect(controlClient.fetchMissions).toHaveBeenCalled();
+      expect(controller.getUIState().missionListOpen).toBe(true);
+
+      // Wait for async fetch to resolve
+      await vi.waitFor(() => {
+        expect(missionListPanel.show).toHaveBeenCalled();
+      });
+
+      const showArg = missionListPanel.show.mock.calls[0][0];
+      expect(showArg).toHaveLength(1);
+      expect(showArg[0].missionId).toBe('mission-test-1');
+    });
+
+    it('closes the mission list', () => {
+      controller.openMissionList();
+      controller.closeMissionList();
+      expect(missionListPanel.hide).toHaveBeenCalled();
+      expect(controller.getUIState().missionListOpen).toBe(false);
+    });
+
+    it('blocked for viewers', () => {
+      controller.setUserRole('viewer' as any);
+      controller.openMissionList();
+      expect(controlClient.fetchMissions).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('openMissionEdit (Issue #135)', () => {
+    it('opens the edit modal with mission data', () => {
+      const mission = {
+        missionId: 'mission-edit-1',
+        title: 'Edit Me',
+        description: 'Desc',
+        assignee: 'synth' as const,
+        priority: 'high' as const,
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      };
+      controller.openMissionEdit(mission);
+      expect(missionEditModal.show).toHaveBeenCalledWith(mission);
+      expect(controller.getUIState().missionEditOpen).toBe(true);
+      // Should close mission list if open
+      expect(missionListPanel.hide).toHaveBeenCalled();
+    });
+
+    it('closes the edit modal', () => {
+      controller.openMissionEdit({
+        missionId: 'm1', title: 'T', description: '', assignee: 'synth',
+        priority: 'normal', createdAt: '', updatedAt: '',
+      });
+      controller.closeMissionEdit();
+      expect(missionEditModal.hide).toHaveBeenCalled();
+      expect(controller.getUIState().missionEditOpen).toBe(false);
+    });
+
+    it('calls updateMission on submit', async () => {
+      controller.openMissionEdit({
+        missionId: 'mission-test-1', title: 'T', description: '', assignee: 'synth',
+        priority: 'normal', createdAt: '', updatedAt: '',
+      });
+
+      // Trigger submit through the wired callback
+      const submitCb = missionEditModal._getSubmitCb();
+      expect(submitCb).toBeDefined();
+      await submitCb('mission-test-1', { title: 'Updated', priority: 'high' });
+      expect(controlClient.updateMission).toHaveBeenCalledWith('mission-test-1', {
+        title: 'Updated',
+        priority: 'high',
+      });
+    });
+
+    it('blocked for viewers', () => {
+      controller.setUserRole('viewer' as any);
+      controller.openMissionEdit({
+        missionId: 'm1', title: 'T', description: '', assignee: 'synth',
+        priority: 'normal', createdAt: '', updatedAt: '',
+      });
+      expect(missionEditModal.show).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getCommands includes edit-missions (Issue #135)', () => {
+    it('has edit missions command', () => {
+      const cmds = controller.getCommands();
+      const editCmd = cmds.find((c) => c.id === 'edit-missions');
+      expect(editCmd).toBeDefined();
+      expect(editCmd!.shortcut).toBe('⌘+E');
+      expect(editCmd!.category).toBe('mission');
     });
   });
 
