@@ -1,11 +1,14 @@
 import { Application, Container } from 'pixi.js';
 import { AGENT_ORDER, AGENTS, CANVAS, ECONOMY } from '@/config';
 import type { AgentId, Point } from '@/config';
+import type { UserRole } from '@/interaction';
 import { createApiClient } from '@/data/api-client';
 import { createEconomyClient } from '@/data/economy-client';
 import { createHealthClient } from '@/data/health-client';
 import { classifyActivity, ActivityType } from '@/data/activity-mapper';
 import { createCameraController } from '@/interaction/camera';
+import { createEventBus, createInteractionController } from '@/interaction';
+import { createControlClient } from '@/data/control-client';
 import { createBuildingsLayer, RING_AGENT_IDS } from '@/renderer/buildings';
 import { createHud, pollKpis } from '@/renderer/hud';
 import { createNexus } from '@/renderer/nexus';
@@ -18,6 +21,11 @@ import { createResourceEconomyLayer } from '@/renderer/resource-economy';
 import { createHealthIndicatorsLayer } from '@/renderer/health-indicators';
 import { createAlertOverlay } from '@/renderer/alert-overlay';
 import { createHealthDashboard } from '@/renderer/health-dashboard';
+import { createAgentDetailPanel } from '@/renderer/agent-detail-panel';
+import { createMissionSpawnModal } from '@/renderer/mission-spawn-modal';
+import { createConfirmationDialog } from '@/renderer/confirmation-dialog';
+import { createCommandPalette } from '@/renderer/command-palette';
+import { createBudgetSlider } from '@/renderer/budget-slider';
 import { deriveBuildingState } from '@/renderer/building-states';
 import { BudgetAlertManager } from '@/economy/alerts';
 import { HealthAlertManager } from '@/health/alerts';
@@ -46,7 +54,8 @@ function createInitialMapState(): MapState {
     agents[id] = {
       id,
       position: id === 'nexus' ? { x: 0, y: 0 } : AGENTS.POSITIONS[i] ?? { x: 0, y: 0 },
-      state: 'IDLE'
+      state: 'IDLE',
+      paused: false,
     };
   }
   return { updatedAt: new Date().toISOString(), agents };
@@ -69,10 +78,14 @@ async function bootstrap() {
   const mount = document.querySelector<HTMLDivElement>('#app');
   if (!mount) throw new Error('Missing #app mount');
   mount.appendChild(app.canvas);
+  app.canvas.tabIndex = 0;
+  app.canvas.addEventListener('pointerdown', () => app.canvas.focus());
 
   // Enable event system across the full screen.
   app.stage.eventMode = 'static';
   app.stage.hitArea = app.screen;
+
+  const interactionBus = createEventBus();
 
   // World container (camera transforms applied here)
   const world = new Container();
@@ -92,6 +105,18 @@ async function bootstrap() {
 
   const unitsLayer = createUnitsLayer(RING_AGENT_IDS);
   world.addChild(unitsLayer.container);
+
+  for (const id of RING_AGENT_IDS) {
+    const building = buildingsLayer.buildings[id];
+    building?.container.on('pointertap', (evt) => {
+      evt.stopPropagation();
+      interactionBus.emit({
+        type: 'agent:click',
+        agentId: id,
+        timestamp: performance.now(),
+      });
+    });
+  }
 
   const nexus = createNexus();
   world.addChild(nexus.container);
@@ -115,6 +140,48 @@ async function bootstrap() {
 
   const healthDashboard = createHealthDashboard();
   app.stage.addChild(healthDashboard.container);
+
+  // Interactive controls overlays (Phase 5.7)
+  const detailPanel = createAgentDetailPanel(interactionBus);
+  const missionSpawnModal = createMissionSpawnModal();
+  const confirmationDialog = createConfirmationDialog();
+  const commandPalette = createCommandPalette();
+  const budgetSlider = createBudgetSlider();
+
+  budgetSlider.container.position.set(0, 0);
+
+  app.stage.addChild(detailPanel.container);
+  app.stage.addChild(budgetSlider.container);
+  app.stage.addChild(missionSpawnModal.container);
+  app.stage.addChild(confirmationDialog.container);
+  app.stage.addChild(commandPalette.container);
+
+  const controlClient = createControlClient({
+    onError: (e) => console.warn('[tactical-map] control api error', e)
+  });
+
+  const interactionController = createInteractionController({
+    eventBus: interactionBus,
+    mapStore,
+    healthStore,
+    economyStore,
+    controlClient,
+    detailPanel,
+    confirmDialog: confirmationDialog,
+    missionModal: missionSpawnModal,
+    commandPalette,
+    budgetSlider,
+    canvas: app.canvas,
+  });
+
+  // Default to admin controls in tactical view unless explicitly overridden.
+  const roleParam = typeof location !== 'undefined'
+    ? new URLSearchParams(location.search).get('role')
+    : null;
+  const requestedRole = roleParam === 'viewer' || roleParam === 'operator' || roleParam === 'admin'
+    ? roleParam
+    : null;
+  interactionController.setUserRole((requestedRole ?? 'admin') as UserRole);
 
   const alertManager = new BudgetAlertManager({
     warningRatio: ECONOMY.WARNING_THRESHOLD,
@@ -161,6 +228,16 @@ async function bootstrap() {
     resourceEconomy.setViewport(app.screen.width, app.screen.height);
     alertOverlay.setViewport(app.screen.width, app.screen.height);
     healthDashboard.setViewport(app.screen.width, app.screen.height);
+
+    detailPanel.setViewport(app.screen.width, app.screen.height);
+    missionSpawnModal.setViewport(app.screen.width, app.screen.height);
+    confirmationDialog.setViewport(app.screen.width, app.screen.height);
+    commandPalette.setViewport(app.screen.width, app.screen.height);
+
+    // Align budget slider near the lower portion of detail panel.
+    const panelX = app.screen.width - 320 - 20;
+    const panelY = 20;
+    budgetSlider.container.position.set(panelX + 16, panelY + 330);
   }
 
   // Pan only when dragging on the terrain surface.
@@ -175,10 +252,18 @@ async function bootstrap() {
     const now = performance.now();
     if (now - lastTap < 280) camera.reset();
     lastTap = now;
+
+    interactionBus.emit({ type: 'terrain:click', timestamp: performance.now() });
   });
 
   // Keep nexus centered in world space.
   nexus.container.position.set(0, 0);
+  nexus.container.eventMode = 'static';
+  nexus.container.cursor = 'pointer';
+  nexus.container.on('pointertap', (evt) => {
+    evt.stopPropagation();
+    interactionBus.emit({ type: 'agent:click', agentId: 'nexus', timestamp: performance.now() });
+  });
 
   // Store → view binding
   mapStore.subscribe((s) => {
@@ -412,6 +497,11 @@ async function bootstrap() {
     healthIndicators.update(elapsedMs);
     alertOverlay.update(elapsedMs);
     healthDashboard.update(elapsedMs);
+    detailPanel.update(elapsedMs);
+    missionSpawnModal.update(elapsedMs);
+    confirmationDialog.update(elapsedMs);
+    commandPalette.update(elapsedMs);
+    budgetSlider.update(elapsedMs);
     resourceEconomy.update(elapsedMs);
   });
 
@@ -420,6 +510,7 @@ async function bootstrap() {
     api.stop();
     economyClient.stop();
     healthClient.stop();
+    interactionController.destroy();
   });
 
   layout();
@@ -435,12 +526,16 @@ async function bootstrap() {
     economyClient,
     healthClient,
     camera,
+    interactionController,
+    interactionBus,
+    controlClient,
     pause: () => app.ticker.stop(),
     resume: () => app.ticker.start(),
     setMapState: (next: MapState) => mapStore.set(next),
     setEconomyState: (next: EconomyState) => economyStore.set(next),
     setHealthState: (next: HealthState) => healthStore.set(next),
     toggleHealthDashboard: () => healthDashboard.setVisible(!healthDashboard.isVisible()),
+    setUserRole: (role: UserRole) => interactionController.setUserRole(role),
     // deterministic snapshot helper
     snapshot: () => {
       app.render();

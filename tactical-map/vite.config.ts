@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
  * Notes:
  * - `root: 'src'` keeps the Vite entrypoint at `src/index.html` per the spec.
  * - `base: '/map/'` allows the built bundle to be served from the dashboard route:
- *   http://192.168.225.149:8001/map
+ *   http://127.0.0.1:8001/map
  */
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // Forward API calls to the dashboard server in dev.
         '/api': {
-          target: 'http://192.168.225.149:8001',
+          target: process.env.TACTICAL_MAP_API_PROXY_TARGET ?? 'http://127.0.0.1:8001',
           changeOrigin: true,
           secure: false
         }
