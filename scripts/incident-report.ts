@@ -21,8 +21,8 @@ import path from 'node:path';
 import os from 'node:os';
 import { execSync } from 'node:child_process';
 
-// Use dynamic import path resolution for the shared module
-const projectRoot = path.resolve(import.meta.dirname, '..');
+// CJS-compatible project root resolution
+const projectRoot = path.resolve(__dirname, '..');
 
 // ─── Redaction (inline to keep script self-contained) ────────────────────────
 
@@ -285,7 +285,7 @@ async function main(): Promise<void> {
 }
 
 // Only run CLI if executed directly
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('incident-report.ts')) {
+if (require.main === module || process.argv[1]?.endsWith('incident-report.ts')) {
   main().catch((err) => {
     console.error('[incident-report] Fatal error:', err);
     process.exit(1);
