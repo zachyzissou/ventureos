@@ -22,7 +22,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 
 All `/api/*` endpoints require authentication (except `/api/login` and `/api/logout`).
 
-**LAN bypass:** Connections from private IPs (`192.168.*`, `10.*`, `172.16-31.*`, `127.0.0.1`, `::1`) bypass authentication entirely.
+By default there is **no LAN auth bypass**. `X-Forwarded-For` is ignored unless trusted-proxy mode is explicitly enabled.
 
 ### Methods (in priority order)
 
@@ -30,11 +30,15 @@ All `/api/*` endpoints require authentication (except `/api/login` and `/api/log
 |--------|--------|---------|
 | Bearer token | `Authorization: Bearer <token>` | `curl -H "Authorization: Bearer abc123" ...` |
 | HttpOnly cookie | Set via `/api/login` | Browser sessions |
-| Query parameter | `?token=<token>` | SSE/EventSource connections |
 
 ### Token Management
 
 The API token is auto-generated on first start and stored at `dashboard/data/.api-token` (mode `0600`). Override with the `DASHBOARD_API_TOKEN` environment variable.
+
+### Proxy / Forwarded Header Trust
+
+- `DASHBOARD_TRUST_PROXY=false` (default): use direct peer socket IP only.
+- `DASHBOARD_TRUST_PROXY=true`: honor `X-Forwarded-For` only when peer IP is in `DASHBOARD_TRUSTED_PROXY_IPS`.
 
 ### Brute-Force Protection
 
@@ -550,13 +554,18 @@ Connection: keep-alive
 }
 ```
 
-**Note:** For SSE connections, pass the auth token via query parameter: `/api/live?token=<token>`
+**Auth for SSE:** same as all API routes (Bearer header or HttpOnly cookie). Query-parameter token auth is disabled.
 
 ---
 
 ## Action Endpoints
 
 All action endpoints require `POST` method.
+
+Security guardrails:
+- Disabled by default (`DASHBOARD_ENABLE_ACTIONS=false`)
+- Loopback-only by default (`DASHBOARD_ACTIONS_LOCALHOST_ONLY=true`)
+- Optional re-auth header (`DASHBOARD_ACTION_REAUTH=true` + `x-openclaw-action-token`)
 
 | Endpoint | Description |
 |----------|-------------|

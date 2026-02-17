@@ -94,17 +94,10 @@ describe('Auth Middleware — Full Stack (authenticate)', () => {
     assert.equal(res.status, 200);
   });
 
-  // ── Query param token (SSE fallback) ──────────────────────────────
+  // ── Query param token auth is disabled ────────────────────────────
 
-  it('accepts query param token for SSE endpoint → 200', async () => {
+  it('rejects query param token (even when valid) → 401', async () => {
     const res = await fetch(`${srv.url}/api/live?token=${token}`);
-    assert.equal(res.status, 200);
-    const body = await res.json();
-    assert.equal(body.ok, true);
-  });
-
-  it('rejects wrong query param token → 401', async () => {
-    const res = await fetch(`${srv.url}/api/live?token=bad-token`);
     assert.equal(res.status, 401);
   });
 

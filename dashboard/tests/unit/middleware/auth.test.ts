@@ -3,7 +3,8 @@
  * Migrated from auth-cookie.test.js and expanded for full coverage.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import fs from 'node:fs';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mockRequest, mockResponse, parseJsonBody } from '../../helpers.js';
 
 // Mock lib/paths before importing auth
@@ -63,6 +64,10 @@ const {
 } = await import('../../../server/middleware/auth.js');
 
 describe('Auth Middleware', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('parseCookies', () => {
     it('parses a single cookie', () => {
       expect(parseCookies('name=value')).toEqual({ name: 'value' });
@@ -131,9 +136,9 @@ describe('Auth Middleware', () => {
       expect(getAuthTokenFromRequest(req)).toBe('my-token-value');
     });
 
-    it('extracts token from query parameter', () => {
+    it('does not extract token from query parameter', () => {
       const req = mockRequest({ url: '/api/live?token=query-token-123' });
-      expect(getAuthTokenFromRequest(req)).toBe('query-token-123');
+      expect(getAuthTokenFromRequest(req)).toBeNull();
     });
 
     it('returns null when no credentials provided', () => {
@@ -153,16 +158,15 @@ describe('Auth Middleware', () => {
   });
 
   describe('isAuthenticated', () => {
-    it('returns true for LAN IPs (127.0.0.1)', () => {
-      expect(isAuthenticated(mockRequest({ socket: { remoteAddress: '127.0.0.1' } }))).toBe(true);
+    it('returns false for loopback requests without credentials', () => {
+      expect(isAuthenticated(mockRequest({ socket: { remoteAddress: '127.0.0.1' } }))).toBe(false);
     });
 
-    it('returns true for LAN IPs (192.168.x.x)', () => {
-      expect(isAuthenticated(mockRequest({ socket: { remoteAddress: '192.168.1.100' } }))).toBe(true);
-    });
-
-    it('returns true for LAN IPs (10.x.x.x)', () => {
-      expect(isAuthenticated(mockRequest({ socket: { remoteAddress: '10.0.0.1' } }))).toBe(true);
+    it('returns true with valid bearer token from LAN IP', () => {
+      expect(isAuthenticated(mockRequest({
+        headers: { authorization: 'Bearer test-token-abc123' },
+        socket: { remoteAddress: '192.168.1.100' },
+      }))).toBe(true);
     });
 
     it('returns true with valid bearer token from non-LAN IP', () => {
@@ -175,6 +179,13 @@ describe('Auth Middleware', () => {
     it('returns false with invalid token from non-LAN IP', () => {
       expect(isAuthenticated(mockRequest({
         headers: { authorization: 'Bearer wrong-token' },
+        socket: { remoteAddress: '203.0.113.50' },
+      }))).toBe(false);
+    });
+
+    it('ignores spoofed X-Forwarded-For by default', () => {
+      expect(isAuthenticated(mockRequest({
+        headers: { 'x-forwarded-for': '127.0.0.1' },
         socket: { remoteAddress: '203.0.113.50' },
       }))).toBe(false);
     });
@@ -205,12 +216,13 @@ describe('Auth Middleware', () => {
       expect(authenticate(mockRequest({ url: '/api/logout', method: 'POST' }), res)).toBe(true);
     });
 
-    it('passes LAN requests without token', () => {
+    it('rejects LAN requests without token', () => {
       const res = mockResponse();
       expect(authenticate(
         mockRequest({ url: '/api/sessions', socket: { remoteAddress: '192.168.1.100' } }),
         res,
-      )).toBe(true);
+      )).toBe(false);
+      expect(res._statusCode).toBe(401);
     });
 
     it('passes with valid Bearer token', () => {
@@ -223,6 +235,19 @@ describe('Auth Middleware', () => {
         }),
         res,
       )).toBe(true);
+    });
+
+    it('rejects spoofed X-Forwarded-For when token is missing', () => {
+      const res = mockResponse();
+      expect(authenticate(
+        mockRequest({
+          url: '/api/sessions',
+          headers: { 'x-forwarded-for': '127.0.0.1' },
+          socket: { remoteAddress: '203.0.113.50' },
+        }),
+        res,
+      )).toBe(false);
+      expect(res._statusCode).toBe(401);
     });
 
     it('rejects with invalid token (401)', () => {
@@ -259,6 +284,24 @@ describe('Auth Middleware', () => {
     it('handles request objects', () => {
       const req = mockRequest({ url: '/api/test', method: 'GET', headers: { 'user-agent': 'test-agent' } });
       expect(() => logAuthEvent('test_event', req, 'with request')).not.toThrow();
+    });
+
+    it('redacts query params from logged path', () => {
+      const appendSpy = vi.mocked(fs.appendFileSync);
+      const req = mockRequest({
+        url: '/api/live?token=super-secret-token&foo=bar',
+        method: 'GET',
+        headers: { 'user-agent': 'test-agent' },
+      });
+
+      logAuthEvent('test_event', req, 'with request');
+
+      expect(appendSpy).toHaveBeenCalled();
+      const line = String(appendSpy.mock.calls[0]?.[1] ?? '');
+      expect(line).not.toContain('super-secret-token');
+
+      const entry = JSON.parse(line.trim()) as { path: string };
+      expect(entry.path).toBe('/api/live');
     });
   });
 });

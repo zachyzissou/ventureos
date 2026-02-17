@@ -21,7 +21,7 @@ npm install
 
 # Start dev server with hot-reload (uses tsx)
 npm run dev
-# → Dashboard: http://0.0.0.0:8001
+# → Dashboard: http://127.0.0.1:8001
 
 # Or from the repo root:
 npm run dashboard:dev
@@ -44,7 +44,7 @@ npm run start      # Runs dist/dashboard/server/server.js
 2. The token is printed to stdout: `[AUTH] Generated new API token. First 8 chars: aBcD1234...`
 3. Open `http://localhost:8001/login` and enter the token
 4. A session cookie is set — you won't need to re-enter it for 30 days
-5. **LAN connections** (192.168.x.x, 10.x.x.x, etc.) bypass auth entirely
+5. All `/api/*` requests require a valid auth token (Bearer header or HttpOnly cookie). LAN bypass is disabled by default
 
 ## Scripts
 
@@ -108,9 +108,20 @@ All configuration is via environment variables with sensible defaults.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DASHBOARD_PORT` | `8001` | HTTP listen port |
-| `DASHBOARD_HOST` | `0.0.0.0` | HTTP bind address |
+| `DASHBOARD_HOST` | `127.0.0.1` | HTTP bind address (default localhost-only) |
 | `DASHBOARD_API_TOKEN` | *(auto-generated)* | Override auth token |
 | `DASHBOARD_AUTH_COOKIE` | `openclaw_dashboard_token` | Cookie name |
+
+### Security Guardrails
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DASHBOARD_ALLOW_LAN_BYPASS` | `false` | Optional legacy LAN auth bypass (disabled by default; not recommended) |
+| `DASHBOARD_TRUST_PROXY` | `false` | Honor `X-Forwarded-For` only when enabled and proxy is trusted |
+| `DASHBOARD_TRUSTED_PROXY_IPS` | `127.0.0.1,::1,::ffff:127.0.0.1` | Trusted proxy peer addresses when `DASHBOARD_TRUST_PROXY=true` |
+| `DASHBOARD_ENABLE_ACTIONS` | `false` | Enable privileged `/api/action/*` endpoints |
+| `DASHBOARD_ACTIONS_LOCALHOST_ONLY` | `true` | Restrict `/api/action/*` to loopback callers |
+| `DASHBOARD_ACTION_REAUTH` | `false` | Require `x-openclaw-action-token` re-auth header for `/api/action/*` |
 
 ### Path Settings
 
@@ -170,7 +181,7 @@ Request
   → Security Headers (CSP, X-Frame-Options, etc.)
   → CORS (strict origin whitelist)
   → Preflight handling (OPTIONS → 204)
-  → Authentication (Bearer token / cookie / LAN bypass)
+  → Authentication (Bearer token / HttpOnly cookie)
   → Rate Limiting (per-IP, per-endpoint sliding window)
   → Route dispatch
   → Response
@@ -268,9 +279,9 @@ cd dashboard && npx tsx server/server.ts
 
 ### "Unauthorized" on every request
 
-- **LAN?** Verify your IP is private (check `ifconfig` / `ip addr`)
-- **Remote?** Check the token: `cat dashboard/data/.api-token`
-- **Cookie expired?** Visit `/login` to re-authenticate
+- Check the token: `cat dashboard/data/.api-token`
+- Verify your browser has a valid auth cookie (visit `/login` to re-authenticate)
+- If using a reverse proxy, configure trusted proxy settings (`DASHBOARD_TRUST_PROXY`, `DASHBOARD_TRUSTED_PROXY_IPS`)
 
 ### No KPI data showing
 
@@ -303,7 +314,7 @@ The dashboard polls several endpoints every 5 seconds. Each IP gets its own buck
 
 The server caches session cost data (re-scanned every 60s) and reads JSONL files. For large session histories:
 - Archive old `.jsonl` files from `~/.openclaw/agents/*/sessions/`
-- Clear caches via `POST /api/action/clear-cache`
+- Clear caches via `POST /api/action/clear-cache` (requires `DASHBOARD_ENABLE_ACTIONS=true`)
 
 ## Migration from Standalone Repo
 

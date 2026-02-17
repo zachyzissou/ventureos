@@ -41,6 +41,16 @@ function ensureToken(): string {
 
 const VALID_TOKEN = ensureToken();
 
+function sanitizePathForLog(rawUrl: string | undefined): string {
+  if (!rawUrl) return '-';
+  try {
+    return new URL(rawUrl, 'http://localhost').pathname;
+  } catch {
+    const qIdx = rawUrl.indexOf('?');
+    return qIdx >= 0 ? rawUrl.slice(0, qIdx) : rawUrl;
+  }
+}
+
 /**
  * Log auth events to the access log file.
  */
@@ -48,9 +58,9 @@ function logAuthEvent(event: string, req: IncomingMessage | null, detail: string
   const entry = {
     ts: new Date().toISOString(),
     event,
-    ip: req ? (req.headers['x-forwarded-for'] as string || req.socket?.remoteAddress || 'unknown') : 'internal',
+    ip: req ? (req.socket?.remoteAddress || 'unknown') : 'internal',
     method: req?.method || '-',
-    path: req?.url || '-',
+    path: sanitizePathForLog(req?.url),
     userAgent: ((req?.headers?.['user-agent'] || '-') as string).substring(0, 200),
     detail,
   };
@@ -128,13 +138,6 @@ export function authenticate(
     const token = authHeader.slice(7);
     if (tokenMatch(token)) return true;
   }
-
-  // Query param fallback for SSE
-  try {
-    const url = new URL(req.url, 'http://localhost');
-    const queryToken = url.searchParams.get('token');
-    if (queryToken && tokenMatch(queryToken)) return true;
-  } catch {}
 
   logAuthEvent('auth_failure', req, authHeader ? 'Invalid token' : 'Missing Authorization header');
   res.writeHead(401, { 'Content-Type': 'application/json' });

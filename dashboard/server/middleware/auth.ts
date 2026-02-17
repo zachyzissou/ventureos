@@ -19,6 +19,17 @@ const DATA_DIR: string = path.join(import.meta.dirname, '..', '..', 'data');
 const TOKEN_PATH: string = path.join(DATA_DIR, '.api-token');
 const ACCESS_LOG: string = path.join(LOG_DIR, 'tactical-map-access.log');
 
+const ALLOW_LAN_BYPASS: boolean =
+  ((process.env.DASHBOARD_ALLOW_LAN_BYPASS ?? 'false').toLowerCase() === 'true');
+const TRUST_PROXY: boolean =
+  ((process.env.DASHBOARD_TRUST_PROXY ?? 'false').toLowerCase() === 'true');
+const TRUSTED_PROXY_IPS: Set<string> = new Set(
+  (process.env.DASHBOARD_TRUSTED_PROXY_IPS ?? '127.0.0.1,::1,::ffff:127.0.0.1')
+    .split(',')
+    .map((ip) => ip.trim())
+    .filter(Boolean),
+);
+
 // Ensure directories exist
 try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch { /* may exist */ }
 try { fs.mkdirSync(LOG_DIR, { recursive: true }); } catch { /* may exist */ }
@@ -62,25 +73,68 @@ const BRUTE_FORCE_THRESHOLD: number = 10;
 const BRUTE_FORCE_BLOCK_MS: number = 15 * 60 * 1000; // 15 minutes
 const blockedIPs: Map<string, number> = new Map(); // ip → blockedUntil timestamp
 
+function normalizeIp(ip: string): string {
+  if (!ip) return ip;
+  return ip.replace(/^::ffff:/, '');
+}
+
 /**
- * Check if an IP is on the local network.
- * LAN IPs still require valid tokens but are exempt from IP-level blocking
- * to prevent self-DoS from misconfigured components on the same network.
+ * Check if an IP is RFC1918 private network or loopback.
  */
 function isLanIP(ip: string): boolean {
-  const cleaned: string = ip.replace(/^::ffff:/, '');
-  return (
-    cleaned.startsWith('192.168.') ||
-    cleaned.startsWith('10.') ||
-    cleaned.startsWith('172.16.') ||
-    cleaned.startsWith('172.17.') ||
-    cleaned.startsWith('172.18.') ||
-    cleaned.startsWith('172.19.') ||
-    cleaned.startsWith('172.2') ||
-    cleaned.startsWith('172.3') ||
-    cleaned === '127.0.0.1' ||
-    cleaned === '::1'
-  );
+  const cleaned: string = normalizeIp(ip);
+  if (cleaned === '::1') return true;
+
+  const octets: number[] = cleaned
+    .split('.')
+    .map((part) => Number.parseInt(part, 10));
+  if (octets.length !== 4 || octets.some((n) => Number.isNaN(n) || n < 0 || n > 255)) {
+    return false;
+  }
+
+  const [a, b] = octets;
+  if (a === 10) return true; // 10.0.0.0/8
+  if (a === 127) return true; // 127.0.0.0/8 loopback
+  if (a === 192 && b === 168) return true; // 192.168.0.0/16
+  if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+
+  return false;
+}
+
+function getPeerIp(req: IncomingMessage | null): string {
+  if (!req) return 'unknown';
+  return req.socket?.remoteAddress ?? 'unknown';
+}
+
+function isTrustedProxyPeer(ip: string): boolean {
+  const cleaned: string = normalizeIp(ip);
+  return TRUSTED_PROXY_IPS.has(ip) || TRUSTED_PROXY_IPS.has(cleaned);
+}
+
+function getClientIp(req: IncomingMessage | null): string {
+  const peerIp: string = getPeerIp(req);
+  if (!req || !TRUST_PROXY || !isTrustedProxyPeer(peerIp)) {
+    return peerIp;
+  }
+
+  const xffRaw: string | string[] | undefined = req.headers['x-forwarded-for'];
+  const xff: string = Array.isArray(xffRaw) ? xffRaw[0] : (xffRaw ?? '');
+  if (typeof xff === 'string' && xff.trim()) {
+    const first: string = xff.split(',')[0].trim();
+    if (first) return first;
+  }
+
+  return peerIp;
+}
+
+function sanitizePathForLog(rawUrl: string | undefined): string {
+  if (!rawUrl) return '-';
+  try {
+    return new URL(rawUrl, 'http://localhost').pathname;
+  } catch {
+    const qIdx: number = rawUrl.indexOf('?');
+    return qIdx >= 0 ? rawUrl.slice(0, qIdx) : rawUrl;
+  }
 }
 
 /**
@@ -90,11 +144,9 @@ export function logAuthEvent(event: string, req: IncomingMessage | null, detail:
   const entry = {
     ts: new Date().toISOString(),
     event,
-    ip: req
-      ? ((req.headers['x-forwarded-for'] as string | undefined) ?? req.socket?.remoteAddress ?? 'unknown')
-      : 'internal',
+    ip: req ? getClientIp(req) : 'internal',
     method: req?.method ?? '-',
-    path: req?.url ?? '-',
+    path: sanitizePathForLog(req?.url),
     userAgent: ((req?.headers?.['user-agent'] as string | undefined) ?? '-').substring(0, 200),
     detail,
   };
@@ -196,23 +248,12 @@ export function getAuthTokenFromRequest(req: IncomingMessage | null): string | n
   const cookies: CookieMap = parseCookies((req.headers?.cookie as string | undefined) ?? '');
   if (cookies[COOKIE_NAME]) return cookies[COOKIE_NAME];
 
-  // 3) Query param fallback (SSE/EventSource can't set headers)
-  try {
-    const url = new URL(req.url ?? '', 'http://localhost');
-    const queryToken: string | null = url.searchParams.get('token');
-    if (queryToken) return queryToken;
-  } catch {
-    // malformed URL
-  }
-
   return null;
 }
 
 export function isAuthenticated(req: IncomingMessage): boolean {
-  // LAN connections bypass authentication (user request 2026-02-16)
-  const ip: string =
-    (req.headers?.['x-forwarded-for'] as string | undefined) ?? req.socket?.remoteAddress ?? 'unknown';
-  if (isLanIP(ip)) {
+  const ip: string = getClientIp(req);
+  if (ALLOW_LAN_BYPASS && isLanIP(ip)) {
     return true;
   }
 
@@ -230,12 +271,11 @@ export function authenticate(req: IncomingMessage, res: ServerResponse): boolean
   // Login/logout endpoints must be reachable without prior auth
   if (req.url === '/api/login' || req.url === '/api/logout') return true;
 
-  const ip: string =
-    (req.headers['x-forwarded-for'] as string | undefined) ?? req.socket?.remoteAddress ?? 'unknown';
+  const ip: string = getClientIp(req);
 
-  // Skip authentication for LAN connections (user request 2026-02-16)
-  if (isLanIP(ip)) {
-    logAuthEvent('auth_lan_bypass', req, `LAN IP ${ip} bypassing auth`);
+  // Optional LAN bypass for explicit local deployments only.
+  if (ALLOW_LAN_BYPASS && isLanIP(ip)) {
+    logAuthEvent('auth_lan_bypass', req, `LAN bypass enabled for IP ${ip}`);
     return true;
   }
 
@@ -259,8 +299,7 @@ export function authenticate(req: IncomingMessage, res: ServerResponse): boolean
   const cookies: CookieMap = parseCookies((req.headers?.cookie as string | undefined) ?? '');
   const hasAnyCreds: boolean =
     (authHeader.trim().length > 0) ||
-    !!cookies[COOKIE_NAME] ||
-    !!(req.url && req.url.includes('token='));
+    !!cookies[COOKIE_NAME];
   logAuthEvent('auth_failure', req, hasAnyCreds ? 'Invalid token' : 'Missing credentials');
 
   res.writeHead(401, { 'Content-Type': 'application/json' });
