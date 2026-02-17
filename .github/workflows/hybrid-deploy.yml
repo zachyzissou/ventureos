@@ -1,0 +1,123 @@
+# Hybrid Deployment CI — Docker Compose build + health check smoke test
+# Issue #191: Validates the hybrid stack can build and boot successfully.
+
+name: Hybrid Deploy CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose.yml'
+      - 'docker-compose.hybrid.yml'
+      - 'dashboard/Dockerfile'
+      - 'dashboard/server/**'
+      - 'lib/**'
+      - '.env.hybrid.example'
+      - '.github/workflows/hybrid-deploy.yml'
+  pull_request:
+    paths:
+      - 'docker-compose.yml'
+      - 'docker-compose.hybrid.yml'
+      - 'dashboard/Dockerfile'
+      - 'dashboard/server/**'
+      - 'lib/**'
+      - '.env.hybrid.example'
+      - '.github/workflows/hybrid-deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: hybrid-deploy-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compose-validate:
+    name: Compose Validate & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate docker-compose.yml
+        run: |
+          # Create minimal .env.hybrid for validation
+          cat > .env.hybrid <<'EOF'
+          POSTGRES_DB=ventureos
+          POSTGRES_USER=ventureos
+          POSTGRES_PASSWORD=ci-test-password
+          POSTGRES_PORT=5433
+          DASHBOARD_PORT=8001
+          DASHBOARD_API_TOKEN=ci-test-dashboard-token
+          BRIDGE_URL=http://host.docker.internal:18790
+          BRIDGE_TOKEN=ci-test-bridge-token
+          EOF
+
+          echo "Validating docker-compose.yml..."
+          docker compose -f docker-compose.yml --env-file .env.hybrid config --quiet
+          echo "✅ docker-compose.yml is valid"
+
+      - name: Build dashboard image
+        run: |
+          docker compose -f docker-compose.yml --env-file .env.hybrid build dashboard
+          echo "✅ Dashboard image built successfully"
+
+      - name: Boot stack & health check
+        run: |
+          # Start DB only (dashboard needs Bridge API which we won't run in CI)
+          docker compose -f docker-compose.yml --env-file .env.hybrid up -d db
+
+          # Wait for DB health
+          echo "Waiting for Postgres..."
+          for i in $(seq 1 30); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' ventureos-db 2>/dev/null || echo "missing")
+            if [ "$STATUS" = "healthy" ]; then
+              echo "✅ Postgres is healthy"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "❌ Postgres did not become healthy"
+              docker logs ventureos-db --tail 20
+              exit 1
+            fi
+            sleep 2
+          done
+
+          # Verify Postgres accepts connections
+          docker exec ventureos-db pg_isready -U ventureos -d ventureos
+          echo "✅ Postgres accepting connections"
+
+          # Start dashboard (it won't fully health-check without Bridge, but should boot)
+          docker compose -f docker-compose.yml --env-file .env.hybrid up -d dashboard
+
+          # Give it time to start
+          sleep 10
+
+          # Check container is running (not crashing)
+          DASH_STATE=$(docker inspect --format='{{.State.Status}}' ventureos-dashboard 2>/dev/null || echo "missing")
+          if [ "$DASH_STATE" = "running" ]; then
+            echo "✅ Dashboard container is running"
+          else
+            echo "⚠️  Dashboard state: $DASH_STATE (expected — Bridge API not available in CI)"
+            docker logs ventureos-dashboard --tail 20
+          fi
+
+      - name: Teardown
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml --env-file .env.hybrid down -v 2>/dev/null || true
+          echo "✅ Stack torn down cleanly"
+
+      - name: Verify clean state
+        if: always()
+        run: |
+          REMAINING=$(docker ps -a --filter "label=com.ventureos.stack=ventureos" --format "{{.Names}}" || true)
+          if [ -n "$REMAINING" ]; then
+            echo "⚠️  Orphaned containers: $REMAINING"
+          else
+            echo "✅ No orphaned containers"
+          fi

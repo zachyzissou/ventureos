@@ -2571,6 +2571,19 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   if (!authorizeActionRequest(req, res)) return;
   // ── End Security Middleware ───────────────────────────────────────
 
+  // ── Health Check (unauthenticated — for container healthchecks) ─── Issue #191
+  if (req.url === '/api/health' && req.method === 'GET') {
+    sendJson(res, {
+      ok: true,
+      service: 'ventureos-dashboard',
+      version: '1.0.0',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      dataMode: DASHBOARD_DATA_MODE,
+    });
+    return;
+  }
+
   // Auth session endpoints (cookie-based browser auth)
   if (req.url === '/api/login' && req.method === 'POST') {
     try {
