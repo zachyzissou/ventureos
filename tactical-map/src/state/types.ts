@@ -25,6 +25,8 @@ export type AgentNode = {
   sessions?: number;
   /** Optional active sessions (if server exposes them). */
   activeSessions?: AgentSession[];
+  /** Whether processing is paused by operator control. */
+  paused?: boolean;
 };
 
 /**
