@@ -8,6 +8,7 @@ import { mockRequest } from '../../helpers.js';
 // Mock lib/paths before import
 vi.mock('../../../../lib/paths.js', () => ({
   LOG_DIR: '/tmp/test-audit-logs',
+  default: { LOG_DIR: '/tmp/test-audit-logs' },
 }));
 
 // Mock fs to capture writes
