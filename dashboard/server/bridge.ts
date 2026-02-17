@@ -24,6 +24,7 @@ import {
   trackDiskHistory,
   readHealthHistory,
 } from './bridge-metrics.js';
+import { redactSecrets } from '../../lib/message-sanitizer.js';
 import paths from '../../lib/paths.js';
 
 const {
@@ -307,14 +308,21 @@ function getLastMessage(sessionId: string): string {
         if (!msg) continue;
         const role = msg.role;
         if (role !== 'user' && role !== 'assistant') continue;
-        if (typeof msg.content === 'string') return msg.content.replace(/\n/g, ' ').substring(0, 80);
-        if (Array.isArray(msg.content)) {
+        let text = '';
+        if (typeof msg.content === 'string') {
+          text = msg.content;
+        } else if (Array.isArray(msg.content)) {
           for (const b of msg.content) {
             if (b && typeof b === 'object' && (b as { type?: string; text?: string }).type === 'text') {
-              const text = (b as { text?: string }).text ?? '';
-              if (text) return text.replace(/\n/g, ' ').substring(0, 80);
+              text = (b as { text?: string }).text ?? '';
+              if (text) break;
             }
           }
+        }
+        if (text) {
+          // Redact secrets/tokens per Issue #137 security requirement
+          const redacted = redactSecrets(text);
+          return redacted.text.replace(/\n/g, ' ').substring(0, 80);
         }
       } catch {
         // ignore
@@ -402,7 +410,9 @@ function getSessionMessages(sessionId: string): Array<{ role: string; content: s
           }
         }
       }
-      messages.push({ role: msg.role, content: text, timestamp: d.timestamp ?? '' });
+      // Redact secrets/tokens per Issue #137 security requirement
+      const redacted = redactSecrets(text);
+      messages.push({ role: msg.role, content: redacted.text, timestamp: d.timestamp ?? '' });
     } catch {
       // ignore
     }
