@@ -62,6 +62,11 @@ echo "📦 Installing dependencies & compiling TypeScript…"
 cd "$VENTUREOS_ROOT"
 npm install --workspace=dashboard --include=dev 2>/dev/null || npm install
 
+# Validate native modules match this platform (fixes ELF-on-Darwin regression)
+if [[ -x "$VENTUREOS_ROOT/scripts/ensure-native-modules.sh" ]]; then
+  "$VENTUREOS_ROOT/scripts/ensure-native-modules.sh"
+fi
+
 cd "$DASHBOARD_DIR"
 npx tsc -p tsconfig.json --outDir dist 2>&1 || {
   echo "⚠️  TypeScript compilation had warnings (non-fatal, continuing)"
