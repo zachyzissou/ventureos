@@ -8,9 +8,10 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { handleConversationApi } from '../../../lib/conversation-http.js';
 import type { ConversationHandlerOptions } from '../../../lib/types/conversation.js';
+import conversationHttp from '../../../lib/conversation-http.js';
 
+const { handleConversationApi } = conversationHttp as typeof import('../../../lib/conversation-http.js');
 export { handleConversationApi };
 export type { ConversationHandlerOptions };
 

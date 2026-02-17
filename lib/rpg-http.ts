@@ -386,3 +386,5 @@ export function createRpgRouter(dbPath: string) {
       handleRpgApi(req, res, { dbPath }),
   };
 }
+
+export default { handleRpgApi, createRpgRouter };

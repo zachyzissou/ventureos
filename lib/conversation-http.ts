@@ -255,3 +255,5 @@ export function createConversationRouter(dbPath: string) {
       handleConversationApi(req, res, { dbPath }),
   };
 }
+
+export default { handleConversationApi, createConversationRouter };
