@@ -160,6 +160,81 @@ describe('data/control-client', () => {
     });
   });
 
+  describe('fetchMissions', () => {
+    it('fetches mission list from GET /missions', async () => {
+      mockOk({
+        ok: true,
+        missions: [
+          {
+            missionId: 'mission-1',
+            title: 'Test',
+            description: '',
+            assignee: 'synth',
+            priority: 'normal',
+            createdAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-01T00:00:00Z',
+          },
+        ],
+      });
+      const client = createControlClient();
+      const result = await client.fetchMissions();
+
+      expect(result.ok).toBe(true);
+      expect(result.missions).toHaveLength(1);
+      expect(result.missions![0].missionId).toBe('mission-1');
+    });
+
+    it('handles fetch failure', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+      const client = createControlClient();
+      const result = await client.fetchMissions();
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain('Network error');
+    });
+  });
+
+  describe('updateMission', () => {
+    it('sends PATCH to correct endpoint', async () => {
+      mockOk({ ok: true, missionId: 'mission-1', mission: { title: 'Updated' } });
+      const client = createControlClient();
+      const result = await client.updateMission('mission-1', {
+        title: 'Updated',
+        priority: 'high',
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.missionId).toBe('mission-1');
+
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(url).toContain('/missions/mission-1');
+      expect(opts.method).toBe('POST');
+      const body = JSON.parse(opts.body);
+      expect(body.title).toBe('Updated');
+      expect(body.priority).toBe('high');
+    });
+
+    it('encodes mission ID in URL', async () => {
+      mockOk({ ok: true });
+      const client = createControlClient();
+      await client.updateMission('mission with spaces', { title: 'Test' });
+
+      const [url] = mockFetch.mock.calls[0];
+      expect(url).toContain('mission%20with%20spaces');
+    });
+
+    it('handles server error', async () => {
+      mockError(400);
+      const onError = vi.fn();
+      const client = createControlClient({ onError });
+      const result = await client.updateMission('mission-1', { title: 'X' });
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeDefined();
+      expect(onError).toHaveBeenCalled();
+    });
+  });
+
   describe('auth headers', () => {
     it('includes Authorization header', async () => {
       mockOk();

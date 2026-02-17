@@ -122,6 +122,133 @@ describe('tactical-map-controls route', () => {
     expect(stateAfterBody.pausedAgents).not.toContain('synth');
   });
 
+  it('edits a mission via PATCH with partial fields', async () => {
+    const dataDir = path.join(baseTmp, 'patch-edit');
+
+    // Spawn a mission first
+    const spawnReq = mockRequest({ method: 'POST', url: '/api/tactical-map/missions/spawn' }) as any;
+    spawnReq._rawBody = JSON.stringify({
+      title: 'Original title',
+      description: 'Original description',
+      assignee: 'synth',
+      priority: 'normal',
+    });
+    const spawned = await runRoute(spawnReq, dataDir);
+    const missionId = parseJsonBody<{ missionId: string }>(spawned.res).missionId;
+
+    // PATCH only priority and title
+    const patchReq = mockRequest({
+      method: 'PATCH',
+      url: `/api/tactical-map/missions/${encodeURIComponent(missionId)}`,
+    }) as any;
+    patchReq._rawBody = JSON.stringify({ title: 'Updated title', priority: 'critical' });
+
+    const patched = await runRoute(patchReq, dataDir);
+    const patchBody = parseJsonBody<{
+      ok: boolean;
+      missionId: string;
+      mission: { title: string; description: string; priority: string; assignee: string };
+    }>(patched.res);
+
+    expect(patchBody.ok).toBe(true);
+    expect(patchBody.mission.title).toBe('Updated title');
+    expect(patchBody.mission.priority).toBe('critical');
+    // Unchanged fields should persist
+    expect(patchBody.mission.description).toBe('Original description');
+    expect(patchBody.mission.assignee).toBe('synth');
+
+    // Verify persistence via GET
+    const listReq = mockRequest({ method: 'GET', url: '/api/tactical-map/missions' }) as any;
+    const listed = await runRoute(listReq, dataDir);
+    const listBody = parseJsonBody<{ missions: Array<{ title: string; priority: string }> }>(listed.res);
+    expect(listBody.missions[0].title).toBe('Updated title');
+    expect(listBody.missions[0].priority).toBe('critical');
+  });
+
+  it('edits mission assignee and description', async () => {
+    const dataDir = path.join(baseTmp, 'patch-assignee');
+
+    const spawnReq = mockRequest({ method: 'POST', url: '/api/tactical-map/missions/spawn' }) as any;
+    spawnReq._rawBody = JSON.stringify({
+      title: 'Test',
+      description: 'Old desc',
+      assignee: 'oracle',
+      priority: 'low',
+    });
+    const spawned = await runRoute(spawnReq, dataDir);
+    const missionId = parseJsonBody<{ missionId: string }>(spawned.res).missionId;
+
+    const patchReq = mockRequest({
+      method: 'PATCH',
+      url: `/api/tactical-map/missions/${encodeURIComponent(missionId)}`,
+    }) as any;
+    patchReq._rawBody = JSON.stringify({ assignee: 'atlas', description: 'New desc' });
+
+    const patched = await runRoute(patchReq, dataDir);
+    const body = parseJsonBody<{ ok: boolean; mission: { assignee: string; description: string } }>(patched.res);
+    expect(body.ok).toBe(true);
+    expect(body.mission.assignee).toBe('atlas');
+    expect(body.mission.description).toBe('New desc');
+  });
+
+  it('rejects PATCH with invalid fields', async () => {
+    const dataDir = path.join(baseTmp, 'patch-invalid');
+
+    const spawnReq = mockRequest({ method: 'POST', url: '/api/tactical-map/missions/spawn' }) as any;
+    spawnReq._rawBody = JSON.stringify({ title: 'Test', description: '', assignee: 'synth', priority: 'normal' });
+    const spawned = await runRoute(spawnReq, dataDir);
+    const missionId = parseJsonBody<{ missionId: string }>(spawned.res).missionId;
+
+    // Empty title
+    const emptyTitle = mockRequest({
+      method: 'PATCH',
+      url: `/api/tactical-map/missions/${encodeURIComponent(missionId)}`,
+    }) as any;
+    emptyTitle._rawBody = JSON.stringify({ title: '' });
+    const r1 = await runRoute(emptyTitle, dataDir);
+    expect(r1.res._statusCode).toBe(400);
+
+    // Invalid priority
+    const badPriority = mockRequest({
+      method: 'PATCH',
+      url: `/api/tactical-map/missions/${encodeURIComponent(missionId)}`,
+    }) as any;
+    badPriority._rawBody = JSON.stringify({ priority: 'extreme' });
+    const r2 = await runRoute(badPriority, dataDir);
+    expect(r2.res._statusCode).toBe(400);
+
+    // Invalid assignee (nexus)
+    const nexusAssignee = mockRequest({
+      method: 'PATCH',
+      url: `/api/tactical-map/missions/${encodeURIComponent(missionId)}`,
+    }) as any;
+    nexusAssignee._rawBody = JSON.stringify({ assignee: 'nexus' });
+    const r3 = await runRoute(nexusAssignee, dataDir);
+    expect(r3.res._statusCode).toBe(400);
+
+    // No valid fields
+    const noFields = mockRequest({
+      method: 'PATCH',
+      url: `/api/tactical-map/missions/${encodeURIComponent(missionId)}`,
+    }) as any;
+    noFields._rawBody = JSON.stringify({ unrelated: 'data' });
+    const r4 = await runRoute(noFields, dataDir);
+    expect(r4.res._statusCode).toBe(400);
+  });
+
+  it('returns 404 for PATCH on non-existent mission', async () => {
+    const dataDir = path.join(baseTmp, 'patch-404');
+
+    const patchReq = mockRequest({
+      method: 'PATCH',
+      url: '/api/tactical-map/missions/non-existent-id',
+    }) as any;
+    patchReq._rawBody = JSON.stringify({ priority: 'high' });
+
+    const result = await runRoute(patchReq, dataDir);
+    expect(result.res._statusCode).toBe(404);
+  });
+
   it('rejects invalid control payloads', async () => {
     const dataDir = path.join(baseTmp, 'validation');
 

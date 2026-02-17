@@ -30,6 +30,38 @@ export type ControlStateSnapshot = {
   error?: string;
 };
 
+export type PersistedMission = {
+  missionId: string;
+  title: string;
+  description: string;
+  assignee: AgentId;
+  priority: MissionPriority;
+  tokenBudget?: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MissionListResult = {
+  ok: boolean;
+  missions?: PersistedMission[];
+  error?: string;
+};
+
+export type MissionUpdateRequest = {
+  title?: string;
+  description?: string;
+  assignee?: AgentId;
+  priority?: MissionPriority;
+  tokenBudget?: number;
+};
+
+export type MissionUpdateResult = {
+  ok: boolean;
+  missionId?: string;
+  mission?: PersistedMission;
+  error?: string;
+};
+
 export type ControlClient = {
   pauseAgent: (agentId: AgentId) => Promise<{ ok: boolean; error?: string }>;
   resumeAgent: (agentId: AgentId) => Promise<{ ok: boolean; error?: string }>;
@@ -44,6 +76,8 @@ export type ControlClient = {
     config: Record<string, unknown>,
   ) => Promise<{ ok: boolean; error?: string }>;
   fetchControlState: () => Promise<ControlStateSnapshot>;
+  fetchMissions: () => Promise<MissionListResult>;
+  updateMission: (missionId: string, updates: MissionUpdateRequest) => Promise<MissionUpdateResult>;
 };
 
 function buildAuthHeaders(includeJsonContentType = true): Record<string, string> {
@@ -181,6 +215,30 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
     }
   }
 
+  async function fetchMissions(): Promise<MissionListResult> {
+    try {
+      return await getJson<MissionListResult>(`${base}/missions`);
+    } catch (err) {
+      opts.onError?.(err);
+      return { ok: false, error: String(err) };
+    }
+  }
+
+  async function updateMission(
+    missionId: string,
+    updates: MissionUpdateRequest,
+  ): Promise<MissionUpdateResult> {
+    try {
+      return await postJson<MissionUpdateResult>(
+        `${base}/missions/${encodeURIComponent(missionId)}`,
+        updates as unknown as Record<string, unknown>,
+      );
+    } catch (err) {
+      opts.onError?.(err);
+      return { ok: false, error: String(err) };
+    }
+  }
+
   return {
     pauseAgent,
     resumeAgent,
@@ -189,5 +247,7 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
     setMissionPriority,
     updateConfig,
     fetchControlState,
+    fetchMissions,
+    updateMission,
   };
 }

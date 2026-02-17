@@ -231,6 +231,10 @@ export interface InteractiveUIState {
   missionSpawnOpen: boolean;
   /** Whether config editor is open. */
   configEditorOpen: boolean;
+  /** Whether mission list panel is open. */
+  missionListOpen: boolean;
+  /** Whether mission edit modal is open. */
+  missionEditOpen: boolean;
   /** Current user role. */
   userRole: UserRole;
 }
@@ -243,6 +247,8 @@ export function createInitialUIState(): InteractiveUIState {
     confirmation: null,
     missionSpawnOpen: false,
     configEditorOpen: false,
+    missionListOpen: false,
+    missionEditOpen: false,
     userRole: 'operator',
   };
 }
