@@ -2378,6 +2378,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if (page === 'observations') {
       fetchObservationsNow();
     }
+    if (page === 'logs') {
+      loadLogSources();
+    }
   });
 });
 
@@ -4860,36 +4863,185 @@ function calculateStreak() {
   }
 }
 
-// Logs Viewer
+// ── Logs Viewer (Issue #137) ──────────────────────────────────────────────
 let logAutoRefreshInterval = null;
+let logCurrentLevel = 'all';
+let logSources = [];
+let logSearchTimer = null;
 
-async function fetchLogs() {
-  const service = document.getElementById('logService').value;
-  const lines = document.getElementById('logLines').value;
-  const viewer = document.getElementById('logViewer');
-  
-  if (!viewer) return;
-  viewer.innerHTML = '<div style="color:var(--text-muted);">Loading logs...</div>';
-  
+function debouncedLogSearch() {
+  clearTimeout(logSearchTimer);
+  logSearchTimer = setTimeout(fetchLogEntries, 400);
+}
+
+function setLogLevel(level) {
+  logCurrentLevel = level;
+  document.querySelectorAll('#logLevelFilters .chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.logLevel === level);
+  });
+  fetchLogEntries();
+}
+
+async function loadLogSources() {
   try {
-    const res = await authFetch(`/api/logs?service=${service}&lines=${lines}`);
-    const logs = await res.text();
-    viewer.textContent = logs;
-    viewer.scrollTop = viewer.scrollHeight;
+    const res = await authFetch('/api/logs/sources');
+    const data = await res.json();
+    logSources = data.sources || [];
+    const sel = document.getElementById('logSource');
+    if (!sel) return;
+    sel.innerHTML = '';
+    if (logSources.length === 0) {
+      sel.innerHTML = '<option value="">No log sources found</option>';
+      document.getElementById('logSourceCount').textContent = '0';
+      return;
+    }
+    document.getElementById('logSourceCount').textContent = String(logSources.length);
+    for (const src of logSources) {
+      const opt = document.createElement('option');
+      opt.value = src.id;
+      const sizeStr = src.size > 1048576 ? (src.size / 1048576).toFixed(1) + 'MB' :
+                      src.size > 1024 ? (src.size / 1024).toFixed(0) + 'KB' : src.size + 'B';
+      opt.textContent = `${src.name} (${src.format}, ${sizeStr}, ${src.lines}L)`;
+      sel.appendChild(opt);
+    }
+    // Auto-load first source
+    fetchLogEntries();
   } catch (e) {
-    viewer.innerHTML = '<div style="color:var(--red);">Failed to load logs: ' + e.message + '</div>';
+    const sel = document.getElementById('logSource');
+    if (sel) sel.innerHTML = '<option value="">Error loading sources</option>';
   }
 }
+
+function showLogState(state) {
+  const entries = document.getElementById('logEntries');
+  const empty = document.getElementById('logEmptyState');
+  const loading = document.getElementById('logLoadingState');
+  const error = document.getElementById('logErrorState');
+  if (entries) entries.style.display = state === 'entries' ? 'flex' : 'none';
+  if (empty) empty.style.display = state === 'empty' ? 'block' : 'none';
+  if (loading) loading.style.display = state === 'loading' ? 'block' : 'none';
+  if (error) error.style.display = state === 'error' ? 'block' : 'none';
+}
+
+const LOG_LEVEL_COLORS = {
+  error: 'var(--red)',
+  warn: 'var(--yellow)',
+  info: 'var(--accent)',
+  debug: 'var(--text-muted)',
+};
+const LOG_LEVEL_ICONS = { error: '🔴', warn: '🟡', info: 'ℹ️', debug: '🔍' };
+
+function renderLogEntry(entry, idx) {
+  const color = LOG_LEVEL_COLORS[entry.level] || 'var(--text-secondary)';
+  const icon = LOG_LEVEL_ICONS[entry.level] || '';
+  const ts = entry.ts ? new Date(entry.ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
+  const tsDate = entry.ts ? new Date(entry.ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+  const msg = (entry.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const hasFields = entry.fields && Object.keys(entry.fields).length > 0;
+
+  let fieldsHtml = '';
+  if (hasFields) {
+    const fieldLines = Object.entries(entry.fields)
+      .filter(([k]) => k !== 'ts' && k !== 'timestamp' && k !== 'event' && k !== 'message')
+      .slice(0, 12)
+      .map(([k, v]) => {
+        const val = typeof v === 'object' ? JSON.stringify(v).slice(0, 120) : String(v).slice(0, 120);
+        return `<span style="color:var(--cyan);">${k}</span>=<span style="color:var(--text-secondary);">${val.replace(/</g,'&lt;')}</span>`;
+      }).join('  ');
+    if (fieldLines) {
+      fieldsHtml = `<div class="log-fields" id="logFields${idx}" style="display:none;margin-top:6px;padding:8px 10px;background:var(--bg-secondary);border-radius:6px;font-size:11px;line-height:1.6;word-break:break-all;">${fieldLines}</div>`;
+    }
+  }
+
+  return `<div class="log-entry" onclick="this.querySelector('.log-fields')&&(this.querySelector('.log-fields').style.display=this.querySelector('.log-fields').style.display==='none'?'block':'none')" style="display:flex;gap:8px;padding:6px 12px;border-bottom:1px solid var(--border);cursor:${hasFields ? 'pointer' : 'default'};transition:background 0.15s;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.5;" onmouseenter="this.style.background='rgba(99,102,241,0.04)'" onmouseleave="this.style.background='transparent'">
+    <span style="flex-shrink:0;width:20px;text-align:center;" title="${entry.level}">${icon}</span>
+    <span style="flex-shrink:0;color:var(--text-muted);width:70px;font-size:11px;" title="${tsDate}">${ts}</span>
+    <span style="flex-shrink:0;width:4px;border-radius:2px;background:${color};"></span>
+    <div style="flex:1;min-width:0;">
+      <span style="color:var(--text-primary);word-break:break-word;">${msg}</span>
+      ${fieldsHtml}
+    </div>
+    ${hasFields ? '<span style="flex-shrink:0;font-size:10px;color:var(--text-muted);" title="Click to expand fields">▶</span>' : ''}
+  </div>`;
+}
+
+async function fetchLogEntries() {
+  const sourceId = document.getElementById('logSource')?.value;
+  if (!sourceId) {
+    showLogState('empty');
+    const emptyText = document.getElementById('logEmptyText');
+    const emptyHint = document.getElementById('logEmptyHint');
+    if (emptyText) emptyText.textContent = 'No source selected';
+    if (emptyHint) emptyHint.textContent = 'Select a log source from the dropdown above.';
+    return;
+  }
+
+  showLogState('loading');
+
+  const limit = document.getElementById('logLimit')?.value || '200';
+  const search = document.getElementById('logSearch')?.value || '';
+  const level = logCurrentLevel;
+
+  try {
+    const params = new URLSearchParams({ source: sourceId, limit, level });
+    if (search) params.set('search', search);
+    const res = await authFetch(`/api/logs/entries?${params}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    const entries = data.entries || [];
+    const container = document.getElementById('logEntries');
+
+    // Update stats
+    const errorCount = entries.filter(e => e.level === 'error').length;
+    const warnCount = entries.filter(e => e.level === 'warn').length;
+    const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    el('logErrorCount', String(errorCount));
+    el('logWarnCount', String(warnCount));
+    el('logShownCount', String(entries.length));
+    el('logLastRefreshed', 'Updated ' + new Date().toLocaleTimeString());
+
+    if (entries.length === 0) {
+      showLogState('empty');
+      const emptyText = document.getElementById('logEmptyText');
+      const emptyHint = document.getElementById('logEmptyHint');
+      if (emptyText) emptyText.textContent = search ? 'No matching entries' : 'No log entries found';
+      if (emptyHint) emptyHint.textContent = search
+        ? `No entries match "${search}" in this source.`
+        : 'This log file may be empty or contain no parseable entries.';
+      return;
+    }
+
+    if (container) {
+      container.innerHTML = entries.map((e, i) => renderLogEntry(e, i)).join('');
+    }
+    showLogState('entries');
+
+    // Scroll to bottom
+    const viewer = document.getElementById('logViewer');
+    if (viewer) viewer.scrollTop = viewer.scrollHeight;
+  } catch (e) {
+    showLogState('error');
+    const errText = document.getElementById('logErrorText');
+    const errDetail = document.getElementById('logErrorDetail');
+    if (errText) errText.textContent = 'Failed to load logs';
+    if (errDetail) errDetail.textContent = e.message || 'Unknown error';
+  }
+}
+
+// Legacy compat wrapper
+async function fetchLogs() { await fetchLogEntries(); }
 
 function toggleLogAutoRefresh(enabled) {
   if (logAutoRefreshInterval) {
     clearInterval(logAutoRefreshInterval);
     logAutoRefreshInterval = null;
   }
-  
   if (enabled) {
-    fetchLogs();
-    logAutoRefreshInterval = setInterval(fetchLogs, 5000);
+    fetchLogEntries();
+    logAutoRefreshInterval = setInterval(fetchLogEntries, 10000);
   }
 }
 

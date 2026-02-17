@@ -1,147 +1,412 @@
 /**
- * Logs route handlers — Issue #137: Observability Logs Page.
- * Multi-source log reading with secret redaction, filtering, and live SSE streaming.
+ * Logs route handler — Issue #137.
+ *
+ * Reads log files from the VentureOS runtime/logs directory and the
+ * dashboard's own server.log. Supports structured JSONL parsing,
+ * full-text search, severity filtering, and tail pagination.
+ *
+ * Routes:
+ *   GET /api/logs/sources          — list available log files
+ *   GET /api/logs/entries           — structured log entries (JSON)
+ *   GET /api/logs/tail              — raw text tail (plain text compat)
+ *   GET /api/logs?service=&lines=   — legacy compat
  */
+
 import fs from 'node:fs';
 import path from 'node:path';
+
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { LogsDeps, LogEntry, LogSourceMeta } from '../types.js';
 
-const SECRET_PATTERNS: RegExp[] = [
-  /Bearer\s+[A-Za-z0-9\-_=.]{8,}/gi,
-  /(?:token|key|secret|password|authorization|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9\-_=.]{16,}["']?/gi,
-  /ghp_[A-Za-z0-9]{36,}/g, /gho_[A-Za-z0-9]{36,}/g, /github_pat_[A-Za-z0-9_]{20,}/g, /npm_[A-Za-z0-9]{36,}/g,
-  /\/Users\/[a-zA-Z0-9._-]+/g, /\/home\/[a-zA-Z0-9._-]+/g,
-];
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-export function redactSecrets(text: string): string {
-  let r = text;
-  for (const p of SECRET_PATTERNS) { p.lastIndex = 0; r = r.replace(p, (m) => m.startsWith('/Users/') || m.startsWith('/home/') ? m.split('/').slice(0,2).join('/')+'/***' : m.length>12 ? m.substring(0,8)+'***REDACTED***' : '***REDACTED***'); }
-  return r;
+/** Allowlisted extensions for log files. */
+const LOG_EXTENSIONS = new Set(['.jsonl', '.log', '.txt']);
+
+/** Characters that indicate a directory-traversal attempt. */
+function isSafeFilename(name: string): boolean {
+  return !/[\/\\]/.test(name) && !name.startsWith('.') && name.length > 0 && name.length < 256;
 }
 
-export interface LogSource { id: string; name: string; description: string; type: 'plaintext'|'jsonl'; path: string|null; available: boolean; }
-export interface ParsedLogEntry { timestamp: string; level: 'info'|'warn'|'error'|'debug'|'unknown'; source: string; message: string; raw: string; meta?: Record<string,string>; }
-export interface LogsDeps { OPENCLAW_DIR: string; LOG_DIR: string; sendJson: (res: ServerResponse, data: unknown, status?: number) => void; clampInt: (n: string|number|null, lo: number, hi: number, dflt: number) => number; }
+/** Infer severity from a raw log line or parsed JSON. */
+function inferLevel(line: string, parsed: Record<string, unknown> | null): LogEntry['level'] {
+  if (parsed) {
+    const lvl = String(parsed.level ?? parsed.severity ?? parsed.logLevel ?? '').toLowerCase();
+    if (lvl === 'error' || lvl === 'err' || lvl === 'fatal' || lvl === 'crit') return 'error';
+    if (lvl === 'warn' || lvl === 'warning') return 'warn';
+    if (lvl === 'debug' || lvl === 'trace') return 'debug';
+    if (lvl === 'info') return 'info';
 
-const ISO_TS = /^(\d{4}-\d{2}-\d{2}T[\d:.]+Z?(?:[+-]\d{2}:\d{2})?)/;
-const TAG_RE = /\[([^\]]+)\]/;
-const LVL: Record<string, ParsedLogEntry['level']> = { error:'error', err:'error', warn:'warn', warning:'warn', info:'info', debug:'debug', fatal:'error', critical:'error' };
+    const event = String(parsed.event ?? '').toLowerCase();
+    if (event.includes('error') || event.includes('fail') || event.includes('crash')) return 'error';
+    if (event.includes('warn') || event.includes('degrad')) return 'warn';
+    if (event.includes('debug') || event.includes('trace')) return 'debug';
+  }
 
-function parsePlain(line: string, src: string): ParsedLogEntry|null {
-  const t = line.trim(); if (!t) return null;
-  let ts = '', rest = t; const m = t.match(ISO_TS); if (m) { ts = m[1]; rest = t.slice(m[0].length).trim(); }
-  let tag = ''; const tm = rest.match(TAG_RE); if (tm) { tag = tm[1]; rest = rest.slice(tm[0].length).trim(); }
-  let level: ParsedLogEntry['level'] = 'info'; const low = rest.toLowerCase();
-  for (const [kw, lv] of Object.entries(LVL)) { if (low.includes(kw)) { level = lv; break; } }
-  const meta: Record<string,string> = {}; if (tag) meta.tag = tag;
-  return { timestamp: ts||new Date().toISOString(), level, source: src, message: redactSecrets(rest), raw: redactSecrets(t), meta };
+  const lower = line.toLowerCase();
+  if (
+    lower.includes('error') ||
+    lower.includes('fatal') ||
+    lower.includes('exception') ||
+    lower.includes('eaddrinuse') ||
+    lower.includes('sigsegv') ||
+    lower.includes('sigabrt') ||
+    lower.includes('crash')
+  ) {
+    return 'error';
+  }
+  if (lower.includes('warn') || lower.includes('deprecated')) return 'warn';
+  if (lower.includes('debug') || lower.includes('trace')) return 'debug';
+  return 'info';
 }
 
-function parseJson(line: string, src: string): ParsedLogEntry|null {
-  const t = line.trim(); if (!t) return null;
+/** Extract a human-readable message from a parsed JSONL entry. */
+function summariseJsonEntry(parsed: Record<string, unknown>): string {
+  for (const key of ['message', 'msg', 'event', 'reason', 'error', 'description']) {
+    if (typeof parsed[key] === 'string' && parsed[key]) {
+      return String(parsed[key]);
+    }
+  }
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(parsed)) {
+    if (k === 'ts' || k === 'timestamp') continue;
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+      parts.push(`${k}=${v}`);
+    }
+  }
+  return parts.slice(0, 5).join(' ') || 'log entry';
+}
+
+/** Extract an ISO timestamp from a parsed JSONL entry or raw text. */
+function extractTimestamp(parsed: Record<string, unknown> | null, raw: string): string {
+  if (parsed) {
+    for (const key of ['ts', 'timestamp', 'time', 'date', 'at']) {
+      const val = parsed[key];
+      if (typeof val === 'string' && val) return val;
+      if (typeof val === 'number' && val > 1e9) return new Date(val > 1e12 ? val : val * 1000).toISOString();
+    }
+  }
+  const m = raw.match(/\d{4}-\d{2}-\d{2}T[\d:.]+Z?/);
+  if (m) return m[0];
+  return '';
+}
+
+/** Count lines in a file by scanning newlines (buffered). */
+function countLines(filePath: string): number {
   try {
-    const o = JSON.parse(t) as Record<string,unknown>;
-    const ts = (o.ts as string)??(o.timestamp as string)??new Date().toISOString();
-    const ev = (o.event as string)??'', detail = (o.detail as string)??'', ip = (o.ip as string)??'', method = (o.method as string)??'', p = (o.path as string)??'';
-    let level: ParsedLogEntry['level'] = 'info'; const el = ev.toLowerCase();
-    if (el.includes('fail')||el.includes('error')||el.includes('block')) level = 'error';
-    else if (el.includes('warn')||el.includes('suspicious')||el.includes('brute')) level = 'warn';
-    let msg = ev; if (method&&p) msg += ` ${method} ${p}`; if (ip) msg += ` from ${ip}`; if (detail) msg += ` — ${detail}`;
-    const meta: Record<string,string> = {}; if (ev) meta.event = ev; if (ip) meta.ip = ip; if (method) meta.method = method;
-    return { timestamp: ts, level, source: src, message: redactSecrets(msg), raw: redactSecrets(t), meta };
-  } catch { return parsePlain(t, src); }
+    const BUF_SIZE = 64 * 1024;
+    const fd = fs.openSync(filePath, 'r');
+    const buf = Buffer.allocUnsafe(BUF_SIZE);
+    let count = 0;
+    let bytesRead: number;
+    while ((bytesRead = fs.readSync(fd, buf, 0, BUF_SIZE, null)) > 0) {
+      for (let i = 0; i < bytesRead; i++) {
+        if (buf[i] === 0x0a) count++;
+      }
+    }
+    fs.closeSync(fd);
+    return count;
+  } catch {
+    return 0;
+  }
 }
 
-function readTail(fp: string, n: number): string[] {
-  try { if (!fs.existsSync(fp)) return []; const st = fs.statSync(fp); if (st.size===0) return [];
-    if (st.size < 1024*1024) return fs.readFileSync(fp,'utf8').split('\n').filter(l=>l.trim()).slice(-n);
-    const sz = Math.min(st.size, n*500), buf = Buffer.alloc(sz), fd = fs.openSync(fp,'r');
-    try { fs.readSync(fd,buf,0,sz,st.size-sz); } finally { fs.closeSync(fd); }
-    return buf.toString('utf8').split('\n').filter(l=>l.trim()).slice(-n);
-  } catch { return []; }
+/** Read the last N lines of a file efficiently. */
+function tailLines(filePath: string, n: number): string[] {
+  try {
+    const stat = fs.statSync(filePath);
+    if (stat.size === 0) return [];
+
+    if (stat.size < 512 * 1024) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const lines = content.split('\n').filter((l) => l.trim());
+      return lines.slice(Math.max(0, lines.length - n));
+    }
+
+    const CHUNK = Math.min(stat.size, n * 2048);
+    const fd = fs.openSync(filePath, 'r');
+    const buf = Buffer.allocUnsafe(CHUNK);
+    const pos = Math.max(0, stat.size - CHUNK);
+    fs.readSync(fd, buf, 0, CHUNK, pos);
+    fs.closeSync(fd);
+
+    const text = buf.toString('utf8');
+    const lines = text.split('\n').filter((l) => l.trim());
+    return lines.slice(Math.max(0, lines.length - n));
+  } catch {
+    return [];
+  }
 }
 
-function resolveSources(d: LogsDeps): LogSource[] {
-  const ld = path.join(d.OPENCLAW_DIR, 'logs');
-  const s: LogSource[] = [
-    { id:'gateway', name:'Gateway', description:'OpenClaw gateway stdout logs', type:'plaintext', path:path.join(ld,'gateway.log'), available:false },
-    { id:'gateway-errors', name:'Gateway Errors', description:'OpenClaw gateway stderr logs', type:'plaintext', path:path.join(ld,'gateway.err.log'), available:false },
-    { id:'access', name:'Access Log', description:'Dashboard auth/access events', type:'jsonl', path:path.join(d.LOG_DIR,'tactical-map-access.log'), available:false },
-    { id:'config-audit', name:'Config Audit', description:'Config change audit trail', type:'jsonl', path:path.join(ld,'config-audit.jsonl'), available:false },
-    { id:'commands', name:'Commands', description:'Session commands', type:'jsonl', path:path.join(ld,'commands.log'), available:false },
-    { id:'session-monitor', name:'Session Monitor', description:'Session health', type:'plaintext', path:path.join(ld,'session-monitor.log'), available:false },
-  ];
-  for (const x of s) { if (x.path) try { x.available = fs.existsSync(x.path)&&fs.statSync(x.path).size>0; } catch { x.available = false; } }
-  return s;
+// ─── Source Discovery ────────────────────────────────────────────────────────
+
+function discoverSources(logDir: string, ventureosRoot: string): LogSourceMeta[] {
+  const sources: LogSourceMeta[] = [];
+  const dirs: string[] = [];
+
+  // 1. Provided LOG_DIR
+  if (logDir) dirs.push(logDir);
+
+  // 2. Also scan <ventureosRoot>/runtime/logs if different
+  if (ventureosRoot) {
+    const runtimeLogs = path.join(ventureosRoot, 'runtime', 'logs');
+    if (runtimeLogs !== logDir) dirs.push(runtimeLogs);
+  }
+
+  // 3. Dashboard server.log
+  if (ventureosRoot) {
+    const dashServerLog = path.join(ventureosRoot, 'dashboard', 'server.log');
+    if (fs.existsSync(dashServerLog)) {
+      try {
+        const st = fs.statSync(dashServerLog);
+        sources.push({
+          id: 'dashboard-server',
+          name: 'Dashboard Server',
+          format: 'text',
+          size: st.size,
+          modified: st.mtime.toISOString(),
+          lines: countLines(dashServerLog),
+        });
+      } catch {
+        // skip
+      }
+    }
+  }
+
+  const seen = new Set<string>();
+
+  for (const dir of dirs) {
+    try {
+      if (!dir || !fs.existsSync(dir)) continue;
+      const entries = fs.readdirSync(dir);
+      for (const entry of entries) {
+        const ext = path.extname(entry).toLowerCase();
+        if (!LOG_EXTENSIONS.has(ext)) continue;
+
+        const full = path.join(dir, entry);
+        try {
+          const st = fs.statSync(full);
+          if (!st.isFile()) continue;
+
+          const id = path.basename(entry, ext);
+          if (seen.has(id)) continue;
+          seen.add(id);
+
+          const isJsonl = ext === '.jsonl';
+          sources.push({
+            id,
+            name: id.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+            format: isJsonl ? 'jsonl' : 'text',
+            size: st.size,
+            modified: st.mtime.toISOString(),
+            lines: countLines(full),
+          });
+        } catch {
+          // skip unreadable
+        }
+      }
+    } catch {
+      // skip unreadable dir
+    }
+  }
+
+  sources.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+  return sources;
 }
 
-function readLogs(src: LogSource, o: { lines:number; level?:string; keyword?:string; since?:number; until?:number }): ParsedLogEntry[] {
-  if (!src.path||!src.available) return [];
-  const raw = readTail(src.path, o.lines*3);
-  const fn = src.type==='jsonl' ? (l:string)=>parseJson(l,src.id) : (l:string)=>parsePlain(l,src.id);
-  let e: ParsedLogEntry[] = []; for (const l of raw) { const x = fn(l); if (x) e.push(x); }
-  if (o.level&&o.level!=='all') e = e.filter(x=>x.level===o.level);
-  if (o.keyword) { const k = o.keyword.toLowerCase(); e = e.filter(x=>x.message.toLowerCase().includes(k)||x.raw.toLowerCase().includes(k)||Object.values(x.meta??{}).some(v=>v.toLowerCase().includes(k))); }
-  if (o.since) e = e.filter(x=>{ const t = new Date(x.timestamp).getTime(); return !Number.isNaN(t)&&t>=o.since!; });
-  if (o.until) e = e.filter(x=>{ const t = new Date(x.timestamp).getTime(); return !Number.isNaN(t)&&t<=o.until!; });
-  return e.slice(-o.lines);
+/** Resolve a source ID to its file path, with path-traversal protection. */
+function resolveSourcePath(
+  sourceId: string,
+  logDir: string,
+  ventureosRoot: string,
+): string | null {
+  if (!isSafeFilename(sourceId)) return null;
+
+  // Special: dashboard-server
+  if (sourceId === 'dashboard-server') {
+    if (!ventureosRoot) return null;
+    const p = path.join(ventureosRoot, 'dashboard', 'server.log');
+    return fs.existsSync(p) ? p : null;
+  }
+
+  // Search in log directories
+  const dirs: string[] = [];
+  if (logDir) dirs.push(logDir);
+  if (ventureosRoot) dirs.push(path.join(ventureosRoot, 'runtime', 'logs'));
+
+  for (const dir of dirs) {
+    if (!dir) continue;
+    for (const ext of ['.jsonl', '.log', '.txt']) {
+      const candidate = path.resolve(path.join(dir, sourceId + ext));
+      if (!candidate.startsWith(path.resolve(dir))) continue;
+      if (fs.existsSync(candidate)) return candidate;
+    }
+  }
+
+  return null;
 }
 
-export function handleLogs(req: IncomingMessage, res: ServerResponse, deps: LogsDeps): boolean {
-  if (!req.url||req.method!=='GET') return false;
+// ─── Entry Parsing ───────────────────────────────────────────────────────────
 
-  if (req.url==='/api/logs/sources') {
-    deps.sendJson(res, { sources: resolveSources(deps).map(s=>({ id:s.id, name:s.name, description:s.description, type:s.type, available:s.available })) });
+function parseLines(
+  lines: string[],
+  sourceId: string,
+  opts: { search?: string; level?: string },
+): LogEntry[] {
+  const entries: LogEntry[] = [];
+  const searchLower = opts.search ? opts.search.toLowerCase() : null;
+  const levelFilter = opts.level ? opts.level.toLowerCase() : null;
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+
+    let parsed: Record<string, unknown> | null = null;
+    if (trimmed.startsWith('{')) {
+      try {
+        parsed = JSON.parse(trimmed) as Record<string, unknown>;
+      } catch {
+        // not valid JSON
+      }
+    }
+
+    const level = inferLevel(trimmed, parsed);
+    const ts = extractTimestamp(parsed, trimmed);
+    const message = parsed ? summariseJsonEntry(parsed) : trimmed.slice(0, 300);
+
+    if (levelFilter && levelFilter !== 'all' && level !== levelFilter) continue;
+
+    if (searchLower) {
+      const haystack = (message + ' ' + trimmed).toLowerCase();
+      if (!haystack.includes(searchLower)) continue;
+    }
+
+    entries.push({ ts, level, source: sourceId, message, raw: trimmed, fields: parsed });
+  }
+
+  return entries;
+}
+
+// ─── Route Handler ───────────────────────────────────────────────────────────
+
+export function handleLogs(
+  req: IncomingMessage,
+  res: ServerResponse,
+  ctx: LogsDeps,
+): boolean {
+  if (!req || !res) return false;
+  if (!req.url || !req.url.startsWith('/api/logs')) return false;
+  if (req.method && req.method !== 'GET') return false;
+
+  const { LOG_DIR, VENTUREOS_ROOT, sendJson, clampInt } = ctx;
+
+  const urlObj = new URL(req.url, 'http://localhost');
+  const pathname = urlObj.pathname;
+
+  // ── GET /api/logs/sources ────────────────────────────────────────────────
+  if (pathname === '/api/logs/sources') {
+    try {
+      const sources = discoverSources(LOG_DIR, VENTUREOS_ROOT);
+      sendJson(res, { sources });
+    } catch {
+      sendJson(res, { error: 'Failed to list log sources', sources: [] }, 500);
+    }
     return true;
   }
 
-  if (req.url.startsWith('/api/logs/read')) {
-    const p = new URL(req.url,'http://localhost').searchParams;
-    const sids = (p.get('sources')??'gateway').split(',').map(s=>s.trim());
-    const lines = deps.clampInt(p.get('lines'),10,1000,200), level = p.get('level')??'all', keyword = p.get('keyword')??'';
-    const sinceStr = p.get('since')??'', untilStr = p.get('until')??'';
-    const since = sinceStr ? new Date(sinceStr).getTime() : undefined, until = untilStr ? new Date(untilStr).getTime() : undefined;
-    const all = resolveSources(deps).filter(s=>sids.includes(s.id)&&s.available);
-    let entries: ParsedLogEntry[] = [];
-    for (const s of all) entries = entries.concat(readLogs(s, { lines, level:level!=='all'?level:undefined, keyword:keyword||undefined, since:since&&!Number.isNaN(since)?since:undefined, until:until&&!Number.isNaN(until)?until:undefined }));
-    entries.sort((a,b)=>new Date(a.timestamp).getTime()-new Date(b.timestamp).getTime());
-    entries = entries.slice(-lines);
-    deps.sendJson(res, { entries, count:entries.length, sources:sids, filters:{ level, keyword, since:sinceStr, until:untilStr } });
+  // ── GET /api/logs/entries ────────────────────────────────────────────────
+  if (pathname === '/api/logs/entries') {
+    const sourceId = urlObj.searchParams.get('source') ?? '';
+    const limit = clampInt(urlObj.searchParams.get('limit'), 10, 2000, 200);
+    const search = urlObj.searchParams.get('search') ?? '';
+    const level = urlObj.searchParams.get('level') ?? '';
+
+    if (!sourceId) {
+      sendJson(res, { error: 'Missing required parameter: source', entries: [] }, 400);
+      return true;
+    }
+
+    const filePath = resolveSourcePath(sourceId, LOG_DIR, VENTUREOS_ROOT);
+    if (!filePath) {
+      sendJson(res, { error: `Log source not found: ${sourceId}`, entries: [] }, 404);
+      return true;
+    }
+
+    try {
+      const readCount = search || level ? limit * 4 : limit;
+      const rawLines = tailLines(filePath, readCount);
+      const entries = parseLines(rawLines, sourceId, { search, level });
+
+      const sliced = entries.slice(Math.max(0, entries.length - limit));
+
+      sendJson(res, {
+        source: sourceId,
+        total: sliced.length,
+        limit,
+        entries: sliced,
+      });
+    } catch {
+      sendJson(res, { error: 'Failed to read log entries', entries: [] }, 500);
+    }
     return true;
   }
 
-  if (req.url.startsWith('/api/logs/stream')) {
-    const p = new URL(req.url,'http://localhost').searchParams;
-    const sids = (p.get('sources')??'gateway').split(',').map(s=>s.trim());
-    const level = p.get('level')??'all', keyword = (p.get('keyword')??'').toLowerCase();
-    res.writeHead(200, { 'Content-Type':'text/event-stream', 'Cache-Control':'no-cache', Connection:'keep-alive' });
-    res.write('data: '+JSON.stringify({ type:'connected', sources:sids })+'\n\n');
-    const all = resolveSources(deps).filter(s=>sids.includes(s.id)&&s.available);
-    const sizes: Record<string,number> = {};
-    for (const s of all) { if (s.path) try { sizes[s.id] = fs.statSync(s.path).size; } catch { sizes[s.id] = 0; } }
-    const watchers: fs.FSWatcher[] = [];
-    for (const s of all) { if (!s.path) continue; try { const w = fs.watch(s.path, (et)=>{
-      if (et!=='change') return; try { if (!res.writable) return;
-        const st = fs.statSync(s.path!), prev = sizes[s.id]??0; if (st.size<=prev) return;
-        const fd = fs.openSync(s.path!,'r'), buf = Buffer.alloc(st.size-prev);
-        fs.readSync(fd,buf,0,buf.length,prev); fs.closeSync(fd); sizes[s.id] = st.size;
-        const nl = buf.toString('utf8').split('\n').filter(l=>l.trim());
-        const fn2 = s.type==='jsonl' ? (l:string)=>parseJson(l,s.id) : (l:string)=>parsePlain(l,s.id);
-        for (const l of nl) { const e = fn2(l); if (!e) continue; if (level!=='all'&&e.level!==level) continue;
-          if (keyword&&!e.message.toLowerCase().includes(keyword)&&!e.raw.toLowerCase().includes(keyword)) continue;
-          res.write('data: '+JSON.stringify({ type:'log', entry:e })+'\n\n'); }
-      } catch {} }); watchers.push(w); } catch {} }
-    req.on('close', ()=>{ for (const w of watchers) try { w.close(); } catch {} });
+  // ── GET /api/logs/tail — raw text compat ─────────────────────────────────
+  if (pathname === '/api/logs/tail') {
+    const sourceId = urlObj.searchParams.get('source') ?? '';
+    const lines = clampInt(urlObj.searchParams.get('lines'), 1, 2000, 100);
+
+    if (!sourceId) {
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+      res.end('Missing required parameter: source');
+      return true;
+    }
+
+    const filePath = resolveSourcePath(sourceId, LOG_DIR, VENTUREOS_ROOT);
+    if (!filePath) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end(`Log source not found: ${sourceId}`);
+      return true;
+    }
+
+    try {
+      const rawLines = tailLines(filePath, lines);
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end(rawLines.join('\n'));
+    } catch {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Failed to read log file');
+    }
     return true;
   }
 
-  if (req.url.startsWith('/api/logs?')||req.url==='/api/logs') {
-    const p = new URL(req.url,'http://localhost').searchParams;
-    const svc = p.get('service')??'gateway', n = deps.clampInt(p.get('lines'),10,1000,100);
-    const map: Record<string,string> = { openclaw:'gateway', 'agent-dashboard':'access', tailscaled:'gateway' };
-    const sid = map[svc]??'gateway', src = resolveSources(deps).find(s=>s.id===sid);
-    if (!src||!src.available) { res.writeHead(200,{'Content-Type':'text/plain'}); res.end('No logs for: '+sid); return true; }
-    res.writeHead(200,{'Content-Type':'text/plain'}); res.end(readTail(src.path!,n).map(l=>redactSecrets(l)).join('\n'));
+  // ── Legacy compat: GET /api/logs?service=...&lines=... ───────────────────
+  if (pathname === '/api/logs') {
+    const service = urlObj.searchParams.get('service') ?? '';
+    const lines = clampInt(urlObj.searchParams.get('lines'), 1, 2000, 100);
+
+    const legacyMap: Record<string, string> = {
+      openclaw: 'dashboard-server',
+      'agent-dashboard': 'dashboard-server',
+      dashboard: 'dashboard',
+    };
+
+    const sourceId = legacyMap[service] ?? service;
+    const filePath = resolveSourcePath(sourceId, LOG_DIR, VENTUREOS_ROOT);
+    if (!filePath) {
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end(`No local logs found for service "${service}". Available sources: ${discoverSources(LOG_DIR, VENTUREOS_ROOT).map((s) => s.id).join(', ')}`);
+      return true;
+    }
+
+    try {
+      const rawLines = tailLines(filePath, lines);
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end(rawLines.join('\n'));
+    } catch {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Error reading log file');
+    }
     return true;
   }
 

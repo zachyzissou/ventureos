@@ -2906,7 +2906,7 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   }
   // Logs API — Issue #137: Observability Logs Page
   try {
-    if (handleLogs(req, res, { OPENCLAW_DIR, LOG_DIR, sendJson, clampInt })) return;
+    if (handleLogs(req, res, { LOG_DIR, VENTUREOS_ROOT, sendJson, clampInt })) return;
   } catch {
     // ignore
   }
