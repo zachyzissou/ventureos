@@ -78,6 +78,11 @@ npx tsc -p tsconfig.json --outDir dist 2>&1 || {
 mkdir -p "$DASHBOARD_DIR/dist/lib"
 echo '{ "type": "commonjs" }' > "$DASHBOARD_DIR/dist/lib/package.json"
 
+# Copy static client assets (HTML, CSS, images) into dist so the compiled
+# server can resolve them via import.meta.dirname (see Issue #178).
+mkdir -p "$DASHBOARD_DIR/dist/dashboard/client"
+cp -R "$DASHBOARD_DIR/client/"* "$DASHBOARD_DIR/dist/dashboard/client/"
+
 if [[ ! -f "$DASHBOARD_DIR/dist/dashboard/server/server.js" ]]; then
   echo "❌ Build failed — dist/dashboard/server/server.js not found"
   exit 1
