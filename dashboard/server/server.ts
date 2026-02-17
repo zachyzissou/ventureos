@@ -187,7 +187,8 @@ function tryServeStatic(
     const root: string = path.resolve(opts.rootDir);
     let fpath: string = path.resolve(path.join(root, rel));
 
-    if (!fpath.startsWith(root)) {
+    const rel2root = path.relative(root, fpath);
+    if (rel2root.startsWith('..') || path.isAbsolute(rel2root)) {
       res.writeHead(403);
       res.end('Forbidden');
       return true;
