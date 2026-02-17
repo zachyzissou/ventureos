@@ -217,9 +217,9 @@ describe('Bounded request body reads (Issue #149)', () => {
       'utf8',
     );
     // Ensure the LIMITS map has an entry for /api/conversation with limit and windowMs
-    expect(src).toMatch(/LIMITS\s*=\s*{[\s\S]*['"]\\/api\\/conversation['"]\s*:/);
-    expect(src).toMatch(/['"]\\/api\\/conversation['"]\s*:\s*{[\s\S]*?limit\s*:/);
-    expect(src).toMatch(/['"]\\/api\\/conversation['"]\s*:\s*{[\s\S]*?windowMs\s*:/);
+    expect(src).toMatch(/LIMITS[\s\S]*['"]\/api\/conversation['"]\s*:/);
+    expect(src).toMatch(/['"]\/api\/conversation['"]\s*:\s*{[\s\S]*?limit\s*:/);
+    expect(src).toMatch(/['"]\/api\/conversation['"]\s*:\s*{[\s\S]*?windowMs\s*:/);
   });
 });
 
