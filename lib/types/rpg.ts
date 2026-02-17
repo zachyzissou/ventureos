@@ -12,13 +12,22 @@
 /** A single snapshot row from the psionic_stats table. */
 export interface PsionicStatSnapshot {
   snapshot_date: string;
-  claims_with_citations: number;
-  total_claims: number;
-  knowledge_gaps: number;
-  cross_domain_links: number;
-  source_count: number;
+  agent_id: string;
+  psionic_mastery: number;
+  energy: number;
+  shields: number;
+  warp_technology: number;
+  psi_reach: number;
+  memory_count: number;
+  unique_domains: number;
+  canonical_edits: number;
+  p95_latency_s: number;
   mttr_minutes: number;
-  freshness_hours: number;
+  acceptance_rate: number;
+  success_rate: number;
+  approval_accuracy: number;
+  tasks_completed: number;
+  warp_tech_inputs: string | null;
 }
 
 /** GET /api/rpg/stats response. */
