@@ -277,6 +277,9 @@ export function authenticate(req: IncomingMessage, res: ServerResponse): boolean
   // Login/logout endpoints must be reachable without prior auth
   if (req.url === '/api/login' || req.url === '/api/logout') return true;
 
+  // Health check endpoint — unauthenticated for container healthchecks (Issue #191)
+  if (req.url === '/api/health') return true;
+
   const ip: string = getClientIp(req);
 
   // Optional LAN bypass for explicit local deployments only.

@@ -1,6 +1,18 @@
+# VentureOS Hybrid Deployment — Production Docker Compose
+# Issue #191: Execute hybrid deployment production cutover
+#
+# Architecture: Host-native OpenClaw + Bridge API ↔ Containerized Dashboard + DB
+# Usage: docker compose --env-file .env.hybrid up -d
+#
+# Prerequisites:
+#   1. Copy .env.hybrid.example → .env.hybrid and fill secrets
+#   2. Start Bridge API on host (see scripts/hybrid-cutover.sh)
+#   3. Docker Desktop running
+
 name: ventureos
 
 services:
+  # ── Postgres (persistent cache / history) ──────────────────────────────────
   db:
     image: postgres:16-alpine
     container_name: ventureos-db
@@ -10,8 +22,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.hybrid}
     volumes:
       - ventureos-db:/var/lib/postgresql/data
-    # Expose to host so the host-native Bridge API can write ingest data.
-    # Use 5433 on host by default to avoid conflicts with local Postgres.
     ports:
       - "${POSTGRES_PORT:-5433}:5432"
     healthcheck:
@@ -27,6 +37,7 @@ services:
       com.ventureos.env: local-hybrid
     restart: unless-stopped
 
+  # ── Dashboard (UI + API + tactical map) ────────────────────────────────────
   dashboard:
     build:
       context: .
@@ -39,24 +50,22 @@ services:
       VENTUREOS_ROOT: /opt/ventureos
       DASHBOARD_HOST: 0.0.0.0
       DASHBOARD_PORT: ${DASHBOARD_PORT:-8001}
-      # Dashboard auth (protects the UI/API)
       DASHBOARD_API_TOKEN: ${DASHBOARD_API_TOKEN:?Set DASHBOARD_API_TOKEN in .env.hybrid}
       DASHBOARD_ALLOW_LAN_BYPASS: "false"
       DASHBOARD_TRUST_PROXY: "false"
       DASHBOARD_ENABLE_ACTIONS: "false"
-      # Hybrid mode: data is sourced from the host Bridge API
+      # Hybrid mode: data sourced from host Bridge API
       DASHBOARD_DATA_MODE: bridge
       BRIDGE_URL: ${BRIDGE_URL:-http://host.docker.internal:18790}
       BRIDGE_TOKEN: ${BRIDGE_TOKEN:?Set BRIDGE_TOKEN in .env.hybrid}
-      # Database (optional cache/history)
+      # Postgres (cache/history)
       DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-ventureos}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ventureos}}
     ports:
       - "${DASHBOARD_PORT:-8001}:8001"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test:
-        ["CMD-SHELL", "node -e \"fetch('http://localhost:8001/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:8001/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 10
