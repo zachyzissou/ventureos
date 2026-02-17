@@ -19,7 +19,13 @@
     "test:e2e:xss": "npx playwright test --grep XSS",
     "dashboard:dev": "npm run dev --workspace=dashboard",
     "dashboard:start": "npm run start --workspace=dashboard",
-    "dashboard:build": "npm run build --workspace=dashboard"
+    "dashboard:build": "npm run build --workspace=dashboard",
+    "test:perf": "cd tactical-map && PERF=1 npx playwright test tests/performance/",
+    "test:perf:render": "cd tactical-map && PERF=1 npx playwright test tests/performance/render-performance.test.ts",
+    "test:perf:load": "cd tactical-map && PERF=1 npx playwright test tests/performance/load-testing.test.ts",
+    "test:perf:memory": "cd tactical-map && PERF=1 npx playwright test tests/performance/memory-leak.test.ts",
+    "test:perf:network": "cd tactical-map && PERF=1 npx playwright test tests/performance/network-latency.test.ts",
+    "bench": "cd tactical-map && ./scripts/run-benchmarks.sh"
   },
   "dependencies": {
     "ajv": "^8.17.1",
