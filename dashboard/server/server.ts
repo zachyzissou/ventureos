@@ -65,6 +65,7 @@ const {
   KPI_DIR,
   DASHBOARD_DATA_DIR,
   OBSERVATIONS_DIR,
+  LOG_DIR,
   RPG_ROOT,
   RPG_DB_PATH,
   ACTIVE_WORK_PATH,
@@ -95,6 +96,7 @@ import { handleAgentHealth } from './routes/agent-health.js';
 import { handleRpgApi } from './routes/rpg.js';
 import { handleConversationApi } from './routes/conversation.js';
 import { handleTacticalMapControls } from './routes/tactical-map-controls.js';
+import { handleLogs } from './routes/logs.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -2902,28 +2904,11 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     sendJson(res, { avgSeconds: getAvgResponseTime() });
     return;
   }
-  if (req.url && req.url.startsWith('/api/logs?')) {
-    try {
-      const params = new URL(req.url, 'http://localhost').searchParams;
-      const allowedServices: string[] = ['openclaw', 'agent-dashboard', 'tailscaled', 'sshd', 'nginx'];
-      const service: string = params.get('service') ?? 'openclaw';
-      if (!allowedServices.includes(service)) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('Invalid service name');
-        return;
-      }
-      const lineCount: number = Math.min(Math.max(parseInt(params.get('lines') ?? '100') || 100, 1), 1000);
-      const logs: string = execSync(
-        `journalctl -u ${service} --no-pager -n ${lineCount} -o short 2>/dev/null || echo "No logs available"`,
-        { encoding: 'utf8', timeout: 10000 },
-      );
-      res.writeHead(200, { 'Content-Type': 'text/plain' });
-      res.end(logs);
-    } catch {
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('Error fetching logs');
-    }
-    return;
+  // Logs API — Issue #137: Observability Logs Page
+  try {
+    if (handleLogs(req, res, { OPENCLAW_DIR, LOG_DIR, sendJson, clampInt })) return;
+  } catch {
+    // ignore
   }
 
   // Action endpoints — use shared error handler (Issue #79) for safe responses
