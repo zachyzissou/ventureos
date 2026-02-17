@@ -83,12 +83,66 @@ export interface ConversationRestServerOptions {
   host?: string;
 }
 
-async function readJson(req: http.IncomingMessage): Promise<any> {
-  const chunks: Buffer[] = [];
-  for await (const c of req) chunks.push(Buffer.from(c));
-  const raw = Buffer.concat(chunks).toString('utf8');
-  if (!raw.trim()) return {};
-  return JSON.parse(raw);
+/**
+ * Maximum request body size (1 MB).
+ * Prevents memory exhaustion from unbounded body reads (Issue #149).
+ */
+const MAX_BODY_BYTES = 1024 * 1024;
+
+/**
+ * Read and parse a JSON request body with a size limit.
+ *
+ * Returns `null` and sends an error response (413 or 400) if the body
+ * exceeds MAX_BODY_BYTES or is malformed JSON. Callers must check for
+ * `null` before proceeding.
+ */
+async function readJson(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<any | null> {
+  return new Promise((resolve) => {
+    const chunks: Buffer[] = [];
+    let totalBytes = 0;
+    let aborted = false;
+
+    req.on('data', (chunk: Buffer) => {
+      if (aborted) return;
+      totalBytes += chunk.length;
+      if (totalBytes > MAX_BODY_BYTES) {
+        aborted = true;
+        req.resume(); // drain remaining data
+        writeJson(res, 413, {
+          error: 'Request body too large',
+          maxBytes: MAX_BODY_BYTES,
+        });
+        resolve(null);
+        return;
+      }
+      chunks.push(chunk);
+    });
+
+    req.on('end', () => {
+      if (aborted) return;
+      const raw = Buffer.concat(chunks).toString('utf8');
+      if (!raw.trim()) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(raw));
+      } catch {
+        writeJson(res, 400, { error: 'Malformed JSON in request body' });
+        resolve(null);
+      }
+    });
+
+    req.on('error', () => {
+      if (aborted) return;
+      aborted = true;
+      writeJson(res, 400, { error: 'Request stream error' });
+      resolve(null);
+    });
+  });
 }
 
 function writeJson(res: http.ServerResponse, status: number, body: any): void {
@@ -114,7 +168,8 @@ export function createConversationRestServer(api: ConversationAPI, options: Conv
 
       // POST /conversations
       if (req.method === 'POST' && parts.length === 1 && parts[0] === 'conversations') {
-        const body = await readJson(req);
+        const body = await readJson(req, res);
+        if (!body) return; // response already sent (413/400)
         const state = await api.startConversation(body as any);
         return writeJson(res, 201, state);
       }
@@ -134,7 +189,8 @@ export function createConversationRestServer(api: ConversationAPI, options: Conv
 
       // POST /conversations/:id/messages
       if (req.method === 'POST' && parts.length === 3 && parts[0] === 'conversations' && parts[2] === 'messages') {
-        const body = await readJson(req);
+        const body = await readJson(req, res);
+        if (!body) return; // response already sent (413/400)
         const msg = await api.sendMessage({ ...(body as any), conversationId: parts[1] });
         return writeJson(res, 201, msg);
       }

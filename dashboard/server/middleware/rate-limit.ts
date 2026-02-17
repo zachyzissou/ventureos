@@ -96,6 +96,7 @@ export const LIMITS: Record<string, RateLimitConfig> = {
   '/api/system':              { limit: 60, windowMs: 60000 },
   '/api/replay':              { limit: 10, windowMs: 60000 },
   '/api/live':                { limit: 10, windowMs: 60000 },
+  '/api/conversation':        { limit: 30, windowMs: 60000 },
 };
 
 /**

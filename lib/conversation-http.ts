@@ -39,12 +39,66 @@ function parseUrl(req: IncomingMessage): URL | null {
   }
 }
 
-async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
-  const chunks: Buffer[] = [];
-  for await (const c of req) chunks.push(Buffer.from(c as Buffer));
-  const raw = Buffer.concat(chunks).toString('utf8');
-  if (!raw.trim()) return {};
-  return JSON.parse(raw) as Record<string, unknown>;
+/**
+ * Maximum request body size (1 MB).
+ * Prevents memory exhaustion from unbounded body reads (Issue #149).
+ */
+const MAX_BODY_BYTES = 1024 * 1024;
+
+/**
+ * Read and parse a JSON request body with a size limit.
+ *
+ * Returns `null` and sends an error response (413 or 400) if the body
+ * exceeds MAX_BODY_BYTES or is malformed JSON. Callers must check for
+ * `null` before proceeding.
+ */
+async function readJsonBody(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<Record<string, unknown> | null> {
+  return new Promise((resolve) => {
+    const chunks: Buffer[] = [];
+    let totalBytes = 0;
+    let aborted = false;
+
+    req.on('data', (chunk: Buffer) => {
+      if (aborted) return;
+      totalBytes += chunk.length;
+      if (totalBytes > MAX_BODY_BYTES) {
+        aborted = true;
+        req.resume(); // drain remaining data
+        sendJson(res, 413, {
+          error: 'Request body too large',
+          maxBytes: MAX_BODY_BYTES,
+        });
+        resolve(null);
+        return;
+      }
+      chunks.push(chunk);
+    });
+
+    req.on('end', () => {
+      if (aborted) return;
+      const raw = Buffer.concat(chunks).toString('utf8');
+      if (!raw.trim()) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(raw) as Record<string, unknown>);
+      } catch {
+        sendJson(res, 400, { error: 'Malformed JSON in request body' });
+        resolve(null);
+      }
+    });
+
+    req.on('error', () => {
+      if (aborted) return;
+      aborted = true;
+      sendJson(res, 400, { error: 'Request stream error' });
+      resolve(null);
+    });
+  });
 }
 
 // ─── Singleton API Instance ─────────────────────────────────────────────────
@@ -82,8 +136,9 @@ async function handleStartConversation(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<void> {
-  const body = (await readJsonBody(req)) as unknown as StartConversationRequest;
-  const state = await api.startConversation(body as any);
+  const body = await readJsonBody(req, res);
+  if (!body) return; // response already sent (413/400)
+  const state = await api.startConversation(body as unknown as StartConversationRequest as any);
   sendJson(res, 201, state);
 }
 
@@ -117,9 +172,10 @@ async function handleSendMessage(
   res: ServerResponse,
   conversationId: string,
 ): Promise<void> {
-  const body = (await readJsonBody(req)) as unknown as SendMessageRequest;
+  const body = await readJsonBody(req, res);
+  if (!body) return; // response already sent (413/400)
   const msg = await api.sendMessage({
-    ...body,
+    ...(body as unknown as SendMessageRequest),
     conversationId,
   } as any);
   sendJson(res, 201, msg);
@@ -131,8 +187,9 @@ async function handleAddParticipant(
   res: ServerResponse,
   conversationId: string,
 ): Promise<void> {
-  const body = (await readJsonBody(req)) as unknown as AddParticipantRequest;
-  const state = await api.addParticipant(conversationId, body.agentId);
+  const body = await readJsonBody(req, res);
+  if (!body) return; // response already sent (413/400)
+  const state = await api.addParticipant(conversationId, (body as unknown as AddParticipantRequest).agentId);
   sendJson(res, 200, state);
 }
 
@@ -142,8 +199,10 @@ async function handleSetStatus(
   res: ServerResponse,
   conversationId: string,
 ): Promise<void> {
-  const body = (await readJsonBody(req)) as unknown as SetStatusRequest;
-  const state = await api.setStatus(conversationId, body.status, body.reason);
+  const body = await readJsonBody(req, res);
+  if (!body) return; // response already sent (413/400)
+  const casted = body as unknown as SetStatusRequest;
+  const state = await api.setStatus(conversationId, casted.status, casted.reason);
   sendJson(res, 200, state);
 }
 
