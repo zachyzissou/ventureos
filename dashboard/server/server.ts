@@ -88,6 +88,7 @@ import { applySecurityHeaders } from './middleware/security-headers.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import { auditLog } from './middleware/audit-log.js';
 import { authorizeActionRequest } from './middleware/action-guard.js';
+import { proxyBridgeJson } from './bridge-proxy.js';
 
 // Route handlers
 import { handleKpis } from './routes/kpis.js';
@@ -105,6 +106,9 @@ export const PORT: number = parseInt(process.env.DASHBOARD_PORT ?? '8001');
 const HOST: string = process.env.DASHBOARD_HOST ?? '127.0.0.1';
 const WORKSPACE_DIR: string = process.env.WORKSPACE_DIR ?? process.env.OPENCLAW_WORKSPACE ?? process.cwd();
 const AGENT_ID: string = process.env.OPENCLAW_AGENT ?? 'main';
+const DASHBOARD_DATA_MODE: string = (process.env.DASHBOARD_DATA_MODE ?? 'filesystem').toLowerCase();
+const BRIDGE_URL: string = process.env.BRIDGE_URL ?? 'http://127.0.0.1:18790';
+const BRIDGE_TOKEN: string = process.env.BRIDGE_TOKEN ?? '';
 const sessDir: string = path.join(OPENCLAW_DIR, 'agents', AGENT_ID, 'sessions');
 const cronFile: string = path.join(OPENCLAW_DIR, 'cron', 'jobs.json');
 const dataDir: string = path.join(WORKSPACE_DIR, 'data');
@@ -126,6 +130,12 @@ const VENTUREOS_AGENTS: string[] = (
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
+
+const bridgeProxyDeps = {
+  dataMode: DASHBOARD_DATA_MODE,
+  bridgeUrl: BRIDGE_URL,
+  bridgeToken: BRIDGE_TOKEN,
+};
 
 // Ensure data directory exists
 try {
@@ -2714,6 +2724,13 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     return;
   }
   if (req.url === '/api/usage') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/usage',
+        forwardQuery: true,
+      })
+    )
+      return;
     const now: number = Date.now();
     if (!usageCache || now - usageCacheTime > 10000) {
       usageCache = getUsageWindows();
@@ -2723,6 +2740,13 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     return;
   }
   if (req.url === '/api/costs') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/costs',
+        forwardQuery: true,
+      })
+    )
+      return;
     const now: number = Date.now();
     if (!costCache || now - costCacheTime > 60000) {
       costCache = getCostData();
@@ -2732,6 +2756,13 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     return;
   }
   if (req.url === '/api/system') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/system',
+        forwardQuery: true,
+      })
+    )
+      return;
     const stats: SystemStats & { diskHistory?: Array<{ t: number; v: number }> } = getSystemStats();
     if (stats.disk) stats.diskHistory = trackDiskHistory(stats.disk.percent || 0);
     sendJson(res, stats);
@@ -2855,6 +2886,13 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     return;
   }
   if (req.url === '/api/tokens-today') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/tokens-today',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getTodayTokens());
     return;
   }
@@ -2901,6 +2939,13 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     return;
   }
   if (req.url === '/api/response-time') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/response-time',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, { avgSeconds: getAvgResponseTime() });
     return;
   }
@@ -3086,6 +3131,13 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   }
 
   if (req.url === '/api/lifetime-stats') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/lifetime-stats',
+        forwardQuery: true,
+      })
+    )
+      return;
     try {
       const now: number = Date.now();
       if (lifetimeStatsCache && now - lifetimeStatsCacheTime < 300000) {
@@ -3151,6 +3203,13 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
   }
 
   if (req.url === '/api/health-history') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/health-history',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, healthHistory);
     return;
   }
