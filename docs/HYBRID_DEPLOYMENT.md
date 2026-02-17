@@ -89,7 +89,8 @@ The Bridge API is a lightweight HTTP service running on the **host**, exposing s
 |---|---|
 | **Authentication** | `Authorization: Bearer <BRIDGE_TOKEN>` (timing-safe comparison) |
 | **CIDR allowlist** | Default: `127.0.0.1/32, ::1/128, 192.168.65.0/24, 172.17.0.0/16` |
-| **Session redaction** | Drop `kind=isolated`, `subagent`, and `isolated` sessions from all outputs |
+| **Session filtering** | Drop `kind=isolated`, `subagent`, and `isolated` sessions from all outputs |
+| **Secret redaction** | Redact Bearer tokens, GitHub PATs, API keys, npm tokens, and home paths from message content (Issue #137) |
 | **Rate limiting** | Sliding-window per IP per endpoint group |
 | **Audit logging** | JSONL log for auth failures, rate-limit hits, sensitive endpoint access |
 
