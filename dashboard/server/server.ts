@@ -2627,6 +2627,138 @@ const server: Server = http.createServer(async (req: IncomingMessage, res: Serve
     return;
   }
 
+  // ── Conversation adapter routes (Issue #live-data) ─────────────────────
+  // The <live-conversation-panel> component fetches /api/rpg/conversations/active
+  // and /api/rpg/conversations/:id, but the real conversation API lives at
+  // /api/conversation/conversations. These adapter routes bridge the mismatch
+  // by internally rewriting the URL so handleConversationApi handles it.
+  if (req.url && req.url.startsWith('/api/rpg/conversations')) {
+    const convUrl = new URL(req.url, 'http://localhost');
+    const convSubPath = convUrl.pathname.slice('/api/rpg/conversations'.length);
+
+    // GET /api/rpg/conversations/active → list + enrich with state
+    if (req.method === 'GET' && (convSubPath === '/active' || convSubPath === '/active/')) {
+      try {
+        // Internally call the conversation list endpoint
+        const origUrl = req.url;
+        (req as { url: string }).url = '/api/conversation/conversations';
+        const listResult = await new Promise<{ conversations: string[] }>((resolve, reject) => {
+          const fakeRes = {
+            writeHead(_status: number, _headers?: Record<string, string>) { /* no-op */ },
+            end(body?: string) { 
+              try { resolve(JSON.parse(body ?? '{}')); }
+              catch { reject(new Error('Failed to parse conversation list')); }
+            },
+            setHeader() {},
+            getHeader() { return undefined; },
+            write() { return true; },
+          } as unknown as ServerResponse;
+          const handled = handleConversationApi(req, fakeRes, { dbPath: RPG_DB_PATH });
+          if (!handled) reject(new Error('Conversation API did not handle list request'));
+        });
+        (req as { url: string }).url = origUrl;
+
+        // Enrich: fetch state for each conversation
+        const enriched: Array<{ id: string; title: string; status: string }> = [];
+        const convIds = listResult.conversations ?? [];
+        for (const id of convIds.slice(0, 20)) {
+          try {
+            const innerReq = Object.create(req, {
+              url: { value: `/api/conversation/conversations/${encodeURIComponent(id)}`, writable: true },
+              method: { value: 'GET', writable: true },
+            });
+            const state = await new Promise<Record<string, unknown>>((resolve, reject) => {
+              const fakeRes2 = {
+                writeHead(_status: number) { /* no-op */ },
+                end(body?: string) {
+                  try { resolve(JSON.parse(body ?? '{}')); }
+                  catch { reject(new Error('Parse error')); }
+                },
+                setHeader() {},
+                getHeader() { return undefined; },
+                write() { return true; },
+              } as unknown as ServerResponse;
+              const handled = handleConversationApi(innerReq, fakeRes2, { dbPath: RPG_DB_PATH });
+              if (!handled) reject(new Error('not handled'));
+            });
+            enriched.push({
+              id,
+              title: (state as any).metadata?.title ?? `Conversation ${id.slice(0, 8)}`,
+              status: (state as any).status ?? 'active',
+            });
+          } catch {
+            enriched.push({ id, title: `Conversation ${id.slice(0, 8)}`, status: 'unknown' });
+          }
+        }
+
+        sendJson(res, { ok: true, conversations: enriched });
+      } catch (e: unknown) {
+        // If no conversations exist yet, return empty list (not an error)
+        sendJson(res, { ok: true, conversations: [] });
+      }
+      return;
+    }
+
+    // GET /api/rpg/conversations/:id → fetch full state, wrap for component
+    if (req.method === 'GET' && convSubPath && /^\/[a-zA-Z0-9_-]+\/?$/.test(convSubPath)) {
+      const convId = convSubPath.replace(/^\//, '').replace(/\/$/, '');
+      try {
+        const innerReq = Object.create(req, {
+          url: { value: `/api/conversation/conversations/${encodeURIComponent(convId)}`, writable: true },
+          method: { value: 'GET', writable: true },
+        });
+        const state = await new Promise<Record<string, unknown>>((resolve, reject) => {
+          const fakeRes3 = {
+            writeHead(_status: number) { /* no-op */ },
+            end(body?: string) {
+              try { resolve(JSON.parse(body ?? '{}')); }
+              catch { reject(new Error('Parse error')); }
+            },
+            setHeader() {},
+            getHeader() { return undefined; },
+            write() { return true; },
+          } as unknown as ServerResponse;
+          const handled = handleConversationApi(innerReq, fakeRes3, { dbPath: RPG_DB_PATH });
+          if (!handled) reject(new Error('not handled'));
+        });
+
+        // Transform ConversationState → component-expected shape
+        const convState = state as any;
+        const participants = (convState.participants ?? []).map((agentId: string) => ({
+          agent: agentId,
+          status: agentId === convState.currentTurn ? 'active' : 'idle',
+          lastActive: convState.updatedAt ?? new Date().toISOString(),
+        }));
+        const messages = (convState.messages ?? []).map((m: any, i: number) => ({
+          id: m.messageId ?? `msg-${i}`,
+          agent: m.from ?? 'unknown',
+          type: m.payload?.type ?? 'fact',
+          text: m.content ?? '',
+          timestamp: m.createdAt ?? new Date().toISOString(),
+          violations: [],
+          injectionScore: m.security?.injectionScore ?? 0,
+        }));
+
+        sendJson(res, {
+          ok: true,
+          conversation: {
+            id: convState.conversationId ?? convId,
+            title: convState.metadata?.title ?? `Conversation ${convId.slice(0, 8)}`,
+            status: convState.status ?? 'active',
+            participants,
+            messages,
+            currentSpeaker: convState.currentTurn ?? null,
+            queue: [],
+            affinities: [],
+          },
+        });
+      } catch (e: unknown) {
+        sendJson(res, { ok: false, error: 'Conversation not found' }, 404);
+      }
+      return;
+    }
+  }
+
   // Conversation API (Issue #78 — monorepo integration)
   if (handleConversationApi(req, res, { dbPath: RPG_DB_PATH })) return;
 
