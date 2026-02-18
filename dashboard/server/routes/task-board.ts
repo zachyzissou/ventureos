@@ -163,6 +163,8 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
     resultSummary: null,
     tokensUsed: null,
     error: null,
+    costEstimate: null,
+    runtimeMs: null,
   };
 
   return { ok: true, card };
@@ -333,6 +335,18 @@ export async function handleTaskBoard(
     if (typeof body.resultSummary === 'string') card.resultSummary = body.resultSummary;
     if (typeof body.tokensUsed === 'number') card.tokensUsed = body.tokensUsed;
     if (typeof body.error === 'string') card.error = body.error;
+    if (typeof body.costEstimate === 'number') card.costEstimate = body.costEstimate;
+    if (typeof body.runtimeMs === 'number') card.runtimeMs = body.runtimeMs;
+
+    // Auto-compute runtimeMs on completion if not explicitly provided (Issue #219)
+    if (
+      (card.status === 'done' || card.status === 'failed') &&
+      card.startedAt &&
+      card.completedAt &&
+      card.runtimeMs == null
+    ) {
+      card.runtimeMs = card.completedAt - card.startedAt;
+    }
 
     tasks[idx] = card;
     saveTasks(dataDir, tasks);
