@@ -9,10 +9,12 @@
  * - Max connections capped to prevent resource exhaustion.
  * - Heartbeat keepalive to detect stale connections.
  * - Graceful cleanup on client disconnect.
+ * - Per-client subscription filters (status, agentId, priority) applied
+ *   server-side before broadcasting. Issue #219 — SSE subscription filtering.
  */
 
 import type { ServerResponse } from 'node:http';
-import type { TaskCard } from './types.js';
+import type { TaskCard, TaskStatus, TaskPriority } from './types.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,6 +27,22 @@ export interface TaskBoardEvent {
   /** For deletes, card is the last-known state before removal. */
 }
 
+/**
+ * Per-client subscription filter. All fields are optional (additive).
+ * When a field is set, only events whose card matches are delivered to that client.
+ * Unset fields match everything (no restriction).
+ */
+export interface SseSubscriptionFilter {
+  status?: TaskStatus;
+  agentId?: string;
+  priority?: TaskPriority;
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const VALID_STATUSES: readonly string[] = ['backlog', 'queued', 'running', 'done', 'failed'];
+const VALID_PRIORITIES: readonly string[] = ['critical', 'high', 'medium', 'low'];
+
 // ─── Event Bus ───────────────────────────────────────────────────────────────
 
 /** Maximum simultaneous SSE connections for the task board stream. */
@@ -36,6 +54,8 @@ const HEARTBEAT_INTERVAL_MS = 30_000;
 interface SseClient {
   res: ServerResponse;
   heartbeat: NodeJS.Timeout;
+  /** Optional subscription filter — when empty, all events are delivered. */
+  filter: SseSubscriptionFilter;
 }
 
 let clients: SseClient[] = [];
@@ -46,10 +66,57 @@ export function clientCount(): number {
 }
 
 /**
+ * Parse raw query-param values into a validated subscription filter.
+ * Invalid values are silently ignored (treated as "no filter" for that field).
+ */
+export function parseSubscriptionFilter(params: {
+  status?: string | null;
+  agentId?: string | null;
+  priority?: string | null;
+}): SseSubscriptionFilter {
+  const filter: SseSubscriptionFilter = {};
+  if (params.status && VALID_STATUSES.includes(params.status)) {
+    filter.status = params.status as TaskStatus;
+  }
+  if (params.agentId && params.agentId.trim()) {
+    filter.agentId = params.agentId.trim();
+  }
+  if (params.priority && VALID_PRIORITIES.includes(params.priority)) {
+    filter.priority = params.priority as TaskPriority;
+  }
+  return filter;
+}
+
+/**
+ * Test whether a card matches a subscription filter.
+ * An empty filter matches everything.
+ */
+export function matchesFilter(card: TaskCard, filter: SseSubscriptionFilter): boolean {
+  if (filter.status && card.status !== filter.status) return false;
+  if (filter.agentId && card.agentId !== filter.agentId) return false;
+  if (filter.priority && card.priority !== filter.priority) return false;
+  return true;
+}
+
+/**
  * Register an SSE client. Returns false if at capacity.
  * The caller should already have written the SSE headers.
+ *
+ * @deprecated Use addFilteredClient for new code — this overload exists for backward compat.
  */
 export function addClient(res: ServerResponse): boolean {
+  return addFilteredClient(res, {});
+}
+
+/**
+ * Register an SSE client with an optional subscription filter.
+ * Returns false if at capacity.
+ * The caller should already have written the SSE headers.
+ */
+export function addFilteredClient(
+  res: ServerResponse,
+  filter: SseSubscriptionFilter,
+): boolean {
   if (clients.length >= MAX_CLIENTS) return false;
 
   const heartbeat = setInterval(() => {
@@ -64,7 +131,7 @@ export function addClient(res: ServerResponse): boolean {
     }
   }, HEARTBEAT_INTERVAL_MS);
 
-  clients.push({ res, heartbeat });
+  clients.push({ res, heartbeat, filter });
   return true;
 }
 
@@ -86,7 +153,12 @@ export function removeAllClients(): void {
 
 /**
  * Broadcast a task board event to all connected SSE clients.
+ * Per-client subscription filters are applied before sending — clients
+ * only receive events whose card matches their filter criteria.
  * Non-writable clients are pruned automatically.
+ *
+ * For `task:deleted` events, the filter is always applied against the
+ * card's last-known state so the client can remove it from its local view.
  */
 export function broadcastTaskEvent(event: TaskBoardEvent): void {
   if (clients.length === 0) return;
@@ -99,6 +171,8 @@ export function broadcastTaskEvent(event: TaskBoardEvent): void {
         stale.push(c.res);
         continue;
       }
+      // Apply per-client filter — skip if card doesn't match
+      if (!matchesFilter(event.card, c.filter)) continue;
       c.res.write(message);
     } catch {
       stale.push(c.res);
