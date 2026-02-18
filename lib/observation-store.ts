@@ -15,9 +15,12 @@ import type {
   ObservationId,
   ObservationQuery,
   ObservationStatus,
+  ObservationPriority,
   TokenUsageSummary,
   IObservationStore,
   MemoryState,
+  MemoryStateSnapshot,
+  ReflectionLogEntry,
 } from './types/observation';
 
 /**
@@ -103,11 +106,34 @@ export class ObservationStore implements IObservationStore {
         last_reflection_at TEXT,
         observation_count INTEGER NOT NULL DEFAULT 0
       );
+
+      -- Reflection log: audit trail for reflector GC passes (Phase 3 / #232)
+      CREATE TABLE IF NOT EXISTS reflection_log (
+        id TEXT PRIMARY KEY,
+        agent_id TEXT NOT NULL,
+        run_at TEXT NOT NULL,
+        observations_evaluated INTEGER NOT NULL DEFAULT 0,
+        observations_kept INTEGER NOT NULL DEFAULT 0,
+        observations_merged INTEGER NOT NULL DEFAULT 0,
+        observations_discarded INTEGER NOT NULL DEFAULT 0,
+        tokens_before INTEGER NOT NULL DEFAULT 0,
+        tokens_after INTEGER NOT NULL DEFAULT 0,
+        model_used TEXT NOT NULL,
+        duration_ms INTEGER NOT NULL DEFAULT 0,
+        error TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_reflection_log_agent
+        ON reflection_log(agent_id);
+      CREATE INDEX IF NOT EXISTS idx_reflection_log_run_at
+        ON reflection_log(run_at);
     `);
 
     // Phase 2 migration: add new columns to existing databases.
     // SQLite ALTER TABLE ADD COLUMN is idempotent-safe via try/catch.
     this.migratePhase2Columns();
+
+    // Phase 3 migration: add reflected_at column for soft-delete
+    this.migratePhase3Columns();
 
     // Create index on priority column (must come after migration adds the column)
     this.db.exec(`
@@ -127,6 +153,18 @@ export class ObservationStore implements IObservationStore {
       } catch {
         // Column already exists — safe to ignore
       }
+    }
+  }
+
+  /**
+   * Add Phase 3 columns if missing (backward-compatible migration).
+   * reflected_at: ISO timestamp when the reflector soft-deleted this observation.
+   */
+  private migratePhase3Columns(): void {
+    try {
+      this.db.exec('ALTER TABLE observations ADD COLUMN reflected_at TEXT');
+    } catch {
+      // Column already exists — safe to ignore
     }
   }
 
@@ -355,6 +393,210 @@ export class ObservationStore implements IObservationStore {
     );
   }
 
+  // ─── Reflector GC (Phase 3 / #232) ──────────────────────────────────
+
+  /**
+   * Get active (non-reflected) observations for an agent.
+   * Returns observations that have NOT been soft-deleted by the reflector.
+   * Ordered by priority (high first), then created_at DESC.
+   */
+  getActiveObservations(agentId: string, limit = 500): Observation[] {
+    const rows = this.db.prepare(`
+      SELECT * FROM observations
+      WHERE source_agent_id = ?
+        AND status = 'processed'
+        AND reflected_at IS NULL
+      ORDER BY
+        CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'info' THEN 2 ELSE 3 END,
+        created_at DESC
+      LIMIT ?
+    `).all(agentId, limit) as any[];
+    return rows.map((r) => this.rowToObservation(r));
+  }
+
+  /**
+   * Soft-delete observations by setting reflected_at timestamp.
+   * This is the GC mechanism — no hard deletes.
+   */
+  markReflected(observationIds: string[], reflectedAt: string): number {
+    if (observationIds.length === 0) return 0;
+    const placeholders = observationIds.map(() => '?').join(',');
+    const result = this.db.prepare(
+      `UPDATE observations SET reflected_at = ? WHERE id IN (${placeholders}) AND reflected_at IS NULL`,
+    ).run(reflectedAt, ...observationIds);
+    return result.changes;
+  }
+
+  /**
+   * Insert a reflection log entry for audit trail.
+   */
+  insertReflectionLog(entry: ReflectionLogEntry): void {
+    this.db.prepare(`
+      INSERT INTO reflection_log
+        (id, agent_id, run_at, observations_evaluated, observations_kept,
+         observations_merged, observations_discarded, tokens_before, tokens_after,
+         model_used, duration_ms, error)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      entry.id,
+      entry.agentId,
+      entry.runAt,
+      entry.observationsEvaluated,
+      entry.observationsKept,
+      entry.observationsMerged,
+      entry.observationsDiscarded,
+      entry.tokensBefore,
+      entry.tokensAfter,
+      entry.modelUsed,
+      entry.durationMs,
+      entry.error ?? null,
+    );
+  }
+
+  /**
+   * Get reflection log entries for an agent.
+   */
+  getReflectionLogs(agentId: string, limit = 20): ReflectionLogEntry[] {
+    const rows = this.db.prepare(
+      'SELECT * FROM reflection_log WHERE agent_id = ? ORDER BY run_at DESC LIMIT ?',
+    ).all(agentId, limit) as any[];
+    return rows.map((r) => ({
+      id: r.id,
+      agentId: r.agent_id,
+      runAt: r.run_at,
+      observationsEvaluated: r.observations_evaluated,
+      observationsKept: r.observations_kept,
+      observationsMerged: r.observations_merged,
+      observationsDiscarded: r.observations_discarded,
+      tokensBefore: r.tokens_before,
+      tokensAfter: r.tokens_after,
+      modelUsed: r.model_used,
+      durationMs: r.duration_ms,
+      error: r.error ?? undefined,
+    }));
+  }
+
+  /**
+   * Update the content of an observation (used for merge operations).
+   */
+  updateContent(id: ObservationId, content: string): void {
+    this.db.prepare('UPDATE observations SET content = ? WHERE id = ?').run(content, id);
+  }
+
+  // ─── Phase 4 Read Methods (#233) ───────────────────────────────────────
+
+  /**
+   * Check whether the `reflected_at` column exists on the observations table.
+   * Returns false gracefully if the column hasn't been migrated yet (#232).
+   */
+  hasReflectedAtColumn(): boolean {
+    try {
+      const cols = this.db.prepare("PRAGMA table_info(observations)").all() as any[];
+      return cols.some((c: any) => c.name === 'reflected_at');
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Count observations grouped by priority for an agent.
+   * Only counts non-token_usage, processed observations.
+   * Gracefully handles missing reflected_at column.
+   */
+  getPriorityCounts(agentId: string): { high: number; medium: number; info: number } {
+    const hasReflected = this.hasReflectedAtColumn();
+    const reflectedClause = hasReflected ? 'AND reflected_at IS NULL' : '';
+    const sql = `
+      SELECT priority, COUNT(*) as cnt
+      FROM observations
+      WHERE source_agent_id = ?
+        AND status = 'processed'
+        AND category != 'token_usage'
+        ${reflectedClause}
+      GROUP BY priority
+    `;
+    const rows = this.db.prepare(sql).all(agentId) as any[];
+    const counts = { high: 0, medium: 0, info: 0 };
+    for (const row of rows) {
+      const p = row.priority as string;
+      if (p === 'high' || p === 'medium' || p === 'info') {
+        counts[p] = row.cnt;
+      }
+    }
+    return counts;
+  }
+
+  /**
+   * Build a full MemoryStateSnapshot for an agent.
+   * Used by GET /api/memory/state and the /observations command.
+   */
+  getMemoryStateSnapshot(agentId: string): MemoryStateSnapshot {
+    const memState = this.getMemoryState(agentId);
+    const priorityCounts = this.getPriorityCounts(agentId);
+    const hasReflected = this.hasReflectedAtColumn();
+
+    return {
+      agentId,
+      enabled: true,
+      observationsTokens: memState?.observationsTokens ?? 0,
+      rawBufferTokens: memState?.rawBufferTokens ?? 0,
+      observationCount: memState?.observationCount ?? 0,
+      priorityCounts,
+      lastObservationAt: memState?.lastObservationAt ?? null,
+      lastReflectionAt: memState?.lastReflectionAt ?? null,
+      reflectionSupported: hasReflected,
+    };
+  }
+
+  /**
+   * Query active (non-reflected) observations with optional priority filter.
+   * Used by GET /api/memory/observations and /observations command.
+   * Gracefully handles missing reflected_at column.
+   */
+  queryActiveObservations(opts: {
+    agentId: string;
+    limit?: number;
+    priority?: ObservationPriority;
+    since?: string;
+  }): Observation[] {
+    const conditions: string[] = [
+      'source_agent_id = ?',
+      "status = 'processed'",
+      "category != 'token_usage'",
+    ];
+    const params: unknown[] = [opts.agentId];
+
+    const hasReflected = this.hasReflectedAtColumn();
+    if (hasReflected) {
+      conditions.push('reflected_at IS NULL');
+    }
+
+    if (opts.priority) {
+      conditions.push('priority = ?');
+      params.push(opts.priority);
+    }
+
+    if (opts.since) {
+      conditions.push('created_at >= ?');
+      params.push(opts.since);
+    }
+
+    const limit = Math.min(opts.limit ?? 50, 500);
+    const where = conditions.join(' AND ');
+    const sql = `
+      SELECT * FROM observations
+      WHERE ${where}
+      ORDER BY
+        CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'info' THEN 2 ELSE 3 END,
+        created_at DESC
+      LIMIT ?
+    `;
+    params.push(limit);
+
+    const rows = this.db.prepare(sql).all(...params) as any[];
+    return rows.map((r) => this.rowToObservation(r));
+  }
+
   /**
    * Close the database connection.
    */
@@ -415,6 +657,9 @@ export class ObservationStore implements IObservationStore {
     if (row.priority) observation.priority = row.priority;
     if (row.referenced_date) observation.referencedDate = row.referenced_date;
     if (sourceMessageIds) observation.sourceMessageIds = sourceMessageIds;
+
+    // Phase 3 fields
+    if (row.reflected_at) observation.reflectedAt = row.reflected_at;
 
     return observation;
   }
