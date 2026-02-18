@@ -797,6 +797,24 @@ export async function handleTaskBoard(
     }
 
     const sanitized = sanitizeWebhookConfig(body);
+
+    // Secret preservation: when a target omits the `secret` field, carry
+    // forward the existing secret from the persisted config so that
+    // dashboard clients that never receive raw secrets can update other
+    // fields without inadvertently clearing them.
+    const existingConfig = readWebhookConfig(dataDir);
+    const existingTargetMap = new Map(existingConfig.targets.map((t) => [t.id, t]));
+    for (const target of sanitized.targets) {
+      if (target.secret === undefined || target.secret === '') {
+        const existing = existingTargetMap.get(target.id);
+        if (existing?.secret) {
+          target.secret = existing.secret;
+        } else {
+          delete target.secret;
+        }
+      }
+    }
+
     writeWebhookConfig(dataDir, sanitized);
     sendJson(res, { config: redactWebhookConfig(sanitized) });
     return true;

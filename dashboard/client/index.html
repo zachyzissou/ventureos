@@ -2136,6 +2136,275 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 /* ─── End Alert Rules ───────────────────────────────────────────────── */
 
+/* ─── Webhook Config (Issue #219, Phase 12) ─────────────────────────── */
+
+.tb-webhook-config-link {
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tb-webhook-config-link:hover {
+  color: var(--text-primary);
+}
+
+.tb-webhook-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 700;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.tb-webhook-overlay.active {
+  display: flex;
+}
+
+.tb-webhook-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 94%;
+  max-width: 640px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  animation: tb-detail-in 0.25s ease;
+}
+
+.tb-webhook-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.tb-webhook-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.tb-webhook-global-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.tb-webhook-global-toggle label {
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-webhook-global-toggle .desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.tb-webhook-settings-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tb-webhook-settings-row > div {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.tb-webhook-settings-row .tb-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.tb-webhook-settings-row .tb-input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-webhook-targets-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.tb-webhook-targets-header .title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tb-webhook-targets-header .add-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tb-webhook-targets-header .add-btn:hover {
+  opacity: 0.85;
+}
+
+.tb-webhook-target {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: var(--bg-card);
+}
+
+.tb-webhook-target-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tb-webhook-target-header label {
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tb-webhook-target-remove {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--red);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tb-webhook-target-remove:hover {
+  opacity: 0.8;
+}
+
+.tb-webhook-target-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tb-webhook-target-fields .full-width {
+  grid-column: 1 / -1;
+}
+
+.tb-webhook-target-fields .tb-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  display: block;
+}
+
+.tb-webhook-target-fields .tb-input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-webhook-target-fields select.tb-input {
+  font-family: 'Inter', sans-serif;
+}
+
+.tb-webhook-secret-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.tb-webhook-secret-hint .set-badge {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.tb-webhook-no-targets {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 24px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.tb-webhook-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  justify-content: flex-end;
+}
+
+.tb-webhook-validation-error {
+  color: var(--red);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.tb-webhook-status-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.tb-webhook-status-badge.enabled {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--green);
+}
+
+.tb-webhook-status-badge.disabled {
+  background: rgba(113, 113, 122, 0.15);
+  color: var(--text-muted);
+}
+
+/* ─── End Webhook Config ────────────────────────────────────────────── */
+
 /* ─── Alert Timeline (Issue #219, Phase 10) ─────────────────────────── */
 
 .tb-alert-timeline {
@@ -3818,6 +4087,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
               <span id="tbAlertsBannerIcon">🔔</span>
               <span id="tbAlertsBannerTitle">Alerts</span>
               <span class="tb-alert-config-link" onclick="tbOpenAlertConfig()">⚙️ Configure</span>
+              <span class="tb-webhook-config-link" onclick="tbOpenWebhookConfig()">🔗 Webhooks</span>
             </div>
             <div id="tbAlertsBannerRules"></div>
           </div>
@@ -4187,6 +4457,25 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
   </div>
 </div>
 <!-- ═══ End Alert Config Modal ═════════════════════════════════════════ -->
+
+<!-- ═══ Webhook Config Modal (Issue #219, Phase 12) ═══════════════════ -->
+<div class="tb-webhook-overlay" id="tbWebhookConfigModal" onclick="if(event.target===this)tbCloseWebhookConfig()">
+  <div class="tb-webhook-panel">
+    <div class="tb-webhook-header">
+      <span>🔗 Webhook Notifications</span>
+      <button onclick="tbCloseWebhookConfig()" class="tb-detail-close" aria-label="Close webhook config">✕</button>
+    </div>
+    <div class="tb-webhook-body" id="tbWebhookConfigBody">
+      <!-- Populated dynamically -->
+    </div>
+    <div class="tb-webhook-footer">
+      <button onclick="tbResetWebhookConfig()" class="tb-btn tb-btn-secondary" style="margin-right:auto;">Reset</button>
+      <button onclick="tbCloseWebhookConfig()" class="tb-btn tb-btn-secondary">Cancel</button>
+      <button onclick="tbSaveWebhookConfig()" class="tb-btn tb-btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+<!-- ═══ End Webhook Config Modal ══════════════════════════════════════ -->
 
 <div class="status-bar">
   <div class="status-bar-section">
@@ -8952,6 +9241,326 @@ function tbTimelineTimeAgo(ts) {
   if (diff < 3600000) return Math.round(diff / 60000) + 'm ago';
   if (diff < 86400000) return Math.round(diff / 3600000) + 'h ago';
   return Math.round(diff / 86400000) + 'd ago';
+}
+
+// ── Webhook Config UI (Issue #219, Phase 12) ────────────────────────────────
+// Dashboard panel for managing webhook notification configuration.
+// Integrates with GET/PUT /api/task-board/webhooks/config endpoints.
+// Secret-handling: never echoes stored secrets — uses hasSecret indicator.
+
+let tbWebhookConfigCache = null;
+let tbWebhookDirty = false;
+
+/** Open the webhook config modal and fetch current config. */
+async function tbOpenWebhookConfig() {
+  const overlay = document.getElementById('tbWebhookConfigModal');
+  if (!overlay) return;
+  overlay.classList.add('active');
+  tbWebhookDirty = false;
+
+  const body = document.getElementById('tbWebhookConfigBody');
+  if (body) body.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;">Loading…</div>';
+
+  try {
+    const res = await fetch('/api/task-board/webhooks/config');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    tbWebhookConfigCache = data.config;
+    tbRenderWebhookConfigForm(data.config);
+  } catch (e) {
+    console.warn('[webhook-config] fetch error', e);
+    if (body) body.innerHTML = '<div style="text-align:center;color:var(--red);padding:30px;">Failed to load webhook config: ' + tbEsc(e.message) + '</div>';
+  }
+}
+
+/** Close the webhook config modal. */
+function tbCloseWebhookConfig() {
+  const overlay = document.getElementById('tbWebhookConfigModal');
+  if (overlay) overlay.classList.remove('active');
+}
+
+/** Generate a short unique ID for new targets. */
+function tbWebhookGenId() {
+  return 'wh-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
+}
+
+/** Render the full webhook config form. */
+function tbRenderWebhookConfigForm(config) {
+  const body = document.getElementById('tbWebhookConfigBody');
+  if (!body || !config) return;
+
+  const targets = config.targets || [];
+  const cooldownSec = Math.round((config.cooldownMs || 60000) / 1000);
+  const timeoutSec = Math.round((config.timeoutMs || 10000) / 1000);
+  const maxRetries = config.maxRetries ?? 3;
+
+  let html = '';
+
+  // Global toggle
+  html += '<div class="tb-webhook-global-toggle">';
+  html += '  <label><input type="checkbox" id="tbWhEnabled" ' + (config.enabled ? 'checked' : '') + ' style="cursor:pointer;"> Webhooks Enabled</label>';
+  html += '  <span class="desc">' + (config.enabled ? 'Active — notifications will be sent on alert transitions' : 'Disabled — no webhook notifications') + '</span>';
+  html += '</div>';
+
+  // Global settings
+  html += '<div class="tb-webhook-settings-row">';
+  html += '  <div><label class="tb-label">Cooldown (sec)</label><input type="number" id="tbWhCooldown" class="tb-input" value="' + cooldownSec + '" min="0" step="1"></div>';
+  html += '  <div><label class="tb-label">Timeout (sec)</label><input type="number" id="tbWhTimeout" class="tb-input" value="' + timeoutSec + '" min="1" max="30" step="1"></div>';
+  html += '  <div><label class="tb-label">Max Retries</label><input type="number" id="tbWhMaxRetries" class="tb-input" value="' + maxRetries + '" min="0" max="5" step="1"></div>';
+  html += '</div>';
+
+  // Targets header
+  const canAdd = targets.length < 5;
+  html += '<div class="tb-webhook-targets-header">';
+  html += '  <span class="title">Targets (' + targets.length + '/5)</span>';
+  html += '  <button class="add-btn" onclick="tbAddWebhookTarget()" ' + (canAdd ? '' : 'disabled style="opacity:0.4;cursor:default;"') + '>+ Add Target</button>';
+  html += '</div>';
+
+  // Targets list
+  if (targets.length === 0) {
+    html += '<div class="tb-webhook-no-targets">No webhook targets configured. Click "Add Target" to create one.</div>';
+  } else {
+    html += '<div id="tbWebhookTargetsList">';
+    for (let i = 0; i < targets.length; i++) {
+      html += tbRenderWebhookTarget(targets[i], i);
+    }
+    html += '</div>';
+  }
+
+  body.innerHTML = html;
+}
+
+/** Render a single webhook target row. */
+function tbRenderWebhookTarget(target, index) {
+  const id = target.id || '';
+  const name = target.name || '';
+  const url = target.url || '';
+  const enabled = target.enabled !== false;
+  const minSeverity = target.minSeverity || 'warning';
+  const hasSecret = target.hasSecret === true;
+
+  let html = '<div class="tb-webhook-target" data-target-index="' + index + '">';
+  html += '  <div class="tb-webhook-target-header">';
+  html += '    <label><input type="checkbox" class="tbWhTargetEnabled" data-idx="' + index + '" ' + (enabled ? 'checked' : '') + ' style="cursor:pointer;"> <span>' + tbEsc(name || id || 'Target ' + (index + 1)) + '</span></label>';
+  html += '    <button class="tb-webhook-target-remove" onclick="tbRemoveWebhookTarget(' + index + ')">Remove</button>';
+  html += '  </div>';
+  html += '  <div class="tb-webhook-target-fields">';
+
+  // ID (readonly for existing)
+  html += '    <div><label class="tb-label">ID</label><input type="text" class="tb-input tbWhTargetId" data-idx="' + index + '" value="' + tbEsc(id) + '" maxlength="64" placeholder="unique-id"></div>';
+
+  // Name
+  html += '    <div><label class="tb-label">Name</label><input type="text" class="tb-input tbWhTargetName" data-idx="' + index + '" value="' + tbEsc(name) + '" maxlength="100" placeholder="My Webhook"></div>';
+
+  // URL (full width)
+  html += '    <div class="full-width"><label class="tb-label">URL (HTTPS required)</label><input type="url" class="tb-input tbWhTargetUrl" data-idx="' + index + '" value="' + tbEsc(url) + '" maxlength="2048" placeholder="https://example.com/webhook"></div>';
+
+  // Min severity
+  html += '    <div><label class="tb-label">Min Severity</label><select class="tb-input tbWhTargetSeverity" data-idx="' + index + '">';
+  html += '      <option value="ok"' + (minSeverity === 'ok' ? ' selected' : '') + '>OK (all)</option>';
+  html += '      <option value="warning"' + (minSeverity === 'warning' ? ' selected' : '') + '>Warning+</option>';
+  html += '      <option value="critical"' + (minSeverity === 'critical' ? ' selected' : '') + '>Critical only</option>';
+  html += '    </select></div>';
+
+  // Secret
+  html += '    <div><label class="tb-label">Secret (HMAC)</label>';
+  html += '      <input type="password" class="tb-input tbWhTargetSecret" data-idx="' + index + '" value="" placeholder="' + (hasSecret ? '••••••••' : 'optional') + '" maxlength="256" autocomplete="off">';
+  html += '      <div class="tb-webhook-secret-hint">' + (hasSecret ? '<span class="set-badge">✓ Secret configured</span> — leave blank to keep, enter new value to replace' : 'Leave blank for unsigned requests') + '</div>';
+  html += '    </div>';
+
+  html += '  </div>';
+  html += '</div>';
+  return html;
+}
+
+/** Add a new empty webhook target to the form. */
+function tbAddWebhookTarget() {
+  // Collect current form state first
+  const current = tbCollectWebhookFormState();
+  if (!current) return;
+  if (current.targets.length >= 5) {
+    tbShowToast('Maximum 5 targets allowed', 'error');
+    return;
+  }
+  current.targets.push({
+    id: tbWebhookGenId(),
+    name: '',
+    url: '',
+    enabled: true,
+    hasSecret: false,
+    minSeverity: 'warning',
+  });
+  tbRenderWebhookConfigForm(current);
+}
+
+/** Remove a webhook target from the form by index. */
+function tbRemoveWebhookTarget(index) {
+  const current = tbCollectWebhookFormState();
+  if (!current) return;
+  current.targets.splice(index, 1);
+  tbRenderWebhookConfigForm(current);
+}
+
+/** Collect current webhook config form state into a config-like object. */
+function tbCollectWebhookFormState() {
+  const enabled = document.getElementById('tbWhEnabled')?.checked ?? false;
+  const cooldownSec = parseFloat(document.getElementById('tbWhCooldown')?.value ?? '60');
+  const timeoutSec = parseFloat(document.getElementById('tbWhTimeout')?.value ?? '10');
+  const maxRetries = parseInt(document.getElementById('tbWhMaxRetries')?.value ?? '3', 10);
+
+  const targetEls = document.querySelectorAll('.tb-webhook-target');
+  const targets = [];
+  targetEls.forEach(function(el, i) {
+    const idInput = el.querySelector('.tbWhTargetId');
+    const nameInput = el.querySelector('.tbWhTargetName');
+    const urlInput = el.querySelector('.tbWhTargetUrl');
+    const enabledInput = el.querySelector('.tbWhTargetEnabled');
+    const severityInput = el.querySelector('.tbWhTargetSeverity');
+    const secretInput = el.querySelector('.tbWhTargetSecret');
+
+    targets.push({
+      id: idInput?.value?.trim() || '',
+      name: nameInput?.value?.trim() || '',
+      url: urlInput?.value?.trim() || '',
+      enabled: enabledInput?.checked ?? true,
+      minSeverity: severityInput?.value || 'warning',
+      _secretValue: secretInput?.value || '',
+      // Carry forward hasSecret from cache for display
+      hasSecret: tbWebhookConfigCache?.targets?.[i]?.hasSecret || false,
+    });
+  });
+
+  return {
+    enabled: enabled,
+    cooldownMs: Math.max(0, Math.round(cooldownSec * 1000)),
+    timeoutMs: Math.max(1000, Math.min(30000, Math.round(timeoutSec * 1000))),
+    maxRetries: Math.max(0, Math.min(5, maxRetries)),
+    targets: targets,
+  };
+}
+
+/** Validate form state before sending to the server. Returns array of error strings. */
+function tbValidateWebhookForm(state) {
+  const errors = [];
+
+  if (state.cooldownMs < 0 || !isFinite(state.cooldownMs)) {
+    errors.push('Cooldown must be a non-negative number');
+  }
+  if (state.timeoutMs < 1000 || state.timeoutMs > 30000 || !isFinite(state.timeoutMs)) {
+    errors.push('Timeout must be between 1 and 30 seconds');
+  }
+  if (state.maxRetries < 0 || state.maxRetries > 5 || !isFinite(state.maxRetries)) {
+    errors.push('Max retries must be between 0 and 5');
+  }
+
+  const seenIds = new Set();
+  for (let i = 0; i < state.targets.length; i++) {
+    const t = state.targets[i];
+    const prefix = 'Target ' + (i + 1);
+
+    if (!t.id || t.id.trim().length === 0) {
+      errors.push(prefix + ': ID is required');
+    } else if (seenIds.has(t.id)) {
+      errors.push(prefix + ': Duplicate ID "' + t.id + '"');
+    } else {
+      seenIds.add(t.id);
+    }
+
+    if (!t.url || t.url.trim().length === 0) {
+      errors.push(prefix + ': URL is required');
+    } else {
+      try {
+        const parsed = new URL(t.url);
+        const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === '::1';
+        if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && isLocalhost)) {
+          errors.push(prefix + ': URL must use HTTPS (HTTP allowed only for localhost)');
+        }
+      } catch {
+        errors.push(prefix + ': Invalid URL format');
+      }
+    }
+  }
+
+  return errors;
+}
+
+/** Build the API payload from form state. Handles secret pass-through. */
+function tbBuildWebhookPayload(state) {
+  return {
+    enabled: state.enabled,
+    cooldownMs: state.cooldownMs,
+    timeoutMs: state.timeoutMs,
+    maxRetries: state.maxRetries,
+    targets: state.targets.map(function(t, i) {
+      const target = {
+        id: t.id,
+        name: t.name || t.id,
+        url: t.url,
+        enabled: t.enabled,
+        minSeverity: t.minSeverity,
+      };
+      // Only include secret when explicitly provided (non-empty).
+      // If the field is empty and server had a secret, preserve it
+      // by passing the existing secret through from the cache.
+      if (t._secretValue && t._secretValue.length > 0) {
+        target.secret = t._secretValue;
+      } else if (tbWebhookConfigCache?.targets?.[i]?.hasSecret) {
+        // We need to preserve the existing secret — but we don't have it.
+        // The server-side config merge must handle this. We signal "keep existing"
+        // by omitting the secret field entirely.
+      }
+      return target;
+    }),
+  };
+}
+
+/** Save webhook config to the server. */
+async function tbSaveWebhookConfig() {
+  const state = tbCollectWebhookFormState();
+  if (!state) return;
+
+  const errors = tbValidateWebhookForm(state);
+  if (errors.length > 0) {
+    tbShowToast('Validation: ' + errors[0], 'error');
+    return;
+  }
+
+  const payload = tbBuildWebhookPayload(state);
+
+  try {
+    const res = await fetch('/api/task-board/webhooks/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(function() { return { error: 'HTTP ' + res.status }; });
+      const msg = err.errors ? err.errors.map(function(e) { return e.field + ': ' + e.message; }).join('; ') : (err.error || 'unknown error');
+      tbShowToast('Failed to save: ' + msg, 'error');
+      return;
+    }
+
+    const data = await res.json();
+    tbWebhookConfigCache = data.config;
+    tbShowToast('Webhook config saved', 'success');
+    tbCloseWebhookConfig();
+  } catch (e) {
+    tbShowToast('Network error: ' + e.message, 'error');
+  }
+}
+
+/** Reset webhook config form to defaults. */
+function tbResetWebhookConfig() {
+  const defaults = {
+    enabled: false,
+    cooldownMs: 60000,
+    timeoutMs: 10000,
+    maxRetries: 3,
+    targets: [],
+  };
+  tbRenderWebhookConfigForm(defaults);
+  tbShowToast('Form reset to defaults (click Save to apply)', 'info');
 }
 
 // ── Real-time SSE subscription (Issue #219) ─────────────────────────────────
