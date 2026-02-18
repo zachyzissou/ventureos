@@ -1,11 +1,12 @@
 /**
- * Observation Store — VentureOS Observational Memory Persistence (Phase 1)
+ * Observation Store — VentureOS Observational Memory Persistence
  *
  * SQLite-backed store for observation records. Follows the same patterns
  * as SqliteConversationStore and InteractionLogger — lazy table creation,
  * WAL mode, prepared statements for performance.
  *
- * Issue #230 — Phase 1 of #218: Observation Data Model + Token Counter Hook
+ * Phase 1 (#230): Core schema + CRUD
+ * Phase 2 (#231): priority, referenced_date, source_message_ids, memory_state table
  */
 
 import Database from 'better-sqlite3';
@@ -16,6 +17,7 @@ import type {
   ObservationStatus,
   TokenUsageSummary,
   IObservationStore,
+  MemoryState,
 } from './types/observation';
 
 /**
@@ -40,8 +42,9 @@ export class ObservationStore implements IObservationStore {
       INSERT INTO observations
         (id, created_at, category, content, source_conversation_id, source_message_id,
          source_agent_id, source_channel, status, token_input, token_output,
-         token_total, token_model, token_cost_usd, metadata)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         token_total, token_model, token_cost_usd, metadata,
+         priority, referenced_date, source_message_ids)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     this.getByIdStmt = this.db.prepare('SELECT * FROM observations WHERE id = ?');
@@ -54,6 +57,8 @@ export class ObservationStore implements IObservationStore {
   /**
    * Create tables and indexes if they don't exist.
    * Safe for existing databases — uses IF NOT EXISTS throughout.
+   * Phase 2 adds: priority, referenced_date, source_message_ids columns
+   * and the memory_state table.
    */
   private ensureTables(): void {
     this.db.exec(`
@@ -72,7 +77,10 @@ export class ObservationStore implements IObservationStore {
         token_total INTEGER,
         token_model TEXT,
         token_cost_usd REAL,
-        metadata TEXT DEFAULT '{}'
+        metadata TEXT DEFAULT '{}',
+        priority TEXT,
+        referenced_date TEXT,
+        source_message_ids TEXT
       );
 
       CREATE INDEX IF NOT EXISTS idx_observations_status
@@ -85,7 +93,41 @@ export class ObservationStore implements IObservationStore {
         ON observations(created_at);
       CREATE INDEX IF NOT EXISTS idx_observations_category
         ON observations(category);
+
+      -- Memory state: one row per agent tracking token budgets
+      CREATE TABLE IF NOT EXISTS memory_state (
+        agent_id TEXT PRIMARY KEY,
+        observations_tokens INTEGER NOT NULL DEFAULT 0,
+        raw_buffer_tokens INTEGER NOT NULL DEFAULT 0,
+        last_observation_at TEXT,
+        last_reflection_at TEXT,
+        observation_count INTEGER NOT NULL DEFAULT 0
+      );
     `);
+
+    // Phase 2 migration: add new columns to existing databases.
+    // SQLite ALTER TABLE ADD COLUMN is idempotent-safe via try/catch.
+    this.migratePhase2Columns();
+
+    // Create index on priority column (must come after migration adds the column)
+    this.db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_observations_priority
+        ON observations(priority);
+    `);
+  }
+
+  /**
+   * Add Phase 2 columns if missing (backward-compatible migration).
+   */
+  private migratePhase2Columns(): void {
+    const cols = ['priority', 'referenced_date', 'source_message_ids'];
+    for (const col of cols) {
+      try {
+        this.db.exec(`ALTER TABLE observations ADD COLUMN ${col} TEXT`);
+      } catch {
+        // Column already exists — safe to ignore
+      }
+    }
   }
 
   /**
@@ -108,6 +150,9 @@ export class ObservationStore implements IObservationStore {
       observation.tokenUsage?.model ?? null,
       observation.tokenUsage?.estimatedCostUsd ?? null,
       JSON.stringify(observation.metadata ?? {}),
+      observation.priority ?? null,
+      observation.referencedDate ?? null,
+      observation.sourceMessageIds ? JSON.stringify(observation.sourceMessageIds) : null,
     );
   }
 
@@ -268,6 +313,48 @@ export class ObservationStore implements IObservationStore {
     return row.c;
   }
 
+  // ─── Memory State (Phase 2) ────────────────────────────────────────────
+
+  /**
+   * Get the memory state for an agent.
+   * Returns null if no state has been recorded yet.
+   */
+  getMemoryState(agentId: string): MemoryState | null {
+    const row = this.db.prepare('SELECT * FROM memory_state WHERE agent_id = ?').get(agentId) as any;
+    if (!row) return null;
+    return {
+      agentId: row.agent_id,
+      observationsTokens: row.observations_tokens,
+      rawBufferTokens: row.raw_buffer_tokens,
+      lastObservationAt: row.last_observation_at ?? null,
+      lastReflectionAt: row.last_reflection_at ?? null,
+      observationCount: row.observation_count,
+    };
+  }
+
+  /**
+   * Upsert memory state for an agent after an observation pass.
+   */
+  upsertMemoryState(state: MemoryState): void {
+    this.db.prepare(`
+      INSERT INTO memory_state (agent_id, observations_tokens, raw_buffer_tokens, last_observation_at, last_reflection_at, observation_count)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(agent_id) DO UPDATE SET
+        observations_tokens = excluded.observations_tokens,
+        raw_buffer_tokens = excluded.raw_buffer_tokens,
+        last_observation_at = excluded.last_observation_at,
+        last_reflection_at = excluded.last_reflection_at,
+        observation_count = excluded.observation_count
+    `).run(
+      state.agentId,
+      state.observationsTokens,
+      state.rawBufferTokens,
+      state.lastObservationAt,
+      state.lastReflectionAt,
+      state.observationCount,
+    );
+  }
+
   /**
    * Close the database connection.
    */
@@ -287,6 +374,15 @@ export class ObservationStore implements IObservationStore {
       metadata = JSON.parse(row.metadata || '{}');
     } catch {
       /* ignore parse errors */
+    }
+
+    let sourceMessageIds: string[] | undefined;
+    if (row.source_message_ids) {
+      try {
+        sourceMessageIds = JSON.parse(row.source_message_ids);
+      } catch {
+        /* ignore parse errors */
+      }
     }
 
     const observation: Observation = {
@@ -314,6 +410,11 @@ export class ObservationStore implements IObservationStore {
         estimatedCostUsd: row.token_cost_usd ?? undefined,
       };
     }
+
+    // Phase 2 fields
+    if (row.priority) observation.priority = row.priority;
+    if (row.referenced_date) observation.referencedDate = row.referenced_date;
+    if (sourceMessageIds) observation.sourceMessageIds = sourceMessageIds;
 
     return observation;
   }
