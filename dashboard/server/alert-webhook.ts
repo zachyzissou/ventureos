@@ -101,6 +101,32 @@ export interface WebhookPayload {
   schemaVersion: 1;
 }
 
+/** Test webhook payload — explicitly marked as non-production. */
+export interface WebhookTestPayload {
+  /** Event type identifier — always 'webhook.test' for test pings. */
+  event: 'webhook.test';
+  /** Explicit non-production marker. */
+  test: true;
+  /** Human-readable non-production notice for downstream consumers. */
+  _testMarker: 'NON_PRODUCTION_TEST_PING';
+  /** Timestamp of the test (ms since epoch). */
+  timestamp: number;
+  /** ISO 8601 timestamp string. */
+  timestampISO: string;
+  /** Human-readable message. */
+  message: string;
+  /** Source identifier. */
+  source: 'ventureos-dashboard';
+  /** Schema version for forward compatibility. */
+  schemaVersion: 1;
+}
+
+/** Result of a webhook test delivery, extending the base result with test metadata. */
+export interface WebhookTestResult extends WebhookDeliveryResult {
+  /** Always true — marks this as a test result. */
+  isTest: true;
+}
+
 /** Result of a single webhook delivery attempt. */
 export interface WebhookDeliveryResult {
   targetId: string;
@@ -685,4 +711,204 @@ export async function maybeDeliverWebhooks(
   }
 
   return results;
+}
+
+// ─── Test/Ping Webhook Delivery ──────────────────────────────────────────────
+
+/** Bounded timeout for test pings (shorter than production). */
+const TEST_TIMEOUT_MS = 5_000;
+/** Bounded retry for test pings (fewer than production). */
+const TEST_MAX_RETRIES = 1;
+
+/**
+ * Build a safe, explicitly non-production test payload for webhook validation.
+ * The payload is designed to be easily distinguishable from real alert payloads
+ * by downstream consumers — it uses a different event type, includes an explicit
+ * test marker, and contains no sensitive data.
+ * Pure function.
+ */
+export function buildTestPayload(now?: number): WebhookTestPayload {
+  const ts = now ?? Date.now();
+  return {
+    event: 'webhook.test',
+    test: true,
+    _testMarker: 'NON_PRODUCTION_TEST_PING',
+    timestamp: ts,
+    timestampISO: new Date(ts).toISOString(),
+    message: 'This is a test ping from VentureOS Dashboard. No action required.',
+    source: 'ventureos-dashboard',
+    schemaVersion: 1,
+  };
+}
+
+/**
+ * Deliver a test payload to a single webhook target.
+ * Uses tighter timeout and no retries by default to give fast user feedback.
+ * Returns a WebhookTestResult with isTest: true.
+ */
+export async function deliverTestWebhook(
+  target: WebhookTarget,
+  payload: WebhookTestPayload,
+  opts: { timeoutMs?: number; maxRetries?: number } = {},
+): Promise<WebhookTestResult> {
+  const timeoutMs = opts.timeoutMs ?? TEST_TIMEOUT_MS;
+  const maxRetries = opts.maxRetries ?? TEST_MAX_RETRIES;
+  const body = JSON.stringify(payload);
+  const startMs = Date.now();
+
+  let lastError: string | null = null;
+  let lastStatusCode: number | null = null;
+  let attempts = 0;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    attempts++;
+
+    if (attempt > 0) {
+      const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'VentureOS-Dashboard/1.0',
+        'X-VentureOS-Event': 'webhook.test',
+        'X-VentureOS-Test': 'true',
+      };
+
+      // Add HMAC signature if secret is configured
+      if (target.secret) {
+        const signature = await computeSignature(body, target.secret);
+        headers['X-VentureOS-Signature'] = `sha256=${signature}`;
+      }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const response = await fetch(target.url, {
+          method: 'POST',
+          headers,
+          body,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timer);
+        lastStatusCode = response.status;
+
+        if (response.ok) {
+          return {
+            targetId: target.id,
+            targetName: target.name,
+            success: true,
+            statusCode: response.status,
+            attempts,
+            error: null,
+            durationMs: Date.now() - startMs,
+            isTest: true,
+          };
+        }
+
+        if (response.status >= 400 && response.status < 500) {
+          lastError = `HTTP ${response.status}`;
+          break;
+        }
+
+        lastError = `HTTP ${response.status}`;
+      } catch (fetchErr: unknown) {
+        clearTimeout(timer);
+        if (fetchErr instanceof Error) {
+          lastError = fetchErr.name === 'AbortError'
+            ? `timeout after ${timeoutMs}ms`
+            : fetchErr.message;
+        } else {
+          lastError = 'unknown fetch error';
+        }
+      }
+    } catch (outerErr: unknown) {
+      lastError = outerErr instanceof Error ? outerErr.message : 'unknown error';
+    }
+  }
+
+  return {
+    targetId: target.id,
+    targetName: target.name,
+    success: false,
+    statusCode: lastStatusCode,
+    attempts,
+    error: lastError,
+    durationMs: Date.now() - startMs,
+    isTest: true,
+  };
+}
+
+/**
+ * Send a test ping to one or all enabled webhook targets.
+ *
+ * This is explicitly user-triggered (not automated). It:
+ * - Builds a non-production test payload
+ * - Delivers to the specified target (by ID), or all enabled targets
+ * - Uses bounded timeout (5s) and single attempt (no retries) for fast feedback
+ * - Records the result in delivery history with a test marker
+ * - Never exposes secrets in the response
+ *
+ * Returns per-target results for UI feedback.
+ */
+export async function sendTestWebhook(
+  dataDir: string,
+  opts: { targetId?: string; now?: number } = {},
+): Promise<{ results: WebhookTestResult[]; error?: string }> {
+  const now = opts.now ?? Date.now();
+  const config = readWebhookConfig(dataDir);
+
+  // Config must exist with at least one target
+  if (config.targets.length === 0) {
+    return { results: [], error: 'No webhook targets configured' };
+  }
+
+  // Determine which targets to ping
+  let targets: WebhookTarget[];
+  if (opts.targetId) {
+    const target = config.targets.find((t) => t.id === opts.targetId);
+    if (!target) {
+      return { results: [], error: `Target not found: ${opts.targetId}` };
+    }
+    targets = [target];
+  } else {
+    // All enabled targets
+    targets = config.targets.filter((t) => t.enabled);
+    if (targets.length === 0) {
+      return { results: [], error: 'No enabled webhook targets' };
+    }
+  }
+
+  const payload = buildTestPayload(now);
+
+  // Bounded delivery timeout from config, capped for test pings
+  const deliveryOpts = {
+    timeoutMs: Math.min(config.timeoutMs ?? TEST_TIMEOUT_MS, TEST_TIMEOUT_MS),
+    maxRetries: TEST_MAX_RETRIES,
+  };
+
+  // Deliver to all targets concurrently
+  const results = await Promise.all(
+    targets.map((target) => deliverTestWebhook(target, payload, deliveryOpts)),
+  );
+
+  // Record test delivery events to persistent history.
+  // Fire-and-forget — recording failures must not affect test results.
+  try {
+    const targetMap = new Map(targets.map((t) => [t.id, t]));
+    const contexts = results.map((r) => ({
+      url: targetMap.get(r.targetId)?.url ?? '',
+      triggerSeverity: 'test' as string,
+      previousSeverity: null as string | null,
+      ts: now,
+    }));
+    appendDeliveryEvents(dataDir, results, contexts);
+  } catch {
+    // Non-critical — history recording failure is swallowed
+  }
+
+  return { results };
 }
