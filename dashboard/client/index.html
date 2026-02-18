@@ -1328,6 +1328,251 @@ body {
   .tb-board { grid-template-columns: 1fr; }
 }
 
+/* ─── Task Detail Modal — Issue #219, Phase 5 ──────────────────────── */
+
+.tb-detail-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 600;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.tb-detail-overlay.active {
+  display: flex;
+}
+
+.tb-detail-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 92%;
+  max-width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  animation: tb-detail-in 0.25s ease;
+}
+
+@keyframes tb-detail-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tb-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-detail-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.tb-detail-id-row {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tb-detail-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.tb-detail-close:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.tb-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.tb-detail-section {
+  margin-bottom: 20px;
+}
+
+.tb-detail-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.tb-detail-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tb-detail-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tb-detail-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tb-detail-meta-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tb-detail-meta-value {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* Expandable sections */
+.tb-detail-expandable {
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tb-detail-expand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  transition: background 0.15s;
+  list-style: none;
+}
+
+.tb-detail-expand-header::-webkit-details-marker { display: none; }
+
+.tb-detail-expand-header:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.tb-detail-expand-icon {
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
+  transform: rotate(90deg);
+}
+
+.tb-detail-expand-body {
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-primary);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tb-detail-error-section {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.tb-detail-error-header {
+  color: var(--red);
+}
+
+.tb-detail-error-body {
+  color: var(--red);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.tb-detail-log-body {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tb-detail-log-entry {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-detail-log-entry:last-child {
+  border-bottom: none;
+}
+
+.tb-detail-log-ts {
+  color: var(--text-muted);
+  font-size: 10px;
+  margin-right: 8px;
+}
+
+.tb-detail-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.tb-detail-footer-transitions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .tb-detail-panel {
+    width: 98%;
+    max-height: 92vh;
+    border-radius: 12px;
+  }
+  .tb-detail-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── End Task Detail Modal ─────────────────────────────────────────── */
+
 /* ─── End Task Board ────────────────────────────────────────────────── */
 
 /* Mobile + Tablet Responsive */
@@ -2957,6 +3202,103 @@ body {
     <div style="padding:0 24px 20px;overflow-y:auto;flex:1;max-height:400px;" id="modalMessages"></div>
   </div>
 </div>
+
+<!-- ═══ Task Detail Modal — Issue #219, Phase 5 ═══════════════════════════ -->
+<div class="tb-detail-overlay" id="tbDetailModal" onclick="if(event.target===this)tbCloseDetail()">
+  <div class="tb-detail-panel" role="dialog" aria-modal="true" aria-labelledby="tbDetailTitle">
+    <!-- Header -->
+    <div class="tb-detail-header">
+      <div style="flex:1;min-width:0;">
+        <h2 id="tbDetailTitle" class="tb-detail-title"></h2>
+        <div class="tb-detail-id-row">
+          <span id="tbDetailId" class="mono" style="font-size:11px;color:var(--text-muted);"></span>
+          <span id="tbDetailStatusBadge" class="tb-badge" style="margin-left:8px;"></span>
+          <span id="tbDetailPriorityBadge" class="tb-badge" style="margin-left:4px;"></span>
+        </div>
+      </div>
+      <button onclick="tbCloseDetail()" class="tb-detail-close" aria-label="Close detail modal">✕</button>
+    </div>
+
+    <!-- Body (scrollable) -->
+    <div class="tb-detail-body">
+      <!-- Description -->
+      <div id="tbDetailDescSection" class="tb-detail-section">
+        <h4 class="tb-detail-section-title">Description</h4>
+        <div id="tbDetailDesc" class="tb-detail-desc"></div>
+      </div>
+
+      <!-- Metadata grid -->
+      <div class="tb-detail-meta-grid">
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Agent</span>
+          <span id="tbDetailAgent" class="tb-detail-meta-value"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Created</span>
+          <span id="tbDetailCreated" class="tb-detail-meta-value mono"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Queued</span>
+          <span id="tbDetailQueued" class="tb-detail-meta-value mono"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Started</span>
+          <span id="tbDetailStarted" class="tb-detail-meta-value mono"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Completed</span>
+          <span id="tbDetailCompleted" class="tb-detail-meta-value mono"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Runtime</span>
+          <span id="tbDetailRuntime" class="tb-detail-meta-value mono"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Tokens Used</span>
+          <span id="tbDetailTokens" class="tb-detail-meta-value mono"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Cost Estimate</span>
+          <span id="tbDetailCost" class="tb-detail-meta-value mono"></span>
+        </div>
+      </div>
+
+      <!-- Result Summary (expandable) -->
+      <details id="tbDetailResultSection" class="tb-detail-expandable">
+        <summary class="tb-detail-expand-header">
+          <span>✅ Result Summary</span>
+          <span class="tb-detail-expand-icon">▸</span>
+        </summary>
+        <div id="tbDetailResult" class="tb-detail-expand-body"></div>
+      </details>
+
+      <!-- Error Details (expandable) -->
+      <details id="tbDetailErrorSection" class="tb-detail-expandable tb-detail-error-section">
+        <summary class="tb-detail-expand-header tb-detail-error-header">
+          <span>❌ Error Details</span>
+          <span class="tb-detail-expand-icon">▸</span>
+        </summary>
+        <div id="tbDetailError" class="tb-detail-expand-body tb-detail-error-body"></div>
+      </details>
+
+      <!-- Execution Log (expandable) -->
+      <details id="tbDetailLogSection" class="tb-detail-expandable">
+        <summary class="tb-detail-expand-header">
+          <span>📋 Execution Log</span>
+          <span class="tb-detail-expand-icon">▸</span>
+        </summary>
+        <div id="tbDetailLog" class="tb-detail-expand-body tb-detail-log-body"></div>
+      </details>
+    </div>
+
+    <!-- Footer -->
+    <div class="tb-detail-footer">
+      <div id="tbDetailTransitions" class="tb-detail-footer-transitions"></div>
+      <button onclick="tbCloseDetail()" class="tb-btn tb-btn-secondary" style="margin-left:auto;">Close</button>
+    </div>
+  </div>
+</div>
+<!-- ═══ End Task Detail Modal ═══════════════════════════════════════════ -->
 
 <div class="status-bar">
   <div class="status-bar-section">
@@ -6404,15 +6746,17 @@ function tbRenderCard(card) {
     : '';
 
   const transitionBtns = transitions.map(s =>
-    `<button class="tb-transition-btn" onclick="tbTransition('${card.id}','${s}')" title="Move to ${s}">${TB_STATUS_EMOJI[s] || ''} ${s}</button>`
+    `<button class="tb-transition-btn" onclick="event.stopPropagation();tbTransition('${card.id}','${s}')" title="Move to ${s}">${TB_STATUS_EMOJI[s] || ''} ${s}</button>`
   ).join('');
 
   return `<div class="tb-card" data-id="${card.id}" data-status="${card.status}" draggable="true"
       ondragstart="tbDragStart(event)" ondragend="tbDragEnd(event)"
-      role="listitem" aria-roledescription="draggable task card" aria-label="${tbEsc(card.title)} — ${card.status}">
+      onclick="tbOpenDetail('${card.id}', event)"
+      role="listitem" aria-roledescription="draggable task card" aria-label="${tbEsc(card.title)} — ${card.status}"
+      style="cursor:pointer;">
     <div class="tb-drag-handle" aria-hidden="true" title="Drag to move">⠿</div>
     <div class="tb-card-actions">
-      <button class="tb-card-action-btn" onclick="tbDeleteTask('${card.id}')" title="Delete">🗑</button>
+      <button class="tb-card-action-btn" onclick="event.stopPropagation();tbDeleteTask('${card.id}')" title="Delete">🗑</button>
     </div>
     <div class="tb-card-title" style="padding-left:12px;">${tbEsc(card.title)}</div>
     ${desc}
@@ -6684,6 +7028,190 @@ async function tbDeleteTask(id) {
     alert('Delete failed: ' + e.message);
   }
 }
+
+// ── Task Detail Modal (Issue #219 — Phase 5) ────────────────────────────────
+// Opens from card click, shows full metadata, expandable result/error/log sections.
+
+let tbDetailCardId = null;
+
+/** Open the task detail modal for a given card ID. */
+function tbOpenDetail(cardId, event) {
+  // Don't open modal when clicking drag handle, action buttons, or transition buttons
+  if (event && event.target.closest('.tb-drag-handle, .tb-card-action-btn, .tb-transition-btn')) return;
+
+  const card = tbTasks.find(t => t.id === cardId);
+  if (!card) return;
+
+  tbDetailCardId = cardId;
+
+  // Populate header
+  document.getElementById('tbDetailTitle').textContent = card.title;
+  document.getElementById('tbDetailId').textContent = 'ID: ' + card.id;
+
+  // Status badge
+  const statusBadge = document.getElementById('tbDetailStatusBadge');
+  statusBadge.textContent = (TB_STATUS_EMOJI[card.status] || '') + ' ' + card.status;
+  statusBadge.className = 'tb-badge';
+  const statusColors = {
+    backlog: 'background:rgba(113,113,122,0.15);color:var(--text-muted);',
+    queued: 'background:rgba(59,130,246,0.15);color:var(--blue);',
+    running: 'background:rgba(245,158,11,0.15);color:var(--yellow);',
+    done: 'background:rgba(16,185,129,0.15);color:var(--green);',
+    failed: 'background:rgba(239,68,68,0.15);color:var(--red);',
+  };
+  statusBadge.style.cssText = statusColors[card.status] || '';
+
+  // Priority badge
+  const priBadge = document.getElementById('tbDetailPriorityBadge');
+  priBadge.textContent = card.priority;
+  priBadge.className = 'tb-badge tb-badge-' + card.priority;
+
+  // Description
+  const descSection = document.getElementById('tbDetailDescSection');
+  const descEl = document.getElementById('tbDetailDesc');
+  if (card.description) {
+    descSection.style.display = '';
+    descEl.textContent = card.description;
+  } else {
+    descSection.style.display = 'none';
+  }
+
+  // Agent
+  document.getElementById('tbDetailAgent').textContent = card.agentId || '—';
+  document.getElementById('tbDetailAgent').style.color = card.agentId ? 'var(--cyan)' : 'var(--text-muted)';
+
+  // Timestamps
+  document.getElementById('tbDetailCreated').textContent = card.createdAt ? tbFormatTimestamp(card.createdAt) : '—';
+  document.getElementById('tbDetailQueued').textContent = card.queuedAt ? tbFormatTimestamp(card.queuedAt) : '—';
+  document.getElementById('tbDetailStarted').textContent = card.startedAt ? tbFormatTimestamp(card.startedAt) : '—';
+  document.getElementById('tbDetailCompleted').textContent = card.completedAt ? tbFormatTimestamp(card.completedAt) : '—';
+
+  // Runtime
+  let runtimeText = '—';
+  if (card.runtimeMs != null) {
+    runtimeText = tbDuration(card.runtimeMs);
+  } else if (card.startedAt && card.completedAt) {
+    runtimeText = tbDuration(card.completedAt - card.startedAt);
+  } else if (card.startedAt && card.status === 'running') {
+    runtimeText = tbDuration(Date.now() - card.startedAt) + ' (running)';
+  }
+  document.getElementById('tbDetailRuntime').textContent = runtimeText;
+
+  // Tokens
+  document.getElementById('tbDetailTokens').textContent = card.tokensUsed != null
+    ? card.tokensUsed.toLocaleString()
+    : '—';
+
+  // Cost
+  document.getElementById('tbDetailCost').textContent = card.costEstimate != null
+    ? '$' + card.costEstimate.toFixed(4)
+    : '—';
+
+  // Result Summary (expandable)
+  const resultSection = document.getElementById('tbDetailResultSection');
+  const resultEl = document.getElementById('tbDetailResult');
+  if (card.resultSummary) {
+    resultSection.style.display = '';
+    resultEl.textContent = card.resultSummary;
+  } else {
+    resultSection.style.display = 'none';
+  }
+
+  // Error Details (expandable)
+  const errorSection = document.getElementById('tbDetailErrorSection');
+  const errorEl = document.getElementById('tbDetailError');
+  if (card.error) {
+    errorSection.style.display = '';
+    errorEl.textContent = card.error;
+    // Auto-expand error section for failed tasks
+    if (card.status === 'failed') errorSection.open = true;
+  } else {
+    errorSection.style.display = 'none';
+    errorSection.open = false;
+  }
+
+  // Execution log: build a timeline from timestamps
+  const logSection = document.getElementById('tbDetailLogSection');
+  const logEl = document.getElementById('tbDetailLog');
+  const logEntries = tbBuildExecutionLog(card);
+  if (logEntries.length > 0) {
+    logSection.style.display = '';
+    logEl.innerHTML = logEntries.map(e =>
+      `<div class="tb-detail-log-entry"><span class="tb-detail-log-ts">${tbEsc(e.ts)}</span>${tbEsc(e.msg)}</div>`
+    ).join('');
+  } else {
+    logSection.style.display = 'none';
+  }
+
+  // Transition buttons in footer
+  const transContainer = document.getElementById('tbDetailTransitions');
+  const transitions = TB_TRANSITIONS[card.status] || [];
+  transContainer.innerHTML = transitions.map(s =>
+    `<button class="tb-transition-btn" style="padding:6px 12px;font-size:12px;" onclick="tbDetailTransition('${card.id}','${s}')">${TB_STATUS_EMOJI[s] || ''} Move to ${s}</button>`
+  ).join('');
+
+  // Show modal
+  document.getElementById('tbDetailModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+/** Close the task detail modal. */
+function tbCloseDetail() {
+  tbDetailCardId = null;
+  const modal = document.getElementById('tbDetailModal');
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+
+  // Reset expandable sections
+  document.getElementById('tbDetailResultSection').open = false;
+  document.getElementById('tbDetailErrorSection').open = false;
+  document.getElementById('tbDetailLogSection').open = false;
+}
+
+/** Transition from within the detail modal. */
+async function tbDetailTransition(cardId, newStatus) {
+  await tbTransition(cardId, newStatus);
+  // Re-open with updated data if still viewing same card
+  if (tbDetailCardId === cardId) {
+    const card = tbTasks.find(t => t.id === cardId);
+    if (card) {
+      tbOpenDetail(cardId, { target: document.createElement('div'), stopPropagation: () => {} });
+    } else {
+      tbCloseDetail();
+    }
+  }
+}
+
+/** Format a timestamp as a readable date/time string. */
+function tbFormatTimestamp(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+/** Build execution log entries from card timestamps. */
+function tbBuildExecutionLog(card) {
+  const entries = [];
+  if (card.createdAt) entries.push({ ts: tbFormatTimestamp(card.createdAt), msg: 'Task created' + (card.agentId ? ' — assigned to ' + card.agentId : '') });
+  if (card.queuedAt) entries.push({ ts: tbFormatTimestamp(card.queuedAt), msg: 'Moved to queue' });
+  if (card.startedAt) entries.push({ ts: tbFormatTimestamp(card.startedAt), msg: 'Execution started' });
+  if (card.completedAt && card.status === 'done') entries.push({ ts: tbFormatTimestamp(card.completedAt), msg: 'Completed successfully' });
+  if (card.completedAt && card.status === 'failed') entries.push({ ts: tbFormatTimestamp(card.completedAt), msg: 'Execution failed' });
+  if (card.runtimeMs != null) entries.push({ ts: '', msg: '⏱ Runtime: ' + tbDuration(card.runtimeMs) });
+  if (card.tokensUsed != null) entries.push({ ts: '', msg: '🪙 Tokens used: ' + card.tokensUsed.toLocaleString() });
+  if (card.costEstimate != null) entries.push({ ts: '', msg: '💰 Cost: $' + card.costEstimate.toFixed(4) });
+  if (card.resultSummary) entries.push({ ts: '', msg: '✅ Result: ' + card.resultSummary.slice(0, 200) });
+  if (card.error) entries.push({ ts: '', msg: '❌ Error: ' + card.error.slice(0, 200) });
+  return entries;
+}
+
+// Keyboard handler for modal: Escape to close
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && tbDetailCardId != null) {
+    tbCloseDetail();
+  }
+});
 
 // ── Real-time SSE subscription (Issue #219) ─────────────────────────────────
 // Prefer SSE for live updates; fall back to 15s polling if unavailable.

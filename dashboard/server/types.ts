@@ -704,6 +704,10 @@ export interface TaskCard {
   resultSummary: string | null;
   tokensUsed: number | null;
   error: string | null;
+  /** Estimated cost in USD (optional, set by agents). Issue #219 — task detail modal. */
+  costEstimate: number | null;
+  /** Runtime in milliseconds (computed on completion, or null). Issue #219 — task detail modal. */
+  runtimeMs: number | null;
 }
 
 /** Summary counts per column returned by the summary endpoint. */
