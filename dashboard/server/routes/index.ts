@@ -19,9 +19,13 @@ export {
   emitTaskEvent,
   broadcastTaskEvent,
   addClient,
+  addFilteredClient,
   removeClient,
   removeAllClients,
   clientCount,
+  parseSubscriptionFilter,
+  matchesFilter,
 } from '../task-board-events.js';
+export type { SseSubscriptionFilter } from '../task-board-events.js';
 export { handleMemoryState } from './memory-state.js';
 export { handleSharedContext } from './shared-context.js';
