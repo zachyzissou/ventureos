@@ -42,6 +42,19 @@ import {
   queryHistory,
 } from '../metrics-history.js';
 
+import {
+  readAlertConfig,
+  writeAlertConfig,
+  evaluateAlerts,
+  validateAlertConfig,
+  mergeWithDefaults,
+} from '../alert-rules.js';
+
+import type {
+  AlertRulesConfig,
+  AlertEvaluation,
+} from '../alert-rules.js';
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -133,6 +146,8 @@ export interface TaskBoardMetrics {
   stuckTasks: StuckTask[];
   stuckCount: number;
   stuckTimeoutMs: number;
+  /** Alert evaluation results (Phase 9). */
+  alerts?: AlertEvaluation;
 }
 
 /**
@@ -687,10 +702,42 @@ export async function handleTaskBoard(
     return true;
   }
 
+  // ── GET /api/task-board/alerts/config — Issue #219, Phase 9 ──────────────
+  // Read/write alert threshold configuration.
+  // GET: returns current config. PUT: updates config (validated).
+  if (url.startsWith('/api/task-board/alerts/config') && method === 'GET') {
+    const config = readAlertConfig(dataDir);
+    sendJson(res, { config });
+    return true;
+  }
+
+  if (url.startsWith('/api/task-board/alerts/config') && method === 'PUT') {
+    let body: unknown;
+    try {
+      const raw = await readRequestBody(req, { maxBytes: 8192 });
+      body = JSON.parse(raw);
+    } catch {
+      sendJson(res, { error: 'invalid JSON body' }, 400);
+      return true;
+    }
+
+    const errors = validateAlertConfig(body);
+    if (errors.length > 0) {
+      sendJson(res, { error: 'validation failed', errors }, 400);
+      return true;
+    }
+
+    const merged = mergeWithDefaults(body as Record<string, unknown>);
+    writeAlertConfig(dataDir, merged);
+    sendJson(res, { config: merged });
+    return true;
+  }
+
   // ── GET /api/task-board/metrics — Issue #219, Task Metrics Dashboard ───────
   // Returns computed metrics: throughput, runtime stats, trends, stuck tasks.
   // Optional query params:
   //   ?stuckTimeoutMs=1800000 — override stuck-task timeout (default 30min)
+  //   ?includeAlerts=true — include alert evaluation in response (Phase 9)
   // Side-effect (Phase 8): appends a snapshot to the metrics history file
   // if the cooldown interval has elapsed (no extra writes on rapid polling).
   if (url.startsWith('/api/task-board/metrics') && method === 'GET') {
@@ -700,6 +747,17 @@ export async function handleTaskBoard(
       : undefined;
     const tasks = loadTasks(dataDir);
     const metrics = computeMetrics(tasks, { stuckTimeoutMs });
+
+    // Alert evaluation (Phase 9): included by default, opt-out with ?includeAlerts=false
+    const includeAlerts = metricsParams.get('includeAlerts') !== 'false';
+    if (includeAlerts) {
+      try {
+        const alertConfig = readAlertConfig(dataDir);
+        metrics.alerts = evaluateAlerts(metrics, alertConfig);
+      } catch {
+        // Non-critical — don't break the metrics response
+      }
+    }
 
     // Piggyback: persist snapshot (bounded by 5-min cooldown)
     try {
