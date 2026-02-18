@@ -5390,6 +5390,10 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
                 <option value="172800000">Last 48h</option>
               </select>
               <span class="subtitle" id="tbTimelineSubtitle"></span>
+              <div class="tb-export-controls">
+                <button class="tb-export-btn" onclick="tbExportAlertHistory('csv')" title="Download alert history as CSV">📥 CSV</button>
+                <button class="tb-export-btn" onclick="tbExportAlertHistory('json')" title="Download alert history as JSON">📥 JSON</button>
+              </div>
             </div>
             <div id="tbTimelineBar" class="tb-alert-timeline-bar"></div>
             <div id="tbTimelineStats" class="tb-alert-timeline-stats"></div>
@@ -10807,6 +10811,28 @@ function tbEscHistEventLabel(type) {
   }
 }
 
+// ── Alert History Export (Issue #219, Phase 24) ─────────────────────────────
+// Download alert history timeline as CSV/JSON file.
+// Uses the same filter state from the alert timeline panel.
+
+/**
+ * Export alert history as CSV or JSON.
+ * Reads current filter state and triggers a file download via the export API.
+ */
+function tbExportAlertHistory(format) {
+  var params = new URLSearchParams();
+  params.set('format', format);
+  params.set('limit', '200');
+
+  var windowEl = document.getElementById('tbTimelineWindow');
+  if (windowEl && windowEl.value) params.set('sinceMs', windowEl.value);
+
+  tbTriggerExportDownload(
+    '/api/task-board/alerts/timeline/export?' + params.toString(),
+    format
+  );
+}
+
 // ── Escalation History Export (Issue #219, Phase 23) ────────────────────────
 // Download escalation history as CSV/JSON file.
 // Uses the same filter state from the escalation history panel.
@@ -12145,7 +12171,15 @@ function tbExportCurrentTab(format) {
   params.set('format', format);
   params.set('limit', '200');
 
-  if (tab === 'retries') {
+  if (tab === 'health') {
+    // Read health filters (Phase 24: webhook health stats export)
+    var healthWindowSel = document.getElementById('tbHealthWindowSelect');
+    var healthTargetSel = document.getElementById('tbHealthTargetFilter');
+    if (healthWindowSel && healthWindowSel.value) params.set('windowMs', healthWindowSel.value);
+    if (healthTargetSel && healthTargetSel.value) params.set('targetId', healthTargetSel.value);
+
+    tbTriggerExportDownload('/api/task-board/webhooks/health/export?' + params.toString(), format);
+  } else if (tab === 'retries') {
     // Read retry filters
     var retryWindowSel = document.getElementById('tbRetryWindowSelect');
     var retryTargetSel = document.getElementById('tbRetryTargetFilter');
