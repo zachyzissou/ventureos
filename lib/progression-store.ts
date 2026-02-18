@@ -20,6 +20,9 @@ import type {
   XpEvent,
   XpSourceCategory,
   PrestigeRecord,
+  AnnotatedSkillNode,
+  SkillNodeStatus,
+  LeaderboardEntry,
 } from './types/progression';
 import {
   levelFromXp,
@@ -102,11 +105,32 @@ CREATE TABLE IF NOT EXISTS prestige_records (
   created_at              TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+
+-- Phase 2: Skill node visual layout positions
+CREATE TABLE IF NOT EXISTS skill_node_layouts (
+  node_id            TEXT PRIMARY KEY,
+  x                  REAL NOT NULL DEFAULT 0,
+  y                  REAL NOT NULL DEFAULT 0,
+  FOREIGN KEY (node_id) REFERENCES skill_nodes(node_id)
+);
+
+-- Phase 2: Progression milestones feed
+CREATE TABLE IF NOT EXISTS progression_milestones (
+  id                 TEXT PRIMARY KEY,
+  agent_id           TEXT NOT NULL,
+  type               TEXT NOT NULL,
+  title              TEXT NOT NULL,
+  description        TEXT NOT NULL DEFAULT '',
+  metadata           TEXT NOT NULL DEFAULT '{}',
+  created_at         TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Indices for common queries
 CREATE INDEX IF NOT EXISTS idx_xp_events_agent      ON xp_events(agent_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_xp_events_category   ON xp_events(agent_id, source_category);
 CREATE INDEX IF NOT EXISTS idx_skill_unlocks_agent   ON skill_unlocks(agent_id);
 CREATE INDEX IF NOT EXISTS idx_prestige_agent        ON prestige_records(agent_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_milestones_agent      ON progression_milestones(agent_id, created_at DESC);
 `;
 
 // ─── Store Class ────────────────────────────────────────────────────────────
@@ -441,6 +465,172 @@ export class ProgressionStore {
     return this.db
       .prepare('SELECT * FROM prestige_records WHERE agent_id = ? ORDER BY created_at DESC')
       .all(agentId) as PrestigeRecord[];
+  }
+
+  // ─── Phase 2: Skill Tree State & Unlock (#207) ─────────────────────────
+
+  /**
+   * Get the annotated skill tree for an agent.
+   * Each node is tagged with its status: 'unlocked', 'available', or 'locked'.
+   * A node is 'available' when all prerequisites are unlocked.
+   */
+  getSkillTreeState(agentId: string): {
+    nodes: AnnotatedSkillNode[];
+    edges: SkillEdge[];
+    unlocked_count: number;
+  } {
+    const nodes = this.getSkillNodes();
+    const edges = this.getSkillEdges();
+    const unlocks = this.getUnlocks(agentId);
+    const profile = this.getOrCreateProfile(agentId);
+
+    const unlockedSet = new Set(unlocks.map((u) => u.node_id));
+
+    const annotated: AnnotatedSkillNode[] = nodes.map((node) => {
+      let status: SkillNodeStatus;
+      if (unlockedSet.has(node.node_id)) {
+        status = 'unlocked';
+      } else if (
+        node.prerequisites.length === 0 ||
+        node.prerequisites.every((p) => unlockedSet.has(p))
+      ) {
+        status = 'available';
+      } else {
+        status = 'locked';
+      }
+
+      return {
+        ...node,
+        status,
+        affordable: status === 'available' && profile.current_xp >= node.xp_cost,
+      };
+    });
+
+    return {
+      nodes: annotated,
+      edges,
+      unlocked_count: unlockedSet.size,
+    };
+  }
+
+  /**
+   * Unlock a skill node for an agent.
+   * Validates: node exists, not already unlocked, prerequisites met, XP sufficient.
+   * Deducts XP cost from current_xp and recalculates level.
+   */
+  unlockSkill(
+    agentId: string,
+    nodeId: string,
+  ): { unlock: SkillUnlock; profile: ProgressionProfile; node: AnnotatedSkillNode } {
+    return this.db.transaction(() => {
+      const profile = this.getOrCreateProfile(agentId);
+
+      // Validate node exists
+      const nodeRow = this.db
+        .prepare('SELECT * FROM skill_nodes WHERE node_id = ?')
+        .get(nodeId) as { node_id: string; name: string; description: string; category: string; xp_cost: number; tier: number; prerequisites: string } | undefined;
+      if (!nodeRow) throw new Error(`Skill node not found: ${nodeId}`);
+
+      const node: SkillNode = {
+        ...nodeRow,
+        category: nodeRow.category as SkillNode['category'],
+        prerequisites: JSON.parse(nodeRow.prerequisites) as string[],
+      };
+
+      // Check not already unlocked
+      const existing = this.db
+        .prepare('SELECT 1 FROM skill_unlocks WHERE agent_id = ? AND node_id = ?')
+        .get(agentId, nodeId);
+      if (existing) throw new Error(`Skill already unlocked: ${nodeId}`);
+
+      // Check prerequisites
+      if (node.prerequisites.length > 0) {
+        const unlocked = this.getUnlocks(agentId);
+        const unlockedSet = new Set(unlocked.map((u) => u.node_id));
+        const missing = node.prerequisites.filter((p) => !unlockedSet.has(p));
+        if (missing.length > 0) {
+          throw new Error(`Prerequisites not met: ${missing.join(', ')}`);
+        }
+      }
+
+      // Check XP
+      if (profile.current_xp < node.xp_cost) {
+        throw new Error(
+          `Insufficient XP: have ${profile.current_xp}, need ${node.xp_cost}`,
+        );
+      }
+
+      // Deduct XP and recalculate level
+      const newXp = profile.current_xp - node.xp_cost;
+      const newLevel = levelFromXp(newXp);
+      this.db
+        .prepare(
+          `UPDATE progression_profiles
+           SET current_xp = ?, level = ?, updated_at = datetime('now')
+           WHERE agent_id = ?`,
+        )
+        .run(newXp, newLevel, agentId);
+
+      // Insert unlock record
+      this.db
+        .prepare(
+          `INSERT INTO skill_unlocks (agent_id, node_id, prestige_rank_at_unlock)
+           VALUES (?, ?, ?)`,
+        )
+        .run(agentId, nodeId, profile.prestige_rank);
+
+      const unlock = this.db
+        .prepare(
+          'SELECT * FROM skill_unlocks WHERE agent_id = ? AND node_id = ?',
+        )
+        .get(agentId, nodeId) as SkillUnlock;
+
+      const updatedProfile = this.db
+        .prepare('SELECT * FROM progression_profiles WHERE agent_id = ?')
+        .get(agentId) as ProgressionProfile;
+
+      const annotatedNode: AnnotatedSkillNode = {
+        ...node,
+        status: 'unlocked',
+        affordable: false,
+      };
+
+      return { unlock, profile: updatedProfile, node: annotatedNode };
+    })();
+  }
+
+  /**
+   * Get leaderboard: agents ranked by composite score.
+   * Sort: prestige_rank DESC, level DESC, lifetime_xp DESC.
+   */
+  getLeaderboard(limit: number = 50): { entries: LeaderboardEntry[]; total_agents: number } {
+    const total = this.db
+      .prepare('SELECT COUNT(*) as cnt FROM progression_profiles')
+      .get() as { cnt: number };
+
+    const rows = this.db
+      .prepare(
+        `SELECT p.*,
+                (SELECT COUNT(*) FROM skill_unlocks WHERE agent_id = p.agent_id) as unlocked_skills
+         FROM progression_profiles p
+         ORDER BY p.prestige_rank DESC, p.level DESC, p.lifetime_xp DESC
+         LIMIT ?`,
+      )
+      .all(limit) as Array<ProgressionProfile & { unlocked_skills: number }>;
+
+    const entries: LeaderboardEntry[] = rows.map((r, i) => ({
+      rank: i + 1,
+      agent_id: r.agent_id,
+      display_name: r.display_name,
+      level: r.level,
+      current_xp: r.current_xp,
+      lifetime_xp: r.lifetime_xp,
+      prestige_rank: r.prestige_rank,
+      unlocked_skills: r.unlocked_skills,
+      diversification_score: r.diversification_score,
+    }));
+
+    return { entries, total_agents: total.cnt };
   }
 }
 
