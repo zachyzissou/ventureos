@@ -55,6 +55,11 @@ import type {
   AlertEvaluation,
 } from '../alert-rules.js';
 
+import {
+  maybeAppendAlertEvent,
+  queryAlertTimeline,
+} from '../alert-history.js';
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -733,6 +738,29 @@ export async function handleTaskBoard(
     return true;
   }
 
+  // ── GET /api/task-board/alerts/timeline — Issue #219, Phase 10 ─────────────
+  // Returns alert history timeline with summary statistics.
+  // Query params:
+  //   ?limit=50        — max events to return (default 50, max 200)
+  //   ?sinceMs=3600000 — only events within this window (default: all retained)
+  //   ?minSeverity=warning — filter to warning+ or critical+ events
+  if (url.startsWith('/api/task-board/alerts/timeline') && method === 'GET') {
+    const tlParams = new URL(url, 'http://localhost').searchParams;
+    const limit = Math.max(1, Math.min(Number(tlParams.get('limit')) || 50, 200));
+    const sinceMs = tlParams.has('sinceMs')
+      ? Math.max(0, Number(tlParams.get('sinceMs')) || 0)
+      : undefined;
+    const minSeverityRaw = tlParams.get('minSeverity');
+    const validSeverities = ['ok', 'warning', 'critical'];
+    const minSeverity = minSeverityRaw && validSeverities.includes(minSeverityRaw)
+      ? (minSeverityRaw as 'ok' | 'warning' | 'critical')
+      : undefined;
+
+    const timeline = queryAlertTimeline(dataDir, { limit, sinceMs, minSeverity });
+    sendJson(res, timeline);
+    return true;
+  }
+
   // ── GET /api/task-board/metrics — Issue #219, Task Metrics Dashboard ───────
   // Returns computed metrics: throughput, runtime stats, trends, stuck tasks.
   // Optional query params:
@@ -740,6 +768,7 @@ export async function handleTaskBoard(
   //   ?includeAlerts=true — include alert evaluation in response (Phase 9)
   // Side-effect (Phase 8): appends a snapshot to the metrics history file
   // if the cooldown interval has elapsed (no extra writes on rapid polling).
+  // Side-effect (Phase 10): appends alert event to history for timeline.
   if (url.startsWith('/api/task-board/metrics') && method === 'GET') {
     const metricsParams = new URL(url, 'http://localhost').searchParams;
     const stuckTimeoutMs = metricsParams.has('stuckTimeoutMs')
@@ -764,6 +793,15 @@ export async function handleTaskBoard(
       maybeAppendSnapshot(dataDir, metrics);
     } catch {
       // Non-critical — don't break the metrics response
+    }
+
+    // Piggyback (Phase 10): record alert event for timeline
+    if (metrics.alerts) {
+      try {
+        maybeAppendAlertEvent(dataDir, metrics.alerts);
+      } catch {
+        // Non-critical — don't break the metrics response
+      }
     }
 
     sendJson(res, metrics);
