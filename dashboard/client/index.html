@@ -1938,6 +1938,15 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
   }
 }
 
+/* Metrics history chart (Phase 8) */
+#tbHistoryChart svg {
+  display: block;
+}
+
+#tbHistoryChart {
+  overflow: visible;
+}
+
 /* ─── End Task Metrics Dashboard ────────────────────────────────────── */
 
 /* ─── End Task Board ────────────────────────────────────────────────── */
@@ -3525,6 +3534,33 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
                     <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px;">No agent data</td></tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metrics History Trend (Issue #219, Phase 8) -->
+          <div style="margin-top:20px;">
+            <div class="tb-metrics-section-title">📈 Metrics History (Time-Series)</div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;">
+              <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+                <select id="tbHistoryMetric" onchange="tbRenderHistoryChart()" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:12px;font-family:inherit;">
+                  <option value="total">Total Tasks</option>
+                  <option value="throughput24h">Throughput (24h)</option>
+                  <option value="successRate" selected>Success Rate</option>
+                  <option value="avgRuntimeMs">Avg Runtime</option>
+                  <option value="stuckCount">Stuck Tasks</option>
+                  <option value="running">Running</option>
+                </select>
+                <select id="tbHistoryWindow" onchange="tbFetchHistory()" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:12px;font-family:inherit;">
+                  <option value="3600000">Last 1h</option>
+                  <option value="21600000">Last 6h</option>
+                  <option value="86400000" selected>Last 24h</option>
+                  <option value="604800000">Last 7d</option>
+                </select>
+                <span id="tbHistoryPointCount" style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-left:auto;"></span>
+              </div>
+              <div id="tbHistoryChart" style="height:100px;position:relative;">
+                <div style="text-align:center;color:var(--text-muted);font-size:12px;padding:30px;">No history data yet — snapshots are recorded every 5 minutes</div>
               </div>
             </div>
           </div>
@@ -7161,8 +7197,11 @@ async function tbRefresh() {
 
     tbRenderBoard();
 
-    // Also refresh metrics if the panel is open
-    if (tbMetricsOpen) tbRefreshMetrics();
+    // Also refresh metrics + history if the panel is open
+    if (tbMetricsOpen) {
+      tbRefreshMetrics();
+      tbFetchHistory();
+    }
   } catch (e) {
     console.error('[task-board] refresh error', e);
   }
@@ -7938,7 +7977,10 @@ function tbToggleMetrics() {
   const panel = document.getElementById('tbMetricsPanel');
   if (toggle) toggle.classList.toggle('open', tbMetricsOpen);
   if (panel) panel.classList.toggle('open', tbMetricsOpen);
-  if (tbMetricsOpen) tbRefreshMetrics();
+  if (tbMetricsOpen) {
+    tbRefreshMetrics();
+    tbFetchHistory();
+  }
 }
 
 /** Fetch metrics from the API and render all panels. */
@@ -8067,6 +8109,131 @@ function tbRenderAgentTable(agents) {
       <td>${rt}</td>
     </tr>`;
   }).join('');
+}
+
+// ── Metrics History (Issue #219, Phase 8) ────────────────────────────────────
+// Fetch and render persisted metrics time-series for trend visualization.
+
+let tbHistoryData = [];
+
+async function tbFetchHistory() {
+  try {
+    const windowMs = document.getElementById('tbHistoryWindow')?.value || '86400000';
+    const res = await fetch(`/api/task-board/metrics/history?sinceMs=${windowMs}&limit=200`);
+    if (!res.ok) return;
+    const data = await res.json();
+    tbHistoryData = data.snapshots || [];
+    const countEl = document.getElementById('tbHistoryPointCount');
+    if (countEl) countEl.textContent = tbHistoryData.length + ' points';
+    tbRenderHistoryChart();
+  } catch (e) {
+    console.warn('[task-board] history fetch error', e);
+  }
+}
+
+function tbRenderHistoryChart() {
+  const container = document.getElementById('tbHistoryChart');
+  if (!container) return;
+  const metric = document.getElementById('tbHistoryMetric')?.value || 'successRate';
+  const points = tbHistoryData;
+
+  if (!points || points.length < 2) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:30px;">Not enough data points yet — snapshots are recorded every 5 minutes</div>';
+    return;
+  }
+
+  // Extract values based on selected metric
+  const values = points.map(p => {
+    switch (metric) {
+      case 'total': return p.total;
+      case 'throughput24h': return p.throughput?.last24h ?? 0;
+      case 'successRate': return p.successRate != null ? p.successRate * 100 : null;
+      case 'avgRuntimeMs': return p.avgRuntimeMs != null ? p.avgRuntimeMs / 1000 : null;
+      case 'stuckCount': return p.stuckCount ?? 0;
+      case 'running': return p.statusCounts?.running ?? 0;
+      default: return 0;
+    }
+  });
+
+  // Filter out nulls for y-axis computation
+  const numericValues = values.filter(v => v !== null);
+  if (numericValues.length < 2) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:30px;">Not enough non-null data points for ' + metric + '</div>';
+    return;
+  }
+
+  const minVal = Math.min(...numericValues);
+  const maxVal = Math.max(...numericValues);
+  const range = maxVal - minVal || 1;
+  const h = 80;
+  const w = container.clientWidth || 400;
+  const padTop = 10;
+  const padBottom = 10;
+
+  // Build SVG polyline
+  const stepX = w / (points.length - 1);
+  let pathPoints = [];
+  let lastValid = null;
+
+  for (let i = 0; i < points.length; i++) {
+    const v = values[i];
+    if (v === null) continue;
+    const x = i * stepX;
+    const y = padTop + h - padBottom - ((v - minVal) / range) * (h - padTop - padBottom);
+    pathPoints.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    lastValid = { x, y, v, ts: points[i].ts };
+  }
+
+  // Format label based on metric
+  function fmtVal(v) {
+    if (metric === 'successRate') return v.toFixed(1) + '%';
+    if (metric === 'avgRuntimeMs') return v.toFixed(1) + 's';
+    return Math.round(v).toString();
+  }
+
+  // Y-axis labels
+  const yMin = fmtVal(minVal);
+  const yMax = fmtVal(maxVal);
+
+  // Time labels (first and last)
+  const firstTs = new Date(points[0].ts);
+  const lastTs = new Date(points[points.length - 1].ts);
+  const tfmt = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Color based on metric
+  const colors = {
+    total: '#6366f1',
+    throughput24h: '#10b981',
+    successRate: '#10b981',
+    avgRuntimeMs: '#f59e0b',
+    stuckCount: '#ef4444',
+    running: '#3b82f6',
+  };
+  const lineColor = colors[metric] || '#6366f1';
+
+  // Fill area under line
+  const fillPoints = [...pathPoints];
+  if (fillPoints.length > 0) {
+    const lastX = fillPoints[fillPoints.length - 1].split(',')[0];
+    const firstX = fillPoints[0].split(',')[0];
+    fillPoints.push(`${lastX},${h}`);
+    fillPoints.push(`${firstX},${h}`);
+  }
+
+  container.innerHTML = `
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow:visible;">
+      ${fillPoints.length > 2 ? `<polygon points="${fillPoints.join(' ')}" fill="${lineColor}" fill-opacity="0.08"/>` : ''}
+      <polyline points="${pathPoints.join(' ')}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${lastValid ? `<circle cx="${lastValid.x.toFixed(1)}" cy="${lastValid.y.toFixed(1)}" r="3" fill="${lineColor}" stroke="var(--bg-card)" stroke-width="1.5"/>` : ''}
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-top:4px;">
+      <span>${tfmt(firstTs)}</span>
+      <span style="color:${lineColor};font-weight:600;">${lastValid ? fmtVal(lastValid.v) : '—'}</span>
+      <span>${tfmt(lastTs)}</span>
+    </div>
+    <div style="position:absolute;top:0;right:8px;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">${yMax}</div>
+    <div style="position:absolute;bottom:20px;right:8px;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">${yMin}</div>
+  `;
 }
 
 // ── Real-time SSE subscription (Issue #219) ─────────────────────────────────

@@ -16,6 +16,19 @@ export { handleAgentDiagnostics } from './agent-diagnostics.js';
 export { handleChangelog } from './changelog.js';
 export { handleTaskBoard } from './task-board.js';
 export {
+  maybeAppendSnapshot,
+  queryHistory,
+  readHistory,
+  pruneSnapshots,
+  shouldSnapshot,
+  createSnapshot,
+} from '../metrics-history.js';
+export type {
+  MetricsSnapshot,
+  MetricsHistoryFile,
+  MetricsHistoryConfig,
+} from '../metrics-history.js';
+export {
   emitTaskEvent,
   broadcastTaskEvent,
   addClient,
