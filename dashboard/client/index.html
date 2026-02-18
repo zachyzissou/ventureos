@@ -2136,6 +2136,155 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 /* ─── End Alert Rules ───────────────────────────────────────────────── */
 
+/* ─── Alert Timeline (Issue #219, Phase 10) ─────────────────────────── */
+
+.tb-alert-timeline {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 12px;
+}
+
+.tb-alert-timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tb-alert-timeline-header .title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tb-alert-timeline-header .subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-alert-timeline-bar {
+  display: flex;
+  width: 100%;
+  height: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.tb-alert-timeline-bar-segment {
+  height: 100%;
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+
+.tb-alert-timeline-bar-segment.severity-ok {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+.tb-alert-timeline-bar-segment.severity-warning {
+  background: rgba(245, 158, 11, 0.5);
+}
+
+.tb-alert-timeline-bar-segment.severity-critical {
+  background: rgba(239, 68, 68, 0.5);
+}
+
+.tb-alert-timeline-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.tb-alert-timeline-stats .stat-label {
+  color: var(--text-muted);
+}
+
+.tb-alert-timeline-stats .stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+
+.tb-alert-timeline-stats .stat-value.severity-ok { color: var(--green); }
+.tb-alert-timeline-stats .stat-value.severity-warning { color: var(--yellow); }
+.tb-alert-timeline-stats .stat-value.severity-critical { color: var(--red); }
+
+.tb-alert-timeline-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.tb-alert-timeline-event {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  font-size: 11px;
+  border-bottom: 1px solid rgba(42, 42, 58, 0.5);
+}
+
+.tb-alert-timeline-event:last-child {
+  border-bottom: none;
+}
+
+.tb-alert-timeline-event-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tb-alert-timeline-event-dot.severity-ok { background: var(--green); }
+.tb-alert-timeline-event-dot.severity-warning { background: var(--yellow); }
+.tb-alert-timeline-event-dot.severity-critical { background: var(--red); }
+
+.tb-alert-timeline-event-time {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+  font-size: 10px;
+  flex-shrink: 0;
+  width: 52px;
+}
+
+.tb-alert-timeline-event-severity {
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.tb-alert-timeline-event-severity.ok { color: var(--green); background: rgba(16,185,129,0.1); }
+.tb-alert-timeline-event-severity.warning { color: var(--yellow); background: rgba(245,158,11,0.1); }
+.tb-alert-timeline-event-severity.critical { color: var(--red); background: rgba(239,68,68,0.1); }
+
+.tb-alert-timeline-event-msg {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tb-alert-timeline-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 16px;
+}
+
+/* ─── End Alert Timeline ────────────────────────────────────────────── */
+
 /* ─── End Task Metrics Dashboard ────────────────────────────────────── */
 
 /* ─── End Task Board ────────────────────────────────────────────────── */
@@ -3671,6 +3820,25 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
               <span class="tb-alert-config-link" onclick="tbOpenAlertConfig()">⚙️ Configure</span>
             </div>
             <div id="tbAlertsBannerRules"></div>
+          </div>
+
+          <!-- Alert History Timeline (Phase 10) — compact recent alert transitions -->
+          <div id="tbAlertTimeline" class="tb-alert-timeline mb-24" style="display:none;">
+            <div class="tb-alert-timeline-header">
+              <span class="title">🕐 Alert Timeline</span>
+              <select id="tbTimelineWindow" onchange="tbFetchAlertTimeline()" style="padding:2px 6px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;color:var(--text-primary);font-size:11px;font-family:inherit;">
+                <option value="3600000">Last 1h</option>
+                <option value="21600000" selected>Last 6h</option>
+                <option value="86400000">Last 24h</option>
+                <option value="172800000">Last 48h</option>
+              </select>
+              <span class="subtitle" id="tbTimelineSubtitle"></span>
+            </div>
+            <div id="tbTimelineBar" class="tb-alert-timeline-bar"></div>
+            <div id="tbTimelineStats" class="tb-alert-timeline-stats"></div>
+            <div id="tbTimelineEvents" class="tb-alert-timeline-events">
+              <div class="tb-alert-timeline-empty">No alert events recorded yet</div>
+            </div>
           </div>
 
           <!-- KPI row -->
@@ -7416,10 +7584,11 @@ async function tbRefresh() {
 
     tbRenderBoard();
 
-    // Also refresh metrics + history if the panel is open
+    // Also refresh metrics + history + timeline if the panel is open
     if (tbMetricsOpen) {
       tbRefreshMetrics();
       tbFetchHistory();
+      tbFetchAlertTimeline();
     }
   } catch (e) {
     console.error('[task-board] refresh error', e);
@@ -8199,6 +8368,7 @@ function tbToggleMetrics() {
   if (tbMetricsOpen) {
     tbRefreshMetrics();
     tbFetchHistory();
+    tbFetchAlertTimeline();
   }
 }
 
@@ -8660,6 +8830,128 @@ async function tbResetAlertConfig() {
   };
   tbRenderAlertConfigForm(defaults);
   tbShowToast('Form reset to defaults (click Save to apply)', 'info');
+}
+
+// ── Alert History Timeline (Issue #219, Phase 10) ────────────────────────────
+// Fetches alert timeline data and renders a compact visualization.
+
+let tbTimelineData = null;
+
+/** Fetch alert timeline data from the API. */
+async function tbFetchAlertTimeline() {
+  try {
+    const windowMs = document.getElementById('tbTimelineWindow')?.value || '21600000';
+    const res = await fetch('/api/task-board/alerts/timeline?sinceMs=' + windowMs + '&limit=100');
+    if (!res.ok) return;
+    tbTimelineData = await res.json();
+    tbRenderAlertTimeline(tbTimelineData);
+  } catch (e) {
+    console.warn('[alert-timeline] fetch error', e);
+  }
+}
+
+/** Render the alert timeline visualization. */
+function tbRenderAlertTimeline(data) {
+  const container = document.getElementById('tbAlertTimeline');
+  const barEl = document.getElementById('tbTimelineBar');
+  const statsEl = document.getElementById('tbTimelineStats');
+  const eventsEl = document.getElementById('tbTimelineEvents');
+  const subtitleEl = document.getElementById('tbTimelineSubtitle');
+
+  if (!container || !data) return;
+
+  // Always show the timeline container
+  container.style.display = '';
+
+  if (!data.events || data.events.length === 0) {
+    if (barEl) barEl.innerHTML = '';
+    if (statsEl) statsEl.innerHTML = '';
+    if (eventsEl) eventsEl.innerHTML = '<div class="tb-alert-timeline-empty">No alert events recorded yet</div>';
+    if (subtitleEl) subtitleEl.textContent = '';
+    return;
+  }
+
+  // Subtitle
+  if (subtitleEl) {
+    subtitleEl.textContent = data.returnedEvents + ' event' + (data.returnedEvents !== 1 ? 's' : '') +
+      (data.transitionCount > 0 ? ' · ' + data.transitionCount + ' transition' + (data.transitionCount !== 1 ? 's' : '') : '');
+  }
+
+  // Severity duration bar
+  if (barEl) {
+    const totalDuration = data.severityDurations.ok + data.severityDurations.warning + data.severityDurations.critical;
+    if (totalDuration > 0) {
+      const okPct = (data.severityDurations.ok / totalDuration * 100).toFixed(1);
+      const warnPct = (data.severityDurations.warning / totalDuration * 100).toFixed(1);
+      const critPct = (data.severityDurations.critical / totalDuration * 100).toFixed(1);
+      barEl.innerHTML = '';
+      if (data.severityDurations.ok > 0) barEl.innerHTML += '<div class="tb-alert-timeline-bar-segment severity-ok" style="width:' + okPct + '%" title="OK: ' + tbTimelineFmtDuration(data.severityDurations.ok) + '"></div>';
+      if (data.severityDurations.warning > 0) barEl.innerHTML += '<div class="tb-alert-timeline-bar-segment severity-warning" style="width:' + warnPct + '%" title="Warning: ' + tbTimelineFmtDuration(data.severityDurations.warning) + '"></div>';
+      if (data.severityDurations.critical > 0) barEl.innerHTML += '<div class="tb-alert-timeline-bar-segment severity-critical" style="width:' + critPct + '%" title="Critical: ' + tbTimelineFmtDuration(data.severityDurations.critical) + '"></div>';
+    } else {
+      barEl.innerHTML = '';
+    }
+  }
+
+  // Stats row
+  if (statsEl) {
+    const parts = [];
+    parts.push('<span class="stat-label">Current:</span> <span class="stat-value severity-' + data.currentSeverity + '">' + data.currentSeverity.toUpperCase() + '</span>');
+    if (data.lastTransitionAt) {
+      parts.push('<span class="stat-label">Last change:</span> <span class="stat-value">' + tbTimelineTimeAgo(data.lastTransitionAt) + '</span>');
+    }
+    const totalDur = data.severityDurations.ok + data.severityDurations.warning + data.severityDurations.critical;
+    if (totalDur > 0 && data.severityDurations.ok > 0) {
+      const okPct = (data.severityDurations.ok / totalDur * 100).toFixed(0);
+      parts.push('<span class="stat-label">OK:</span> <span class="stat-value severity-ok">' + okPct + '%</span>');
+    }
+    statsEl.innerHTML = parts.join(' &nbsp;·&nbsp; ');
+  }
+
+  // Event list (most recent first for readability)
+  if (eventsEl) {
+    const reversed = [...data.events].reverse();
+    // Show max 20 events in the compact view
+    const displayed = reversed.slice(0, 20);
+    eventsEl.innerHTML = displayed.map(function(ev) {
+      const time = tbTimelineFmtTime(ev.ts);
+      const msgs = (ev.activeMessages || []).join('; ');
+      const label = ev.overallSeverity === 'ok' ? 'All clear' : msgs || ev.overallSeverity;
+      return '<div class="tb-alert-timeline-event">' +
+        '<span class="tb-alert-timeline-event-dot severity-' + ev.overallSeverity + '"></span>' +
+        '<span class="tb-alert-timeline-event-time">' + time + '</span>' +
+        '<span class="tb-alert-timeline-event-severity ' + ev.overallSeverity + '">' + ev.overallSeverity + '</span>' +
+        '<span class="tb-alert-timeline-event-msg">' + tbEsc(label) + '</span>' +
+        '</div>';
+    }).join('');
+    if (reversed.length > 20) {
+      eventsEl.innerHTML += '<div style="text-align:center;color:var(--text-muted);font-size:10px;padding:4px;">+ ' + (reversed.length - 20) + ' more events</div>';
+    }
+  }
+}
+
+/** Format a duration (ms) into human-readable string. */
+function tbTimelineFmtDuration(ms) {
+  if (ms < 60000) return Math.round(ms / 1000) + 's';
+  if (ms < 3600000) return Math.round(ms / 60000) + 'm';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.round((ms % 3600000) / 60000);
+  return h + 'h' + (m > 0 ? ' ' + m + 'm' : '');
+}
+
+/** Format a timestamp into compact HH:MM time. */
+function tbTimelineFmtTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+/** Format a timestamp into "X ago" relative time. */
+function tbTimelineTimeAgo(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.round(diff / 60000) + 'm ago';
+  if (diff < 86400000) return Math.round(diff / 3600000) + 'h ago';
+  return Math.round(diff / 86400000) + 'd ago';
 }
 
 // ── Real-time SSE subscription (Issue #219) ─────────────────────────────────

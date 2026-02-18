@@ -59,3 +59,19 @@ export type {
   AlertMetricsInput,
   AlertConfigValidationError,
 } from '../alert-rules.js';
+export {
+  readAlertHistory,
+  createAlertEvent,
+  isStateChange,
+  pruneAlertHistory,
+  shouldRecordEvent,
+  maybeAppendAlertEvent,
+  queryAlertTimeline,
+} from '../alert-history.js';
+export type {
+  AlertHistoryEvent,
+  AlertHistoryFile,
+  AlertHistoryConfig,
+  AlertHistoryQuery,
+  AlertTimelineSummary,
+} from '../alert-history.js';
