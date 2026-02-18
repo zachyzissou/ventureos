@@ -15,3 +15,4 @@ export { handleTacticalMapReplay } from './tactical-map-replay.js';
 export { handleAgentDiagnostics } from './agent-diagnostics.js';
 export { handleChangelog } from './changelog.js';
 export { handleTaskBoard } from './task-board.js';
+export { handleMemoryState } from './memory-state.js';

@@ -12,6 +12,6 @@
     "isolatedModules": true,
     "resolveJsonModule": true
   },
-  "include": ["server/**/*.ts", "../lib/rpg-http.ts", "../lib/conversation-http.ts", "../lib/progression-http.ts", "../lib/progression-engine.ts", "../lib/progression-store.ts", "../lib/types/*.ts", "../lib/paths.ts", "../lib/http-types.ts", "../lib/error-handler.ts"],
+  "include": ["server/**/*.ts", "../lib/rpg-http.ts", "../lib/conversation-http.ts", "../lib/progression-http.ts", "../lib/progression-engine.ts", "../lib/progression-store.ts", "../lib/types/*.ts", "../lib/paths.ts", "../lib/http-types.ts", "../lib/error-handler.ts", "../lib/observation-store.ts", "../lib/structured-logger.ts"],
   "exclude": ["dist", "node_modules", "tests"]
 }

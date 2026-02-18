@@ -720,3 +720,32 @@ export interface TaskBoardDeps {
   sendJson: (res: ServerResponse, data: unknown, status?: number) => void;
   readRequestBody: (req: IncomingMessage, opts?: { maxBytes?: number }) => Promise<string>;
 }
+
+// ─── Memory State Domain (Phase 4 — #233) ────────────────────────────────────
+
+/** Response shape for GET /api/memory/state. */
+export interface MemoryStateResponse {
+  agentId: string;
+  enabled: boolean;
+  observationsTokens: number;
+  rawBufferTokens: number;
+  observationCount: number;
+  priorityCounts: { high: number; medium: number; info: number };
+  lastObservationAt: string | null;
+  lastReflectionAt: string | null;
+  reflectionSupported: boolean;
+}
+
+/** Response shape for GET /api/memory/observations. */
+export interface MemoryObservationsResponse {
+  agentId: string;
+  observations: Array<{
+    id: string;
+    createdAt: string;
+    category: string;
+    content: string;
+    priority: string | null;
+    referencedDate: string | null;
+  }>;
+  total: number;
+}

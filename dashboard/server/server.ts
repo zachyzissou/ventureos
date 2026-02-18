@@ -108,6 +108,7 @@ import { handleProgressionApi } from './routes/progression.js';
 import { handleProgressionV2Api } from '../../lib/progression-http-v2.js';
 import { handleChangelog } from './routes/changelog.js';
 import { handleTaskBoard } from './routes/task-board.js';
+import { handleMemoryState } from './routes/memory-state.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -2887,6 +2888,18 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   } catch {
     // ignore
   }
+
+  // Memory State API — Phase 4 (#233)
+  try {
+    if (handleMemoryState(req, res, {
+      dbPath: process.env.OBSERVATIONS_DB_PATH ?? path.join(dataDir, 'observations.db'),
+      defaultAgentId: AGENT_ID,
+      sendJson,
+    })) return;
+  } catch {
+    // ignore
+  }
+
   try {
     if (handleAgentHealth(req, res, { OPENCLAW_DIR, WORKSPACE_DIR, sendJson })) return;
   } catch {
