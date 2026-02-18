@@ -105,6 +105,7 @@ import { handleTacticalMapControls } from './routes/tactical-map-controls.js';
 import { handleLogs } from './routes/logs.js';
 import { handleTacticalMapReplay } from './routes/tactical-map-replay.js';
 import { handleProgressionApi } from './routes/progression.js';
+import { handleProgressionV2Api } from '../../lib/progression-http-v2.js';
 import { handleChangelog } from './routes/changelog.js';
 import { handleTaskBoard } from './routes/task-board.js';
 
@@ -2811,6 +2812,9 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 
   // VentureOS RPG APIs (Issue #78 — monorepo integration)
   if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
+
+  // VentureOS Progression V2 APIs (Issue #207 — Phase 4.5 Phase 2)
+  if (handleProgressionV2Api(req, res, { dbPath: RPG_DB_PATH })) return;
 
   // VentureOS Progression APIs (Issue #203 — Phase 4.5)
   if (handleProgressionApi(req, res, { dbPath: RPG_DB_PATH })) return;
