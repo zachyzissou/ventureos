@@ -74,6 +74,10 @@ import {
   queryDeliveryHistory,
 } from '../webhook-delivery-history.js';
 
+import {
+  computeWebhookHealth,
+} from '../webhook-health-stats.js';
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -864,6 +868,23 @@ export async function handleTaskBoard(
       sendJson(res, { error: `Test delivery failed: ${msg}`, results: [] }, 500);
     }
 
+    return true;
+  }
+
+  // ── GET /api/task-board/webhooks/health — Issue #219, Phase 15 ───────────
+  // Returns per-target webhook health stats aggregated from delivery history.
+  // Query params:
+  //   ?windowMs=86400000  — aggregation window (default 24h, max 48h)
+  //   ?targetId=slack     — filter to a specific target
+  if (url.startsWith('/api/task-board/webhooks/health') && method === 'GET') {
+    const healthParams = new URL(url, 'http://localhost').searchParams;
+    const windowMs = healthParams.has('windowMs')
+      ? Math.max(1000, Math.min(Number(healthParams.get('windowMs')) || 86400000, 172800000))
+      : undefined;
+    const targetId = healthParams.get('targetId') || undefined;
+
+    const result = computeWebhookHealth(dataDir, { windowMs, targetId });
+    sendJson(res, result);
     return true;
   }
 

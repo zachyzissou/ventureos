@@ -106,6 +106,18 @@ export type {
   WebhookConfigValidationError,
 } from '../alert-webhook.js';
 export {
+  computeWebhookHealth,
+  aggregateTargetHealth,
+  computeHealthSummary,
+  classifyHealth,
+} from '../webhook-health-stats.js';
+export type {
+  WebhookTargetHealthStats,
+  WebhookHealthSummary,
+  WebhookHealthResponse,
+  WebhookHealthQuery,
+} from '../webhook-health-stats.js';
+export {
   readDeliveryHistory,
   appendDeliveryEvents,
   queryDeliveryHistory,
