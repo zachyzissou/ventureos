@@ -96,6 +96,8 @@ function makeSampleCard(overrides: Partial<TaskCard> = {}): TaskCard {
     resultSummary: null,
     tokensUsed: null,
     error: null,
+    costEstimate: null,
+    runtimeMs: null,
     ...overrides,
   };
 }
