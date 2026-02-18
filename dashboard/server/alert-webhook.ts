@@ -21,6 +21,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { AlertSeverity, AlertEvaluation, AlertRuleResult } from './alert-rules.js';
 import type { AlertHistoryEvent } from './alert-history.js';
+import { appendDeliveryEvents } from './webhook-delivery-history.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -667,6 +668,21 @@ export async function maybeDeliverWebhooks(
       return result;
     }),
   );
+
+  // Record delivery events to persistent history (Phase 13).
+  // Fire-and-forget — history recording failures must not affect delivery results.
+  try {
+    const targetMap = new Map(eligibleTargets.map((t) => [t.id, t]));
+    const contexts = results.map((r) => ({
+      url: targetMap.get(r.targetId)?.url ?? '',
+      triggerSeverity: currentSeverity,
+      previousSeverity: previousSeverity,
+      ts: now,
+    }));
+    appendDeliveryEvents(dataDir, results, contexts);
+  } catch {
+    // Non-critical — delivery history recording failure is swallowed
+  }
 
   return results;
 }
