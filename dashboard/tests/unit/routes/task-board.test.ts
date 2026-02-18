@@ -532,4 +532,302 @@ describe('handleTaskBoard', () => {
       expect(handled).toBe(false);
     });
   });
+
+  // ── Phase 2: additional coverage for Kanban UI integration ────────────────
+
+  describe('full lifecycle workflow', () => {
+    it('card flows backlog → queued → running → done', async () => {
+      // Create
+      const createRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST' }),
+        createRes,
+        depsWithBody({ title: 'Lifecycle test', priority: 'high' }),
+      );
+      expect(createRes._statusCode).toBe(201);
+      const cardId = parseJsonBody<{ card: TaskCard }>(createRes).card.id;
+
+      // backlog → queued
+      const r1 = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: `/api/task-board/${cardId}`, method: 'PATCH' }),
+        r1,
+        depsWithBody({ status: 'queued' }),
+      );
+      expect(parseJsonBody<{ card: TaskCard }>(r1).card.status).toBe('queued');
+      expect(parseJsonBody<{ card: TaskCard }>(r1).card.queuedAt).toBeTruthy();
+
+      // queued → running
+      const r2 = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: `/api/task-board/${cardId}`, method: 'PATCH' }),
+        r2,
+        depsWithBody({ status: 'running' }),
+      );
+      const runCard = parseJsonBody<{ card: TaskCard }>(r2).card;
+      expect(runCard.status).toBe('running');
+      expect(runCard.startedAt).toBeTruthy();
+
+      // running → done with result
+      const r3 = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: `/api/task-board/${cardId}`, method: 'PATCH' }),
+        r3,
+        depsWithBody({ status: 'done', resultSummary: 'Shipped!', tokensUsed: 1234 }),
+      );
+      const doneCard = parseJsonBody<{ card: TaskCard }>(r3).card;
+      expect(doneCard.status).toBe('done');
+      expect(doneCard.completedAt).toBeTruthy();
+      expect(doneCard.resultSummary).toBe('Shipped!');
+      expect(doneCard.tokensUsed).toBe(1234);
+
+      // Summary reflects the final state
+      const sumRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/summary' }),
+        sumRes,
+        createDeps(),
+      );
+      const sum = parseJsonBody<{ columns: Record<string, number>; total: number }>(sumRes);
+      expect(sum.total).toBe(1);
+      expect(sum.columns.done).toBe(1);
+    });
+
+    it('card flows running → failed → backlog → queued (retry path)', async () => {
+      // Seed a running card
+      const card = makeSampleCard({ id: 'retry-card', status: 'running', startedAt: Date.now() });
+      seedTasks([card]);
+
+      // running → failed
+      const r1 = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/retry-card', method: 'PATCH' }),
+        r1,
+        depsWithBody({ status: 'failed', error: 'Timeout exceeded' }),
+      );
+      const failedCard = parseJsonBody<{ card: TaskCard }>(r1).card;
+      expect(failedCard.status).toBe('failed');
+      expect(failedCard.error).toBe('Timeout exceeded');
+      expect(failedCard.completedAt).toBeTruthy();
+
+      // failed → backlog
+      const r2 = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/retry-card', method: 'PATCH' }),
+        r2,
+        depsWithBody({ status: 'backlog' }),
+      );
+      expect(parseJsonBody<{ card: TaskCard }>(r2).card.status).toBe('backlog');
+
+      // backlog → queued
+      const r3 = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/retry-card', method: 'PATCH' }),
+        r3,
+        depsWithBody({ status: 'queued' }),
+      );
+      expect(parseJsonBody<{ card: TaskCard }>(r3).card.status).toBe('queued');
+    });
+  });
+
+  describe('POST edge cases', () => {
+    it('trims whitespace from title', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST' }),
+        res,
+        depsWithBody({ title: '  Whitespace task  ' }),
+      );
+      expect(res._statusCode).toBe(201);
+      expect(parseJsonBody<{ card: TaskCard }>(res).card.title).toBe('Whitespace task');
+    });
+
+    it('rejects title over 200 chars', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST' }),
+        res,
+        depsWithBody({ title: 'x'.repeat(201) }),
+      );
+      expect(res._statusCode).toBe(400);
+      expect(parseJsonBody(res).error).toContain('200');
+    });
+
+    it('rejects description over 2000 chars', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST' }),
+        res,
+        depsWithBody({ title: 'Valid', description: 'y'.repeat(2001) }),
+      );
+      expect(res._statusCode).toBe(400);
+      expect(parseJsonBody(res).error).toContain('2000');
+    });
+
+    it('allows creating card with initial queued status', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST' }),
+        res,
+        depsWithBody({ title: 'Pre-queued', status: 'queued' }),
+      );
+      expect(res._statusCode).toBe(201);
+      const card = parseJsonBody<{ card: TaskCard }>(res).card;
+      expect(card.status).toBe('queued');
+      expect(card.queuedAt).toBeTruthy();
+    });
+
+    it('rejects invalid initial status', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST' }),
+        res,
+        depsWithBody({ title: 'Bad status', status: 'exploding' }),
+      );
+      expect(res._statusCode).toBe(400);
+    });
+
+    it('handles malformed JSON body gracefully', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST' }),
+        res,
+        createDeps({ readRequestBody: async () => '{not json' }),
+      );
+      expect(res._statusCode).toBe(400);
+      expect(parseJsonBody(res).error).toContain('invalid JSON');
+    });
+  });
+
+  describe('PATCH edge cases', () => {
+    it('handles malformed JSON in PATCH body', async () => {
+      seedTasks([makeSampleCard({ id: 'card-1' })]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/card-1', method: 'PATCH' }),
+        res,
+        createDeps({ readRequestBody: async () => 'broken{' }),
+      );
+      expect(res._statusCode).toBe(400);
+    });
+
+    it('rejects invalid status value in PATCH', async () => {
+      seedTasks([makeSampleCard({ id: 'card-1', status: 'backlog' })]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/card-1', method: 'PATCH' }),
+        res,
+        depsWithBody({ status: 'nonexistent' }),
+      );
+      expect(res._statusCode).toBe(400);
+      expect(parseJsonBody(res).error).toContain('invalid status');
+    });
+
+    it('ignores invalid priority in PATCH', async () => {
+      seedTasks([makeSampleCard({ id: 'card-1', priority: 'low' })]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/card-1', method: 'PATCH' }),
+        res,
+        depsWithBody({ priority: 'ultra' }),
+      );
+      // Should succeed but not change priority
+      expect(res._statusCode).toBe(200);
+      expect(parseJsonBody<{ card: TaskCard }>(res).card.priority).toBe('low');
+    });
+
+    it('clears agentId when set to empty string', async () => {
+      seedTasks([makeSampleCard({ id: 'card-1', agentId: 'oracle' })]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/card-1', method: 'PATCH' }),
+        res,
+        depsWithBody({ agentId: '' }),
+      );
+      expect(parseJsonBody<{ card: TaskCard }>(res).card.agentId).toBeNull();
+    });
+
+    it('truncates title to 200 chars in PATCH', async () => {
+      seedTasks([makeSampleCard({ id: 'card-1' })]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/card-1', method: 'PATCH' }),
+        res,
+        depsWithBody({ title: 'z'.repeat(300) }),
+      );
+      expect(parseJsonBody<{ card: TaskCard }>(res).card.title).toHaveLength(200);
+    });
+  });
+
+  describe('summary with multiple agents', () => {
+    it('returns accurate per-agent breakdown across all statuses', async () => {
+      seedTasks([
+        makeSampleCard({ agentId: 'alpha', status: 'backlog' }),
+        makeSampleCard({ agentId: 'alpha', status: 'running' }),
+        makeSampleCard({ agentId: 'alpha', status: 'done' }),
+        makeSampleCard({ agentId: 'beta', status: 'queued' }),
+        makeSampleCard({ agentId: 'beta', status: 'failed' }),
+        makeSampleCard({ agentId: null, status: 'backlog' }),
+      ]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/summary' }),
+        res,
+        createDeps(),
+      );
+      const body = parseJsonBody<{
+        columns: Record<string, number>;
+        byAgent: Record<string, Record<string, number>>;
+        total: number;
+      }>(res);
+      expect(body.total).toBe(6);
+      expect(body.columns.backlog).toBe(2);
+      expect(body.columns.running).toBe(1);
+      expect(body.columns.queued).toBe(1);
+      expect(body.columns.done).toBe(1);
+      expect(body.columns.failed).toBe(1);
+
+      expect(body.byAgent['alpha'].running).toBe(1);
+      expect(body.byAgent['alpha'].done).toBe(1);
+      expect(body.byAgent['beta'].queued).toBe(1);
+      expect(body.byAgent['beta'].failed).toBe(1);
+      expect(body.byAgent['_unassigned'].backlog).toBe(1);
+    });
+  });
+
+  describe('combined filter coverage', () => {
+    it('filters by priority + agentId', async () => {
+      seedTasks([
+        makeSampleCard({ id: 'a', agentId: 'oracle', priority: 'critical', status: 'backlog' }),
+        makeSampleCard({ id: 'b', agentId: 'oracle', priority: 'low', status: 'backlog' }),
+        makeSampleCard({ id: 'c', agentId: 'sentinel', priority: 'critical', status: 'running' }),
+      ]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board?priority=critical&agentId=oracle' }),
+        res,
+        createDeps(),
+      );
+      const body = parseJsonBody<{ tasks: TaskCard[] }>(res);
+      expect(body.tasks).toHaveLength(1);
+      expect(body.tasks[0].id).toBe('a');
+    });
+
+    it('filters by all three: status + agentId + priority', async () => {
+      seedTasks([
+        makeSampleCard({ id: 'x', agentId: 'nexus', priority: 'high', status: 'running' }),
+        makeSampleCard({ id: 'y', agentId: 'nexus', priority: 'high', status: 'backlog' }),
+        makeSampleCard({ id: 'z', agentId: 'nexus', priority: 'low', status: 'running' }),
+      ]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board?status=running&agentId=nexus&priority=high' }),
+        res,
+        createDeps(),
+      );
+      const body = parseJsonBody<{ tasks: TaskCard[] }>(res);
+      expect(body.tasks).toHaveLength(1);
+      expect(body.tasks[0].id).toBe('x');
+    });
+  });
 });
