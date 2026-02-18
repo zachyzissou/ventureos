@@ -6312,15 +6312,116 @@ async function tbDeleteTask(id) {
   }
 }
 
-// Auto-refresh task board every 15s when visible
-function tbStartAutoRefresh() {
+// ── Real-time SSE subscription (Issue #219) ─────────────────────────────────
+// Prefer SSE for live updates; fall back to 15s polling if unavailable.
+
+let tbEventSource = null;
+let tbSseConnected = false;
+let tbReconnectTimer = null;
+const TB_RECONNECT_DELAY_MS = 5000;
+const TB_POLL_INTERVAL_MS = 15000;
+
+function tbConnectSse() {
+  if (tbEventSource) return;
+  try {
+    tbEventSource = new EventSource('/api/task-board/events');
+
+    tbEventSource.onopen = () => {
+      tbSseConnected = true;
+      // Stop polling — SSE is live
+      if (tbAutoRefreshTimer) {
+        clearInterval(tbAutoRefreshTimer);
+        tbAutoRefreshTimer = null;
+      }
+      console.log('[task-board] SSE connected');
+    };
+
+    tbEventSource.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data.type === 'connected') return; // handshake
+
+        if (data.type === 'task:created' || data.type === 'task:updated' || data.type === 'task:deleted') {
+          tbApplyEvent(data);
+        }
+      } catch (e) {
+        console.warn('[task-board] SSE parse error', e);
+      }
+    };
+
+    tbEventSource.onerror = () => {
+      console.warn('[task-board] SSE error — falling back to polling');
+      tbDisconnectSse();
+      tbStartPollingFallback();
+      // Attempt reconnect after delay
+      tbReconnectTimer = setTimeout(tbConnectSse, TB_RECONNECT_DELAY_MS);
+    };
+  } catch (e) {
+    console.warn('[task-board] SSE not available', e);
+    tbStartPollingFallback();
+  }
+}
+
+function tbDisconnectSse() {
+  tbSseConnected = false;
+  if (tbEventSource) {
+    try { tbEventSource.close(); } catch {}
+    tbEventSource = null;
+  }
+}
+
+/**
+ * Apply a real-time event to the local task list and re-render.
+ * Avoids a full refresh — updates in-place.
+ */
+function tbApplyEvent(event) {
+  const card = event.card;
+  if (!card || !card.id) return;
+
+  if (event.type === 'task:created') {
+    // Only add if not already present (idempotency)
+    if (!tbTasks.find(t => t.id === card.id)) {
+      tbTasks.push(card);
+    }
+  } else if (event.type === 'task:updated') {
+    const idx = tbTasks.findIndex(t => t.id === card.id);
+    if (idx !== -1) {
+      tbTasks[idx] = card;
+    } else {
+      tbTasks.push(card); // card appeared (possibly missed create)
+    }
+  } else if (event.type === 'task:deleted') {
+    tbTasks = tbTasks.filter(t => t.id !== card.id);
+  }
+
+  // Re-sort and render
+  tbTasks.sort((a, b) =>
+    (TB_PRIORITY_ORDER[a.priority] ?? 9) - (TB_PRIORITY_ORDER[b.priority] ?? 9)
+  );
+
+  // Update summary counts inline
+  const cols = { backlog: 0, queued: 0, running: 0, done: 0, failed: 0 };
+  for (const t of tbTasks) { cols[t.status] = (cols[t.status] || 0) + 1; }
+  const el = (id) => document.getElementById(id);
+  if (el('tbCountBacklog')) el('tbCountBacklog').textContent = cols.backlog;
+  if (el('tbCountQueued')) el('tbCountQueued').textContent = cols.queued;
+  if (el('tbCountRunning')) el('tbCountRunning').textContent = cols.running;
+  if (el('tbCountDone')) el('tbCountDone').textContent = cols.done;
+  if (el('tbCountFailed')) el('tbCountFailed').textContent = cols.failed;
+
+  tbRenderBoard();
+}
+
+function tbStartPollingFallback() {
   if (tbAutoRefreshTimer) return;
   tbAutoRefreshTimer = setInterval(() => {
     const activePage = document.querySelector('.page.active');
     if (activePage && activePage.id === 'taskboard') tbRefresh();
-  }, 15000);
+  }, TB_POLL_INTERVAL_MS);
 }
-tbStartAutoRefresh();
+
+// Start SSE on load; falls back to polling automatically
+tbConnectSse();
 </script>
 </body>
 </html>

@@ -719,6 +719,12 @@ export interface TaskBoardDeps {
   dataDir: string;
   sendJson: (res: ServerResponse, data: unknown, status?: number) => void;
   readRequestBody: (req: IncomingMessage, opts?: { maxBytes?: number }) => Promise<string>;
+  /**
+   * Optional callback to emit real-time events on task mutations.
+   * When provided, called after successful create/update/delete.
+   * Issue #219 — SSE real-time updates.
+   */
+  emitEvent?: (type: 'task:created' | 'task:updated' | 'task:deleted', card: TaskCard) => void;
 }
 
 // ─── Memory State Domain (Phase 4 — #233) ────────────────────────────────────
