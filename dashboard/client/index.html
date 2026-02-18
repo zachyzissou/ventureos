@@ -2668,6 +2668,38 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
   color: var(--text-muted);
 }
 
+/* Export buttons (Phase 17) */
+.tb-export-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.tb-export-btn {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.tb-export-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+.tb-export-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ─── End Webhook Delivery History ──────────────────────────────────── */
 
 /* ─── Webhook Health Stats (Issue #219, Phase 15) ────────────────────── */
@@ -5247,6 +5279,10 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
     </div>
     <div class="tb-delivery-footer">
       <span id="tbDeliveryFooterInfo"></span>
+      <div class="tb-export-controls" id="tbExportControls">
+        <button class="tb-export-btn" onclick="tbExportCurrentTab('csv')" title="Download as CSV">📥 CSV</button>
+        <button class="tb-export-btn" onclick="tbExportCurrentTab('json')" title="Download as JSON">📥 JSON</button>
+      </div>
       <span>Retention: 200 events / 48h</span>
     </div>
   </div>
@@ -11042,6 +11078,84 @@ function tbRenderRetryActivity(data) {
   var footer = document.getElementById('tbDeliveryFooterInfo');
   if (footer) {
     footer.textContent = 'Showing ' + events.length + ' retried deliver' + (events.length !== 1 ? 'ies' : 'y');
+  }
+}
+
+// ── Delivery/Retry Export (Issue #219, Phase 17) ────────────────────────────
+// Download delivery history or retry activity as CSV/JSON file.
+// Uses the same filter state from the active tab. Triggers browser download
+// via a dynamically created <a> element with a blob: URL.
+
+/**
+ * Export current tab data as CSV or JSON.
+ * Reads current filter state and triggers a file download via the export API.
+ */
+function tbExportCurrentTab(format) {
+  var tab = tbCurrentDeliveryTab || 'history';
+  var params = new URLSearchParams();
+  params.set('format', format);
+  params.set('limit', '200');
+
+  if (tab === 'retries') {
+    // Read retry filters
+    var retryWindowSel = document.getElementById('tbRetryWindowSelect');
+    var retryTargetSel = document.getElementById('tbRetryTargetFilter');
+    if (retryWindowSel && retryWindowSel.value) params.set('sinceMs', retryWindowSel.value);
+    if (retryTargetSel && retryTargetSel.value) params.set('targetId', retryTargetSel.value);
+
+    tbTriggerExportDownload('/api/task-board/webhooks/retries/export?' + params.toString(), format);
+  } else {
+    // Read delivery filters (default tab = history)
+    var windowEl = document.getElementById('tbDeliveryWindow');
+    var statusEl = document.getElementById('tbDeliveryStatusFilter');
+    var targetEl = document.getElementById('tbDeliveryTargetFilter');
+    if (windowEl && windowEl.value) params.set('sinceMs', windowEl.value);
+    if (statusEl && statusEl.value) params.set('status', statusEl.value);
+    if (targetEl && targetEl.value) params.set('targetId', targetEl.value);
+
+    tbTriggerExportDownload('/api/task-board/webhooks/deliveries/export?' + params.toString(), format);
+  }
+}
+
+/**
+ * Trigger a file download from an export API URL.
+ * Fetches the content, creates a Blob, and triggers download via <a> click.
+ */
+async function tbTriggerExportDownload(url, format) {
+  // Disable export buttons while downloading
+  var btns = document.querySelectorAll('.tb-export-btn');
+  btns.forEach(function(b) { b.disabled = true; });
+
+  try {
+    var res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // Extract filename from Content-Disposition header if available
+    var disposition = res.headers.get('Content-Disposition') || '';
+    var filenameMatch = disposition.match(/filename="?([^";\s]+)"?/);
+    var filename = filenameMatch ? filenameMatch[1] : ('webhook-export.' + format);
+
+    var blob = await res.blob();
+    var blobUrl = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+
+    // Cleanup
+    setTimeout(function() {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    }, 100);
+
+    tbShowToast('Exported ' + (res.headers.get('X-Export-Count') || '') + ' events as ' + format.toUpperCase(), 'success');
+  } catch (e) {
+    console.warn('[export] download error', e);
+    tbShowToast('Export failed: ' + e.message, 'error');
+  } finally {
+    btns.forEach(function(b) { b.disabled = false; });
   }
 }
 
