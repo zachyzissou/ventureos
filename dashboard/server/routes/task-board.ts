@@ -1,9 +1,12 @@
 /**
  * Task Board (Kanban) route handlers.
- * Issue #219 — first vertical slice.
+ * Issue #219 — first vertical slice + SSE real-time updates.
  *
  * Provides CRUD + summary endpoints for task cards that flow through
  * Backlog → Queued → Running → Done/Failed columns.
+ *
+ * SSE stream at GET /api/task-board/events pushes task:created,
+ * task:updated, and task:deleted events to connected clients.
  *
  * Data is persisted as a single JSON file on disk (consistent with
  * the rest of the dashboard's filesystem-based storage).
@@ -21,6 +24,12 @@ import type {
   TaskPriority,
   TaskBoardSummary,
 } from '../types.js';
+
+import {
+  addClient,
+  removeClient,
+  clientCount,
+} from '../task-board-events.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -170,6 +179,28 @@ export async function handleTaskBoard(
   const url = req.url;
   const method = req.method ?? 'GET';
 
+  // ── GET /api/task-board/events (SSE) ─────────────────────────────────────
+  // Real-time event stream for task mutations. Issue #219.
+  if (url === '/api/task-board/events' && method === 'GET') {
+    if (!addClient(res)) {
+      sendJson(res, { error: 'too many SSE connections' }, 503);
+      return true;
+    }
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    });
+    res.write(`data: ${JSON.stringify({ type: 'connected', ts: Date.now(), clients: clientCount() })}\n\n`);
+
+    req.on('close', () => {
+      removeClient(res);
+    });
+
+    return true;
+  }
+
   // ── GET /api/task-board ────────────────────────────────────────────────────
   // Returns filtered list of cards. Query params: status, agentId, priority.
   if (url.startsWith('/api/task-board') && !url.startsWith('/api/task-board/') && method === 'GET') {
@@ -228,6 +259,7 @@ export async function handleTaskBoard(
     const tasks = loadTasks(dataDir);
     tasks.push(result.card);
     saveTasks(dataDir, tasks);
+    deps.emitEvent?.('task:created', result.card);
     sendJson(res, { card: result.card }, 201);
     return true;
   }
@@ -291,6 +323,7 @@ export async function handleTaskBoard(
 
     tasks[idx] = card;
     saveTasks(dataDir, tasks);
+    deps.emitEvent?.('task:updated', card);
     sendJson(res, { card });
     return true;
   }
@@ -308,8 +341,10 @@ export async function handleTaskBoard(
       return true;
     }
 
+    const deletedCard = tasks[idx];
     tasks.splice(idx, 1);
     saveTasks(dataDir, tasks);
+    deps.emitEvent?.('task:deleted', deletedCard);
     sendJson(res, { ok: true });
     return true;
   }
