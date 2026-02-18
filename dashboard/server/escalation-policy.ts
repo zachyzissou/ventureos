@@ -496,6 +496,211 @@ export function updateEscalationState(
   }
 }
 
+// ─── Escalation Status (Dashboard Display Model) ─────────────────────────────
+
+/**
+ * Tier status for dashboard display — one entry per configured tier.
+ */
+export interface EscalationTierStatus {
+  /** Tier index (0-based). */
+  index: number;
+  /** Human-readable label (from config, or generated). */
+  label: string;
+  /** Time threshold for this tier (ms). */
+  afterMs: number;
+  /** Target IDs for this tier. */
+  targetIds: string[];
+  /**
+   * Status of this tier:
+   * - 'inactive':  qualifying state not reached / policy not tracking
+   * - 'pending':   qualifying, but threshold not yet reached
+   * - 'triggered': threshold reached, notification was sent
+   * - 'cooldown':  triggered, but in cooldown before re-notification
+   */
+  status: 'inactive' | 'pending' | 'triggered' | 'cooldown';
+  /** Time remaining until this tier fires (ms), null if not pending. */
+  timeRemainingMs: number | null;
+  /** Last notification timestamp for this tier (null if never). */
+  lastNotifiedAt: number | null;
+}
+
+/**
+ * Full escalation status snapshot for dashboard display.
+ * Computed from current state + policy — pure read-only derivation.
+ */
+export interface EscalationStatusSnapshot {
+  /** Whether escalation policy is enabled. */
+  policyEnabled: boolean;
+  /** Whether the system is actively tracking an escalation (qualifying state detected). */
+  isTracking: boolean;
+  /** Current qualifying severity (null if not tracking). */
+  qualifyingSeverity: AlertSeverity | null;
+  /** How long the qualifying state has persisted (ms), 0 if not tracking. */
+  qualifyingDurationMs: number;
+  /** Timestamp when qualifying state started (null if not tracking). */
+  qualifyingSince: number | null;
+  /** Trigger severity threshold from policy config. */
+  triggerSeverity: AlertSeverity;
+  /** Cooldown between escalation notifications (ms). */
+  cooldownMs: number;
+  /** Highest tier index that has been triggered (-1 = none). */
+  currentTierIndex: number;
+  /** Human label for the current tier (null if no tier triggered). */
+  currentTierLabel: string | null;
+  /** Per-tier status breakdown. */
+  tiers: EscalationTierStatus[];
+  /** Next tier that will trigger (null if all triggered or not tracking). */
+  nextTierIndex: number | null;
+  /** Time remaining until the next tier fires (ms), null if N/A. */
+  nextTierTimeRemainingMs: number | null;
+  /** Timestamp of this snapshot. */
+  computedAt: number;
+}
+
+/**
+ * Compute the escalation status snapshot for dashboard display.
+ *
+ * Pure function — derives all display state from the current escalation
+ * state + policy config + timestamp. No side effects, no mutations.
+ *
+ * @param policy - Escalation policy configuration (may be undefined/disabled).
+ * @param state  - Current in-memory escalation state.
+ * @param now    - Current timestamp (ms since epoch).
+ */
+export function computeEscalationStatus(
+  policy: EscalationPolicyConfig | undefined | null,
+  state: Readonly<EscalationState>,
+  now: number,
+): EscalationStatusSnapshot {
+  const defaultResult: EscalationStatusSnapshot = {
+    policyEnabled: false,
+    isTracking: false,
+    qualifyingSeverity: null,
+    qualifyingDurationMs: 0,
+    qualifyingSince: null,
+    triggerSeverity: 'critical',
+    cooldownMs: DEFAULT_ESCALATION_COOLDOWN_MS,
+    currentTierIndex: -1,
+    currentTierLabel: null,
+    tiers: [],
+    nextTierIndex: null,
+    nextTierTimeRemainingMs: null,
+    computedAt: now,
+  };
+
+  if (!policy || !policy.enabled) {
+    return defaultResult;
+  }
+
+  const triggerSeverity = policy.triggerSeverity ?? DEFAULT_TRIGGER_SEVERITY;
+  const cooldownMs = policy.cooldownMs ?? DEFAULT_ESCALATION_COOLDOWN_MS;
+  const isTracking = state.qualifyingSince !== null;
+  const qualifyingDurationMs = isTracking ? now - state.qualifyingSince! : 0;
+
+  // Build per-tier status
+  const tiers: EscalationTierStatus[] = (policy.tiers || []).map((tier, i) => {
+    const label = tier.label || `Tier ${i + 1}`;
+    const lastNotified = state.lastNotifiedAt[i] ?? null;
+
+    if (!isTracking) {
+      return {
+        index: i,
+        label,
+        afterMs: tier.afterMs,
+        targetIds: [...tier.targetIds],
+        status: 'inactive' as const,
+        timeRemainingMs: null,
+        lastNotifiedAt: lastNotified,
+      };
+    }
+
+    // Tracking — determine tier status
+    if (qualifyingDurationMs < tier.afterMs) {
+      // Threshold not reached yet
+      return {
+        index: i,
+        label,
+        afterMs: tier.afterMs,
+        targetIds: [...tier.targetIds],
+        status: 'pending' as const,
+        timeRemainingMs: tier.afterMs - qualifyingDurationMs,
+        lastNotifiedAt: lastNotified,
+      };
+    }
+
+    // Threshold reached — has it been triggered?
+    if (i <= state.lastTriggeredTier) {
+      // Check if in cooldown
+      if (lastNotified !== null && (now - lastNotified) < cooldownMs) {
+        return {
+          index: i,
+          label,
+          afterMs: tier.afterMs,
+          targetIds: [...tier.targetIds],
+          status: 'cooldown' as const,
+          timeRemainingMs: cooldownMs - (now - lastNotified),
+          lastNotifiedAt: lastNotified,
+        };
+      }
+      return {
+        index: i,
+        label,
+        afterMs: tier.afterMs,
+        targetIds: [...tier.targetIds],
+        status: 'triggered' as const,
+        timeRemainingMs: null,
+        lastNotifiedAt: lastNotified,
+      };
+    }
+
+    // Threshold reached but not yet triggered (will fire on next evaluation)
+    return {
+      index: i,
+      label,
+      afterMs: tier.afterMs,
+      targetIds: [...tier.targetIds],
+      status: 'pending' as const,
+      timeRemainingMs: 0,
+      lastNotifiedAt: lastNotified,
+    };
+  });
+
+  // Current tier
+  const currentTierIndex = state.lastTriggeredTier;
+  const currentTierLabel = currentTierIndex >= 0 && currentTierIndex < (policy.tiers || []).length
+    ? (policy.tiers[currentTierIndex].label || `Tier ${currentTierIndex + 1}`)
+    : null;
+
+  // Next tier to fire
+  let nextTierIndex: number | null = null;
+  let nextTierTimeRemainingMs: number | null = null;
+  if (isTracking) {
+    for (let i = 0; i < tiers.length; i++) {
+      if (tiers[i].status === 'pending') {
+        nextTierIndex = i;
+        nextTierTimeRemainingMs = tiers[i].timeRemainingMs;
+        break;
+      }
+    }
+  }
+
+  return {
+    policyEnabled: true,
+    isTracking,
+    qualifyingSeverity: state.qualifyingSeverity,
+    qualifyingDurationMs,
+    qualifyingSince: state.qualifyingSince,
+    triggerSeverity,
+    cooldownMs,
+    currentTierIndex,
+    currentTierLabel,
+    tiers,
+    nextTierIndex,
+    nextTierTimeRemainingMs,
+    computedAt: now,
+  };
+}
+
 // ─── Escalation Dispatch ─────────────────────────────────────────────────────
 
 /**
