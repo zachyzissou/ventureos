@@ -23,6 +23,10 @@ import type {
   PrestigeRequest,
   PrestigeResponse,
   ProgressionErrorResponse,
+  SkillTreeStateResponse,
+  UnlockSkillRequest,
+  UnlockSkillResponse,
+  LeaderboardResponse,
 } from './types/progression';
 import { ProgressionStore } from './progression-store';
 import { levelProgress, isPrestigeEligible, isValidSourceCategory } from './progression-engine';
@@ -248,6 +252,103 @@ async function handlePrestige(
   }
 }
 
+// ─── Phase 2 Route Handlers (#207) ──────────────────────────────────────────
+
+function handleSkillTreeState(dbPath: string, res: ServerResponse, agentId: string): void {
+  const store = openStore(dbPath);
+  try {
+    const profile = store.getOrCreateProfile(agentId);
+    const treeState = store.getSkillTreeState(agentId);
+
+    const body: SkillTreeStateResponse = {
+      agent_id: agentId,
+      current_xp: profile.current_xp,
+      nodes: treeState.nodes,
+      edges: treeState.edges,
+      unlocked_count: treeState.unlocked_count,
+      total_count: treeState.nodes.length,
+    };
+
+    sendJson(res, 200, body);
+  } finally {
+    store.close();
+  }
+}
+
+async function handleUnlockSkill(
+  dbPath: string,
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  let body: UnlockSkillRequest;
+  try {
+    const raw = await readBody(req);
+    body = JSON.parse(raw) as UnlockSkillRequest;
+  } catch {
+    sendError(res, 400, 'Invalid JSON body');
+    return;
+  }
+
+  if (!body.agent_id || typeof body.agent_id !== 'string') {
+    sendError(res, 400, 'Missing or invalid agent_id');
+    return;
+  }
+  if (!body.node_id || typeof body.node_id !== 'string') {
+    sendError(res, 400, 'Missing or invalid node_id');
+    return;
+  }
+
+  const agentId = body.agent_id.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  const nodeId = body.node_id.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+
+  if (!agentId) {
+    sendError(res, 400, 'agent_id contains no valid characters');
+    return;
+  }
+  if (!nodeId) {
+    sendError(res, 400, 'node_id contains no valid characters');
+    return;
+  }
+
+  const store = openStore(dbPath);
+  try {
+    const result = store.unlockSkill(agentId, nodeId);
+
+    const response: UnlockSkillResponse = {
+      ok: true,
+      unlock: result.unlock,
+      profile: result.profile,
+      node: result.node,
+    };
+
+    sendJson(res, 200, response);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    sendError(res, 400, msg);
+  } finally {
+    store.close();
+  }
+}
+
+function handleLeaderboard(dbPath: string, res: ServerResponse, url: URL): void {
+  const limitParam = url.searchParams.get('limit');
+  const limit = limitParam ? Math.min(100, Math.max(1, parseInt(limitParam, 10) || 50)) : 50;
+
+  const store = openStore(dbPath);
+  try {
+    const result = store.getLeaderboard(limit);
+
+    const body: LeaderboardResponse = {
+      entries: result.entries,
+      total_agents: result.total_agents,
+    };
+
+    sendJson(res, 200, body);
+  } finally {
+    store.close();
+  }
+}
+
 // ─── Main Router ────────────────────────────────────────────────────────────
 
 /**
@@ -278,6 +379,40 @@ export function handleProgressionApi(
       const msg = err instanceof Error ? err.message : String(err);
       sendError(res, 500, msg);
     }
+    return true;
+  }
+
+  // GET /api/rpg/progression/leaderboard
+  if (req.method === 'GET' && (subPath === '/leaderboard' || subPath === '/leaderboard/')) {
+    try {
+      handleLeaderboard(opts.dbPath, res, url);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      sendError(res, 500, msg);
+    }
+    return true;
+  }
+
+  // GET /api/rpg/progression/skill-tree/:agentId
+  if (req.method === 'GET' && subPath.startsWith('/skill-tree/')) {
+    const agentId = subPath.slice('/skill-tree/'.length).replace(/\/$/, '');
+    if (agentId && /^[a-zA-Z0-9_-]+$/.test(agentId)) {
+      try {
+        handleSkillTreeState(opts.dbPath, res, agentId);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        sendError(res, 500, msg);
+      }
+      return true;
+    }
+  }
+
+  // POST /api/rpg/progression/skills/unlock
+  if (req.method === 'POST' && (subPath === '/skills/unlock' || subPath === '/skills/unlock/')) {
+    handleUnlockSkill(opts.dbPath, req, res).catch((err) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      sendError(res, 500, msg);
+    });
     return true;
   }
 

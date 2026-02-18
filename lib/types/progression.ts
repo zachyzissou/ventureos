@@ -183,6 +183,60 @@ export interface PrestigeResponse {
   profile: ProgressionProfile;
 }
 
+// ─── Phase 2: Skill Tree UI & Progression Polish (#207) ─────────────────────
+
+/** Unlock state for a single node in an annotated skill tree. */
+export type SkillNodeStatus = 'locked' | 'available' | 'unlocked';
+
+/** A skill node annotated with its current unlock state for a specific agent. */
+export interface AnnotatedSkillNode extends SkillNode {
+  status: SkillNodeStatus;
+  /** True when the agent can afford this node's XP cost (meaningful when status='available'). */
+  affordable: boolean;
+}
+
+/** GET /api/rpg/progression/skill-tree/:agentId — annotated skill tree. */
+export interface SkillTreeStateResponse {
+  agent_id: string;
+  current_xp: number;
+  nodes: AnnotatedSkillNode[];
+  edges: SkillEdge[];
+  unlocked_count: number;
+  total_count: number;
+}
+
+/** POST /api/rpg/progression/skills/unlock — unlock a skill node. */
+export interface UnlockSkillRequest {
+  agent_id: string;
+  node_id: string;
+}
+
+/** Response for skill unlock. */
+export interface UnlockSkillResponse {
+  ok: true;
+  unlock: SkillUnlock;
+  profile: ProgressionProfile;
+  node: AnnotatedSkillNode;
+}
+
+/** GET /api/rpg/progression/leaderboard — ranked agents. */
+export interface LeaderboardEntry {
+  rank: number;
+  agent_id: string;
+  display_name: string;
+  level: number;
+  current_xp: number;
+  lifetime_xp: number;
+  prestige_rank: number;
+  unlocked_skills: number;
+  diversification_score: number;
+}
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  total_agents: number;
+}
+
 /** Handler options matching the existing pattern. */
 export interface ProgressionHandlerOptions {
   dbPath: string;
@@ -192,4 +246,59 @@ export interface ProgressionHandlerOptions {
 export interface ProgressionErrorResponse {
   ok: false;
   error: string;
+}
+
+// ─── Phase 2 Types (Issue #207) ─────────────────────────────────────────────
+
+/** Visual position of a skill node in the tree editor. */
+export interface SkillNodeLayout {
+  node_id: string;
+  x: number;
+  y: number;
+}
+
+/** Result of skill tree graph validation. */
+export interface SkillTreeValidation {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+/** XP attribution breakdown by source category. */
+export interface XpAttribution {
+  source_category: string;
+  total_raw_xp: number;
+  total_effective_xp: number;
+  event_count: number;
+  avg_multiplier: number;
+}
+
+/** Prestige simulation preview (non-destructive). */
+export interface PrestigeSimulation {
+  agent_id: string;
+  current_rank: number;
+  next_rank: number;
+  eligible: boolean;
+  preview: {
+    xp_reset_from: number;
+    level_reset_from: number;
+    unlocks_lost: number;
+    lifetime_xp_kept: number;
+    level_requirement: number;
+    xp_requirement: number;
+  };
+}
+
+/** Types of progression milestones. */
+export type MilestoneType = 'level_up' | 'skill_unlock' | 'prestige' | 'diversification';
+
+/** A progression milestone event. */
+export interface ProgressionMilestone {
+  id: string;
+  agent_id: string;
+  type: MilestoneType;
+  title: string;
+  description: string;
+  created_at: string;
+  metadata?: Record<string, unknown>;
 }
