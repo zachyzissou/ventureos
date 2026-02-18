@@ -236,6 +236,12 @@ export interface AgentSummary {
   lastLabel: string | null;
 }
 
+/** Dependencies injected into Agent Diagnostics route handlers (#205). */
+export interface DiagnosticsDeps {
+  OPENCLAW_DIR: string;
+  sendJson: (res: ServerResponse, data: unknown, status?: number) => void;
+}
+
 /** Agent health API response. */
 export interface AgentHealthResponse {
   now: number;

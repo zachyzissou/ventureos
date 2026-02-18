@@ -12,3 +12,4 @@ export { handleRpg, handleRpgApi } from './rpg.js';
 export { handleConversation, handleConversationApi } from './conversation.js';
 export { handleTacticalMapControls } from './tactical-map-controls.js';
 export { handleTacticalMapReplay } from './tactical-map-replay.js';
+export { handleAgentDiagnostics } from './agent-diagnostics.js';
