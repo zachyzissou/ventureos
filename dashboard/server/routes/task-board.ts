@@ -69,6 +69,10 @@ import {
   maybeDeliverWebhooks,
 } from '../alert-webhook.js';
 
+import {
+  queryDeliveryHistory,
+} from '../webhook-delivery-history.js';
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -817,6 +821,28 @@ export async function handleTaskBoard(
 
     writeWebhookConfig(dataDir, sanitized);
     sendJson(res, { config: redactWebhookConfig(sanitized) });
+    return true;
+  }
+
+  // ── GET /api/task-board/webhooks/deliveries — Issue #219, Phase 13 ─────────
+  // Returns recent webhook delivery events with summary statistics.
+  // Query params:
+  //   ?limit=50        — max events to return (default 50, max 200)
+  //   ?sinceMs=3600000 — only events within this time window (default: all retained)
+  //   ?targetId=slack  — filter by target ID
+  //   ?status=success  — filter: 'success' or 'failure'
+  if (url.startsWith('/api/task-board/webhooks/deliveries') && method === 'GET') {
+    const dlvParams = new URL(url, 'http://localhost').searchParams;
+    const limit = Math.max(1, Math.min(Number(dlvParams.get('limit')) || 50, 200));
+    const sinceMs = dlvParams.has('sinceMs')
+      ? Math.max(0, Number(dlvParams.get('sinceMs')) || 0)
+      : undefined;
+    const targetId = dlvParams.get('targetId') || undefined;
+    const statusRaw = dlvParams.get('status');
+    const status = statusRaw === 'success' || statusRaw === 'failure' ? statusRaw : undefined;
+
+    const result = queryDeliveryHistory(dataDir, { limit, sinceMs, targetId, status });
+    sendJson(res, result);
     return true;
   }
 

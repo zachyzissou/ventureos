@@ -100,3 +100,19 @@ export type {
   WebhookDeliveryState,
   WebhookConfigValidationError,
 } from '../alert-webhook.js';
+export {
+  readDeliveryHistory,
+  appendDeliveryEvents,
+  queryDeliveryHistory,
+  pruneDeliveryEvents,
+  createDeliveryEvent,
+  truncateError,
+} from '../webhook-delivery-history.js';
+export type {
+  WebhookDeliveryEvent,
+  WebhookDeliveryHistoryFile,
+  WebhookDeliveryHistoryConfig,
+  DeliveryHistoryQuery,
+  DeliveryHistorySummary,
+  DeliveryHistoryResponse,
+} from '../webhook-delivery-history.js';
