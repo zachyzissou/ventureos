@@ -241,3 +241,162 @@ export function queryHistory(
 
   return snapshots;
 }
+
+// ─── Export Helpers (Phase 25: Metrics History Export) ────────────────────────
+
+/**
+ * Maximum number of snapshots allowed in a single export.
+ * Prevents unbounded memory/CPU usage on export requests.
+ */
+export const METRICS_EXPORT_MAX_SNAPSHOTS = 500;
+
+/** Supported export formats. */
+export type MetricsExportFormat = 'csv' | 'json';
+
+/** Export query — same filters as queryHistory, plus format. */
+export interface MetricsExportQuery {
+  format?: MetricsExportFormat;
+  limit?: number;
+  sinceMs?: number;
+  now?: number;
+}
+
+/** Result of a metrics history export operation. */
+export interface MetricsExportResult {
+  /** The serialized export content (CSV string or JSON string). */
+  content: string;
+  /** MIME type for the response Content-Type header. */
+  contentType: string;
+  /** Suggested filename for the Content-Disposition header. */
+  filename: string;
+  /** Number of snapshots included in the export. */
+  count: number;
+}
+
+/**
+ * Escape a value for CSV output.
+ * Wraps in double quotes if the value contains commas, quotes, or newlines.
+ * Pure function.
+ */
+export function csvEscapeMetrics(value: string | number | boolean | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+/**
+ * Format a timestamp as ISO 8601 string for export.
+ * Returns empty string for null/undefined.
+ */
+function formatMetricsExportTs(ts: number | null | undefined): string {
+  if (ts == null) return '';
+  return new Date(ts).toISOString();
+}
+
+/**
+ * Conservative field allowlist for metrics history export.
+ * Explicitly enumerates safe fields — only observable metrics state.
+ * No internal config, file paths, or implementation details leak through.
+ */
+function sanitizeSnapshotForExport(snapshot: MetricsSnapshot): Record<string, unknown> {
+  return {
+    timestamp: formatMetricsExportTs(snapshot.ts),
+    total: snapshot.total,
+    backlog: snapshot.statusCounts.backlog ?? 0,
+    queued: snapshot.statusCounts.queued ?? 0,
+    running: snapshot.statusCounts.running ?? 0,
+    done: snapshot.statusCounts.done ?? 0,
+    failed: snapshot.statusCounts.failed ?? 0,
+    throughputLast24h: snapshot.throughput.last24h,
+    throughputLast7d: snapshot.throughput.last7d,
+    throughputLast30d: snapshot.throughput.last30d,
+    avgRuntimeMs: snapshot.avgRuntimeMs,
+    medianRuntimeMs: snapshot.medianRuntimeMs,
+    successRate: snapshot.successRate,
+    stuckCount: snapshot.stuckCount,
+  };
+}
+
+/** CSV column headers for metrics history export. */
+const METRICS_CSV_HEADERS = [
+  'timestamp', 'total', 'backlog', 'queued', 'running', 'done', 'failed',
+  'throughputLast24h', 'throughputLast7d', 'throughputLast30d',
+  'avgRuntimeMs', 'medianRuntimeMs', 'successRate', 'stuckCount',
+];
+
+/**
+ * Convert metrics history snapshots to CSV format.
+ * Pure function — no I/O, bounded by input array length.
+ */
+export function metricsSnapshotsToCsv(snapshots: MetricsSnapshot[]): string {
+  const rows: string[] = [METRICS_CSV_HEADERS.join(',')];
+
+  for (const snapshot of snapshots) {
+    const safe = sanitizeSnapshotForExport(snapshot);
+    const row = METRICS_CSV_HEADERS.map((h) =>
+      csvEscapeMetrics(safe[h] as string | number | boolean | null),
+    );
+    rows.push(row.join(','));
+  }
+
+  return rows.join('\n');
+}
+
+/**
+ * Convert metrics history snapshots to a safe JSON export format.
+ * Returns a JSON string with sanitized snapshots (conservative allowlist).
+ * Pure function.
+ */
+export function metricsSnapshotsToJson(snapshots: MetricsSnapshot[]): string {
+  const safeSnapshots = snapshots.map(sanitizeSnapshotForExport);
+  return JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    format: 'ventureos-metrics-history-export-v1',
+    count: safeSnapshots.length,
+    snapshots: safeSnapshots,
+  }, null, 2);
+}
+
+/**
+ * Export metrics history with the same filter capabilities as queryHistory.
+ * Returns formatted content (CSV or JSON), content type, and suggested filename.
+ *
+ * Secret-safe: all snapshots pass through sanitizeSnapshotForExport() which
+ * applies a conservative field allowlist. Only observable task metrics
+ * (counts, rates, timestamps) are included — no paths, configs, or internals.
+ */
+export function exportMetricsHistory(
+  dataDir: string,
+  opts: MetricsExportQuery = {},
+): MetricsExportResult {
+  const format: MetricsExportFormat = opts.format === 'csv' ? 'csv' : 'json';
+  const limit = Math.max(1, Math.min(opts.limit ?? METRICS_EXPORT_MAX_SNAPSHOTS, METRICS_EXPORT_MAX_SNAPSHOTS));
+
+  // Reuse the same query logic for filter parity
+  const snapshots = queryHistory(dataDir, {
+    limit,
+    sinceMs: opts.sinceMs,
+    now: opts.now,
+  });
+
+  const dateSuffix = new Date().toISOString().slice(0, 10);
+
+  if (format === 'csv') {
+    return {
+      content: metricsSnapshotsToCsv(snapshots),
+      contentType: 'text/csv; charset=utf-8',
+      filename: `metrics-history-${dateSuffix}.csv`,
+      count: snapshots.length,
+    };
+  }
+
+  return {
+    content: metricsSnapshotsToJson(snapshots),
+    contentType: 'application/json; charset=utf-8',
+    filename: `metrics-history-${dateSuffix}.json`,
+    count: snapshots.length,
+  };
+}
