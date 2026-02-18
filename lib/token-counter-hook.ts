@@ -34,6 +34,12 @@ export interface TokenCounterHookConfig {
   defaultModel?: string;
   /** Per-token cost in USD for estimation. Default: 0 (no cost tracking) */
   costPerToken?: number;
+  /**
+   * Raw buffer token threshold that triggers `observation:threshold_reached`.
+   * Set to 0 to disable threshold events. Default: 0 (disabled)
+   * Phase 2 (#231): Observer Agent integration.
+   */
+  thresholdTokens?: number;
 }
 
 const DEFAULT_CONFIG: TokenCounterHookConfig = {
@@ -57,6 +63,10 @@ export interface TokenCounterMetrics {
   lastWriteAt: string | null;
   /** Timestamp of last error. */
   lastErrorAt: string | null;
+  /** Running token count since last threshold reset (Phase 2). */
+  rawBufferTokens: number;
+  /** Number of threshold events emitted (Phase 2). */
+  thresholdEventsEmitted: number;
 }
 
 // ─── Hook ───────────────────────────────────────────────────────────────────
@@ -101,6 +111,8 @@ export class TokenCounterHook {
     errors: 0,
     lastWriteAt: null,
     lastErrorAt: null,
+    rawBufferTokens: 0,
+    thresholdEventsEmitted: 0,
   };
 
   constructor(store: IObservationStore, config: Partial<TokenCounterHookConfig> = {}) {
@@ -201,6 +213,24 @@ export class TokenCounterHook {
       this.metrics.observationsWritten++;
       this.metrics.totalTokensCounted += totalTokens;
       this.metrics.lastWriteAt = new Date().toISOString();
+
+      // Phase 2: Track raw buffer tokens and emit threshold event
+      const thresholdTokens = this.config.thresholdTokens ?? 0;
+      if (thresholdTokens > 0) {
+        this.metrics.rawBufferTokens += totalTokens;
+        if (this.metrics.rawBufferTokens >= thresholdTokens && this.api) {
+          this.metrics.thresholdEventsEmitted++;
+          const rawBufferTokens = this.metrics.rawBufferTokens;
+          this.api.emit('observation:threshold_reached', {
+            agentId: message.from,
+            conversationId: message.conversationId,
+            rawBufferTokens,
+            thresholdTokens,
+          });
+          // Reset buffer counter after threshold
+          this.metrics.rawBufferTokens = 0;
+        }
+      }
     } catch (err: unknown) {
       this.metrics.errors++;
       this.metrics.lastErrorAt = new Date().toISOString();
@@ -209,6 +239,14 @@ export class TokenCounterHook {
         console.warn(`[token-counter] Failed to record token usage: ${errMsg}`);
       }
     }
+  }
+
+  /**
+   * Reset the raw buffer token counter.
+   * Called after an observation pass completes (Phase 2).
+   */
+  resetRawBufferTokens(): void {
+    this.metrics.rawBufferTokens = 0;
   }
 
   // ─── Internal ─────────────────────────────────────────────────────────
