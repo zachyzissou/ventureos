@@ -2403,6 +2403,72 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
   color: var(--text-muted);
 }
 
+.tb-webhook-test-btn {
+  font-size: 11px;
+  padding: 4px 12px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tb-webhook-test-btn:hover:not(:disabled) {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+
+.tb-webhook-test-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tb-webhook-test-result {
+  font-size: 11px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.tb-webhook-test-result.success {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.tb-webhook-test-result.failure {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.tb-webhook-test-result.mixed {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: var(--yellow);
+  color: var(--yellow);
+}
+
+.tb-webhook-test-result-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  font-size: 11px;
+}
+
+.tb-webhook-test-result-item .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tb-webhook-test-result-item .dot.ok { background: var(--green); }
+.tb-webhook-test-result-item .dot.fail { background: var(--red); }
+
 /* ─── End Webhook Config ────────────────────────────────────────────── */
 
 /* ─── Webhook Delivery History (Issue #219, Phase 13) ────────────────── */
@@ -4670,6 +4736,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
     </div>
     <div class="tb-webhook-footer">
       <button onclick="tbResetWebhookConfig()" class="tb-btn tb-btn-secondary" style="margin-right:auto;">Reset</button>
+      <button id="tbWebhookTestBtn" onclick="tbSendTestPing()" class="tb-webhook-test-btn" title="Send a non-production test ping to all enabled targets">🔔 Send Test Ping</button>
       <button onclick="tbCloseWebhookConfig()" class="tb-btn tb-btn-secondary">Cancel</button>
       <button onclick="tbSaveWebhookConfig()" class="tb-btn tb-btn-primary">Save</button>
     </div>
@@ -4683,6 +4750,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
     <div class="tb-delivery-header">
       <span>📊 Webhook Delivery History</span>
       <div class="tb-delivery-controls">
+        <button onclick="tbSendTestPingFromDeliveries()" class="tb-webhook-test-btn" id="tbDeliveryTestBtn" style="font-size:11px;padding:4px 10px;">🔔 Send Test Ping</button>
         <button onclick="tbRefreshDeliveryHistory()" class="tb-btn tb-btn-secondary" style="font-size:11px;padding:4px 10px;">↻ Refresh</button>
         <button onclick="tbCloseDeliveryHistory()" class="tb-detail-close" aria-label="Close delivery history">✕</button>
       </div>
@@ -9563,6 +9631,7 @@ function tbRenderWebhookTarget(target, index) {
   let html = '<div class="tb-webhook-target" data-target-index="' + index + '">';
   html += '  <div class="tb-webhook-target-header">';
   html += '    <label><input type="checkbox" class="tbWhTargetEnabled" data-idx="' + index + '" ' + (enabled ? 'checked' : '') + ' style="cursor:pointer;"> <span>' + tbEsc(name || id || 'Target ' + (index + 1)) + '</span></label>';
+  html += '    <button class="tb-webhook-test-btn" onclick="tbSendTestPingTarget(\'' + tbEsc(id) + '\')" title="Send test ping to this target" style="margin-right:6px;">🔔 Test</button>';
   html += '    <button class="tb-webhook-target-remove" onclick="tbRemoveWebhookTarget(' + index + ')">Remove</button>';
   html += '  </div>';
   html += '  <div class="tb-webhook-target-fields">';
@@ -9784,6 +9853,141 @@ function tbResetWebhookConfig() {
   tbShowToast('Form reset to defaults (click Save to apply)', 'info');
 }
 
+// ── Webhook Test Ping (Issue #219, Phase 14) ────────────────────────────────
+// Send a non-production test ping to validate webhook connectivity.
+// User-triggered only — never fires automatically.
+
+/** Send a test ping to all enabled targets. */
+async function tbSendTestPing() {
+  const btn = document.getElementById('tbWebhookTestBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending…'; }
+
+  try {
+    const res = await fetch('/api/task-board/webhooks/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      tbShowToast('Test ping failed: ' + (data.error || 'HTTP ' + res.status), 'error');
+      tbShowTestResults(data.results || [], data.error);
+      return;
+    }
+
+    const results = data.results || [];
+    const allOk = results.every(function(r) { return r.success; });
+    const allFail = results.every(function(r) { return !r.success; });
+
+    if (allOk) {
+      tbShowToast('Test ping succeeded (' + results.length + ' target' + (results.length !== 1 ? 's' : '') + ')', 'success');
+    } else if (allFail) {
+      tbShowToast('Test ping failed for all targets', 'error');
+    } else {
+      tbShowToast('Test ping: partial success', 'warning');
+    }
+
+    tbShowTestResults(results);
+  } catch (e) {
+    tbShowToast('Network error: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔔 Send Test Ping'; }
+  }
+}
+
+/** Send a test ping to a single target by ID. */
+async function tbSendTestPingTarget(targetId) {
+  // Find and disable the button in the target row
+  var btns = document.querySelectorAll('.tb-webhook-test-btn');
+  var targetBtn = null;
+  btns.forEach(function(b) {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf(targetId) !== -1) {
+      targetBtn = b;
+    }
+  });
+  if (targetBtn) { targetBtn.disabled = true; targetBtn.textContent = '⏳…'; }
+
+  try {
+    const res = await fetch('/api/task-board/webhooks/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetId: targetId }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      tbShowToast('Test failed: ' + (data.error || 'HTTP ' + res.status), 'error');
+      return;
+    }
+
+    const r = (data.results || [])[0];
+    if (r && r.success) {
+      tbShowToast('✓ Test ping to "' + (r.targetName || targetId) + '" succeeded (' + r.durationMs + 'ms)', 'success');
+    } else if (r) {
+      tbShowToast('✗ Test ping to "' + (r.targetName || targetId) + '" failed: ' + (r.error || 'HTTP ' + r.statusCode), 'error');
+    }
+  } catch (e) {
+    tbShowToast('Network error: ' + e.message, 'error');
+  } finally {
+    if (targetBtn) { targetBtn.disabled = false; targetBtn.textContent = '🔔 Test'; }
+  }
+}
+
+/** Render test ping results in the webhook config panel body. */
+function tbShowTestResults(results, errorMsg) {
+  // Remove any previous test results
+  var existing = document.getElementById('tbWebhookTestResults');
+  if (existing) existing.remove();
+
+  if ((!results || results.length === 0) && !errorMsg) return;
+
+  var container = document.createElement('div');
+  container.id = 'tbWebhookTestResults';
+
+  var allOk = results.length > 0 && results.every(function(r) { return r.success; });
+  var allFail = results.length > 0 && results.every(function(r) { return !r.success; });
+  var cls = allOk ? 'success' : (allFail ? 'failure' : 'mixed');
+
+  container.className = 'tb-webhook-test-result ' + cls;
+
+  var html = '<strong>Test Ping Results:</strong>';
+  if (errorMsg) {
+    html += '<div style="margin-top:4px;">' + tbEsc(errorMsg) + '</div>';
+  }
+  for (var i = 0; i < results.length; i++) {
+    var r = results[i];
+    var dotCls = r.success ? 'ok' : 'fail';
+    html += '<div class="tb-webhook-test-result-item">';
+    html += '  <span class="dot ' + dotCls + '"></span>';
+    html += '  <span>' + tbEsc(r.targetName || r.targetId) + '</span>';
+    html += '  <span style="color:var(--text-muted);">— ';
+    if (r.success) {
+      html += 'HTTP ' + r.statusCode + ' (' + r.durationMs + 'ms)';
+    } else {
+      html += (r.error || 'HTTP ' + r.statusCode);
+    }
+    html += '</span>';
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+
+  // Insert after the body, before the footer
+  var body = document.getElementById('tbWebhookConfigBody');
+  if (body) {
+    body.appendChild(container);
+  }
+
+  // Auto-dismiss after 15 seconds
+  setTimeout(function() {
+    var el = document.getElementById('tbWebhookTestResults');
+    if (el) el.remove();
+  }, 15000);
+}
+
 // ── Webhook Delivery History UI (Issue #219, Phase 13) ──────────────────────
 // Dashboard modal for viewing recent webhook delivery attempts/results.
 // Integrates with GET /api/task-board/webhooks/deliveries endpoint.
@@ -9943,6 +10147,46 @@ function tbRenderDeliveryHistory(data) {
   var footer = document.getElementById('tbDeliveryFooterInfo');
   if (footer) {
     footer.textContent = 'Showing ' + events.length + ' event' + (events.length !== 1 ? 's' : '');
+  }
+}
+
+/** Send test ping from the delivery history modal, then refresh. */
+async function tbSendTestPingFromDeliveries() {
+  var btn = document.getElementById('tbDeliveryTestBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending…'; }
+
+  try {
+    var res = await fetch('/api/task-board/webhooks/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+
+    var data = await res.json();
+
+    if (!res.ok || data.error) {
+      tbShowToast('Test ping failed: ' + (data.error || 'HTTP ' + res.status), 'error');
+      return;
+    }
+
+    var results = data.results || [];
+    var allOk = results.every(function(r) { return r.success; });
+    var allFail = results.every(function(r) { return !r.success; });
+
+    if (allOk) {
+      tbShowToast('Test ping succeeded (' + results.length + ' target' + (results.length !== 1 ? 's' : '') + ')', 'success');
+    } else if (allFail) {
+      tbShowToast('Test ping failed for all targets', 'error');
+    } else {
+      tbShowToast('Test ping: partial success', 'warning');
+    }
+
+    // Auto-refresh delivery history to show the new test event
+    await tbFetchDeliveryHistory();
+  } catch (e) {
+    tbShowToast('Network error: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔔 Send Test Ping'; }
   }
 }
 
