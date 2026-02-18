@@ -220,3 +220,115 @@ export function getDefaultSkillTree(): { nodes: SkillNode[]; edges: SkillEdge[] 
 
   return { nodes, edges };
 }
+
+// ─── Phase 2: Graph Validation & Simulation (Issue #207) ────────────────────
+
+export function detectCycles(edges: Array<{ from_node_id: string; to_node_id: string }>): string[] {
+  const adj = new Map<string, string[]>();
+  const allNodes = new Set<string>();
+  for (const e of edges) {
+    allNodes.add(e.from_node_id);
+    allNodes.add(e.to_node_id);
+    if (!adj.has(e.from_node_id)) adj.set(e.from_node_id, []);
+    adj.get(e.from_node_id)!.push(e.to_node_id);
+  }
+  const white = new Set(allNodes);
+  const gray = new Set<string>();
+  const parent = new Map<string, string>();
+  for (const start of allNodes) {
+    if (!white.has(start)) continue;
+    const stack: string[] = [start];
+    while (stack.length > 0) {
+      const node = stack[stack.length - 1]!;
+      if (white.has(node)) {
+        white.delete(node);
+        gray.add(node);
+        for (const neighbor of adj.get(node) ?? []) {
+          if (gray.has(neighbor)) {
+            const cycle = [neighbor, node];
+            let cur = node;
+            while (cur !== neighbor && parent.has(cur)) { cur = parent.get(cur)!; cycle.push(cur); }
+            return cycle.reverse();
+          }
+          if (white.has(neighbor)) { parent.set(neighbor, node); stack.push(neighbor); }
+        }
+      } else {
+        stack.pop();
+        gray.delete(node);
+      }
+    }
+  }
+  return [];
+}
+
+export function findOrphanNodes(
+  nodes: Array<{ node_id: string; tier: number; prerequisites: string[] }>,
+  edges: Array<{ from_node_id: string; to_node_id: string }>,
+): string[] {
+  const connected = new Set<string>();
+  for (const e of edges) { connected.add(e.from_node_id); connected.add(e.to_node_id); }
+  return nodes.filter(n => n.tier > 1 && !connected.has(n.node_id) && n.prerequisites.length === 0).map(n => n.node_id);
+}
+
+export function validateSkillTree(
+  nodes: Array<{ node_id: string; name: string; tier: number; xp_cost: number; prerequisites: string[] }>,
+  edges: Array<{ from_node_id: string; to_node_id: string }>,
+): { valid: boolean; errors: string[]; warnings: string[] } {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const nodeIds = new Set(nodes.map(n => n.node_id));
+  if (nodeIds.size !== nodes.length) errors.push('Duplicate node IDs detected');
+  for (const node of nodes) {
+    for (const prereq of node.prerequisites) {
+      if (!nodeIds.has(prereq)) errors.push('Node "' + node.node_id + '" references unknown prerequisite "' + prereq + '"');
+    }
+  }
+  for (const edge of edges) {
+    if (!nodeIds.has(edge.from_node_id)) errors.push('Edge references unknown node "' + edge.from_node_id + '"');
+    if (!nodeIds.has(edge.to_node_id)) errors.push('Edge references unknown node "' + edge.to_node_id + '"');
+  }
+  const cycle = detectCycles(edges);
+  if (cycle.length > 0) errors.push('Cycle detected: ' + cycle.join(' -> '));
+  const orphans = findOrphanNodes(nodes, edges);
+  if (orphans.length > 0) warnings.push('Orphan nodes (tier>1, no connections): ' + orphans.join(', '));
+  for (const node of nodes) {
+    if (node.xp_cost <= 0) errors.push('Node "' + node.node_id + '" has non-positive XP cost (' + node.xp_cost + ')');
+    if (node.xp_cost > 100000) warnings.push('Node "' + node.node_id + '" has very high XP cost (' + node.xp_cost + ')');
+  }
+  return { valid: errors.length === 0, errors, warnings };
+}
+
+export type SkillNodeState = 'locked' | 'unlockable' | 'unlocked' | 'maxed';
+
+export function getNodeState(
+  nodeId: string,
+  node: { prerequisites: string[]; tier: number },
+  unlockedIds: Set<string>,
+): SkillNodeState {
+  if (unlockedIds.has(nodeId)) return 'unlocked';
+  if (node.tier === 1 && node.prerequisites.length === 0) return 'unlockable';
+  if (node.prerequisites.length > 0 && node.prerequisites.every(p => unlockedIds.has(p))) return 'unlockable';
+  return 'locked';
+}
+
+export function simulatePrestige(
+  profile: { current_xp: number; lifetime_xp: number; level: number; prestige_rank: number },
+  unlockCount: number,
+) {
+  const nextRank = profile.prestige_rank + 1;
+  const levelReq = prestigeLevelRequirement(profile.prestige_rank);
+  const xpReq = prestigeXpRequirement(profile.prestige_rank);
+  const eligible = nextRank <= MAX_PRESTIGE_RANK && isPrestigeEligible(profile.level, profile.prestige_rank, profile.lifetime_xp);
+  return {
+    eligible,
+    next_rank: nextRank,
+    preview: {
+      xp_reset_from: profile.current_xp,
+      level_reset_from: profile.level,
+      unlocks_lost: unlockCount,
+      lifetime_xp_kept: profile.lifetime_xp,
+      level_requirement: levelReq,
+      xp_requirement: xpReq,
+    },
+  };
+}
