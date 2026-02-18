@@ -106,6 +106,7 @@ import { handleLogs } from './routes/logs.js';
 import { handleTacticalMapReplay } from './routes/tactical-map-replay.js';
 import { handleProgressionApi } from './routes/progression.js';
 import { handleChangelog } from './routes/changelog.js';
+import { handleTaskBoard } from './routes/task-board.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -3177,6 +3178,23 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     if (handleChangelog(req, res, { ventureosRoot: VENTUREOS_ROOT, sendJson, clampInt })) return;
   } catch {
     // ignore
+  }
+
+  // Task Board (Kanban) — Issue #219
+  if (req.url && req.url.startsWith('/api/task-board')) {
+    try {
+      const handled = await handleTaskBoard(req, res, {
+        dataDir: DASHBOARD_DATA_DIR,
+        sendJson,
+        readRequestBody,
+      });
+      if (handled) return;
+    } catch (e: unknown) {
+      const safe = toSafeError(e, { route: 'task-board' });
+      slogError('dashboard', 'route_error', 'task-board error', { errorRef: safe.errorRef });
+      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
+      return;
+    }
   }
 
   // Action endpoints — use shared error handler (Issue #79) for safe responses
