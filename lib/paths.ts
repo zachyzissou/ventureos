@@ -109,6 +109,17 @@ export function agentWorkspaceDir(agentId: string): string {
   return path.join(OPENCLAW_DIR, `workspace-${safe}`);
 }
 
+/**
+ * Resolve the shared-context directory for a given team.
+ * Team names are sanitized to lowercase alphanumeric + hyphens/underscores.
+ */
+export function teamSharedContextDir(teamName: string): string {
+  const safe = String(teamName || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\-_]/g, '');
+  return path.join(SHARED_CONTEXT_DIR, safe);
+}
+
 
 const defaultPathsExport = {
   VENTUREOS_ROOT,
@@ -124,6 +135,7 @@ const defaultPathsExport = {
   PRIORITIES_PATH,
   agentSessionsDir,
   agentWorkspaceDir,
+  teamSharedContextDir,
   paths,
 } as const;
 
