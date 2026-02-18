@@ -680,3 +680,43 @@ export interface ReplaySessionListResponse {
   pageSize: number;
   page: number;
 }
+
+// ─── Task Board Domain (Issue #219) ──────────────────────────────────────────
+
+/** Valid task card statuses (Kanban columns). */
+export type TaskStatus = 'backlog' | 'queued' | 'running' | 'done' | 'failed';
+
+/** Valid task card priorities. */
+export type TaskPriority = 'critical' | 'high' | 'medium' | 'low';
+
+/** A single task board card. */
+export interface TaskCard {
+  id: string;
+  agentId: string | null;
+  title: string;
+  description: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  createdAt: number;
+  queuedAt: number | null;
+  startedAt: number | null;
+  completedAt: number | null;
+  resultSummary: string | null;
+  tokensUsed: number | null;
+  error: string | null;
+}
+
+/** Summary counts per column returned by the summary endpoint. */
+export interface TaskBoardSummary {
+  updatedAt: number;
+  columns: Record<TaskStatus, number>;
+  byAgent: Record<string, Record<TaskStatus, number>>;
+  total: number;
+}
+
+/** Dependencies injected into Task Board route handlers. */
+export interface TaskBoardDeps {
+  dataDir: string;
+  sendJson: (res: ServerResponse, data: unknown, status?: number) => void;
+  readRequestBody: (req: IncomingMessage, opts?: { maxBytes?: number }) => Promise<string>;
+}
