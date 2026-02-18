@@ -10,6 +10,10 @@
  *
  * Data is persisted as a single JSON file on disk (consistent with
  * the rest of the dashboard's filesystem-based storage).
+ *
+ * Phase 8 (Issue #219): Metrics history persistence — snapshots are
+ * appended on each metrics API read (with cooldown) and queryable via
+ * GET /api/task-board/metrics/history.
  */
 
 import fs from 'node:fs';
@@ -32,6 +36,11 @@ import {
   clientCount,
   parseSubscriptionFilter,
 } from '../task-board-events.js';
+
+import {
+  maybeAppendSnapshot,
+  queryHistory,
+} from '../metrics-history.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -661,17 +670,45 @@ export async function handleTaskBoard(
     return true;
   }
 
+  // ── GET /api/task-board/metrics/history — Issue #219, Phase 8 ───────────────
+  // Returns persisted metrics snapshots for time-series charting.
+  // Query params:
+  //   ?limit=50       — max number of most-recent points (default 100, max 500)
+  //   ?sinceMs=86400000 — only points within this window (default: all retained)
+  // Note: this route MUST be checked before the general /metrics route below.
+  if (url.startsWith('/api/task-board/metrics/history') && method === 'GET') {
+    const histParams = new URL(url, 'http://localhost').searchParams;
+    const limit = Math.max(1, Math.min(Number(histParams.get('limit')) || 100, 500));
+    const sinceMs = histParams.has('sinceMs')
+      ? Math.max(0, Number(histParams.get('sinceMs')) || 0)
+      : undefined;
+    const snapshots = queryHistory(dataDir, { limit, sinceMs });
+    sendJson(res, { snapshots, count: snapshots.length });
+    return true;
+  }
+
   // ── GET /api/task-board/metrics — Issue #219, Task Metrics Dashboard ───────
   // Returns computed metrics: throughput, runtime stats, trends, stuck tasks.
   // Optional query params:
   //   ?stuckTimeoutMs=1800000 — override stuck-task timeout (default 30min)
+  // Side-effect (Phase 8): appends a snapshot to the metrics history file
+  // if the cooldown interval has elapsed (no extra writes on rapid polling).
   if (url.startsWith('/api/task-board/metrics') && method === 'GET') {
     const metricsParams = new URL(url, 'http://localhost').searchParams;
     const stuckTimeoutMs = metricsParams.has('stuckTimeoutMs')
       ? Math.max(1000, Math.min(Number(metricsParams.get('stuckTimeoutMs')) || DEFAULT_STUCK_TIMEOUT_MS, 86400000))
       : undefined;
     const tasks = loadTasks(dataDir);
-    sendJson(res, computeMetrics(tasks, { stuckTimeoutMs }));
+    const metrics = computeMetrics(tasks, { stuckTimeoutMs });
+
+    // Piggyback: persist snapshot (bounded by 5-min cooldown)
+    try {
+      maybeAppendSnapshot(dataDir, metrics);
+    } catch {
+      // Non-critical — don't break the metrics response
+    }
+
+    sendJson(res, metrics);
     return true;
   }
 
