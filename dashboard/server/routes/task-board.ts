@@ -40,7 +40,9 @@ import {
 import {
   maybeAppendSnapshot,
   queryHistory,
+  exportMetricsHistory,
 } from '../metrics-history.js';
+import type { MetricsExportFormat } from '../metrics-history.js';
 
 import {
   readAlertConfig,
@@ -847,6 +849,36 @@ export async function handleTaskBoard(
     } catch {
       sendJson(res, { error: 'Failed to query escalation history' }, 500);
     }
+    return true;
+  }
+
+  // ── GET /api/task-board/metrics/history/export — Issue #219, Phase 25 ────────
+  // Export metrics history as CSV or JSON file download.
+  // Query params: same as /metrics/history + ?format=csv|json (default json)
+  // Bounded: max 500 snapshots per export. Secret-safe: conservative field allowlist.
+  if (url.startsWith('/api/task-board/metrics/history/export') && method === 'GET') {
+    const exportParams = new URL(url, 'http://localhost').searchParams;
+    const format = (exportParams.get('format') === 'csv' ? 'csv' : 'json') as MetricsExportFormat;
+    const limit = exportParams.has('limit')
+      ? Math.max(1, Math.min(Number(exportParams.get('limit')) || 500, 500))
+      : 500;
+    const sinceMs = exportParams.has('sinceMs')
+      ? Math.max(0, Number(exportParams.get('sinceMs')) || 0)
+      : undefined;
+
+    const result = exportMetricsHistory(dataDir, {
+      format,
+      limit,
+      sinceMs,
+    });
+
+    res.writeHead(200, {
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+      'Cache-Control': 'no-store',
+      'X-Export-Count': String(result.count),
+    });
+    res.end(result.content);
     return true;
   }
 
