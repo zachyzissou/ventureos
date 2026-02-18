@@ -109,6 +109,7 @@ import { handleProgressionV2Api } from '../../lib/progression-http-v2.js';
 import { handleChangelog } from './routes/changelog.js';
 import { handleTaskBoard } from './routes/task-board.js';
 import { handleMemoryState } from './routes/memory-state.js';
+import { handleSharedContext } from './routes/shared-context.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -2898,6 +2899,24 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     })) return;
   } catch {
     // ignore
+  }
+
+  // Shared-Context Activity Feed — Phase 4 (#244)
+  if (req.url && req.url.startsWith('/api/shared-context/')) {
+    try {
+      if (handleSharedContext(req, res, {
+        teamDbPath: process.env.TEAM_DB_PATH ?? path.join(dataDir, 'teams.db'),
+        auditDbPath: process.env.AUDIT_DB_PATH ?? path.join(dataDir, 'shared-context-audit.db'),
+        sharedContextDir: SHARED_CONTEXT,
+        sendJson,
+        clampInt,
+      })) return;
+    } catch (e: unknown) {
+      const safe = toSafeError(e, { route: 'shared-context' });
+      slogError('dashboard', 'route_error', 'shared-context error', { errorRef: safe.errorRef });
+      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
+      return;
+    }
   }
 
   try {
