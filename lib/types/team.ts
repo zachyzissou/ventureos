@@ -134,6 +134,80 @@ export interface SymlinkHealthReport {
   checkedAt: string;
 }
 
+// ─── Shared-Context Watcher Types (Phase 3 — #243) ─────────────────────────
+
+/**
+ * Action type for shared-context file events.
+ */
+export type SharedContextAction = 'write' | 'delete' | 'rename' | 'read';
+
+/**
+ * Typed event emitted by the shared-context file watcher.
+ */
+export interface SharedContextEvent {
+  /** Event type. */
+  type: 'write' | 'delete' | 'rename';
+  /** Relative path within the team's shared-context directory. */
+  path: string;
+  /** Agent ID attributed to this change (or 'unknown'). */
+  agentId: string;
+  /** ISO 8601 timestamp of the event. */
+  timestamp: string;
+  /** File size in bytes (0 for deletes). */
+  sizeBytes: number;
+  /** Team ID this event belongs to. */
+  teamId: string;
+}
+
+/**
+ * Audit log entry stored in SQLite.
+ */
+export interface SharedContextAuditEntry {
+  /** Unique entry ID (UUID). */
+  id: string;
+  /** Team identifier. */
+  teamId: string;
+  /** Agent that performed the action. */
+  agentId: string;
+  /** Action type. */
+  action: SharedContextAction | 'violation';
+  /** Relative file path. */
+  filePath: string;
+  /** File size in bytes (null for deletes/reads). */
+  fileSizeBytes: number | null;
+  /** ISO 8601 timestamp. */
+  timestamp: string;
+  /** Optional detail for violations. */
+  detail?: string;
+}
+
+/**
+ * Configuration for the shared-context watcher enforcement rules.
+ */
+export interface SharedContextWatcherConfig {
+  /** Maximum size per file in bytes. Default: 51200 (50KB). */
+  maxFileSizeBytes: number;
+  /** Maximum total shared-context size per team in bytes. Default: 2097152 (2MB). */
+  maxTeamTotalBytes: number;
+  /** Warning threshold as fraction of maxTeamTotalBytes. Default: 0.8. */
+  teamTotalWarnThreshold: number;
+  /** Max writes per agent per minute. Default: 10. */
+  maxWritesPerMinutePerAgent: number;
+  /** Debounce interval in ms. Default: 100. */
+  debounceMs: number;
+}
+
+/**
+ * Default enforcement configuration matching issue #243 spec.
+ */
+export const DEFAULT_WATCHER_CONFIG: Readonly<SharedContextWatcherConfig> = {
+  maxFileSizeBytes: 50 * 1024,        // 50KB
+  maxTeamTotalBytes: 2 * 1024 * 1024,  // 2MB
+  teamTotalWarnThreshold: 0.8,
+  maxWritesPerMinutePerAgent: 10,
+  debounceMs: 100,
+} as const;
+
 // ─── Composite Types ────────────────────────────────────────────────────────
 
 /**
