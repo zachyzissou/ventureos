@@ -2602,6 +2602,203 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 .tb-webhook-test-result-item .dot.ok { background: var(--green); }
 .tb-webhook-test-result-item .dot.fail { background: var(--red); }
 
+/* ─── Escalation Policy Config (Issue #219, Phase 21) ─────────────── */
+
+.tb-escalation-config-section {
+  margin-top: 18px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.tb-escalation-config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.tb-escalation-config-header .title {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tb-escalation-config-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.tb-escalation-config-toggle label {
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-escalation-config-toggle .desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.tb-escalation-config-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tb-escalation-config-settings > div {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.tb-escalation-config-settings .tb-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.tb-escalation-config-settings .tb-input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-escalation-config-settings select.tb-input {
+  font-family: 'Inter', sans-serif;
+}
+
+.tb-escalation-tiers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tb-escalation-tiers-header .title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tb-escalation-tiers-header .add-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tb-escalation-tiers-header .add-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.tb-escalation-tiers-header .add-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tb-escalation-config-tier {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--bg-card);
+}
+
+.tb-escalation-config-tier-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tb-escalation-config-tier-header .tier-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--purple);
+}
+
+.tb-escalation-config-tier-remove {
+  font-size: 11px;
+  color: var(--red);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tb-escalation-config-tier-remove:hover {
+  opacity: 0.8;
+}
+
+.tb-escalation-config-tier-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tb-escalation-config-tier-fields .full-width {
+  grid-column: 1 / -1;
+}
+
+.tb-escalation-config-tier-fields .tb-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  display: block;
+}
+
+.tb-escalation-config-tier-fields .tb-input {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-escalation-no-tiers {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 16px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.tb-escalation-config-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ─── End Escalation Policy Config ─────────────────────────────────── */
+
 /* ─── End Webhook Config ────────────────────────────────────────────── */
 
 /* ─── Webhook Delivery History (Issue #219, Phase 13) ────────────────── */
@@ -10409,7 +10606,150 @@ function tbRenderWebhookConfigForm(config) {
     html += '</div>';
   }
 
+  // ── Escalation Policy Config (Issue #219, Phase 21) ──────────────────
+  html += tbRenderEscalationConfigSection(config);
+
   body.innerHTML = html;
+}
+
+/** Render the escalation policy configuration section within the webhook config form. */
+function tbRenderEscalationConfigSection(config) {
+  const esc = config.escalation || {};
+  const enabled = esc.enabled === true;
+  const triggerSeverity = esc.triggerSeverity || 'critical';
+  const cooldownSec = Math.round((esc.cooldownMs || 300000) / 1000);
+  const tiers = Array.isArray(esc.tiers) ? esc.tiers : [];
+
+  let html = '<div class="tb-escalation-config-section">';
+
+  // Section header
+  html += '<div class="tb-escalation-config-header">';
+  html += '  <span class="title">⚡ Escalation Policy</span>';
+  html += '</div>';
+
+  // Enable toggle
+  html += '<div class="tb-escalation-config-toggle">';
+  html += '  <label><input type="checkbox" id="tbEscEnabled" ' + (enabled ? 'checked' : '') + ' style="cursor:pointer;" onchange="tbToggleEscalationFields()"> Escalation Enabled</label>';
+  html += '  <span class="desc">' + (enabled ? 'Active — persistent alert states will trigger escalation tiers' : 'Disabled — no escalation behavior') + '</span>';
+  html += '</div>';
+
+  // Settings + tiers (dimmed when disabled)
+  html += '<div id="tbEscFieldsContainer"' + (enabled ? '' : ' class="tb-escalation-config-disabled"') + '>';
+
+  // Trigger severity + cooldown
+  html += '<div class="tb-escalation-config-settings">';
+  html += '  <div>';
+  html += '    <label class="tb-label">Trigger Severity</label>';
+  html += '    <select class="tb-input" id="tbEscTriggerSeverity">';
+  html += '      <option value="warning"' + (triggerSeverity === 'warning' ? ' selected' : '') + '>Warning+</option>';
+  html += '      <option value="critical"' + (triggerSeverity === 'critical' ? ' selected' : '') + '>Critical only</option>';
+  html += '    </select>';
+  html += '  </div>';
+  html += '  <div>';
+  html += '    <label class="tb-label">Cooldown (sec)</label>';
+  html += '    <input type="number" class="tb-input" id="tbEscCooldown" value="' + cooldownSec + '" min="0" step="1">';
+  html += '  </div>';
+  html += '</div>';
+
+  // Tiers header
+  const canAddTier = tiers.length < 3;
+  html += '<div class="tb-escalation-tiers-header">';
+  html += '  <span class="title">Tiers (' + tiers.length + '/3)</span>';
+  html += '  <button class="add-btn" onclick="tbAddEscalationTier()" ' + (canAddTier ? '' : 'disabled') + '>+ Add Tier</button>';
+  html += '</div>';
+
+  // Tiers list
+  if (tiers.length === 0) {
+    html += '<div class="tb-escalation-no-tiers">No escalation tiers configured. Click "Add Tier" to create one.</div>';
+  } else {
+    html += '<div id="tbEscTiersList">';
+    for (let i = 0; i < tiers.length; i++) {
+      html += tbRenderEscalationTierConfig(tiers[i], i, config.targets || []);
+    }
+    html += '</div>';
+  }
+
+  html += '</div>'; // tbEscFieldsContainer
+  html += '</div>'; // tb-escalation-config-section
+  return html;
+}
+
+/** Render a single escalation tier config row. */
+function tbRenderEscalationTierConfig(tier, index, targets) {
+  const afterMin = Math.round((tier.afterMs || 60000) / 60000);
+  const label = tier.label || '';
+  const targetIds = Array.isArray(tier.targetIds) ? tier.targetIds : [];
+
+  let html = '<div class="tb-escalation-config-tier" data-tier-index="' + index + '">';
+  html += '  <div class="tb-escalation-config-tier-header">';
+  html += '    <span class="tier-label">Tier ' + (index + 1) + '</span>';
+  html += '    <button class="tb-escalation-config-tier-remove" onclick="tbRemoveEscalationTier(' + index + ')">Remove</button>';
+  html += '  </div>';
+  html += '  <div class="tb-escalation-config-tier-fields">';
+
+  // After (minutes)
+  html += '    <div>';
+  html += '      <label class="tb-label">After (minutes)</label>';
+  html += '      <input type="number" class="tb-input tbEscTierAfter" data-tier-idx="' + index + '" value="' + afterMin + '" min="1" max="1440" step="1">';
+  html += '    </div>';
+
+  // Label
+  html += '    <div>';
+  html += '      <label class="tb-label">Label</label>';
+  html += '      <input type="text" class="tb-input tbEscTierLabel" data-tier-idx="' + index + '" value="' + tbEsc(label) + '" maxlength="100" placeholder="e.g. Page on-call">';
+  html += '    </div>';
+
+  // Target IDs (full width, comma-separated with helper text)
+  html += '    <div class="full-width">';
+  html += '      <label class="tb-label">Target IDs (comma-separated)</label>';
+  html += '      <input type="text" class="tb-input tbEscTierTargets" data-tier-idx="' + index + '" value="' + tbEsc(targetIds.join(', ')) + '" placeholder="target-id-1, target-id-2">';
+  if (targets.length > 0) {
+    html += '      <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Available: ' + targets.map(function(t) { return tbEsc(t.id); }).join(', ') + '</div>';
+  }
+  html += '    </div>';
+
+  html += '  </div>';
+  html += '</div>';
+  return html;
+}
+
+/** Toggle escalation fields enabled/disabled state. */
+function tbToggleEscalationFields() {
+  const enabled = document.getElementById('tbEscEnabled')?.checked ?? false;
+  const container = document.getElementById('tbEscFieldsContainer');
+  if (container) {
+    if (enabled) {
+      container.classList.remove('tb-escalation-config-disabled');
+    } else {
+      container.classList.add('tb-escalation-config-disabled');
+    }
+  }
+}
+
+/** Add a new empty escalation tier to the config form. */
+function tbAddEscalationTier() {
+  const current = tbCollectWebhookFormState();
+  if (!current) return;
+  if (!current.escalation) {
+    current.escalation = { enabled: false, triggerSeverity: 'critical', cooldownMs: 300000, tiers: [] };
+  }
+  if (current.escalation.tiers.length >= 3) {
+    tbShowToast('Maximum 3 escalation tiers allowed', 'error');
+    return;
+  }
+  // Default: afterMs based on tier count (5min, 15min, 30min)
+  const defaults = [300000, 900000, 1800000];
+  const afterMs = defaults[current.escalation.tiers.length] || 300000;
+  current.escalation.tiers.push({ afterMs: afterMs, targetIds: [], label: '' });
+  tbRenderWebhookConfigForm(current);
+}
+
+/** Remove an escalation tier from the config form by index. */
+function tbRemoveEscalationTier(index) {
+  const current = tbCollectWebhookFormState();
+  if (!current || !current.escalation) return;
+  current.escalation.tiers.splice(index, 1);
+  tbRenderWebhookConfigForm(current);
 }
 
 /** Render a single webhook target row. */
@@ -10513,12 +10853,37 @@ function tbCollectWebhookFormState() {
     });
   });
 
+  // Escalation policy state
+  const escEnabled = document.getElementById('tbEscEnabled')?.checked ?? false;
+  const escTriggerSeverity = document.getElementById('tbEscTriggerSeverity')?.value || 'critical';
+  const escCooldownSec = parseFloat(document.getElementById('tbEscCooldown')?.value ?? '300');
+  const tierEls = document.querySelectorAll('.tb-escalation-config-tier');
+  const escTiers = [];
+  tierEls.forEach(function(el, i) {
+    const afterInput = el.querySelector('.tbEscTierAfter');
+    const labelInput = el.querySelector('.tbEscTierLabel');
+    const targetsInput = el.querySelector('.tbEscTierTargets');
+    const afterMin = parseFloat(afterInput?.value ?? '1');
+    const targetIdsRaw = (targetsInput?.value || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+    escTiers.push({
+      afterMs: Math.round(afterMin * 60000),
+      label: (labelInput?.value || '').trim(),
+      targetIds: targetIdsRaw,
+    });
+  });
+
   return {
     enabled: enabled,
     cooldownMs: Math.max(0, Math.round(cooldownSec * 1000)),
     timeoutMs: Math.max(1000, Math.min(30000, Math.round(timeoutSec * 1000))),
     maxRetries: Math.max(0, Math.min(5, maxRetries)),
     targets: targets,
+    escalation: {
+      enabled: escEnabled,
+      triggerSeverity: escTriggerSeverity,
+      cooldownMs: Math.max(0, Math.round(escCooldownSec * 1000)),
+      tiers: escTiers,
+    },
   };
 }
 
@@ -10564,12 +10929,48 @@ function tbValidateWebhookForm(state) {
     }
   }
 
+  // Escalation policy validation
+  if (state.escalation && state.escalation.enabled) {
+    const esc = state.escalation;
+    if (esc.cooldownMs < 0 || !isFinite(esc.cooldownMs)) {
+      errors.push('Escalation: Cooldown must be a non-negative number');
+    }
+    if (!['warning', 'critical'].includes(esc.triggerSeverity)) {
+      errors.push('Escalation: Trigger severity must be warning or critical');
+    }
+    if (esc.tiers.length > 3) {
+      errors.push('Escalation: Maximum 3 tiers allowed');
+    }
+    const targetIdSet = new Set(state.targets.map(function(t) { return t.id; }));
+    let prevAfterMs = 0;
+    for (let ti = 0; ti < esc.tiers.length; ti++) {
+      const tier = esc.tiers[ti];
+      const tp = 'Escalation Tier ' + (ti + 1);
+      if (!isFinite(tier.afterMs) || tier.afterMs < 60000) {
+        errors.push(tp + ': After must be >= 1 minute');
+      } else if (tier.afterMs > 86400000) {
+        errors.push(tp + ': After must be <= 24 hours');
+      } else if (tier.afterMs <= prevAfterMs) {
+        errors.push(tp + ': After must be greater than previous tier');
+      }
+      prevAfterMs = tier.afterMs || 0;
+      if (tier.targetIds.length > 5) {
+        errors.push(tp + ': Maximum 5 targets per tier');
+      }
+      for (let tj = 0; tj < tier.targetIds.length; tj++) {
+        if (targetIdSet.size > 0 && !targetIdSet.has(tier.targetIds[tj])) {
+          errors.push(tp + ': Target ID "' + tier.targetIds[tj] + '" not found in webhook targets');
+        }
+      }
+    }
+  }
+
   return errors;
 }
 
 /** Build the API payload from form state. Handles secret pass-through. */
 function tbBuildWebhookPayload(state) {
-  return {
+  const payload = {
     enabled: state.enabled,
     cooldownMs: state.cooldownMs,
     timeoutMs: state.timeoutMs,
@@ -10595,6 +10996,24 @@ function tbBuildWebhookPayload(state) {
       return target;
     }),
   };
+
+  // Include escalation policy config if present
+  if (state.escalation) {
+    payload.escalation = {
+      enabled: state.escalation.enabled,
+      triggerSeverity: state.escalation.triggerSeverity,
+      cooldownMs: state.escalation.cooldownMs,
+      tiers: state.escalation.tiers.map(function(t) {
+        return {
+          afterMs: t.afterMs,
+          targetIds: t.targetIds,
+          label: t.label || undefined,
+        };
+      }),
+    };
+  }
+
+  return payload;
 }
 
 /** Save webhook config to the server. */
@@ -10641,6 +11060,12 @@ function tbResetWebhookConfig() {
     timeoutMs: 10000,
     maxRetries: 3,
     targets: [],
+    escalation: {
+      enabled: false,
+      triggerSeverity: 'critical',
+      cooldownMs: 300000,
+      tiers: [],
+    },
   };
   tbRenderWebhookConfigForm(defaults);
   tbShowToast('Form reset to defaults (click Save to apply)', 'info');
