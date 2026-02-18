@@ -104,6 +104,7 @@ import { handleConversationApi } from './routes/conversation.js';
 import { handleTacticalMapControls } from './routes/tactical-map-controls.js';
 import { handleLogs } from './routes/logs.js';
 import { handleTacticalMapReplay } from './routes/tactical-map-replay.js';
+import { handleProgressionApi } from './routes/progression.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -2808,6 +2809,9 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 
   // VentureOS RPG APIs (Issue #78 — monorepo integration)
   if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
+
+  // VentureOS Progression APIs (Issue #203 — Phase 4.5)
+  if (handleProgressionApi(req, res, { dbPath: RPG_DB_PATH })) return;
 
   // VentureOS APIs
   if (req.url && req.url.startsWith('/api/ventureos-kpis')) {
