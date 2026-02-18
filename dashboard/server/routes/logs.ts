@@ -425,6 +425,60 @@ export function handleLogs(
     return true;
   }
 
+  // ── GET /api/logs/export — downloadable filtered log file ─────────────────
+  if (pathname === '/api/logs/export') {
+    const sourceId = urlObj.searchParams.get('source') ?? '';
+    const limit = clampInt(urlObj.searchParams.get('limit'), 10, 5000, 500);
+    const search = urlObj.searchParams.get('search') ?? '';
+    const level = urlObj.searchParams.get('level') ?? '';
+    const format = urlObj.searchParams.get('format') === 'text' ? 'text' : 'jsonl';
+
+    if (!sourceId) {
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+      res.end('Missing required parameter: source');
+      return true;
+    }
+
+    const filePath = resolveSourcePath(sourceId, LOG_DIR, VENTUREOS_ROOT);
+    if (!filePath) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end(`Log source not found: ${sourceId}`);
+      return true;
+    }
+
+    try {
+      const readCount = search || level ? limit * 4 : limit;
+      const rawLines = tailLines(filePath, readCount);
+      const entries = parseLines(rawLines, sourceId, { search, level });
+      const sliced = entries.slice(Math.max(0, entries.length - limit));
+
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const levelSuffix = level && level !== 'all' ? `-${level}` : '';
+      const ext = format === 'text' ? 'log' : 'jsonl';
+      const filename = `logs-${sourceId}${levelSuffix}-${ts}.${ext}`;
+
+      const contentType = format === 'text' ? 'text/plain; charset=utf-8' : 'application/x-ndjson; charset=utf-8';
+
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      });
+
+      if (format === 'text') {
+        res.end(sliced.map((e) => {
+          const tsStr = e.ts ? `[${e.ts}] ` : '';
+          return `${tsStr}[${e.level.toUpperCase()}] ${e.message}`;
+        }).join('\n'));
+      } else {
+        res.end(sliced.map((e) => JSON.stringify(e)).join('\n'));
+      }
+    } catch {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Failed to export log entries');
+    }
+    return true;
+  }
+
   // ── Legacy compat: GET /api/logs?service=...&lines=... ───────────────────
   if (pathname === '/api/logs') {
     const service = urlObj.searchParams.get('service') ?? '';
