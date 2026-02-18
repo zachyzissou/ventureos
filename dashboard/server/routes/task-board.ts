@@ -82,6 +82,10 @@ import {
   computeWebhookHealth,
 } from '../webhook-health-stats.js';
 
+import {
+  maybeEscalate,
+} from '../escalation-policy.js';
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -1039,6 +1043,18 @@ export async function handleTaskBoard(
       try {
         // Intentionally not awaited — delivery runs in background
         void maybeDeliverWebhooks(dataDir, metrics.alerts);
+      } catch {
+        // Non-critical — don't break the metrics response
+      }
+    }
+
+    // Piggyback (Phase 19): evaluate escalation policy for persistent alert states.
+    // Runs after base webhook dispatch — escalation is additive.
+    // Fire-and-forget — escalation delivery is async and non-blocking.
+    if (metrics.alerts) {
+      try {
+        const webhookConfig = readWebhookConfig(dataDir);
+        void maybeEscalate(dataDir, webhookConfig, metrics.alerts, null);
       } catch {
         // Non-critical — don't break the metrics response
       }
