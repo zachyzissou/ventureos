@@ -6,7 +6,7 @@
   "description": "OpenClaw operational dashboard — monitoring, session management, KPI tracking",
   "scripts": {
     "build": "tsc --noEmit",
-    "compile": "tsc && mkdir -p dist/lib dist/scripts && echo '{\"type\":\"commonjs\"}' > dist/lib/package.json && echo '{\"type\":\"commonjs\"}' > dist/scripts/package.json",
+    "compile": "tsc && mkdir -p dist/lib dist/scripts && echo '{\"type\":\"commonjs\"}' > dist/lib/package.json && echo '{\"type\":\"commonjs\"}' > dist/scripts/package.json && mkdir -p dist/dashboard/client && cp -R client/* dist/dashboard/client/",
     "dev": "tsx watch server/server.ts",
     "start": "node dist/dashboard/server/server.js",
     "test": "vitest run --config vitest.config.ts",

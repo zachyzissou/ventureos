@@ -26,6 +26,10 @@ import { createMissionSpawnModal } from '@/renderer/mission-spawn-modal';
 import { createConfirmationDialog } from '@/renderer/confirmation-dialog';
 import { createCommandPalette } from '@/renderer/command-palette';
 import { createBudgetSlider } from '@/renderer/budget-slider';
+import { createTourOverlay } from '@/renderer/tour-overlay';
+import { createHelpOverlay } from '@/renderer/help-overlay';
+import { createTourController } from '@/tour/controller';
+import { DEFAULT_TOUR_STEPS, HELP_ENTRIES } from '@/tour/steps';
 import { deriveBuildingState } from '@/renderer/building-states';
 import { BudgetAlertManager } from '@/economy/alerts';
 import { HealthAlertManager } from '@/health/alerts';
@@ -150,11 +154,16 @@ async function bootstrap() {
 
   budgetSlider.container.position.set(0, 0);
 
+  const tourOverlay = createTourOverlay();
+  const helpOverlay = createHelpOverlay(HELP_ENTRIES);
+
   app.stage.addChild(detailPanel.container);
   app.stage.addChild(budgetSlider.container);
   app.stage.addChild(missionSpawnModal.container);
   app.stage.addChild(confirmationDialog.container);
   app.stage.addChild(commandPalette.container);
+  app.stage.addChild(helpOverlay.container);
+  app.stage.addChild(tourOverlay.container);
 
   const controlClient = createControlClient({
     onError: (e) => console.warn('[tactical-map] control api error', e)
@@ -173,6 +182,11 @@ async function bootstrap() {
     budgetSlider,
     canvas: app.canvas,
   });
+
+  const tourController = createTourController({
+    eventBus: interactionBus, tourOverlay, helpOverlay, steps: DEFAULT_TOUR_STEPS,
+  });
+  if (!tourController.hasCompleted()) setTimeout(() => tourController.start(), 800);
 
   // Default to admin controls in tactical view unless explicitly overridden.
   const roleParam = typeof location !== 'undefined'
@@ -233,12 +247,22 @@ async function bootstrap() {
     missionSpawnModal.setViewport(app.screen.width, app.screen.height);
     confirmationDialog.setViewport(app.screen.width, app.screen.height);
     commandPalette.setViewport(app.screen.width, app.screen.height);
+    tourOverlay.setViewport(app.screen.width, app.screen.height);
+    helpOverlay.setViewport(app.screen.width, app.screen.height);
 
     // Align budget slider near the lower portion of detail panel.
     const panelX = app.screen.width - 320 - 20;
     const panelY = 20;
     budgetSlider.container.position.set(panelX + 16, panelY + 330);
   }
+
+  function onTourKeyDown(e: KeyboardEvent) {
+    const meta = e.metaKey || e.ctrlKey;
+    if (e.key === '?' && !meta) { e.preventDefault(); tourController.toggleHelp(); return; }
+    if (meta && e.key === '/') { e.preventDefault(); tourController.start(); return; }
+    if (e.key === 'Escape' && helpOverlay.isVisible()) { helpOverlay.hide(); return; }
+  }
+  window.addEventListener('keydown', onTourKeyDown);
 
   // Pan only when dragging on the terrain surface.
   terrain.hit.on('pointerdown', (e) => camera.onPanDown(e));
@@ -537,6 +561,8 @@ async function bootstrap() {
     confirmationDialog.update(elapsedMs);
     commandPalette.update(elapsedMs);
     budgetSlider.update(elapsedMs);
+    tourOverlay.update(elapsedMs);
+    helpOverlay.update(elapsedMs);
     resourceEconomy.update(elapsedMs);
   });
 
@@ -546,6 +572,8 @@ async function bootstrap() {
     economyClient.stop();
     healthClient.stop();
     interactionController.destroy();
+    tourController.destroy();
+    window.removeEventListener('keydown', onTourKeyDown);
   });
 
   layout();
@@ -571,6 +599,9 @@ async function bootstrap() {
     setHealthState: (next: HealthState) => healthStore.set(next),
     toggleHealthDashboard: () => healthDashboard.setVisible(!healthDashboard.isVisible()),
     setUserRole: (role: UserRole) => interactionController.setUserRole(role),
+    tourController,
+    startTour: () => tourController.start(),
+    toggleHelp: () => tourController.toggleHelp(),
     // deterministic snapshot helper
     snapshot: () => {
       app.render();
