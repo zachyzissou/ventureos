@@ -2136,6 +2136,139 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 /* ─── End Alert Rules ───────────────────────────────────────────────── */
 
+/* ─── Escalation Status (Issue #219, Phase 20) ────────────────────── */
+
+.tb-escalation-panel {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.tb-escalation-panel.active {
+  display: block;
+}
+.tb-escalation-panel.tracking {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.tb-escalation-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tb-escalation-header .icon {
+  font-size: 15px;
+}
+.tb-escalation-header .title {
+  flex: 1;
+}
+.tb-escalation-policy-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.tb-escalation-policy-badge.enabled {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--green);
+}
+.tb-escalation-policy-badge.disabled {
+  background: rgba(113, 113, 122, 0.15);
+  color: var(--text-muted);
+}
+.tb-escalation-policy-badge.tracking {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--yellow);
+  animation: tb-stuck-pulse 2s ease-in-out infinite;
+}
+.tb-escalation-summary {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.tb-escalation-summary .timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--yellow);
+}
+.tb-escalation-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tb-escalation-tier {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+}
+.tb-escalation-tier.status-inactive {
+  opacity: 0.5;
+}
+.tb-escalation-tier.status-pending {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.05);
+}
+.tb-escalation-tier.status-triggered {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+}
+.tb-escalation-tier.status-cooldown {
+  border-color: rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.05);
+}
+.tb-escalation-tier-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  min-width: 60px;
+  text-align: center;
+}
+.tb-escalation-tier-badge.inactive {
+  background: rgba(113, 113, 122, 0.2);
+  color: var(--text-muted);
+}
+.tb-escalation-tier-badge.pending {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--blue);
+}
+.tb-escalation-tier-badge.triggered {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--yellow);
+}
+.tb-escalation-tier-badge.cooldown {
+  background: rgba(168, 85, 247, 0.2);
+  color: var(--purple);
+}
+.tb-escalation-tier-label {
+  flex: 1;
+  font-weight: 500;
+}
+.tb-escalation-tier-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.tb-escalation-tier-time.countdown {
+  color: var(--blue);
+}
+
+/* ─── End Escalation Status ───────────────────────────────────────── */
+
 /* ─── Webhook Config (Issue #219, Phase 12) ─────────────────────────── */
 
 .tb-webhook-config-link {
@@ -4864,6 +4997,17 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
               <span class="tb-delivery-history-link" onclick="tbOpenDeliveryHistory()">📊 Deliveries</span>
             </div>
             <div id="tbAlertsBannerRules"></div>
+          </div>
+
+          <!-- Escalation Status Panel (Phase 20) — shows current escalation state -->
+          <div id="tbEscalationPanel" class="tb-escalation-panel">
+            <div class="tb-escalation-header">
+              <span class="icon">🔺</span>
+              <span class="title">Escalation Status</span>
+              <span id="tbEscalationPolicyBadge" class="tb-escalation-policy-badge disabled">Disabled</span>
+            </div>
+            <div id="tbEscalationSummary" class="tb-escalation-summary"></div>
+            <div id="tbEscalationTiers" class="tb-escalation-tiers"></div>
           </div>
 
           <!-- Alert History Timeline (Phase 10) — compact recent alert transitions -->
@@ -8690,6 +8834,7 @@ async function tbRefresh() {
       tbRefreshMetrics();
       tbFetchHistory();
       tbFetchAlertTimeline();
+      tbFetchEscalationStatus();
     }
   } catch (e) {
     console.error('[task-board] refresh error', e);
@@ -9470,6 +9615,7 @@ function tbToggleMetrics() {
     tbRefreshMetrics();
     tbFetchHistory();
     tbFetchAlertTimeline();
+    tbFetchEscalationStatus();
   }
 }
 
@@ -10053,6 +10199,130 @@ function tbTimelineTimeAgo(ts) {
   if (diff < 3600000) return Math.round(diff / 60000) + 'm ago';
   if (diff < 86400000) return Math.round(diff / 3600000) + 'h ago';
   return Math.round(diff / 86400000) + 'd ago';
+}
+
+// ── Escalation Status UI (Issue #219, Phase 20) ─────────────────────────────
+// Dashboard panel displaying current escalation policy state, tier status,
+// and time-to-next-tier countdowns. Read-only — no mutations from UI.
+
+let tbEscalationTimer = null;
+
+async function tbFetchEscalationStatus() {
+  try {
+    const res = await fetch('/api/task-board/escalation/status');
+    if (!res.ok) return;
+    const data = await res.json();
+    tbRenderEscalationStatus(data.status);
+  } catch (e) {
+    console.warn('[task-board] escalation status fetch error', e);
+  }
+}
+
+function tbRenderEscalationStatus(status) {
+  const panel = document.getElementById('tbEscalationPanel');
+  const badge = document.getElementById('tbEscalationPolicyBadge');
+  const summary = document.getElementById('tbEscalationSummary');
+  const tiersEl = document.getElementById('tbEscalationTiers');
+  if (!panel || !badge || !summary || !tiersEl) return;
+
+  // Always show panel when policy exists (enabled or disabled)
+  if (!status) {
+    panel.classList.remove('active', 'tracking');
+    return;
+  }
+
+  panel.classList.add('active');
+  panel.classList.toggle('tracking', status.isTracking);
+
+  // Policy badge
+  if (!status.policyEnabled) {
+    badge.className = 'tb-escalation-policy-badge disabled';
+    badge.textContent = 'Disabled';
+    summary.innerHTML = 'Escalation policy is not enabled. Configure it in <strong>Webhooks → Escalation</strong>.';
+    tiersEl.innerHTML = '';
+    tbStopEscalationTimer();
+    return;
+  }
+
+  if (status.isTracking) {
+    badge.className = 'tb-escalation-policy-badge tracking';
+    badge.textContent = 'Tracking';
+  } else {
+    badge.className = 'tb-escalation-policy-badge enabled';
+    badge.textContent = 'Active';
+  }
+
+  // Summary text
+  if (status.isTracking) {
+    const dur = tbEscDuration(status.qualifyingDurationMs);
+    const sev = status.qualifyingSeverity || 'unknown';
+    const tierLabel = status.currentTierLabel
+      ? ` — current: <strong>${tbEsc(status.currentTierLabel)}</strong>`
+      : '';
+    const nextPart = status.nextTierTimeRemainingMs != null && status.nextTierTimeRemainingMs > 0
+      ? ` · Next tier in <span class="timer">${tbEscDuration(status.nextTierTimeRemainingMs)}</span>`
+      : '';
+    summary.innerHTML = `<strong>${sev}</strong> state persisting for <span class="timer">${dur}</span>${tierLabel}${nextPart}`;
+    tbStartEscalationTimer();
+  } else {
+    summary.innerHTML = `Monitoring for <strong>${status.triggerSeverity}</strong> states. ${status.tiers.length} tier${status.tiers.length !== 1 ? 's' : ''} configured.`;
+    tbStopEscalationTimer();
+  }
+
+  // Tier breakdown
+  if (status.tiers.length === 0) {
+    tiersEl.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">No escalation tiers configured.</div>';
+    return;
+  }
+
+  tiersEl.innerHTML = status.tiers.map(t => {
+    const statusBadge = `<span class="tb-escalation-tier-badge ${t.status}">${t.status}</span>`;
+    let timeInfo = '';
+    if (t.status === 'pending' && t.timeRemainingMs != null && t.timeRemainingMs > 0) {
+      timeInfo = `<span class="tb-escalation-tier-time countdown">⏱ ${tbEscDuration(t.timeRemainingMs)}</span>`;
+    } else if (t.status === 'cooldown' && t.timeRemainingMs != null) {
+      timeInfo = `<span class="tb-escalation-tier-time">🔄 ${tbEscDuration(t.timeRemainingMs)}</span>`;
+    } else if (t.status === 'triggered' && t.lastNotifiedAt) {
+      timeInfo = `<span class="tb-escalation-tier-time">✅ ${tbTimelineAgo(t.lastNotifiedAt)}</span>`;
+    } else if (t.status === 'inactive') {
+      timeInfo = `<span class="tb-escalation-tier-time">after ${tbEscDuration(t.afterMs)}</span>`;
+    }
+    const targets = t.targetIds.length > 0
+      ? `<span style="font-size:10px;color:var(--text-muted);">[${t.targetIds.length} target${t.targetIds.length !== 1 ? 's' : ''}]</span>`
+      : '';
+    return `<div class="tb-escalation-tier status-${t.status}">
+      ${statusBadge}
+      <span class="tb-escalation-tier-label">${tbEsc(t.label)}</span>
+      ${targets}
+      ${timeInfo}
+    </div>`;
+  }).join('');
+}
+
+function tbEscDuration(ms) {
+  if (ms == null || ms < 0) return '—';
+  const secs = Math.floor(ms / 1000);
+  if (secs < 60) return secs + 's';
+  const mins = Math.floor(secs / 60);
+  const remSecs = secs % 60;
+  if (mins < 60) return mins + 'm ' + (remSecs > 0 ? remSecs + 's' : '');
+  const hrs = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  return hrs + 'h ' + (remMins > 0 ? remMins + 'm' : '');
+}
+
+function tbStartEscalationTimer() {
+  if (tbEscalationTimer) return;
+  tbEscalationTimer = setInterval(() => {
+    tbFetchEscalationStatus();
+  }, 15000); // Refresh every 15s while tracking
+}
+
+function tbStopEscalationTimer() {
+  if (tbEscalationTimer) {
+    clearInterval(tbEscalationTimer);
+    tbEscalationTimer = null;
+  }
 }
 
 // ── Webhook Config UI (Issue #219, Phase 12) ────────────────────────────────
