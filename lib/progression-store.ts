@@ -23,6 +23,11 @@ import type {
   AnnotatedSkillNode,
   SkillNodeStatus,
   LeaderboardEntry,
+  XpAttribution,
+  SkillNodeLayout,
+  SkillTreeValidation,
+  ProgressionMilestone,
+  MilestoneType,
 } from './types/progression';
 import {
   levelFromXp,
@@ -32,6 +37,7 @@ import {
   isPrestigeEligible,
   MAX_PRESTIGE_RANK,
   getDefaultSkillTree,
+  validateSkillTree,
 } from './progression-engine';
 
 // ─── Schema Migration ───────────────────────────────────────────────────────
@@ -585,6 +591,15 @@ export class ProgressionStore {
         )
         .get(agentId, nodeId) as SkillUnlock;
 
+      // Record milestone for the unlock
+      this.recordMilestone(
+        agentId,
+        'skill_unlock',
+        `Unlocked: ${node.name}`,
+        `${profile.display_name} unlocked "${node.name}" for ${node.xp_cost} XP`,
+        { node_id: nodeId, xp_cost: node.xp_cost },
+      );
+
       const updatedProfile = this.db
         .prepare('SELECT * FROM progression_profiles WHERE agent_id = ?')
         .get(agentId) as ProgressionProfile;
@@ -631,6 +646,122 @@ export class ProgressionStore {
     }));
 
     return { entries, total_agents: total.cnt };
+  }
+
+  // ─── Phase 2: Admin CRUD, Attribution, Milestones (Issue #207) ────────
+
+  /** Upsert a skill node and rebuild its prerequisite edges. */
+  upsertSkillNode(nodeId: string, name: string, description: string, category: string, xpCost: number, tier: number, prerequisites: string[]): SkillNode {
+    this.db.prepare(
+      `INSERT INTO skill_nodes (node_id, name, description, category, xp_cost, tier, prerequisites)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(node_id) DO UPDATE SET name=excluded.name, description=excluded.description,
+         category=excluded.category, xp_cost=excluded.xp_cost, tier=excluded.tier, prerequisites=excluded.prerequisites`
+    ).run(nodeId, name, description, category, xpCost, tier, JSON.stringify(prerequisites));
+    this.db.prepare('DELETE FROM skill_edges WHERE to_node_id = ?').run(nodeId);
+    const ins = this.db.prepare('INSERT OR IGNORE INTO skill_edges (from_node_id, to_node_id) VALUES (?, ?)');
+    for (const p of prerequisites) ins.run(p, nodeId);
+    const row = this.db.prepare('SELECT * FROM skill_nodes WHERE node_id = ?').get(nodeId) as any;
+    return { ...row, category: row.category as SkillNode['category'], prerequisites: JSON.parse(row.prerequisites) as string[] };
+  }
+
+  /** Delete a skill node. Refuses if other nodes depend on it. */
+  deleteSkillNode(nodeId: string): boolean {
+    return this.db.transaction(() => {
+      const deps = this.db.prepare('SELECT to_node_id FROM skill_edges WHERE from_node_id = ?').all(nodeId) as Array<{ to_node_id: string }>;
+      if (deps.length > 0) throw new Error(`Cannot delete "${nodeId}": prerequisite for ${deps.map((d: any) => d.to_node_id).join(', ')}`);
+      this.db.prepare('DELETE FROM skill_edges WHERE to_node_id = ?').run(nodeId);
+      this.db.prepare('DELETE FROM skill_node_layouts WHERE node_id = ?').run(nodeId);
+      this.db.prepare('DELETE FROM skill_unlocks WHERE node_id = ?').run(nodeId);
+      return this.db.prepare('DELETE FROM skill_nodes WHERE node_id = ?').run(nodeId).changes > 0;
+    })();
+  }
+
+  /** Validate the skill tree graph (cycles, orphans, bad refs, costs). */
+  validateTree(): SkillTreeValidation {
+    return validateSkillTree(this.getSkillNodes(), this.getSkillEdges());
+  }
+
+  /** Get visual layout positions for all nodes. */
+  getNodeLayouts(): SkillNodeLayout[] {
+    return this.db.prepare('SELECT * FROM skill_node_layouts').all() as SkillNodeLayout[];
+  }
+
+  /** Save/upsert visual layout positions. */
+  saveNodeLayouts(layouts: SkillNodeLayout[]): void {
+    const upsert = this.db.prepare(
+      'INSERT INTO skill_node_layouts (node_id, x, y) VALUES (?, ?, ?) ON CONFLICT(node_id) DO UPDATE SET x=excluded.x, y=excluded.y'
+    );
+    this.db.transaction(() => { for (const l of layouts) upsert.run(l.node_id, l.x, l.y); })();
+  }
+
+  /** Export full tree definition with optional layout positions. */
+  exportTree(): { nodes: Array<SkillNode & { x?: number; y?: number }>; edges: SkillEdge[] } {
+    const nodes = this.getSkillNodes();
+    const edges = this.getSkillEdges();
+    const layoutMap = new Map(this.getNodeLayouts().map((l: SkillNodeLayout) => [l.node_id, l]));
+    return {
+      nodes: nodes.map((n: SkillNode) => { const l = layoutMap.get(n.node_id); return l ? { ...n, x: l.x, y: l.y } : n; }),
+      edges,
+    };
+  }
+
+  /** Import a tree definition, replacing existing nodes/edges/layouts. */
+  importTree(def: { nodes: Array<SkillNode & { x?: number; y?: number }>; edges: SkillEdge[] }): void {
+    this.db.transaction(() => {
+      this.db.prepare('DELETE FROM skill_node_layouts').run();
+      this.db.prepare('DELETE FROM skill_edges').run();
+      this.db.prepare('DELETE FROM skill_nodes').run();
+      const insN = this.db.prepare('INSERT INTO skill_nodes (node_id,name,description,category,xp_cost,tier,prerequisites) VALUES (?,?,?,?,?,?,?)');
+      const insE = this.db.prepare('INSERT INTO skill_edges (from_node_id,to_node_id) VALUES (?,?)');
+      const insL = this.db.prepare('INSERT INTO skill_node_layouts (node_id,x,y) VALUES (?,?,?)');
+      for (const n of def.nodes) {
+        insN.run(n.node_id, n.name, n.description, n.category, n.xp_cost, n.tier, JSON.stringify(n.prerequisites));
+        if (n.x != null && n.y != null) insL.run(n.node_id, n.x, n.y);
+      }
+      for (const e of def.edges) insE.run(e.from_node_id, e.to_node_id);
+    })();
+  }
+
+  /** XP attribution breakdown by source category for a single agent. */
+  getXpAttribution(agentId: string): XpAttribution[] {
+    return this.db.prepare(
+      `SELECT source_category, SUM(raw_xp) as total_raw_xp, SUM(effective_xp) as total_effective_xp,
+              COUNT(*) as event_count, AVG(diversification_multiplier) as avg_multiplier
+       FROM xp_events WHERE agent_id = ? GROUP BY source_category ORDER BY total_effective_xp DESC`
+    ).all(agentId) as XpAttribution[];
+  }
+
+  /** Global XP attribution breakdown across all agents. */
+  getGlobalXpAttribution(): XpAttribution[] {
+    return this.db.prepare(
+      `SELECT source_category, SUM(raw_xp) as total_raw_xp, SUM(effective_xp) as total_effective_xp,
+              COUNT(*) as event_count, AVG(diversification_multiplier) as avg_multiplier
+       FROM xp_events GROUP BY source_category ORDER BY total_effective_xp DESC`
+    ).all() as XpAttribution[];
+  }
+
+  /** Daily XP aggregation for an agent over the given number of days. */
+  getXpHistory(agentId: string, days: number = 30): Array<{ date: string; total_xp: number; event_count: number }> {
+    return this.db.prepare(
+      `SELECT DATE(created_at) as date, SUM(effective_xp) as total_xp, COUNT(*) as event_count
+       FROM xp_events WHERE agent_id = ? AND created_at >= datetime('now', ? || ' days')
+       GROUP BY DATE(created_at) ORDER BY date`
+    ).all(agentId, -days) as any[];
+  }
+
+  /** Record a progression milestone event. */
+  recordMilestone(agentId: string, type: MilestoneType, title: string, description: string, metadata?: Record<string, unknown>): ProgressionMilestone {
+    const id = crypto.randomUUID();
+    this.db.prepare(
+      'INSERT INTO progression_milestones (id, agent_id, type, title, description, metadata) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(id, agentId, type, title, description, JSON.stringify(metadata ?? {}));
+    return this.db.prepare('SELECT * FROM progression_milestones WHERE id = ?').get(id) as ProgressionMilestone;
+  }
+
+  /** Get recent milestones across all agents. */
+  getRecentMilestones(limit: number = 20): ProgressionMilestone[] {
+    return this.db.prepare('SELECT * FROM progression_milestones ORDER BY created_at DESC LIMIT ?').all(limit) as ProgressionMilestone[];
   }
 }
 
