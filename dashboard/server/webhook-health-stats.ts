@@ -310,3 +310,183 @@ export function computeWebhookHealth(
     computedAt: now,
   };
 }
+
+// ─── Export Helpers (Phase 24: Webhook Health Stats Export) ───────────────────
+
+/**
+ * Maximum number of target rows allowed in a single export.
+ * In practice, the number of targets is small (< 20 typically),
+ * but we bound for safety.
+ */
+export const HEALTH_EXPORT_MAX_TARGETS = 100;
+
+/** Supported export formats. */
+export type HealthExportFormat = 'csv' | 'json';
+
+/** Export query — same filters as WebhookHealthQuery, plus format. */
+export interface HealthExportQuery {
+  format?: HealthExportFormat;
+  windowMs?: number;
+  targetId?: string;
+  now?: number;
+}
+
+/** Result of a health stats export operation. */
+export interface HealthExportResult {
+  /** The serialized export content (CSV string or JSON string). */
+  content: string;
+  /** MIME type for the response Content-Type header. */
+  contentType: string;
+  /** Suggested filename for the Content-Disposition header. */
+  filename: string;
+  /** Number of target rows included in the export. */
+  count: number;
+}
+
+/**
+ * Escape a value for CSV output.
+ * Wraps in double quotes if the value contains commas, quotes, or newlines.
+ * Pure function.
+ */
+export function csvEscapeHealth(value: string | number | boolean | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+/**
+ * Format a timestamp as ISO 8601 string for export.
+ * Returns empty string for null/undefined.
+ */
+function formatHealthExportTs(ts: number | null | undefined): string {
+  if (ts == null) return '';
+  return new Date(ts).toISOString();
+}
+
+/**
+ * Conservative field allowlist for webhook health stats export.
+ * Explicitly enumerates safe fields — no raw webhook URLs, secrets,
+ * or internal identifiers leak through. maskedUrl is already safe
+ * (protocol + host only).
+ */
+function sanitizeHealthTargetForExport(target: WebhookTargetHealthStats): Record<string, unknown> {
+  return {
+    targetId: target.targetId,
+    targetName: target.targetName,
+    healthStatus: target.healthStatus,
+    successCount: target.successCount,
+    failureCount: target.failureCount,
+    totalCount: target.totalCount,
+    successRate: target.successRate,
+    avgLatencyMs: target.avgLatencyMs,
+    lastSuccessAt: formatHealthExportTs(target.lastSuccessTs),
+    lastFailureAt: formatHealthExportTs(target.lastFailureTs),
+    lastStatusCode: target.lastStatusCode,
+    // Explicitly omit: maskedUrl (even masked URLs could leak infrastructure info in exports)
+    // Explicitly omit: any fields that may be added in future
+  };
+}
+
+/** CSV column headers for webhook health stats export. */
+const HEALTH_CSV_HEADERS = [
+  'targetId', 'targetName', 'healthStatus', 'successCount', 'failureCount',
+  'totalCount', 'successRate', 'avgLatencyMs', 'lastSuccessAt', 'lastFailureAt',
+  'lastStatusCode',
+];
+
+/**
+ * Convert webhook health target stats to CSV format.
+ * Pure function — no I/O, bounded by input array length.
+ */
+export function healthTargetsToCsv(targets: WebhookTargetHealthStats[]): string {
+  const rows: string[] = [HEALTH_CSV_HEADERS.join(',')];
+
+  for (const target of targets) {
+    const safe = sanitizeHealthTargetForExport(target);
+    const row = HEALTH_CSV_HEADERS.map((h) =>
+      csvEscapeHealth(safe[h] as string | number | boolean | null),
+    );
+    rows.push(row.join(','));
+  }
+
+  return rows.join('\n');
+}
+
+/**
+ * Convert webhook health stats to a safe JSON export format.
+ * Returns a JSON string with sanitized targets and summary (no secrets).
+ * Pure function.
+ */
+export function healthStatsToJson(
+  response: WebhookHealthResponse,
+): string {
+  const safeTargets = response.targets.map(sanitizeHealthTargetForExport);
+  return JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    format: 'ventureos-webhook-health-export-v1',
+    windowMs: response.windowMs,
+    computedAt: new Date(response.computedAt).toISOString(),
+    count: safeTargets.length,
+    summary: {
+      totalDeliveries: response.summary.totalDeliveries,
+      totalSuccesses: response.summary.totalSuccesses,
+      totalFailures: response.summary.totalFailures,
+      overallSuccessRate: response.summary.overallSuccessRate,
+      overallAvgLatencyMs: response.summary.overallAvgLatencyMs,
+      targetCount: response.summary.targetCount,
+      healthyCount: response.summary.healthyCount,
+      degradedCount: response.summary.degradedCount,
+      unhealthyCount: response.summary.unhealthyCount,
+    },
+    targets: safeTargets,
+  }, null, 2);
+}
+
+/**
+ * Export webhook health stats with the same filter capabilities as computeWebhookHealth.
+ * Returns formatted content (CSV or JSON), content type, and suggested filename.
+ *
+ * Secret-safe: all targets pass through sanitizeHealthTargetForExport() which
+ * applies a conservative field allowlist. maskedUrl is intentionally omitted
+ * from exports as even partial URL info could leak infrastructure details.
+ */
+export function exportWebhookHealth(
+  dataDir: string,
+  opts: HealthExportQuery = {},
+): HealthExportResult {
+  const format: HealthExportFormat = opts.format === 'csv' ? 'csv' : 'json';
+
+  // Reuse the same computation logic for filter parity
+  const healthResult = computeWebhookHealth(dataDir, {
+    windowMs: opts.windowMs,
+    targetId: opts.targetId,
+    now: opts.now,
+  });
+
+  // Bound target count (defensive — unlikely to exceed in practice)
+  let targets = healthResult.targets;
+  if (targets.length > HEALTH_EXPORT_MAX_TARGETS) {
+    targets = targets.slice(0, HEALTH_EXPORT_MAX_TARGETS);
+  }
+
+  const dateSuffix = new Date().toISOString().slice(0, 10);
+
+  if (format === 'csv') {
+    return {
+      content: healthTargetsToCsv(targets),
+      contentType: 'text/csv; charset=utf-8',
+      filename: `webhook-health-${dateSuffix}.csv`,
+      count: targets.length,
+    };
+  }
+
+  return {
+    content: healthStatsToJson(healthResult),
+    contentType: 'application/json; charset=utf-8',
+    filename: `webhook-health-${dateSuffix}.json`,
+    count: targets.length,
+  };
+}

@@ -94,6 +94,16 @@ import {
 } from '../escalation-history.js';
 import type { EscalationEventType, EscalationExportFormat } from '../escalation-history.js';
 
+import {
+  exportAlertHistory,
+} from '../alert-history.js';
+import type { AlertExportFormat } from '../alert-history.js';
+
+import {
+  exportWebhookHealth,
+} from '../webhook-health-stats.js';
+import type { HealthExportFormat } from '../webhook-health-stats.js';
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -888,6 +898,42 @@ export async function handleTaskBoard(
     return true;
   }
 
+  // ── GET /api/task-board/alerts/timeline/export — Issue #219, Phase 24 ───────
+  // Export alert history as CSV or JSON file download.
+  // Query params: same as /alerts/timeline + ?format=csv|json (default json)
+  // Bounded: max 200 events per export. Secret-safe: conservative field allowlist.
+  if (url.startsWith('/api/task-board/alerts/timeline/export') && method === 'GET') {
+    const exportParams = new URL(url, 'http://localhost').searchParams;
+    const format = (exportParams.get('format') === 'csv' ? 'csv' : 'json') as AlertExportFormat;
+    const limit = exportParams.has('limit')
+      ? Math.max(1, Math.min(Number(exportParams.get('limit')) || 200, 200))
+      : 200;
+    const sinceMs = exportParams.has('sinceMs')
+      ? Math.max(0, Number(exportParams.get('sinceMs')) || 0)
+      : undefined;
+    const minSeverityRaw = exportParams.get('minSeverity');
+    const validSeverities = ['ok', 'warning', 'critical'];
+    const minSeverity = minSeverityRaw && validSeverities.includes(minSeverityRaw)
+      ? (minSeverityRaw as 'ok' | 'warning' | 'critical')
+      : undefined;
+
+    const result = exportAlertHistory(dataDir, {
+      format,
+      limit,
+      sinceMs,
+      minSeverity,
+    });
+
+    res.writeHead(200, {
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+      'Cache-Control': 'no-store',
+      'X-Export-Count': String(result.count),
+    });
+    res.end(result.content);
+    return true;
+  }
+
   // ── GET /api/task-board/alerts/timeline — Issue #219, Phase 10 ─────────────
   // Returns alert history timeline with summary statistics.
   // Query params:
@@ -1000,6 +1046,34 @@ export async function handleTaskBoard(
       sendJson(res, { error: `Test delivery failed: ${msg}`, results: [] }, 500);
     }
 
+    return true;
+  }
+
+  // ── GET /api/task-board/webhooks/health/export — Issue #219, Phase 24 ──────
+  // Export webhook health stats as CSV or JSON file download.
+  // Query params: same as /webhooks/health + ?format=csv|json (default json)
+  // Bounded: max 100 targets per export. Secret-safe: maskedUrl omitted.
+  if (url.startsWith('/api/task-board/webhooks/health/export') && method === 'GET') {
+    const exportParams = new URL(url, 'http://localhost').searchParams;
+    const format = (exportParams.get('format') === 'csv' ? 'csv' : 'json') as HealthExportFormat;
+    const windowMs = exportParams.has('windowMs')
+      ? Math.max(1000, Math.min(Number(exportParams.get('windowMs')) || 86400000, 172800000))
+      : undefined;
+    const targetId = exportParams.get('targetId') || undefined;
+
+    const result = exportWebhookHealth(dataDir, {
+      format,
+      windowMs,
+      targetId,
+    });
+
+    res.writeHead(200, {
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+      'Cache-Control': 'no-store',
+      'X-Export-Count': String(result.count),
+    });
+    res.end(result.content);
     return true;
   }
 
