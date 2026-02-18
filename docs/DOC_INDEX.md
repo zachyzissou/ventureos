@@ -71,6 +71,8 @@
 - **docs/ops/BUDGET_POLICY.md** – thresholds + caps
 - **docs/ops/COST_BUDGETS.md** – thresholds, alert routing, enforcement actions, reporting cadence
 - **docs/ops/OPS_RUNBOOK.md** – incident response tiers
+- **docs/DEPLOY_RUNBOOK.md** – production deploy/rollback operator guide (#197)
+- **docs/PRODUCTION_CUTOVER.md** – hybrid deployment cutover reference (#191)
 
 ## Templates (workspace starters)
 - **docs/templates/AGENTS.json** – AGENTS policy wiring template
