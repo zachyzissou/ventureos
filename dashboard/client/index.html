@@ -5264,6 +5264,10 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
               <option value="low">🟢 Low</option>
             </select>
             <button onclick="tbClearFilters()" class="tb-btn tb-btn-secondary" title="Clear filters" style="padding:6px 10px;font-size:12px;">✕ Clear</button>
+            <div class="tb-export-controls" style="margin-left:4px;">
+              <button class="tb-export-btn" onclick="tbExportCards('csv')" title="Download task cards as CSV">📥 CSV</button>
+              <button class="tb-export-btn" onclick="tbExportCards('json')" title="Download task cards as JSON">📥 JSON</button>
+            </div>
             <button onclick="tbToggleSelectMode()" class="tb-btn tb-btn-secondary" id="tbSelectModeBtn" title="Toggle multi-select mode">☑ Select</button>
             <button onclick="tbRefresh()" class="tb-btn tb-btn-secondary" title="Refresh">🔄 Refresh</button>
             <button onclick="tbShowCreateForm()" class="tb-btn tb-btn-primary" title="New Task">＋ New Task</button>
@@ -10254,6 +10258,30 @@ function tbRenderHistoryChart() {
   `;
 }
 
+// ── Task Card Export (Issue #219, Phase 26) ──────────────────────────────────
+// Download task board cards as CSV/JSON file.
+// Passes current filter state (status/agent/priority) to the export endpoint.
+
+/**
+ * Export task cards as CSV or JSON.
+ * Reads current filter state and triggers a file download via the export API.
+ */
+function tbExportCards(format) {
+  var params = new URLSearchParams();
+  params.set('format', format);
+  params.set('limit', '500');
+
+  if (tbActiveFilters.status) params.set('status', tbActiveFilters.status);
+  if (tbActiveFilters.agentId) params.set('agentId', tbActiveFilters.agentId);
+  if (tbActiveFilters.priority) params.set('priority', tbActiveFilters.priority);
+
+  tbTriggerExportDownload(
+    '/api/task-board/export?' + params.toString(),
+    format,
+    'cards'
+  );
+}
+
 // ── Metrics History Export (Issue #219, Phase 25) ────────────────────────────
 // Download metrics history time-series as CSV/JSON file.
 // Uses the same filter state from the metrics history panel.
@@ -10272,7 +10300,8 @@ function tbExportMetricsHistory(format) {
 
   tbTriggerExportDownload(
     '/api/task-board/metrics/history/export?' + params.toString(),
-    format
+    format,
+    'snapshots'
   );
 }
 
@@ -10855,7 +10884,8 @@ function tbExportAlertHistory(format) {
 
   tbTriggerExportDownload(
     '/api/task-board/alerts/timeline/export?' + params.toString(),
-    format
+    format,
+    'events'
   );
 }
 
@@ -12204,7 +12234,7 @@ function tbExportCurrentTab(format) {
     if (healthWindowSel && healthWindowSel.value) params.set('windowMs', healthWindowSel.value);
     if (healthTargetSel && healthTargetSel.value) params.set('targetId', healthTargetSel.value);
 
-    tbTriggerExportDownload('/api/task-board/webhooks/health/export?' + params.toString(), format);
+    tbTriggerExportDownload('/api/task-board/webhooks/health/export?' + params.toString(), format, 'webhooks');
   } else if (tab === 'retries') {
     // Read retry filters
     var retryWindowSel = document.getElementById('tbRetryWindowSelect');
@@ -12212,7 +12242,7 @@ function tbExportCurrentTab(format) {
     if (retryWindowSel && retryWindowSel.value) params.set('sinceMs', retryWindowSel.value);
     if (retryTargetSel && retryTargetSel.value) params.set('targetId', retryTargetSel.value);
 
-    tbTriggerExportDownload('/api/task-board/webhooks/retries/export?' + params.toString(), format);
+    tbTriggerExportDownload('/api/task-board/webhooks/retries/export?' + params.toString(), format, 'retries');
   } else {
     // Read delivery filters (default tab = history)
     var windowEl = document.getElementById('tbDeliveryWindow');
@@ -12222,7 +12252,7 @@ function tbExportCurrentTab(format) {
     if (statusEl && statusEl.value) params.set('status', statusEl.value);
     if (targetEl && targetEl.value) params.set('targetId', targetEl.value);
 
-    tbTriggerExportDownload('/api/task-board/webhooks/deliveries/export?' + params.toString(), format);
+    tbTriggerExportDownload('/api/task-board/webhooks/deliveries/export?' + params.toString(), format, 'deliveries');
   }
 }
 
@@ -12230,7 +12260,7 @@ function tbExportCurrentTab(format) {
  * Trigger a file download from an export API URL.
  * Fetches the content, creates a Blob, and triggers download via <a> click.
  */
-async function tbTriggerExportDownload(url, format) {
+async function tbTriggerExportDownload(url, format, itemLabel) {
   // Disable export buttons while downloading
   var btns = document.querySelectorAll('.tb-export-btn');
   btns.forEach(function(b) { b.disabled = true; });
@@ -12259,7 +12289,8 @@ async function tbTriggerExportDownload(url, format) {
       URL.revokeObjectURL(blobUrl);
     }, 100);
 
-    tbShowToast('Exported ' + (res.headers.get('X-Export-Count') || '') + ' events as ' + format.toUpperCase(), 'success');
+    var label = itemLabel || 'items';
+    tbShowToast('Exported ' + (res.headers.get('X-Export-Count') || '') + ' ' + label + ' as ' + format.toUpperCase(), 'success');
   } catch (e) {
     console.warn('[export] download error', e);
     tbShowToast('Export failed: ' + e.message, 'error');
