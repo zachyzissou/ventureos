@@ -67,6 +67,7 @@ import {
   sanitizeConfig as sanitizeWebhookConfig,
   redactConfig as redactWebhookConfig,
   maybeDeliverWebhooks,
+  sendTestWebhook,
 } from '../alert-webhook.js';
 
 import {
@@ -821,6 +822,48 @@ export async function handleTaskBoard(
 
     writeWebhookConfig(dataDir, sanitized);
     sendJson(res, { config: redactWebhookConfig(sanitized) });
+    return true;
+  }
+
+  // ── POST /api/task-board/webhooks/test — Issue #219, Phase 14 ────────────
+  // Send a test ping to one or all enabled webhook targets.
+  // Explicit user-triggered action — sends a non-production test payload.
+  // Body (optional): { "targetId": "slack" } — omit to test all enabled targets.
+  // Response: { results: WebhookTestResult[], error?: string }
+  if (url.startsWith('/api/task-board/webhooks/test') && method === 'POST') {
+    let body: { targetId?: string } = {};
+    try {
+      const raw = await readRequestBody(req, { maxBytes: 1024 });
+      if (raw.trim()) {
+        body = JSON.parse(raw) as { targetId?: string };
+      }
+    } catch {
+      sendJson(res, { error: 'invalid JSON body' }, 400);
+      return true;
+    }
+
+    // Validate targetId if provided
+    if (body.targetId !== undefined && typeof body.targetId !== 'string') {
+      sendJson(res, { error: 'targetId must be a string' }, 400);
+      return true;
+    }
+
+    try {
+      const result = await sendTestWebhook(dataDir, {
+        targetId: body.targetId || undefined,
+      });
+
+      if (result.error) {
+        sendJson(res, result, 422);
+        return true;
+      }
+
+      sendJson(res, result);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'unknown error';
+      sendJson(res, { error: `Test delivery failed: ${msg}`, results: [] }, 500);
+    }
+
     return true;
   }
 
