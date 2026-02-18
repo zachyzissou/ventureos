@@ -84,6 +84,8 @@ import {
 
 import {
   maybeEscalate,
+  getEscalationState,
+  computeEscalationStatus,
 } from '../escalation-policy.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -713,6 +715,23 @@ export async function handleTaskBoard(
     const result = executeBatch(dataDir, body, deps.emitEvent);
     const status = result.error ? 400 : 200;
     sendJson(res, result, status);
+    return true;
+  }
+
+  // ── GET /api/task-board/escalation/status — Issue #219, Phase 20 ─────────────
+  // Read-only endpoint returning current escalation state for dashboard display.
+  // Returns: escalation policy status, current tier, time-to-next-tier, per-tier breakdown.
+  // No mutations — purely derived from in-memory escalation state + webhook config.
+  if (url.startsWith('/api/task-board/escalation/status') && method === 'GET') {
+    try {
+      const webhookConfig = readWebhookConfig(dataDir);
+      const state = getEscalationState();
+      const now = Date.now();
+      const status = computeEscalationStatus(webhookConfig.escalation, state, now);
+      sendJson(res, { status });
+    } catch {
+      sendJson(res, { error: 'Failed to compute escalation status' }, 500);
+    }
     return true;
   }
 
