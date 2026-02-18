@@ -27,8 +27,10 @@ import type {
 
 import {
   addClient,
+  addFilteredClient,
   removeClient,
   clientCount,
+  parseSubscriptionFilter,
 } from '../task-board-events.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -181,8 +183,19 @@ export async function handleTaskBoard(
 
   // ── GET /api/task-board/events (SSE) ─────────────────────────────────────
   // Real-time event stream for task mutations. Issue #219.
-  if (url === '/api/task-board/events' && method === 'GET') {
-    if (!addClient(res)) {
+  // Supports optional subscription filters via query params:
+  //   ?status=running&agentId=oracle&priority=high
+  // Server-side filtering is applied before broadcasting to each client.
+  if (url.startsWith('/api/task-board/events') && method === 'GET') {
+    // Parse optional subscription filter from query string
+    const evtParams = new URL(url, 'http://localhost').searchParams;
+    const filter = parseSubscriptionFilter({
+      status: evtParams.get('status'),
+      agentId: evtParams.get('agentId'),
+      priority: evtParams.get('priority'),
+    });
+
+    if (!addFilteredClient(res, filter)) {
       sendJson(res, { error: 'too many SSE connections' }, 503);
       return true;
     }
@@ -192,7 +205,7 @@ export async function handleTaskBoard(
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
-    res.write(`data: ${JSON.stringify({ type: 'connected', ts: Date.now(), clients: clientCount() })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'connected', ts: Date.now(), clients: clientCount(), filter })}\n\n`);
 
     req.on('close', () => {
       removeClient(res);

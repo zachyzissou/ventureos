@@ -2776,7 +2776,27 @@ body {
             <h1 class="page-title">Task Board</h1>
             <p class="page-subtitle">Kanban view — agent task lifecycle management</p>
           </div>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <!-- SSE subscription filters (Issue #219 — subscription filtering) -->
+            <select id="tbFilterStatus" class="tb-input" style="width:auto;min-width:100px;padding:6px 8px;font-size:12px;" onchange="tbApplyFilters()" title="Filter by status">
+              <option value="">All statuses</option>
+              <option value="backlog">📋 Backlog</option>
+              <option value="queued">⏳ Queued</option>
+              <option value="running">⚡ Running</option>
+              <option value="done">✅ Done</option>
+              <option value="failed">❌ Failed</option>
+            </select>
+            <select id="tbFilterAgent" class="tb-input" style="width:auto;min-width:110px;padding:6px 8px;font-size:12px;" onchange="tbApplyFilters()" title="Filter by agent">
+              <option value="">All agents</option>
+            </select>
+            <select id="tbFilterPriority" class="tb-input" style="width:auto;min-width:100px;padding:6px 8px;font-size:12px;" onchange="tbApplyFilters()" title="Filter by priority">
+              <option value="">All priorities</option>
+              <option value="critical">🔴 Critical</option>
+              <option value="high">🟠 High</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+            <button onclick="tbClearFilters()" class="tb-btn tb-btn-secondary" title="Clear filters" style="padding:6px 10px;font-size:12px;">✕ Clear</button>
             <button onclick="tbRefresh()" class="tb-btn tb-btn-secondary" title="Refresh">🔄 Refresh</button>
             <button onclick="tbShowCreateForm()" class="tb-btn tb-btn-primary" title="New Task">＋ New Task</button>
           </div>
@@ -6248,23 +6268,89 @@ const TB_PRIORITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 let tbTasks = [];
 let tbAutoRefreshTimer = null;
 
+// ── Filter state (Issue #219 — SSE subscription filtering) ──────────────────
+let tbActiveFilters = { status: '', agentId: '', priority: '' };
+let tbKnownAgents = new Set(); // populated from task data
+
+/** Build URL query string from active filters (empty fields omitted). */
+function tbFilterQueryString() {
+  const parts = [];
+  if (tbActiveFilters.status) parts.push('status=' + encodeURIComponent(tbActiveFilters.status));
+  if (tbActiveFilters.agentId) parts.push('agentId=' + encodeURIComponent(tbActiveFilters.agentId));
+  if (tbActiveFilters.priority) parts.push('priority=' + encodeURIComponent(tbActiveFilters.priority));
+  return parts.length ? '?' + parts.join('&') : '';
+}
+
+/** Read current filter UI state into tbActiveFilters. */
+function tbReadFilterUi() {
+  tbActiveFilters.status = (document.getElementById('tbFilterStatus') || {}).value || '';
+  tbActiveFilters.agentId = (document.getElementById('tbFilterAgent') || {}).value || '';
+  tbActiveFilters.priority = (document.getElementById('tbFilterPriority') || {}).value || '';
+}
+
+/** Called when any filter dropdown changes — reconnect SSE with new filter params. */
+function tbApplyFilters() {
+  tbReadFilterUi();
+  // Reconnect SSE stream with updated filter query params
+  tbDisconnectSse();
+  tbConnectSse();
+  // Also refresh REST data with the same filters
+  tbRefresh();
+}
+
+/** Clear all filters and refresh. */
+function tbClearFilters() {
+  const statusEl = document.getElementById('tbFilterStatus');
+  const agentEl = document.getElementById('tbFilterAgent');
+  const priorityEl = document.getElementById('tbFilterPriority');
+  if (statusEl) statusEl.value = '';
+  if (agentEl) agentEl.value = '';
+  if (priorityEl) priorityEl.value = '';
+  tbApplyFilters();
+}
+
+/** Populate the agent filter dropdown from known agents in task data. */
+function tbPopulateAgentFilter(tasks) {
+  for (const t of tasks) {
+    if (t.agentId) tbKnownAgents.add(t.agentId);
+  }
+  const el = document.getElementById('tbFilterAgent');
+  if (!el) return;
+  const current = el.value;
+  // Preserve existing first option ("All agents")
+  el.innerHTML = '<option value="">All agents</option>';
+  const sorted = [...tbKnownAgents].sort();
+  for (const a of sorted) {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = '🤖 ' + a;
+    el.appendChild(opt);
+  }
+  // Restore selected value
+  el.value = current;
+}
+
 async function tbRefresh() {
   try {
+    const qs = tbFilterQueryString();
     const [tasksRes, summaryRes] = await Promise.all([
-      fetch('/api/task-board').then(r => r.json()),
+      fetch('/api/task-board' + qs).then(r => r.json()),
       fetch('/api/task-board/summary').then(r => r.json()),
     ]);
     tbTasks = (tasksRes.tasks || []).sort((a, b) =>
       (TB_PRIORITY_ORDER[a.priority] ?? 9) - (TB_PRIORITY_ORDER[b.priority] ?? 9)
     );
 
-    // Update summary counts
+    // Update summary counts (always unfiltered from summary endpoint)
     const cols = summaryRes.columns || {};
     document.getElementById('tbCountBacklog').textContent = cols.backlog ?? 0;
     document.getElementById('tbCountQueued').textContent = cols.queued ?? 0;
     document.getElementById('tbCountRunning').textContent = cols.running ?? 0;
     document.getElementById('tbCountDone').textContent = cols.done ?? 0;
     document.getElementById('tbCountFailed').textContent = cols.failed ?? 0;
+
+    // Populate agent filter dropdown from all task data
+    tbPopulateAgentFilter(tbTasks);
 
     tbRenderBoard();
   } catch (e) {
@@ -6611,7 +6697,10 @@ const TB_POLL_INTERVAL_MS = 15000;
 function tbConnectSse() {
   if (tbEventSource) return;
   try {
-    tbEventSource = new EventSource('/api/task-board/events');
+    // Include current filter state as query params for server-side filtering (Issue #219)
+    tbReadFilterUi();
+    const sseUrl = '/api/task-board/events' + tbFilterQueryString();
+    tbEventSource = new EventSource(sseUrl);
 
     tbEventSource.onopen = () => {
       tbSseConnected = true;
@@ -6620,7 +6709,7 @@ function tbConnectSse() {
         clearInterval(tbAutoRefreshTimer);
         tbAutoRefreshTimer = null;
       }
-      console.log('[task-board] SSE connected');
+      console.log('[task-board] SSE connected' + (tbFilterQueryString() ? ' (filtered: ' + tbFilterQueryString() + ')' : ''));
     };
 
     tbEventSource.onmessage = (ev) => {
@@ -6651,6 +6740,10 @@ function tbConnectSse() {
 
 function tbDisconnectSse() {
   tbSseConnected = false;
+  if (tbReconnectTimer) {
+    clearTimeout(tbReconnectTimer);
+    tbReconnectTimer = null;
+  }
   if (tbEventSource) {
     try { tbEventSource.close(); } catch {}
     tbEventSource = null;
