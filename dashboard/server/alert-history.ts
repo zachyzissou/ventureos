@@ -368,3 +368,163 @@ export function queryAlertTimeline(
     events,
   };
 }
+
+// ─── Export Helpers (Phase 24: Alert History Export) ──────────────────────────
+
+/**
+ * Maximum number of events allowed in a single export.
+ * Prevents unbounded memory/CPU usage on export requests.
+ */
+export const ALERT_EXPORT_MAX_EVENTS = 200;
+
+/** Supported export formats. */
+export type AlertExportFormat = 'csv' | 'json';
+
+/** Export query — same filters as AlertHistoryQuery, plus format. */
+export interface AlertExportQuery {
+  format?: AlertExportFormat;
+  limit?: number;
+  sinceMs?: number;
+  minSeverity?: AlertSeverity;
+  now?: number;
+}
+
+/** Result of an alert history export operation. */
+export interface AlertExportResult {
+  /** The serialized export content (CSV string or JSON string). */
+  content: string;
+  /** MIME type for the response Content-Type header. */
+  contentType: string;
+  /** Suggested filename for the Content-Disposition header. */
+  filename: string;
+  /** Number of events included in the export. */
+  count: number;
+}
+
+/**
+ * Escape a value for CSV output.
+ * Wraps in double quotes if the value contains commas, quotes, or newlines.
+ * Pure function.
+ */
+export function csvEscapeAlert(value: string | number | boolean | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+/**
+ * Format a timestamp as ISO 8601 string for export.
+ * Returns empty string for null/undefined.
+ */
+function formatAlertExportTs(ts: number | null | undefined): string {
+  if (ts == null) return '';
+  return new Date(ts).toISOString();
+}
+
+/**
+ * Conservative field allowlist for alert history export.
+ * Explicitly enumerates safe fields — no internal rule config, thresholds,
+ * or implementation details leak through. Only observable alert state.
+ */
+function sanitizeAlertEventForExport(event: AlertHistoryEvent): Record<string, unknown> {
+  return {
+    timestamp: formatAlertExportTs(event.ts),
+    overallSeverity: event.overallSeverity,
+    okCount: event.severityCounts.ok ?? 0,
+    warningCount: event.severityCounts.warning ?? 0,
+    criticalCount: event.severityCounts.critical ?? 0,
+    activeMessages: (event.activeMessages || []).join('; '),
+    // Expose per-rule severities as a flattened string for CSV friendliness.
+    // Rule names are observable (displayed in dashboard) and not secrets.
+    ruleSeverities: Object.entries(event.ruleSeverities || {})
+      .map(([rule, sev]) => `${rule}=${sev}`)
+      .join('; '),
+    // Explicitly omit: raw ruleSeverities object (flattened above),
+    // any internal fields that may be added in future.
+  };
+}
+
+/** CSV column headers for alert history export. */
+const ALERT_CSV_HEADERS = [
+  'timestamp', 'overallSeverity', 'okCount', 'warningCount', 'criticalCount',
+  'activeMessages', 'ruleSeverities',
+];
+
+/**
+ * Convert alert history events to CSV format.
+ * Pure function — no I/O, bounded by input array length.
+ */
+export function alertEventsToCsv(events: AlertHistoryEvent[]): string {
+  const rows: string[] = [ALERT_CSV_HEADERS.join(',')];
+
+  for (const event of events) {
+    const safe = sanitizeAlertEventForExport(event);
+    const row = ALERT_CSV_HEADERS.map((h) =>
+      csvEscapeAlert(safe[h] as string | number | boolean | null),
+    );
+    rows.push(row.join(','));
+  }
+
+  return rows.join('\n');
+}
+
+/**
+ * Convert alert history events to a safe JSON export format.
+ * Returns a JSON string with sanitized events (conservative allowlist).
+ * Pure function.
+ */
+export function alertEventsToJson(events: AlertHistoryEvent[]): string {
+  const safeEvents = events.map(sanitizeAlertEventForExport);
+  return JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    format: 'ventureos-alert-history-export-v1',
+    count: safeEvents.length,
+    events: safeEvents,
+  }, null, 2);
+}
+
+/**
+ * Export alert history with the same filter capabilities as queryAlertTimeline.
+ * Returns formatted content (CSV or JSON), content type, and suggested filename.
+ *
+ * Secret-safe: all events pass through sanitizeAlertEventForExport() which
+ * applies a conservative field allowlist. Rule names and severity levels
+ * are observable data (displayed in dashboard), not secrets.
+ */
+export function exportAlertHistory(
+  dataDir: string,
+  opts: AlertExportQuery = {},
+): AlertExportResult {
+  const format: AlertExportFormat = opts.format === 'csv' ? 'csv' : 'json';
+  const limit = Math.max(1, Math.min(opts.limit ?? ALERT_EXPORT_MAX_EVENTS, ALERT_EXPORT_MAX_EVENTS));
+
+  // Reuse the same query logic for filter parity
+  const queryResult = queryAlertTimeline(dataDir, {
+    limit,
+    sinceMs: opts.sinceMs,
+    minSeverity: opts.minSeverity,
+    now: opts.now,
+  });
+
+  const events = queryResult.events;
+  const dateSuffix = new Date().toISOString().slice(0, 10);
+
+  if (format === 'csv') {
+    return {
+      content: alertEventsToCsv(events),
+      contentType: 'text/csv; charset=utf-8',
+      filename: `alert-history-${dateSuffix}.csv`,
+      count: events.length,
+    };
+  }
+
+  return {
+    content: alertEventsToJson(events),
+    contentType: 'application/json; charset=utf-8',
+    filename: `alert-history-${dateSuffix}.json`,
+    count: events.length,
+  };
+}
