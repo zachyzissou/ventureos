@@ -231,6 +231,27 @@ export function logError(subsystem: string, event: string, message: string, fiel
   return structuredLog('error', subsystem, event, message, fields);
 }
 
+// ─── Observation Event Constants (Phase 4 — #233) ───────────────────────────
+
+/**
+ * Stable event names for observational memory subsystem logging.
+ * Use these instead of raw strings to enable grep/query consistency.
+ */
+export const OBSERVATION_EVENTS = {
+  /** /observations command invoked */
+  COMMAND_INVOKED: 'observations_command_invoked',
+  /** /observations command returned results */
+  COMMAND_RESULT: 'observations_command_result',
+  /** /observations command found no data */
+  COMMAND_EMPTY: 'observations_command_empty',
+  /** GET /api/memory/state served */
+  API_MEMORY_STATE: 'api_memory_state',
+  /** GET /api/memory/observations served */
+  API_MEMORY_OBSERVATIONS: 'api_memory_observations',
+  /** Memory API error */
+  API_MEMORY_ERROR: 'api_memory_error',
+} as const;
+
 export default {
   structuredLog,
   logDebug,
@@ -243,4 +264,5 @@ export default {
   runWithCorrelation,
   correlationStore,
   setLogOutput,
+  OBSERVATION_EVENTS,
 };
