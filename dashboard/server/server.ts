@@ -105,6 +105,7 @@ import { handleTacticalMapControls } from './routes/tactical-map-controls.js';
 import { handleLogs } from './routes/logs.js';
 import { handleTacticalMapReplay } from './routes/tactical-map-replay.js';
 import { handleProgressionApi } from './routes/progression.js';
+import { handleChangelog } from './routes/changelog.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -3167,6 +3168,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   // Logs API — Issue #137: Observability Logs Page
   try {
     if (handleLogs(req, res, { LOG_DIR, VENTUREOS_ROOT, sendJson, clampInt })) return;
+  } catch {
+    // ignore
+  }
+
+  // Changelog / Release Notes — Issue #211
+  try {
+    if (handleChangelog(req, res, { ventureosRoot: VENTUREOS_ROOT, sendJson, clampInt })) return;
   } catch {
     // ignore
   }

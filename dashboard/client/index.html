@@ -1330,6 +1330,10 @@ body {
         <span class="icon">⚡</span>
         <span class="nav-text">Live Feed</span>
       </div>
+      <div class="nav-item" data-page="changelog">
+        <span class="icon">📋</span>
+        <span class="nav-text">Changelog</span>
+      </div>
     </nav>
   </aside>
 
@@ -1758,6 +1762,28 @@ body {
 
       <div class="mb-24">
         <atlas-reliability-metrics agent="atlas"></atlas-reliability-metrics>
+      </div>
+
+      <!-- Phase 4.5 Phase 2: Skill Tree & Progression (Issue #207) -->
+      <div class="card mb-24">
+        <h3 class="card-title" style="display:flex;align-items:center;gap:8px;">
+          🌳 Skill Tree
+          <select id="skillTreeAgentSelect" style="padding:4px 10px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;font-size:12px;" onchange="document.querySelector('skill-tree-renderer').setAttribute('agent', this.value); document.querySelector('progression-dashboard').setAttribute('agent', this.value);">
+            <option value="echo">Echo</option>
+            <option value="nexus">Nexus</option>
+            <option value="oracle" selected>Oracle</option>
+            <option value="atlas">Atlas</option>
+            <option value="sentinel">Sentinel</option>
+            <option value="verifier">Verifier</option>
+            <option value="archivist">Archivist</option>
+            <option value="synth">Synth</option>
+          </select>
+        </h3>
+        <skill-tree-renderer agent="oracle"></skill-tree-renderer>
+      </div>
+
+      <div class="mb-24">
+        <progression-dashboard agent="oracle"></progression-dashboard>
       </div>
     </div>
 
@@ -2295,6 +2321,80 @@ body {
       </div>
     </div>
 
+    <!-- ── Changelog / Release Notes — Issue #211 ──────────────────── -->
+    <div class="page" id="changelog">
+      <div class="page-header">
+        <h1 class="page-title">Release Notes</h1>
+        <p class="page-subtitle">Changelog — features, fixes, and infrastructure updates</p>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="grid mb-24" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="card" id="clTotalCard">
+          <div class="metric accent">
+            <div class="metric-value" id="clTotal">--</div>
+            <div class="metric-label">Total Entries</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="metric green">
+            <div class="metric-value" id="clFeats">--</div>
+            <div class="metric-label">Features</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="metric">
+            <div class="metric-value" style="color:var(--red);" id="clFixes">--</div>
+            <div class="metric-label">Fixes</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="metric">
+            <div class="metric-value" style="color:var(--yellow);" id="clInfra">--</div>
+            <div class="metric-label">Infrastructure</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="toolbar">
+        <div class="filter-chips" id="clCategoryChips">
+          <div class="chip active" data-category="all" onclick="filterChangelog('all',this)">All</div>
+          <div class="chip" data-category="feat" onclick="filterChangelog('feat',this)">✨ Features</div>
+          <div class="chip" data-category="fix" onclick="filterChangelog('fix',this)">🐛 Fixes</div>
+          <div class="chip" data-category="infra" onclick="filterChangelog('infra',this)">🔧 Infra</div>
+          <div class="chip" data-category="docs" onclick="filterChangelog('docs',this)">📝 Docs</div>
+          <div class="chip" data-category="refactor" onclick="filterChangelog('refactor',this)">♻️ Refactor</div>
+          <div class="chip" data-category="breaking" onclick="filterChangelog('breaking',this)">💥 Breaking</div>
+        </div>
+        <input type="text" class="search-box" id="clSearch" placeholder="🔍 Search changes…" oninput="debouncedChangelogSearch()">
+      </div>
+
+      <!-- Timeline entries -->
+      <div class="card" id="clTimelineCard">
+        <div id="clTimeline" style="display:flex;flex-direction:column;gap:0;">
+          <div id="clLoading" style="padding:60px 20px;text-align:center;color:var(--text-muted);">
+            <div style="font-size:32px;margin-bottom:12px;opacity:0.5;">⏳</div>
+            <div style="font-size:14px;">Loading changelog…</div>
+          </div>
+        </div>
+        <div id="clEmpty" style="display:none;padding:60px 20px;text-align:center;color:var(--text-muted);">
+          <div style="font-size:48px;margin-bottom:16px;opacity:0.5;">📭</div>
+          <div style="font-size:16px;margin-bottom:8px;">No entries found</div>
+          <div style="font-size:13px;">Try adjusting your filters or search query.</div>
+        </div>
+        <div id="clError" style="display:none;padding:40px 20px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+          <div style="font-size:14px;color:var(--red);" id="clErrorMsg">Failed to load changelog.</div>
+          <button onclick="loadChangelog()" style="margin-top:12px;padding:8px 16px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:600;">Retry</button>
+        </div>
+        <!-- Load more -->
+        <div id="clLoadMore" style="display:none;text-align:center;padding:16px;">
+          <button onclick="loadMoreChangelog()" style="padding:10px 24px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">Load more…</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -2450,6 +2550,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
     }
     if (page === 'logs') {
       loadLogSources();
+    }
+    if (page === 'changelog') {
+      loadChangelog();
     }
   });
 });
@@ -5462,6 +5565,158 @@ setInterval(() => {
 
 // Start live telemetry connection
 connectLiveTelemetry();
+
+// ─── Changelog / Release Notes — Issue #211 ──────────────────────────────────
+
+let clState = { entries: [], total: 0, offset: 0, limit: 30, category: 'all', query: '', categories: {}, categoryCounts: {}, loaded: false };
+let clSearchTimer = null;
+
+function debouncedChangelogSearch() {
+  clearTimeout(clSearchTimer);
+  clSearchTimer = setTimeout(() => { clState.offset = 0; loadChangelog(); }, 300);
+}
+
+function filterChangelog(category, el) {
+  document.querySelectorAll('#clCategoryChips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  clState.category = category;
+  clState.offset = 0;
+  loadChangelog();
+}
+
+async function loadChangelog() {
+  const timeline = document.getElementById('clTimeline');
+  const loading = document.getElementById('clLoading');
+  const empty = document.getElementById('clEmpty');
+  const error = document.getElementById('clError');
+  const loadMore = document.getElementById('clLoadMore');
+
+  if (!clState.loaded) {
+    loading.style.display = '';
+  }
+  empty.style.display = 'none';
+  error.style.display = 'none';
+  loadMore.style.display = 'none';
+
+  const q = (document.getElementById('clSearch')?.value ?? '').trim();
+  clState.query = q;
+
+  try {
+    const params = new URLSearchParams({
+      limit: String(clState.limit),
+      offset: String(clState.offset),
+    });
+    if (clState.category !== 'all') params.set('category', clState.category);
+    if (q) params.set('q', q);
+
+    const res = await authFetch('/api/changelog?' + params.toString());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    clState.entries = clState.offset > 0 ? [...clState.entries, ...data.entries] : data.entries;
+    clState.total = data.total ?? 0;
+    clState.categories = data.categories ?? {};
+    clState.categoryCounts = data.categoryCounts ?? {};
+    clState.loaded = true;
+
+    renderChangelog();
+  } catch (e) {
+    loading.style.display = 'none';
+    error.style.display = '';
+    document.getElementById('clErrorMsg').textContent = 'Failed to load changelog: ' + (e.message || 'unknown error');
+  }
+}
+
+function loadMoreChangelog() {
+  clState.offset += clState.limit;
+  loadChangelog();
+}
+
+function renderChangelog() {
+  const timeline = document.getElementById('clTimeline');
+  const loading = document.getElementById('clLoading');
+  const empty = document.getElementById('clEmpty');
+  const loadMore = document.getElementById('clLoadMore');
+
+  loading.style.display = 'none';
+
+  // Summary cards
+  const counts = clState.categoryCounts;
+  document.getElementById('clTotal').textContent = String(clState.total);
+  document.getElementById('clFeats').textContent = String(counts.feat ?? 0);
+  document.getElementById('clFixes').textContent = String(counts.fix ?? 0);
+  document.getElementById('clInfra').textContent = String((counts.infra ?? 0) + (counts.docs ?? 0));
+
+  if (!clState.entries.length) {
+    timeline.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  // Group by date
+  const grouped = {};
+  for (const e of clState.entries) {
+    if (!grouped[e.date]) grouped[e.date] = [];
+    grouped[e.date].push(e);
+  }
+
+  const catColors = {
+    feat: 'var(--green)', fix: 'var(--red)', refactor: 'var(--blue)',
+    docs: 'var(--purple)', infra: 'var(--yellow)', chore: 'var(--text-muted)',
+    breaking: '#dc2626', other: 'var(--text-secondary)',
+  };
+  const catEmoji = {
+    feat: '✨', fix: '🐛', refactor: '♻️', docs: '📝',
+    infra: '🔧', chore: '🧹', breaking: '💥', other: '📦',
+  };
+
+  let html = '';
+  const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+  for (const date of dates) {
+    const entries = grouped[date];
+    const d = new Date(date + 'T12:00:00');
+    const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+    html += '<div style="display:flex;align-items:center;gap:12px;padding:16px 0 8px 0;">'
+      + '<div style="width:12px;height:12px;border-radius:50%;background:var(--accent);flex-shrink:0;box-shadow:0 0 8px var(--accent-glow);"></div>'
+      + '<div style="font-size:14px;font-weight:700;color:var(--text-primary);">' + escHtml(dayLabel) + '</div>'
+      + '<div style="flex:1;height:1px;background:var(--border);"></div>'
+      + '<div style="font-size:11px;color:var(--text-muted);font-family:\'JetBrains Mono\',monospace;">' + entries.length + ' change' + (entries.length !== 1 ? 's' : '') + '</div>'
+      + '</div>';
+
+    for (const e of entries) {
+      const color = catColors[e.category] || 'var(--text-muted)';
+      const emoji = catEmoji[e.category] || '📦';
+      const scope = e.scope ? '<span class="model-tag" style="margin-left:6px;">' + escHtml(e.scope) + '</span>' : '';
+      const prLink = e.pr ? '<a href="https://github.com/zachyzissou/ventureos/pull/' + e.pr + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-size:11px;font-family:\'JetBrains Mono\',monospace;" title="View PR">#' + e.pr + '</a>' : '';
+      const hashBadge = e.hash ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--text-muted);background:var(--bg-primary);padding:1px 5px;border-radius:3px;border:1px solid var(--border);">' + escHtml(e.hash) + '</span>' : '';
+      const versionBadge = e.version ? '<span style="font-size:11px;font-weight:700;color:var(--accent);background:rgba(99,102,241,0.12);padding:2px 8px;border-radius:6px;">' + escHtml(e.version) + '</span>' : '';
+
+      html += '<div style="display:flex;gap:12px;padding:8px 0 8px 5px;border-left:2px solid var(--border);margin-left:5px;">'
+        + '<div style="width:22px;flex-shrink:0;text-align:center;padding-top:2px;"><span style="font-size:14px;" title="' + escHtml(e.category) + '">' + emoji + '</span></div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;">'
+        + '<span style="font-size:13px;font-weight:600;color:var(--text-primary);">' + escHtml(e.title) + '</span>'
+        + scope + versionBadge
+        + '</div>'
+        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+        + '<span class="badge" style="background:' + color + '20;color:' + color + ';font-size:10px;">' + escHtml(e.category) + '</span>'
+        + prLink + hashBadge
+        + '<span style="font-size:10px;color:var(--text-muted);">' + (e.source === 'changelog-md' ? 'CHANGELOG.md' : 'git') + '</span>'
+        + '</div></div></div>';
+    }
+  }
+
+  timeline.innerHTML = html;
+
+  // Show/hide load more
+  loadMore.style.display = clState.entries.length < clState.total ? '' : 'none';
+}
+
+function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 </script>
 </body>
 </html>
