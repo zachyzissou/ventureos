@@ -98,6 +98,10 @@ describe('Logs Route Handler (Issue #137)', () => {
       expect(handleLogs(mockRequest({ url: '/api/logs/tail?source=dashboard' }), mockResponse(), createDeps())).toBe(true);
     });
 
+    it('returns true for /api/logs/export', () => {
+      expect(handleLogs(mockRequest({ url: '/api/logs/export?source=dashboard' }), mockResponse(), createDeps())).toBe(true);
+    });
+
     it('returns true for legacy /api/logs?service=...', () => {
       expect(handleLogs(mockRequest({ url: '/api/logs?service=dashboard' }), mockResponse(), createDeps())).toBe(true);
     });
@@ -270,6 +274,80 @@ describe('Logs Route Handler (Issue #137)', () => {
       handleLogs(mockRequest({ url: '/api/logs?service=unknown-svc' }), res, createDeps());
       expect(res._ended).toBe(true);
       expect(res._body).toContain('Available sources');
+    });
+  });
+
+  describe('GET /api/logs/export', () => {
+    it('returns JSONL download with Content-Disposition', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/export?source=phantom-detector' }), res, createDeps());
+      expect(res._ended).toBe(true);
+      expect(res._statusCode).toBe(200);
+      expect(res._headers['content-type']).toContain('application/x-ndjson');
+      expect(res._headers['content-disposition']).toContain('attachment');
+      expect(res._headers['content-disposition']).toContain('phantom-detector');
+      expect(res._headers['content-disposition']).toMatch(/\.jsonl"/);
+
+      // Each line should be valid JSON
+      const lines = res._body.split('\n').filter(l => l.trim());
+      expect(lines.length).toBeGreaterThan(0);
+      for (const line of lines) {
+        expect(() => JSON.parse(line)).not.toThrow();
+      }
+    });
+
+    it('returns text format when format=text', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/export?source=phantom-detector&format=text' }), res, createDeps());
+      expect(res._ended).toBe(true);
+      expect(res._headers['content-type']).toContain('text/plain');
+      expect(res._headers['content-disposition']).toMatch(/\.log"/);
+      // Text format should contain level tags
+      expect(res._body).toMatch(/\[(INFO|WARN|ERROR|DEBUG)\]/);
+    });
+
+    it('respects level filter in export', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/export?source=phantom-detector&level=warn' }), res, createDeps());
+      const lines = res._body.split('\n').filter(l => l.trim());
+      expect(lines.length).toBeGreaterThan(0);
+      for (const line of lines) {
+        const entry = JSON.parse(line);
+        expect(entry.level).toBe('warn');
+      }
+    });
+
+    it('respects search filter in export', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/export?source=phantom-detector&search=oracle' }), res, createDeps());
+      const lines = res._body.split('\n').filter(l => l.trim());
+      expect(lines.length).toBe(1);
+      const entry = JSON.parse(lines[0]);
+      expect(entry.raw).toContain('oracle');
+    });
+
+    it('includes level suffix in filename when filtered', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/export?source=dashboard&level=error' }), res, createDeps());
+      expect(res._headers['content-disposition']).toContain('-error-');
+    });
+
+    it('returns 400 when source is missing', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/export' }), res, createDeps());
+      expect(res._statusCode).toBe(400);
+    });
+
+    it('returns 404 for unknown source', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/export?source=nonexistent' }), res, createDeps());
+      expect(res._statusCode).toBe(404);
+    });
+
+    it('rejects path traversal in source parameter', () => {
+      const res = mockResponse();
+      handleLogs(mockRequest({ url: '/api/logs/export?source=../../etc/passwd' }), res, createDeps());
+      expect(res._statusCode).toBe(404);
     });
   });
 

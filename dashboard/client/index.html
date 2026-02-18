@@ -2198,29 +2198,99 @@ body {
     <div class="page" id="logs">
       <div class="page-header">
         <h1 class="page-title">Logs</h1>
-        <p class="page-subtitle">System and service logs viewer</p>
+        <p class="page-subtitle">Structured log explorer — filter, search, tail, export</p>
       </div>
 
+      <!-- Controls bar -->
       <div class="card mb-24" style="padding:16px 24px;">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-          <select id="logService" style="padding:8px 12px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-size:14px;font-weight:500;">
-            <option value="openclaw">OpenClaw</option>
-            <option value="agent-dashboard">Agent Dashboard</option>
-            <option value="tailscaled">Tailscaled</option>
+          <!-- Source selector -->
+          <select id="logSource" aria-label="Log source" style="padding:8px 12px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:500;min-width:180px;" onchange="fetchLogEntries()">
+            <option value="">Loading sources…</option>
           </select>
-          <input type="number" id="logLines" value="100" min="10" max="1000" step="10" style="width:100px;padding:8px 12px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-size:14px;">
-          <span style="font-size:13px;color:var(--text-muted);">lines</span>
-          <button onclick="fetchLogs()" style="padding:8px 16px;background:linear-gradient(135deg,var(--accent),var(--purple));color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">🔄 Refresh</button>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-left:auto;">
-            <input type="checkbox" id="logAutoRefresh" onchange="toggleLogAutoRefresh(this.checked)" style="width:18px;height:18px;cursor:pointer;">
-            <span style="font-size:14px;font-weight:500;">Auto-refresh (5s)</span>
+          <span style="font-size:11px;color:var(--text-muted);" id="logSourceCount">0</span>
+          <span style="font-size:11px;color:var(--text-muted);">sources</span>
+
+          <!-- Limit selector -->
+          <select id="logLimit" aria-label="Entry limit" style="padding:8px 10px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-size:13px;" onchange="fetchLogEntries()">
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200" selected>200</option>
+            <option value="500">500</option>
+            <option value="1000">1000</option>
+          </select>
+          <span style="font-size:11px;color:var(--text-muted);">entries</span>
+
+          <!-- Search -->
+          <div style="position:relative;flex:1;min-width:200px;max-width:340px;">
+            <input type="text" id="logSearch" placeholder="🔍 Search logs…" aria-label="Search logs" style="width:100%;padding:8px 32px 8px 12px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-size:13px;" oninput="debouncedLogSearch()">
+            <button onclick="document.getElementById('logSearch').value='';fetchLogEntries()" aria-label="Clear search" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:2px 6px;">✕</button>
+          </div>
+
+          <!-- Refresh -->
+          <button onclick="fetchLogEntries()" aria-label="Refresh logs" style="padding:8px 14px;background:linear-gradient(135deg,var(--accent),var(--purple));color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;">🔄 Refresh</button>
+
+          <!-- Tail toggle -->
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-left:auto;" title="Auto-refresh every 3 seconds">
+            <input type="checkbox" id="logTailToggle" onchange="toggleLogTail(this.checked)" aria-label="Toggle tail mode" style="width:18px;height:18px;cursor:pointer;">
+            <span id="logTailDot" style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);transition:all 0.3s;"></span>
+            <span id="logTailLabel" style="font-size:13px;font-weight:500;">Tail</span>
           </label>
+
+          <!-- Export -->
+          <button onclick="exportLogs('jsonl')" aria-label="Export as JSONL" style="padding:8px 14px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;">📥 Export</button>
+          <button onclick="exportLogs('text')" aria-label="Export as text" style="padding:6px 10px;background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:11px;" title="Export as plain text">.log</button>
+        </div>
+
+        <!-- Level filter chips -->
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;" id="logLevelFilters">
+          <div class="chip active" data-log-level="all" onclick="setLogLevel('all')">All</div>
+          <div class="chip" data-log-level="error" onclick="setLogLevel('error')">🔴 Error <span id="logErrorCount" style="font-family:'JetBrains Mono',monospace;font-size:11px;margin-left:4px;">0</span></div>
+          <div class="chip" data-log-level="warn" onclick="setLogLevel('warn')">🟡 Warn <span id="logWarnCount" style="font-family:'JetBrains Mono',monospace;font-size:11px;margin-left:4px;">0</span></div>
+          <div class="chip" data-log-level="info" onclick="setLogLevel('info')">ℹ️ Info</div>
+          <div class="chip" data-log-level="debug" onclick="setLogLevel('debug')">🔍 Debug</div>
+
+          <div style="width:1px;height:20px;background:var(--border);margin:0 4px;"></div>
+
+          <!-- Presets -->
+          <button class="chip" onclick="applyLogPreset('errors-only')" title="Show all errors across sources" style="font-size:11px;">⚡ Errors Only</button>
+          <button class="chip" onclick="applyLogPreset('crashes')" title="Search for crash/fatal/segfault" style="font-size:11px;">💥 Crashes</button>
+          <button class="chip" onclick="applyLogPreset('warnings-errors')" title="Warnings and errors" style="font-size:11px;">⚠️ Warn+Err</button>
+          <button class="chip" onclick="applyLogPreset('clear')" title="Clear all filters" style="font-size:11px;">✕ Clear</button>
+        </div>
+
+        <!-- Stats bar -->
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--text-muted);align-items:center;flex-wrap:wrap;">
+          <span>Showing <strong id="logShownCount" style="color:var(--text-primary);">0</strong> entries</span>
+          <span id="logLastRefreshed">--</span>
         </div>
       </div>
 
-      <div class="card">
-        <div id="logViewer" style="background:var(--bg-primary);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;color:var(--text-primary);max-height:700px;overflow-y:auto;white-space:pre-wrap;word-wrap:break-word;">
-          <div style="color:var(--text-muted);">Click Refresh to load logs...</div>
+      <!-- Log viewer -->
+      <div class="card" id="logViewerCard">
+        <!-- Loading state -->
+        <div id="logLoadingState" style="display:none;padding:40px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;animation:pulse 1.5s infinite;">📋</div>
+          <div style="font-size:14px;color:var(--text-secondary);">Loading log entries…</div>
+        </div>
+
+        <!-- Error state -->
+        <div id="logErrorState" style="display:none;padding:40px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">❌</div>
+          <div style="font-size:14px;color:var(--red);font-weight:600;" id="logErrorText">Failed to load logs</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:6px;" id="logErrorDetail"></div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="logEmptyState" style="display:none;padding:40px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">📭</div>
+          <div style="font-size:14px;color:var(--text-secondary);font-weight:600;" id="logEmptyText">No log entries</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:6px;" id="logEmptyHint">Select a source and click Refresh.</div>
+        </div>
+
+        <!-- Entries container -->
+        <div id="logViewer" style="background:var(--bg-primary);border-radius:8px;max-height:700px;overflow-y:auto;" onscroll="onLogViewerScroll(this)">
+          <div id="logEntries" style="display:flex;flex-direction:column;"></div>
         </div>
       </div>
     </div>
@@ -4863,11 +4933,13 @@ function calculateStreak() {
   }
 }
 
-// ── Logs Viewer (Issue #137) ──────────────────────────────────────────────
+// ── Logs Viewer (Issue #137 + #201 — Richer UX) ──────────────────────────
 let logAutoRefreshInterval = null;
 let logCurrentLevel = 'all';
 let logSources = [];
 let logSearchTimer = null;
+let logTailActive = false;
+let logTailUserScrolled = false;
 
 function debouncedLogSearch() {
   clearTimeout(logSearchTimer);
@@ -4876,10 +4948,79 @@ function debouncedLogSearch() {
 
 function setLogLevel(level) {
   logCurrentLevel = level;
-  document.querySelectorAll('#logLevelFilters .chip').forEach(c => {
+  document.querySelectorAll('#logLevelFilters .chip[data-log-level]').forEach(c => {
     c.classList.toggle('active', c.dataset.logLevel === level);
   });
   fetchLogEntries();
+}
+
+/** Apply a filter preset */
+function applyLogPreset(preset) {
+  const searchEl = document.getElementById('logSearch');
+  switch (preset) {
+    case 'errors-only':
+      setLogLevel('error');
+      if (searchEl) searchEl.value = '';
+      break;
+    case 'crashes':
+      setLogLevel('error');
+      if (searchEl) searchEl.value = 'crash fatal segfault sigsegv sigabrt';
+      fetchLogEntries();
+      break;
+    case 'warnings-errors':
+      // Show warn level (which also captures errors through broader read)
+      setLogLevel('warn');
+      if (searchEl) searchEl.value = '';
+      break;
+    case 'clear':
+      setLogLevel('all');
+      if (searchEl) searchEl.value = '';
+      fetchLogEntries();
+      break;
+  }
+}
+
+/** Export current filtered view */
+function exportLogs(format) {
+  const sourceId = document.getElementById('logSource')?.value;
+  if (!sourceId) { showToast && showToast('Select a log source first', 'warning'); return; }
+  const limit = document.getElementById('logLimit')?.value || '200';
+  const search = document.getElementById('logSearch')?.value || '';
+  const level = logCurrentLevel;
+  const params = new URLSearchParams({ source: sourceId, limit, level, format });
+  if (search) params.set('search', search);
+  // Trigger download via hidden link
+  const a = document.createElement('a');
+  a.href = `/api/logs/export?${params}`;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+/** Handle scroll in log viewer — pause tail auto-scroll if user scrolls up */
+function onLogViewerScroll(el) {
+  if (!logTailActive) return;
+  const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+  logTailUserScrolled = !atBottom;
+}
+
+/** Toggle tail/follow mode */
+function toggleLogTail(enabled) {
+  logTailActive = enabled;
+  logTailUserScrolled = false;
+  const dot = document.getElementById('logTailDot');
+  const label = document.getElementById('logTailLabel');
+  if (enabled) {
+    if (dot) { dot.style.background = 'var(--green)'; dot.style.boxShadow = '0 0 8px var(--green-glow)'; dot.style.animation = 'pulse 2s ease-in-out infinite'; }
+    if (label) { label.textContent = 'LIVE'; label.style.color = 'var(--green)'; }
+    fetchLogEntries();
+    logAutoRefreshInterval = setInterval(fetchLogEntries, 3000);
+  } else {
+    if (dot) { dot.style.background = 'var(--text-muted)'; dot.style.boxShadow = 'none'; dot.style.animation = 'none'; }
+    if (label) { label.textContent = 'Tail'; label.style.color = ''; }
+    if (logAutoRefreshInterval) { clearInterval(logAutoRefreshInterval); logAutoRefreshInterval = null; }
+  }
 }
 
 async function loadLogSources() {
@@ -4892,10 +5033,12 @@ async function loadLogSources() {
     sel.innerHTML = '';
     if (logSources.length === 0) {
       sel.innerHTML = '<option value="">No log sources found</option>';
-      document.getElementById('logSourceCount').textContent = '0';
+      const countEl = document.getElementById('logSourceCount');
+      if (countEl) countEl.textContent = '0';
       return;
     }
-    document.getElementById('logSourceCount').textContent = String(logSources.length);
+    const countEl = document.getElementById('logSourceCount');
+    if (countEl) countEl.textContent = String(logSources.length);
     for (const src of logSources) {
       const opt = document.createElement('option');
       opt.value = src.id;
@@ -4913,10 +5056,12 @@ async function loadLogSources() {
 }
 
 function showLogState(state) {
+  const viewer = document.getElementById('logViewer');
   const entries = document.getElementById('logEntries');
   const empty = document.getElementById('logEmptyState');
   const loading = document.getElementById('logLoadingState');
   const error = document.getElementById('logErrorState');
+  if (viewer) viewer.style.display = state === 'entries' ? 'block' : 'none';
   if (entries) entries.style.display = state === 'entries' ? 'flex' : 'none';
   if (empty) empty.style.display = state === 'empty' ? 'block' : 'none';
   if (loading) loading.style.display = state === 'loading' ? 'block' : 'none';
@@ -4953,15 +5098,15 @@ function renderLogEntry(entry, idx) {
     }
   }
 
-  return `<div class="log-entry" onclick="this.querySelector('.log-fields')&&(this.querySelector('.log-fields').style.display=this.querySelector('.log-fields').style.display==='none'?'block':'none')" style="display:flex;gap:8px;padding:6px 12px;border-bottom:1px solid var(--border);cursor:${hasFields ? 'pointer' : 'default'};transition:background 0.15s;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.5;" onmouseenter="this.style.background='rgba(99,102,241,0.04)'" onmouseleave="this.style.background='transparent'">
-    <span style="flex-shrink:0;width:20px;text-align:center;" title="${entry.level}">${icon}</span>
+  return `<div class="log-entry" role="listitem" onclick="this.querySelector('.log-fields')&&(this.querySelector('.log-fields').style.display=this.querySelector('.log-fields').style.display==='none'?'block':'none')" style="display:flex;gap:8px;padding:6px 12px;border-bottom:1px solid var(--border);cursor:${hasFields ? 'pointer' : 'default'};transition:background 0.15s;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.5;" onmouseenter="this.style.background='rgba(99,102,241,0.04)'" onmouseleave="this.style.background='transparent'" tabindex="0" onkeydown="if(event.key==='Enter')this.click()">
+    <span style="flex-shrink:0;width:20px;text-align:center;" title="${entry.level}" aria-label="${entry.level}">${icon}</span>
     <span style="flex-shrink:0;color:var(--text-muted);width:70px;font-size:11px;" title="${tsDate}">${ts}</span>
-    <span style="flex-shrink:0;width:4px;border-radius:2px;background:${color};"></span>
+    <span style="flex-shrink:0;width:4px;border-radius:2px;background:${color};" aria-hidden="true"></span>
     <div style="flex:1;min-width:0;">
       <span style="color:var(--text-primary);word-break:break-word;">${msg}</span>
       ${fieldsHtml}
     </div>
-    ${hasFields ? '<span style="flex-shrink:0;font-size:10px;color:var(--text-muted);" title="Click to expand fields">▶</span>' : ''}
+    ${hasFields ? '<span style="flex-shrink:0;font-size:10px;color:var(--text-muted);" title="Click to expand fields" aria-label="Expand fields">▶</span>' : ''}
   </div>`;
 }
 
@@ -4976,7 +5121,8 @@ async function fetchLogEntries() {
     return;
   }
 
-  showLogState('loading');
+  // Only show loading on first load, not during tail refreshes
+  if (!logTailActive) showLogState('loading');
 
   const limit = document.getElementById('logLimit')?.value || '200';
   const search = document.getElementById('logSearch')?.value || '';
@@ -4994,7 +5140,7 @@ async function fetchLogEntries() {
     const entries = data.entries || [];
     const container = document.getElementById('logEntries');
 
-    // Update stats
+    // Update stats — count across all entries for level counters
     const errorCount = entries.filter(e => e.level === 'error').length;
     const warnCount = entries.filter(e => e.level === 'warn').length;
     const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
@@ -5014,14 +5160,19 @@ async function fetchLogEntries() {
       return;
     }
 
+    // Cap DOM nodes at 2000 for performance
+    const capped = entries.length > 2000 ? entries.slice(entries.length - 2000) : entries;
+
     if (container) {
-      container.innerHTML = entries.map((e, i) => renderLogEntry(e, i)).join('');
+      container.innerHTML = capped.map((e, i) => renderLogEntry(e, i)).join('');
     }
     showLogState('entries');
 
-    // Scroll to bottom
-    const viewer = document.getElementById('logViewer');
-    if (viewer) viewer.scrollTop = viewer.scrollHeight;
+    // Auto-scroll to bottom (unless user has scrolled up during tail)
+    if (!logTailUserScrolled) {
+      const viewer = document.getElementById('logViewer');
+      if (viewer) viewer.scrollTop = viewer.scrollHeight;
+    }
   } catch (e) {
     showLogState('error');
     const errText = document.getElementById('logErrorText');
@@ -5035,14 +5186,9 @@ async function fetchLogEntries() {
 async function fetchLogs() { await fetchLogEntries(); }
 
 function toggleLogAutoRefresh(enabled) {
-  if (logAutoRefreshInterval) {
-    clearInterval(logAutoRefreshInterval);
-    logAutoRefreshInterval = null;
-  }
-  if (enabled) {
-    fetchLogEntries();
-    logAutoRefreshInterval = setInterval(fetchLogEntries, 10000);
-  }
+  // Legacy compat — redirect to tail
+  const tailEl = document.getElementById('logTailToggle');
+  if (tailEl) { tailEl.checked = enabled; toggleLogTail(enabled); }
 }
 
 // Update scrapeClaudeUsage to show toast
