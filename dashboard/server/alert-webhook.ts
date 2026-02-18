@@ -22,6 +22,7 @@ import path from 'node:path';
 import type { AlertSeverity, AlertEvaluation, AlertRuleResult } from './alert-rules.js';
 import type { AlertHistoryEvent } from './alert-history.js';
 import { appendDeliveryEvents } from './webhook-delivery-history.js';
+import type { WebhookDeliveryAttemptDetail } from './webhook-delivery-history.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -136,6 +137,11 @@ export interface WebhookDeliveryResult {
   attempts: number;
   error: string | null;
   durationMs: number;
+  /**
+   * Per-attempt breakdown (Phase 16). Each entry records the outcome
+   * of an individual HTTP request in the retry loop.
+   */
+  attemptDetails?: WebhookDeliveryAttemptDetail[];
 }
 
 /** Delivery state tracked per-target (in-memory, non-persistent). */
@@ -509,14 +515,17 @@ export async function deliverWebhook(
   let lastError: string | null = null;
   let lastStatusCode: number | null = null;
   let attempts = 0;
+  const attemptDetails: WebhookDeliveryAttemptDetail[] = [];
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     attempts++;
+    const attemptStartMs = Date.now();
 
     // Exponential backoff: 0, 1s, 2s (only between retries)
+    let backoffDelayMs = 0;
     if (attempt > 0) {
-      const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      backoffDelayMs = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+      await new Promise((resolve) => setTimeout(resolve, backoffDelayMs));
     }
 
     try {
@@ -547,6 +556,14 @@ export async function deliverWebhook(
         lastStatusCode = response.status;
 
         if (response.ok) {
+          attemptDetails.push({
+            attempt: attempts,
+            ts: attemptStartMs,
+            statusCode: response.status,
+            error: null,
+            durationMs: Date.now() - attemptStartMs,
+            nextRetryDelayMs: null,
+          });
           return {
             targetId: target.id,
             targetName: target.name,
@@ -555,16 +572,37 @@ export async function deliverWebhook(
             attempts,
             error: null,
             durationMs: Date.now() - startMs,
+            attemptDetails,
           };
         }
 
         // Non-retryable status codes (client errors)
         if (response.status >= 400 && response.status < 500) {
           lastError = `HTTP ${response.status}`;
+          attemptDetails.push({
+            attempt: attempts,
+            ts: attemptStartMs,
+            statusCode: response.status,
+            error: lastError,
+            durationMs: Date.now() - attemptStartMs,
+            nextRetryDelayMs: null, // no retry on 4xx
+          });
           break; // Don't retry client errors
         }
 
         lastError = `HTTP ${response.status}`;
+        // Compute next retry delay (if there will be one)
+        const nextDelay = attempt + 1 < maxRetries
+          ? Math.min(1000 * Math.pow(2, attempt), 4000)
+          : null;
+        attemptDetails.push({
+          attempt: attempts,
+          ts: attemptStartMs,
+          statusCode: response.status,
+          error: lastError,
+          durationMs: Date.now() - attemptStartMs,
+          nextRetryDelayMs: nextDelay,
+        });
       } catch (fetchErr: unknown) {
         clearTimeout(timer);
         if (fetchErr instanceof Error) {
@@ -574,9 +612,31 @@ export async function deliverWebhook(
         } else {
           lastError = 'unknown fetch error';
         }
+        const nextDelay = attempt + 1 < maxRetries
+          ? Math.min(1000 * Math.pow(2, attempt), 4000)
+          : null;
+        attemptDetails.push({
+          attempt: attempts,
+          ts: attemptStartMs,
+          statusCode: null,
+          error: lastError,
+          durationMs: Date.now() - attemptStartMs,
+          nextRetryDelayMs: nextDelay,
+        });
       }
     } catch (outerErr: unknown) {
       lastError = outerErr instanceof Error ? outerErr.message : 'unknown error';
+      const nextDelay = attempt + 1 < maxRetries
+        ? Math.min(1000 * Math.pow(2, attempt), 4000)
+        : null;
+      attemptDetails.push({
+        attempt: attempts,
+        ts: attemptStartMs,
+        statusCode: null,
+        error: lastError,
+        durationMs: Date.now() - attemptStartMs,
+        nextRetryDelayMs: nextDelay,
+      });
     }
   }
 
@@ -588,6 +648,7 @@ export async function deliverWebhook(
     attempts,
     error: lastError,
     durationMs: Date.now() - startMs,
+    attemptDetails,
   };
 }
 
@@ -759,9 +820,11 @@ export async function deliverTestWebhook(
   let lastError: string | null = null;
   let lastStatusCode: number | null = null;
   let attempts = 0;
+  const attemptDetails: WebhookDeliveryAttemptDetail[] = [];
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     attempts++;
+    const attemptStartMs = Date.now();
 
     if (attempt > 0) {
       const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
@@ -797,6 +860,14 @@ export async function deliverTestWebhook(
         lastStatusCode = response.status;
 
         if (response.ok) {
+          attemptDetails.push({
+            attempt: attempts,
+            ts: attemptStartMs,
+            statusCode: response.status,
+            error: null,
+            durationMs: Date.now() - attemptStartMs,
+            nextRetryDelayMs: null,
+          });
           return {
             targetId: target.id,
             targetName: target.name,
@@ -806,15 +877,35 @@ export async function deliverTestWebhook(
             error: null,
             durationMs: Date.now() - startMs,
             isTest: true,
+            attemptDetails,
           };
         }
 
         if (response.status >= 400 && response.status < 500) {
           lastError = `HTTP ${response.status}`;
+          attemptDetails.push({
+            attempt: attempts,
+            ts: attemptStartMs,
+            statusCode: response.status,
+            error: lastError,
+            durationMs: Date.now() - attemptStartMs,
+            nextRetryDelayMs: null,
+          });
           break;
         }
 
         lastError = `HTTP ${response.status}`;
+        const nextDelay = attempt + 1 < maxRetries
+          ? Math.min(1000 * Math.pow(2, attempt), 4000)
+          : null;
+        attemptDetails.push({
+          attempt: attempts,
+          ts: attemptStartMs,
+          statusCode: response.status,
+          error: lastError,
+          durationMs: Date.now() - attemptStartMs,
+          nextRetryDelayMs: nextDelay,
+        });
       } catch (fetchErr: unknown) {
         clearTimeout(timer);
         if (fetchErr instanceof Error) {
@@ -824,9 +915,31 @@ export async function deliverTestWebhook(
         } else {
           lastError = 'unknown fetch error';
         }
+        const nextDelay = attempt + 1 < maxRetries
+          ? Math.min(1000 * Math.pow(2, attempt), 4000)
+          : null;
+        attemptDetails.push({
+          attempt: attempts,
+          ts: attemptStartMs,
+          statusCode: null,
+          error: lastError,
+          durationMs: Date.now() - attemptStartMs,
+          nextRetryDelayMs: nextDelay,
+        });
       }
     } catch (outerErr: unknown) {
       lastError = outerErr instanceof Error ? outerErr.message : 'unknown error';
+      const nextDelay = attempt + 1 < maxRetries
+        ? Math.min(1000 * Math.pow(2, attempt), 4000)
+        : null;
+      attemptDetails.push({
+        attempt: attempts,
+        ts: attemptStartMs,
+        statusCode: null,
+        error: lastError,
+        durationMs: Date.now() - attemptStartMs,
+        nextRetryDelayMs: nextDelay,
+      });
     }
   }
 
@@ -839,6 +952,7 @@ export async function deliverTestWebhook(
     error: lastError,
     durationMs: Date.now() - startMs,
     isTest: true,
+    attemptDetails,
   };
 }
 

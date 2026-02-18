@@ -72,6 +72,7 @@ import {
 
 import {
   queryDeliveryHistory,
+  queryRetryActivity,
 } from '../webhook-delivery-history.js';
 
 import {
@@ -884,6 +885,26 @@ export async function handleTaskBoard(
     const targetId = healthParams.get('targetId') || undefined;
 
     const result = computeWebhookHealth(dataDir, { windowMs, targetId });
+    sendJson(res, result);
+    return true;
+  }
+
+  // ── GET /api/task-board/webhooks/retries — Issue #219, Phase 16 ──────────
+  // Returns retry activity: deliveries that required multiple attempts,
+  // per-attempt breakdown, and per-target retry summaries.
+  // Query params:
+  //   ?limit=50        — max events to return (default 50, max 200)
+  //   ?sinceMs=3600000 — only events within this time window
+  //   ?targetId=slack  — filter by target ID
+  if (url.startsWith('/api/task-board/webhooks/retries') && method === 'GET') {
+    const retryParams = new URL(url, 'http://localhost').searchParams;
+    const limit = Math.max(1, Math.min(Number(retryParams.get('limit')) || 50, 200));
+    const sinceMs = retryParams.has('sinceMs')
+      ? Math.max(0, Number(retryParams.get('sinceMs')) || 0)
+      : undefined;
+    const targetId = retryParams.get('targetId') || undefined;
+
+    const result = queryRetryActivity(dataDir, { limit, sinceMs, targetId });
     sendJson(res, result);
     return true;
   }

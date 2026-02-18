@@ -23,6 +23,26 @@ import { maskUrl } from './alert-webhook.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+/**
+ * Per-attempt detail within a webhook delivery.
+ * Records the outcome of each individual HTTP request in the retry loop.
+ * Issue #219 — Phase 16: Retry Queue Visualization.
+ */
+export interface WebhookDeliveryAttemptDetail {
+  /** 1-indexed attempt number. */
+  attempt: number;
+  /** Timestamp when this attempt started (ms since epoch). */
+  ts: number;
+  /** HTTP status code returned (null if network error/timeout). */
+  statusCode: number | null;
+  /** Error message for this attempt (null on success). */
+  error: string | null;
+  /** Duration of this individual attempt in ms. */
+  durationMs: number;
+  /** Delay before the next retry in ms (null if last attempt or success). */
+  nextRetryDelayMs: number | null;
+}
+
 /** A single recorded webhook delivery attempt. */
 export interface WebhookDeliveryEvent {
   /** Unique event ID (monotonic counter within file). */
@@ -49,6 +69,11 @@ export interface WebhookDeliveryEvent {
   triggerSeverity: string;
   /** Previous severity (the transition source). */
   previousSeverity: string | null;
+  /**
+   * Per-attempt breakdown (Phase 16). Present when attempts > 0.
+   * Bounded: max entries = maxRetries (≤ 5).
+   */
+  attemptDetails?: WebhookDeliveryAttemptDetail[];
 }
 
 /** On-disk file format. */
@@ -168,6 +193,7 @@ export function createDeliveryEvent(
     attempts: number;
     error: string | null;
     durationMs: number;
+    attemptDetails?: WebhookDeliveryAttemptDetail[];
   },
   context: {
     url: string;
@@ -177,7 +203,7 @@ export function createDeliveryEvent(
   },
   nextId: number,
 ): WebhookDeliveryEvent {
-  return {
+  const event: WebhookDeliveryEvent = {
     id: nextId,
     ts: context.ts ?? Date.now(),
     targetId: result.targetId,
@@ -191,6 +217,17 @@ export function createDeliveryEvent(
     triggerSeverity: context.triggerSeverity,
     previousSeverity: context.previousSeverity,
   };
+
+  // Attach per-attempt breakdown if available (Phase 16).
+  // Truncate errors within each attempt detail for bounded storage.
+  if (result.attemptDetails && result.attemptDetails.length > 0) {
+    event.attemptDetails = result.attemptDetails.map((ad) => ({
+      ...ad,
+      error: truncateError(ad.error),
+    }));
+  }
+
+  return event;
 }
 
 /**
@@ -211,6 +248,7 @@ export function appendDeliveryEvents(
     attempts: number;
     error: string | null;
     durationMs: number;
+    attemptDetails?: WebhookDeliveryAttemptDetail[];
   }>,
   contexts: Array<{
     url: string;
@@ -333,6 +371,159 @@ export function queryDeliveryHistory(
       failed,
       avgDurationMs,
       targetIds,
+    },
+  };
+}
+
+// ─── Retry Activity Query (Phase 16) ────────────────────────────────────────
+
+/** Query options for retry activity view. */
+export interface RetryActivityQuery {
+  /** Max events to return (default 50, max 200). */
+  limit?: number;
+  /** Only events within this time window from now (ms). */
+  sinceMs?: number;
+  /** Filter by target ID. */
+  targetId?: string;
+  /** Current time override (for testing). */
+  now?: number;
+}
+
+/** Per-target retry summary. */
+export interface RetryTargetSummary {
+  targetId: string;
+  targetName: string;
+  totalDeliveries: number;
+  retriedDeliveries: number;
+  totalAttempts: number;
+  avgAttemptsPerDelivery: number | null;
+  lastRetryTs: number | null;
+}
+
+/** Retry activity response shape. */
+export interface RetryActivityResponse {
+  /** Events that involved retries (attempts > 1), most-recent-first. */
+  events: WebhookDeliveryEvent[];
+  count: number;
+  /** Per-target retry summary. */
+  targetSummaries: RetryTargetSummary[];
+  /** Overall retry statistics. */
+  summary: {
+    totalDeliveries: number;
+    retriedDeliveries: number;
+    retryRate: number | null;
+    totalAttempts: number;
+    avgAttemptsPerRetry: number | null;
+    retriedSuccessCount: number;
+    retriedFailureCount: number;
+  };
+}
+
+/**
+ * Query retry activity — deliveries that required multiple attempts.
+ * Filters to events where attempts > 1 (i.e., at least one retry was made).
+ * Returns per-attempt breakdown when available.
+ *
+ * This provides the "retry queue" approximation: since retries happen inline
+ * (no explicit queue), we surface recent retry activity as a bounded view
+ * of the system's retry behavior.
+ */
+export function queryRetryActivity(
+  dataDir: string,
+  opts: RetryActivityQuery = {},
+): RetryActivityResponse {
+  const history = readDeliveryHistory(dataDir);
+  const now = opts.now ?? Date.now();
+  let allEvents = history.events;
+
+  // Filter by time window
+  if (opts.sinceMs != null && opts.sinceMs > 0) {
+    const cutoff = now - opts.sinceMs;
+    allEvents = allEvents.filter((e) => e.ts >= cutoff);
+  }
+
+  // Filter by target ID
+  if (opts.targetId) {
+    allEvents = allEvents.filter((e) => e.targetId === opts.targetId);
+  }
+
+  // Compute overall stats before filtering to retries-only
+  const totalDeliveries = allEvents.length;
+  const totalAttempts = allEvents.reduce((sum, e) => sum + e.attempts, 0);
+
+  // Filter to events with retries (attempts > 1)
+  let retryEvents = allEvents.filter((e) => e.attempts > 1);
+
+  // Apply limit (most recent N)
+  const limit = Math.max(1, Math.min(opts.limit ?? 50, 200));
+  if (retryEvents.length > limit) {
+    retryEvents = retryEvents.slice(retryEvents.length - limit);
+  }
+
+  // Reverse to most-recent-first
+  retryEvents = [...retryEvents].reverse();
+
+  // Per-target summaries (computed from all events, not just retried ones)
+  const targetMap = new Map<string, RetryTargetSummary>();
+  for (const ev of allEvents) {
+    let ts = targetMap.get(ev.targetId);
+    if (!ts) {
+      ts = {
+        targetId: ev.targetId,
+        targetName: ev.targetName,
+        totalDeliveries: 0,
+        retriedDeliveries: 0,
+        totalAttempts: 0,
+        avgAttemptsPerDelivery: null,
+        lastRetryTs: null,
+      };
+      targetMap.set(ev.targetId, ts);
+    }
+    ts.totalDeliveries++;
+    ts.totalAttempts += ev.attempts;
+    if (ev.attempts > 1) {
+      ts.retriedDeliveries++;
+      if (ts.lastRetryTs === null || ev.ts > ts.lastRetryTs) {
+        ts.lastRetryTs = ev.ts;
+      }
+    }
+    // Update name from most recent event
+    ts.targetName = ev.targetName;
+  }
+
+  const targetSummaries: RetryTargetSummary[] = [];
+  for (const ts of targetMap.values()) {
+    ts.avgAttemptsPerDelivery = ts.totalDeliveries > 0
+      ? Math.round((ts.totalAttempts / ts.totalDeliveries) * 100) / 100
+      : null;
+    targetSummaries.push(ts);
+  }
+  // Sort by retried count descending
+  targetSummaries.sort((a, b) => b.retriedDeliveries - a.retriedDeliveries);
+
+  // Overall summary
+  const retriedDeliveries = allEvents.filter((e) => e.attempts > 1).length;
+  const retriedEvents = allEvents.filter((e) => e.attempts > 1);
+  const retriedSuccessCount = retriedEvents.filter((e) => e.success).length;
+  const retriedFailureCount = retriedEvents.length - retriedSuccessCount;
+  const retriedTotalAttempts = retriedEvents.reduce((sum, e) => sum + e.attempts, 0);
+
+  return {
+    events: retryEvents,
+    count: retryEvents.length,
+    targetSummaries,
+    summary: {
+      totalDeliveries,
+      retriedDeliveries,
+      retryRate: totalDeliveries > 0
+        ? Math.round((retriedDeliveries / totalDeliveries) * 10000) / 10000
+        : null,
+      totalAttempts,
+      avgAttemptsPerRetry: retriedDeliveries > 0
+        ? Math.round((retriedTotalAttempts / retriedDeliveries) * 100) / 100
+        : null,
+      retriedSuccessCount,
+      retriedFailureCount,
     },
   };
 }
