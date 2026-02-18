@@ -33,6 +33,8 @@ import type { AlertSeverity, AlertEvaluation } from './alert-rules.js';
 import type { WebhookTarget, WebhookConfig, WebhookDeliveryResult } from './alert-webhook.js';
 import { deliverWebhook, buildWebhookPayload } from './alert-webhook.js';
 import { appendDeliveryEvents } from './webhook-delivery-history.js';
+import { appendEscalationEvent, appendEscalationReset } from './escalation-history.js';
+import type { EscalationDeliveryOutcome } from './escalation-history.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -771,11 +773,29 @@ export async function maybeEscalate(
   const currentSeverity = evaluation.overallSeverity;
   const triggerSeverity = policy.triggerSeverity ?? DEFAULT_TRIGGER_SEVERITY;
 
+  // Capture pre-update state for reset detection (Phase 22)
+  const wasTracking = escalationState.qualifyingSince !== null;
+  const priorQualifyingSeverity = escalationState.qualifyingSeverity;
+  const priorQualifyingSince = escalationState.qualifyingSince;
+
   // Evaluate what to do
   const decision = evaluateEscalation(policy, currentSeverity, escalationState, now);
 
   // Update state (start/stop clock, record triggers)
   updateEscalationState(currentSeverity, triggerSeverity, decision, now);
+
+  // Phase 22: Record escalation reset event if we were tracking and just stopped
+  if (wasTracking && escalationState.qualifyingSince === null && priorQualifyingSince !== null) {
+    try {
+      appendEscalationReset(dataDir, {
+        qualifyingSeverity: priorQualifyingSeverity ?? 'unknown',
+        qualifyingDurationMs: now - priorQualifyingSince,
+        ts: now,
+      });
+    } catch {
+      // Non-critical — don't break the metrics response
+    }
+  }
 
   // No escalation needed
   if (!decision.shouldEscalate) return [];
@@ -801,8 +821,8 @@ export async function maybeEscalate(
   );
 
   // Record in delivery history
+  const targetMap = new Map(targets.map((t) => [t.id, t]));
   try {
-    const targetMap = new Map(targets.map((t) => [t.id, t]));
     const contexts = results.map((r) => ({
       url: targetMap.get(r.targetId)?.url ?? '',
       triggerSeverity: `escalation-tier-${(decision.tierIndex ?? 0) + 1}`,
@@ -812,6 +832,40 @@ export async function maybeEscalate(
     appendDeliveryEvents(dataDir, results, contexts);
   } catch {
     // Non-critical
+  }
+
+  // Phase 22: Record escalation event in escalation history (audit trail)
+  try {
+    const isNewTier = decision.tierIndex != null && decision.reason.includes('triggered');
+    const eventType = isNewTier ? 'tier_triggered' : 'tier_renotified';
+
+    const deliveries: EscalationDeliveryOutcome[] = results.map((r) => ({
+      targetId: r.targetId,
+      targetName: r.targetName,
+      success: r.success,
+      statusCode: r.statusCode,
+      attempts: r.attempts,
+      durationMs: r.durationMs,
+      error: r.error,
+    }));
+
+    const successCount = deliveries.filter((d) => d.success).length;
+    const failureCount = deliveries.length - successCount;
+
+    appendEscalationEvent(dataDir, {
+      ts: now,
+      eventType,
+      tierIndex: decision.tierIndex,
+      tierLabel: decision.tier?.label ?? null,
+      qualifyingSeverity: currentSeverity,
+      qualifyingDurationMs: decision.qualifyingDurationMs,
+      reason: decision.reason,
+      deliveries,
+      deliverySuccessCount: successCount,
+      deliveryFailureCount: failureCount,
+    });
+  } catch {
+    // Non-critical — don't break the metrics response
   }
 
   return [{
