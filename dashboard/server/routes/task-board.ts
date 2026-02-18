@@ -90,8 +90,9 @@ import {
 
 import {
   queryEscalationHistory,
+  exportEscalationHistory,
 } from '../escalation-history.js';
-import type { EscalationEventType } from '../escalation-history.js';
+import type { EscalationEventType, EscalationExportFormat } from '../escalation-history.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -737,6 +738,57 @@ export async function handleTaskBoard(
     } catch {
       sendJson(res, { error: 'Failed to compute escalation status' }, 500);
     }
+    return true;
+  }
+
+  // ── GET /api/task-board/escalation/history/export — Issue #219, Phase 23 ────
+  // Export escalation history as CSV or JSON file download.
+  // Query params: same as /escalation/history + ?format=csv|json (default json)
+  // Bounded: max 200 events per export. Secret-safe: conservative field allowlist.
+  if (url.startsWith('/api/task-board/escalation/history/export') && method === 'GET') {
+    const exportParams = new URL(url, 'http://localhost').searchParams;
+    const format = (exportParams.get('format') === 'csv' ? 'csv' : 'json') as EscalationExportFormat;
+    const limit = exportParams.has('limit')
+      ? Math.max(1, Math.min(Number(exportParams.get('limit')) || 200, 200))
+      : 200;
+    const sinceMs = exportParams.has('sinceMs')
+      ? Math.max(0, Number(exportParams.get('sinceMs')) || 0)
+      : undefined;
+
+    const eventTypeRaw = exportParams.get('eventType');
+    const validEventTypes: EscalationEventType[] = [
+      'tier_triggered', 'tier_renotified', 'notification_sent', 'escalation_reset',
+    ];
+    const eventType = eventTypeRaw && validEventTypes.includes(eventTypeRaw as EscalationEventType)
+      ? (eventTypeRaw as EscalationEventType)
+      : undefined;
+
+    const tierIndexRaw = exportParams.get('tierIndex');
+    const tierIndex = tierIndexRaw !== null && !isNaN(Number(tierIndexRaw))
+      ? Number(tierIndexRaw)
+      : undefined;
+
+    const deliveryStatusRaw = exportParams.get('deliveryStatus');
+    const deliveryStatus = deliveryStatusRaw === 'success' || deliveryStatusRaw === 'failure'
+      ? deliveryStatusRaw
+      : undefined;
+
+    const result = exportEscalationHistory(dataDir, {
+      format,
+      limit,
+      sinceMs,
+      eventType,
+      tierIndex,
+      deliveryStatus,
+    });
+
+    res.writeHead(200, {
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+      'Cache-Control': 'no-store',
+      'X-Export-Count': String(result.count),
+    });
+    res.end(result.content);
     return true;
   }
 

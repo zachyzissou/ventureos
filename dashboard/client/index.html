@@ -5368,6 +5368,10 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
                 <option value="success">Success</option>
                 <option value="failure">Failure</option>
               </select>
+              <div class="tb-export-controls">
+                <button class="tb-export-btn" onclick="tbExportEscalationHistory('csv')" title="Download escalation history as CSV">📥 CSV</button>
+                <button class="tb-export-btn" onclick="tbExportEscalationHistory('json')" title="Download escalation history as JSON">📥 JSON</button>
+              </div>
             </div>
             <div id="tbEscHistStats" class="tb-escalation-history-stats"></div>
             <div id="tbEscHistBody">
@@ -10800,6 +10804,75 @@ function tbEscHistEventLabel(type) {
     case 'notification_sent': return 'Notification';
     case 'escalation_reset': return 'Reset';
     default: return type || 'Unknown';
+  }
+}
+
+// ── Escalation History Export (Issue #219, Phase 23) ────────────────────────
+// Download escalation history as CSV/JSON file.
+// Uses the same filter state from the escalation history panel.
+
+/**
+ * Export escalation history as CSV or JSON.
+ * Reads current filter state and triggers a file download via the export API.
+ */
+function tbExportEscalationHistory(format) {
+  var params = new URLSearchParams();
+  params.set('format', format);
+  params.set('limit', '200');
+
+  var windowEl = document.getElementById('tbEscHistWindow');
+  var eventTypeEl = document.getElementById('tbEscHistEventType');
+  var deliveryStatusEl = document.getElementById('tbEscHistDeliveryStatus');
+
+  if (windowEl && windowEl.value) params.set('sinceMs', windowEl.value);
+  if (eventTypeEl && eventTypeEl.value) params.set('eventType', eventTypeEl.value);
+  if (deliveryStatusEl && deliveryStatusEl.value) params.set('deliveryStatus', deliveryStatusEl.value);
+
+  tbTriggerEscalationExportDownload(
+    '/api/task-board/escalation/history/export?' + params.toString(),
+    format
+  );
+}
+
+/**
+ * Trigger a file download from an escalation export API URL.
+ * Fetches the content, creates a Blob, and triggers download via <a> click.
+ */
+async function tbTriggerEscalationExportDownload(url, format) {
+  // Disable export buttons while downloading
+  var btns = document.querySelectorAll('#tbEscalationHistoryPanel .tb-export-btn');
+  btns.forEach(function(b) { b.disabled = true; });
+
+  try {
+    var res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // Extract filename from Content-Disposition header if available
+    var disposition = res.headers.get('Content-Disposition') || '';
+    var filenameMatch = disposition.match(/filename="?([^";\s]+)"?/);
+    var filename = filenameMatch ? filenameMatch[1] : ('escalation-history.' + format);
+
+    var blob = await res.blob();
+    var blobUrl = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+
+    // Cleanup
+    setTimeout(function() {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    }, 100);
+
+    tbShowToast('Exported ' + (res.headers.get('X-Export-Count') || '') + ' escalation events as ' + format.toUpperCase(), 'success');
+  } catch (e) {
+    console.error('[task-board] escalation history export failed', e);
+    tbShowToast('Export failed: ' + e.message, 'error');
+  } finally {
+    btns.forEach(function(b) { b.disabled = false; });
   }
 }
 
