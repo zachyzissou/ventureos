@@ -2269,6 +2269,142 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 /* ─── End Escalation Status ───────────────────────────────────────── */
 
+/* ─── Escalation History (Issue #219, Phase 22) ────────────────────── */
+
+.tb-escalation-history-panel {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.tb-escalation-history-panel.active {
+  display: block;
+}
+.tb-escalation-history-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tb-escalation-history-header .icon {
+  font-size: 15px;
+}
+.tb-escalation-history-header .title {
+  flex: 1;
+}
+.tb-escalation-history-header .subtitle {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.tb-escalation-history-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.tb-escalation-history-controls select {
+  padding: 2px 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: inherit;
+}
+.tb-escalation-history-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.tb-escalation-history-stats .stat-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.tb-escalation-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.tb-escalation-history-table th {
+  text-align: left;
+  padding: 6px 8px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.tb-escalation-history-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: top;
+}
+.tb-escalation-history-table tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+.tb-escalation-event-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.tb-escalation-event-badge.tier_triggered {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--yellow);
+}
+.tb-escalation-event-badge.tier_renotified {
+  background: rgba(168, 85, 247, 0.2);
+  color: var(--purple);
+}
+.tb-escalation-event-badge.notification_sent {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--blue);
+}
+.tb-escalation-event-badge.escalation_reset {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--green);
+}
+.tb-escalation-delivery-outcomes {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.tb-escalation-delivery-pill {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.tb-escalation-delivery-pill.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--green);
+}
+.tb-escalation-delivery-pill.failure {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red);
+}
+.tb-escalation-history-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 24px 0;
+  font-size: 12px;
+}
+
+/* ─── End Escalation History ──────────────────────────────────────── */
+
 /* ─── Webhook Config (Issue #219, Phase 12) ─────────────────────────── */
 
 .tb-webhook-config-link {
@@ -5205,6 +5341,38 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
             </div>
             <div id="tbEscalationSummary" class="tb-escalation-summary"></div>
             <div id="tbEscalationTiers" class="tb-escalation-tiers"></div>
+          </div>
+
+          <!-- Escalation History Panel (Phase 22) — audit trail of escalation events -->
+          <div id="tbEscalationHistoryPanel" class="tb-escalation-history-panel">
+            <div class="tb-escalation-history-header">
+              <span class="icon">📋</span>
+              <span class="title">Escalation History</span>
+              <span class="subtitle" id="tbEscHistSubtitle"></span>
+            </div>
+            <div class="tb-escalation-history-controls">
+              <select id="tbEscHistWindow" onchange="tbFetchEscalationHistory()">
+                <option value="3600000">Last 1h</option>
+                <option value="21600000" selected>Last 6h</option>
+                <option value="86400000">Last 24h</option>
+                <option value="172800000">Last 48h</option>
+              </select>
+              <select id="tbEscHistEventType" onchange="tbFetchEscalationHistory()">
+                <option value="">All events</option>
+                <option value="tier_triggered">Tier triggered</option>
+                <option value="tier_renotified">Re-notified</option>
+                <option value="escalation_reset">Reset</option>
+              </select>
+              <select id="tbEscHistDeliveryStatus" onchange="tbFetchEscalationHistory()">
+                <option value="">Any delivery</option>
+                <option value="success">Success</option>
+                <option value="failure">Failure</option>
+              </select>
+            </div>
+            <div id="tbEscHistStats" class="tb-escalation-history-stats"></div>
+            <div id="tbEscHistBody">
+              <div class="tb-escalation-history-empty">No escalation events recorded yet</div>
+            </div>
           </div>
 
           <!-- Alert History Timeline (Phase 10) — compact recent alert transitions -->
@@ -9032,6 +9200,7 @@ async function tbRefresh() {
       tbFetchHistory();
       tbFetchAlertTimeline();
       tbFetchEscalationStatus();
+      tbFetchEscalationHistory();
     }
   } catch (e) {
     console.error('[task-board] refresh error', e);
@@ -9813,6 +9982,7 @@ function tbToggleMetrics() {
     tbFetchHistory();
     tbFetchAlertTimeline();
     tbFetchEscalationStatus();
+    tbFetchEscalationHistory();
   }
 }
 
@@ -10519,6 +10689,117 @@ function tbStopEscalationTimer() {
   if (tbEscalationTimer) {
     clearInterval(tbEscalationTimer);
     tbEscalationTimer = null;
+  }
+}
+
+// ── Escalation History (Issue #219, Phase 22) ────────────────────────────────
+// Fetches and renders the escalation history audit trail panel.
+// Integrates with GET /api/task-board/escalation/history endpoint.
+
+async function tbFetchEscalationHistory() {
+  try {
+    const windowMs = document.getElementById('tbEscHistWindow')?.value || '21600000';
+    const eventType = document.getElementById('tbEscHistEventType')?.value || '';
+    const deliveryStatus = document.getElementById('tbEscHistDeliveryStatus')?.value || '';
+
+    let qs = `?sinceMs=${windowMs}&limit=50`;
+    if (eventType) qs += `&eventType=${eventType}`;
+    if (deliveryStatus) qs += `&deliveryStatus=${deliveryStatus}`;
+
+    const res = await fetch('/api/task-board/escalation/history' + qs);
+    if (!res.ok) return;
+    const data = await res.json();
+    tbRenderEscalationHistory(data);
+  } catch (e) {
+    console.warn('[task-board] escalation history fetch error', e);
+  }
+}
+
+function tbRenderEscalationHistory(data) {
+  const panel = document.getElementById('tbEscalationHistoryPanel');
+  const subtitle = document.getElementById('tbEscHistSubtitle');
+  const statsEl = document.getElementById('tbEscHistStats');
+  const body = document.getElementById('tbEscHistBody');
+  if (!panel || !body) return;
+
+  const events = data.events || [];
+  const summary = data.summary || {};
+
+  // Always show panel when escalation policy exists
+  panel.classList.add('active');
+
+  // Subtitle
+  if (subtitle) {
+    subtitle.textContent = events.length > 0
+      ? `${summary.totalEvents || events.length} event${(summary.totalEvents || events.length) !== 1 ? 's' : ''}`
+      : '';
+  }
+
+  // Stats row
+  if (statsEl) {
+    const counts = summary.eventTypeCounts || {};
+    const parts = [];
+    if (counts.tier_triggered) parts.push(`<span class="stat-value">${counts.tier_triggered}</span> triggered`);
+    if (counts.tier_renotified) parts.push(`<span class="stat-value">${counts.tier_renotified}</span> re-notified`);
+    if (counts.escalation_reset) parts.push(`<span class="stat-value">${counts.escalation_reset}</span> resets`);
+    if (summary.totalNotificationsSent) {
+      parts.push(`<span class="stat-value">${summary.totalNotificationSuccesses || 0}/${summary.totalNotificationsSent}</span> delivered`);
+    }
+    statsEl.innerHTML = parts.join(' · ');
+  }
+
+  // No events
+  if (events.length === 0) {
+    body.innerHTML = '<div class="tb-escalation-history-empty">No escalation events in this time window</div>';
+    return;
+  }
+
+  // Render table
+  let html = '<table class="tb-escalation-history-table">';
+  html += '<thead><tr><th>Time</th><th>Event</th><th>Tier</th><th>Duration</th><th>Deliveries</th><th>Reason</th></tr></thead>';
+  html += '<tbody>';
+
+  for (const ev of events) {
+    const timeStr = tbTimelineTimeAgo(ev.ts);
+    const eventBadge = `<span class="tb-escalation-event-badge ${ev.eventType}">${tbEscHistEventLabel(ev.eventType)}</span>`;
+    const tierStr = ev.tierIndex != null ? `${ev.tierLabel || ('Tier ' + (ev.tierIndex + 1))}` : '—';
+    const durStr = tbEscDuration(ev.qualifyingDurationMs);
+
+    // Delivery outcomes
+    let deliveryHtml = '—';
+    if (ev.deliveries && ev.deliveries.length > 0) {
+      deliveryHtml = '<div class="tb-escalation-delivery-outcomes">';
+      for (const d of ev.deliveries) {
+        const cls = d.success ? 'success' : 'failure';
+        const icon = d.success ? '✓' : '✗';
+        deliveryHtml += `<span class="tb-escalation-delivery-pill ${cls}" title="${tbEsc(d.targetName)}${d.error ? ': ' + tbEsc(d.error) : ''}">${icon} ${tbEsc(d.targetName)}</span>`;
+      }
+      deliveryHtml += '</div>';
+    }
+
+    const reasonStr = ev.reason ? tbEsc(ev.reason).slice(0, 80) : '—';
+
+    html += `<tr>
+      <td style="white-space:nowrap;color:var(--text-muted);">${timeStr}</td>
+      <td>${eventBadge}</td>
+      <td>${tbEsc(tierStr)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">${durStr}</td>
+      <td>${deliveryHtml}</td>
+      <td style="color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${tbEsc(ev.reason || '')}">${reasonStr}</td>
+    </tr>`;
+  }
+
+  html += '</tbody></table>';
+  body.innerHTML = html;
+}
+
+function tbEscHistEventLabel(type) {
+  switch (type) {
+    case 'tier_triggered': return 'Triggered';
+    case 'tier_renotified': return 'Re-notified';
+    case 'notification_sent': return 'Notification';
+    case 'escalation_reset': return 'Reset';
+    default: return type || 'Unknown';
   }
 }
 
