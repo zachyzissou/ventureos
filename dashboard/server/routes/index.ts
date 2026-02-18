@@ -75,3 +75,28 @@ export type {
   AlertHistoryQuery,
   AlertTimelineSummary,
 } from '../alert-history.js';
+export {
+  readWebhookConfig,
+  writeWebhookConfig,
+  validateWebhookConfig,
+  sanitizeConfig as sanitizeWebhookConfig,
+  redactConfig as redactWebhookConfig,
+  buildWebhookPayload,
+  deliverWebhook,
+  maybeDeliverWebhooks,
+  isTransition,
+  selectTargets,
+  resetDeliveryState,
+  getDeliveryState,
+  maskUrl,
+  computeSignature,
+  DEFAULT_WEBHOOK_CONFIG,
+} from '../alert-webhook.js';
+export type {
+  WebhookConfig,
+  WebhookTarget,
+  WebhookPayload,
+  WebhookDeliveryResult,
+  WebhookDeliveryState,
+  WebhookConfigValidationError,
+} from '../alert-webhook.js';
