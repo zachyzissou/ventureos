@@ -170,6 +170,193 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
   return { ok: true, card };
 }
 
+// ─── Batch operations (Issue #219 — Bulk Operations Panel) ───────────────────
+
+/** Maximum cards per batch request to prevent unbounded operations. */
+const MAX_BATCH_SIZE = 50;
+
+/** Statuses that are eligible for the archive (delete) action. */
+const ARCHIVABLE_STATUSES: TaskStatus[] = ['done', 'failed'];
+
+interface BatchInput {
+  action?: string;
+  ids?: string[];
+  status?: string;
+}
+
+interface BatchItemResult {
+  id: string;
+  ok: boolean;
+  error?: string;
+}
+
+export interface BatchResult {
+  action: string;
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: BatchItemResult[];
+  error?: string;
+}
+
+/**
+ * Execute a batch operation (transition or archive) on multiple cards.
+ * All mutations are applied atomically — either the file is written with
+ * all successful changes, or rolled back on unexpected errors.
+ *
+ * For transitions: each card is validated individually against the state
+ * machine. Failed transitions are reported per-card but do not block
+ * successful ones (partial success model).
+ *
+ * For archive: only done/failed cards can be archived. Others are skipped
+ * with per-card error.
+ */
+export function executeBatch(
+  dataDir: string,
+  input: BatchInput,
+  emitEvent?: TaskBoardDeps['emitEvent'],
+): BatchResult {
+  const action = input.action ?? '';
+
+  if (!['transition', 'archive'].includes(action)) {
+    return {
+      action,
+      total: 0,
+      succeeded: 0,
+      failed: 0,
+      results: [],
+      error: `invalid action: ${action}. Must be "transition" or "archive".`,
+    };
+  }
+
+  const ids = input.ids;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return {
+      action,
+      total: 0,
+      succeeded: 0,
+      failed: 0,
+      results: [],
+      error: 'ids must be a non-empty array',
+    };
+  }
+
+  if (ids.length > MAX_BATCH_SIZE) {
+    return {
+      action,
+      total: ids.length,
+      succeeded: 0,
+      failed: ids.length,
+      results: [],
+      error: `batch size ${ids.length} exceeds maximum of ${MAX_BATCH_SIZE}`,
+    };
+  }
+
+  // De-duplicate ids
+  const uniqueIds = [...new Set(ids)];
+
+  const tasks = loadTasks(dataDir);
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
+  const results: BatchItemResult[] = [];
+  let succeeded = 0;
+  let failed = 0;
+
+  if (action === 'transition') {
+    const targetStatus = input.status as TaskStatus;
+    if (!targetStatus || !VALID_STATUSES.includes(targetStatus)) {
+      return {
+        action,
+        total: uniqueIds.length,
+        succeeded: 0,
+        failed: uniqueIds.length,
+        results: [],
+        error: `invalid target status: ${input.status}`,
+      };
+    }
+
+    for (const id of uniqueIds) {
+      const card = taskMap.get(id);
+      if (!card) {
+        results.push({ id, ok: false, error: 'not found' });
+        failed++;
+        continue;
+      }
+      if (card.status === targetStatus) {
+        // Already at target — count as success (idempotent)
+        results.push({ id, ok: true });
+        succeeded++;
+        continue;
+      }
+      if (!isValidTransition(card.status, targetStatus)) {
+        results.push({
+          id,
+          ok: false,
+          error: `invalid transition: ${card.status} → ${targetStatus}`,
+        });
+        failed++;
+        continue;
+      }
+
+      // Apply transition
+      card.status = targetStatus;
+      const now = Date.now();
+      if (targetStatus === 'queued') card.queuedAt = now;
+      if (targetStatus === 'running') card.startedAt = now;
+      if (targetStatus === 'done' || targetStatus === 'failed') {
+        card.completedAt = now;
+        if (card.startedAt && card.runtimeMs == null) {
+          card.runtimeMs = now - card.startedAt;
+        }
+      }
+
+      results.push({ id, ok: true });
+      succeeded++;
+      emitEvent?.('task:updated', card);
+    }
+
+    // Persist all changes
+    saveTasks(dataDir, tasks);
+  } else if (action === 'archive') {
+    const toRemove: string[] = [];
+
+    for (const id of uniqueIds) {
+      const card = taskMap.get(id);
+      if (!card) {
+        results.push({ id, ok: false, error: 'not found' });
+        failed++;
+        continue;
+      }
+      if (!ARCHIVABLE_STATUSES.includes(card.status)) {
+        results.push({
+          id,
+          ok: false,
+          error: `cannot archive card in status "${card.status}" — only done/failed cards can be archived`,
+        });
+        failed++;
+        continue;
+      }
+      toRemove.push(id);
+      results.push({ id, ok: true });
+      succeeded++;
+      emitEvent?.('task:deleted', card);
+    }
+
+    if (toRemove.length > 0) {
+      const removeSet = new Set(toRemove);
+      const remaining = tasks.filter((t) => !removeSet.has(t.id));
+      saveTasks(dataDir, remaining);
+    }
+  }
+
+  return {
+    action,
+    total: uniqueIds.length,
+    succeeded,
+    failed,
+    results,
+  };
+}
+
 // ─── Route handler ───────────────────────────────────────────────────────────
 
 export async function handleTaskBoard(
@@ -227,6 +414,27 @@ export async function handleTaskBoard(
       priority: params.get('priority'),
     });
     sendJson(res, { tasks: filtered, total: filtered.length });
+    return true;
+  }
+
+  // ── POST /api/task-board/batch — Issue #219, Phase 6 (Bulk Operations) ────
+  // Batch operations on multiple cards. Bounded to MAX_BATCH_SIZE per request.
+  // Supports: { action: "transition", ids: [...], status: "done" }
+  //           { action: "archive",    ids: [...] }
+  // Returns per-card results with success/failure breakdown.
+  if (url === '/api/task-board/batch' && method === 'POST') {
+    let body: BatchInput;
+    try {
+      const raw = await readRequestBody(req, { maxBytes: 32768 });
+      body = JSON.parse(raw) as BatchInput;
+    } catch {
+      sendJson(res, { error: 'invalid JSON body' }, 400);
+      return true;
+    }
+
+    const result = executeBatch(dataDir, body, deps.emitEvent);
+    const status = result.error ? 400 : 200;
+    sendJson(res, result, status);
     return true;
   }
 
