@@ -23,6 +23,8 @@ import type { AlertSeverity, AlertEvaluation, AlertRuleResult } from './alert-ru
 import type { AlertHistoryEvent } from './alert-history.js';
 import { appendDeliveryEvents } from './webhook-delivery-history.js';
 import type { WebhookDeliveryAttemptDetail } from './webhook-delivery-history.js';
+import { formatPayload, isValidProvider, ALLOWED_PROVIDERS } from './webhook-formatters.js';
+import type { WebhookProvider, FormattedPayload } from './webhook-formatters.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -43,6 +45,14 @@ export interface WebhookTarget {
    * Default: 'warning' (notifies on warning and critical transitions).
    */
   minSeverity?: AlertSeverity;
+  /**
+   * Payload format provider for this target.
+   * Controls how the webhook payload is shaped for the receiving service.
+   * Default: 'generic' (raw VentureOS JSON — backward-compatible).
+   * Allowed values: 'generic', 'slack', 'discord'.
+   * Issue #219 — Phase 18.
+   */
+  provider?: WebhookProvider;
 }
 
 /** Full webhook configuration. */
@@ -280,6 +290,7 @@ export function sanitizeConfig(raw: unknown): WebhookConfig {
             minSeverity: typeof tObj.minSeverity === 'string' && ['ok', 'warning', 'critical'].includes(tObj.minSeverity)
               ? (tObj.minSeverity as AlertSeverity)
               : 'warning',
+            provider: isValidProvider(tObj.provider) ? tObj.provider : undefined,
           });
         }
       }
@@ -389,6 +400,15 @@ export function validateWebhookConfig(input: unknown): WebhookConfigValidationEr
         if (tObj.minSeverity !== undefined) {
           if (typeof tObj.minSeverity !== 'string' || !['ok', 'warning', 'critical'].includes(tObj.minSeverity)) {
             errors.push({ field: `${prefix}.minSeverity`, message: 'minSeverity must be ok, warning, or critical' });
+          }
+        }
+
+        if (tObj.provider !== undefined) {
+          if (!isValidProvider(tObj.provider)) {
+            errors.push({
+              field: `${prefix}.provider`,
+              message: `provider must be one of: ${ALLOWED_PROVIDERS.join(', ')}`,
+            });
           }
         }
       }
@@ -509,7 +529,11 @@ export async function deliverWebhook(
 ): Promise<WebhookDeliveryResult> {
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxRetries = opts.maxRetries ?? DEFAULT_MAX_RETRIES;
-  const body = JSON.stringify(payload);
+
+  // Format payload for the target's provider (Phase 18).
+  // Falls back to generic JSON if provider is unset or unknown.
+  const formatted = formatPayload(payload, target.provider);
+  const body = formatted.body;
   const startMs = Date.now();
 
   let lastError: string | null = null;
@@ -530,12 +554,15 @@ export async function deliverWebhook(
 
     try {
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+        'Content-Type': formatted.contentType,
         'User-Agent': 'VentureOS-Dashboard/1.0',
         'X-VentureOS-Event': 'alert.transition',
+        ...formatted.extraHeaders,
       };
 
-      // Add HMAC signature if secret is configured
+      // Add HMAC signature if secret is configured.
+      // Signature is computed over the final formatted body so verification
+      // works regardless of which provider formatter was used.
       if (target.secret) {
         const signature = await computeSignature(body, target.secret);
         headers['X-VentureOS-Signature'] = `sha256=${signature}`;
@@ -814,7 +841,10 @@ export async function deliverTestWebhook(
 ): Promise<WebhookTestResult> {
   const timeoutMs = opts.timeoutMs ?? TEST_TIMEOUT_MS;
   const maxRetries = opts.maxRetries ?? TEST_MAX_RETRIES;
-  const body = JSON.stringify(payload);
+
+  // Format test payload for the target's provider (Phase 18).
+  const formatted = formatPayload(payload, target.provider);
+  const body = formatted.body;
   const startMs = Date.now();
 
   let lastError: string | null = null;
@@ -833,13 +863,15 @@ export async function deliverTestWebhook(
 
     try {
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+        'Content-Type': formatted.contentType,
         'User-Agent': 'VentureOS-Dashboard/1.0',
         'X-VentureOS-Event': 'webhook.test',
         'X-VentureOS-Test': 'true',
+        ...formatted.extraHeaders,
       };
 
-      // Add HMAC signature if secret is configured
+      // Add HMAC signature if secret is configured.
+      // Signature is computed over the final formatted body.
       if (target.secret) {
         const signature = await computeSignature(body, target.secret);
         headers['X-VentureOS-Signature'] = `sha256=${signature}`;
