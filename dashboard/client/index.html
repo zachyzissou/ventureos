@@ -2670,6 +2670,224 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 /* ─── End Webhook Delivery History ──────────────────────────────────── */
 
+/* ─── Webhook Health Stats (Issue #219, Phase 15) ────────────────────── */
+
+.tb-health-section {
+  margin-bottom: 20px;
+}
+
+.tb-health-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tb-health-section-header .title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tb-health-section-header .subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-health-overall {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tb-health-overall-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.tb-health-overall-card .value {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-health-overall-card .label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.tb-health-target-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tb-health-target-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: border-color 0.2s;
+}
+
+.tb-health-target-card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.tb-health-target-card.healthy {
+  border-left: 3px solid var(--green);
+}
+
+.tb-health-target-card.degraded {
+  border-left: 3px solid var(--yellow);
+}
+
+.tb-health-target-card.unhealthy {
+  border-left: 3px solid var(--red);
+}
+
+.tb-health-target-card.unknown {
+  border-left: 3px solid var(--text-muted);
+}
+
+.tb-health-target-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tb-health-target-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tb-health-target-url {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-health-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-left: auto;
+}
+
+.tb-health-status-badge.healthy {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--green);
+}
+
+.tb-health-status-badge.degraded {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--yellow);
+}
+
+.tb-health-status-badge.unhealthy {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--red);
+}
+
+.tb-health-status-badge.unknown {
+  background: rgba(113, 113, 122, 0.15);
+  color: var(--text-muted);
+}
+
+.tb-health-target-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.tb-health-stat {
+  text-align: center;
+}
+
+.tb-health-stat .value {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+}
+
+.tb-health-stat .label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 1px;
+}
+
+.tb-health-target-timestamps {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-health-target-timestamps .ts-ok {
+  color: var(--green);
+}
+
+.tb-health-target-timestamps .ts-fail {
+  color: var(--red);
+}
+
+.tb-health-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 24px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.tb-health-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(239, 68, 68, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.tb-health-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.tb-health-progress-fill.healthy {
+  background: var(--green);
+}
+
+.tb-health-progress-fill.degraded {
+  background: var(--yellow);
+}
+
+.tb-health-progress-fill.unhealthy {
+  background: var(--red);
+}
+
+/* ─── End Webhook Health Stats ───────────────────────────────────────── */
+
 /* ─── Alert Timeline (Issue #219, Phase 10) ─────────────────────────── */
 
 .tb-alert-timeline {
@@ -4744,12 +4962,16 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 </div>
 <!-- ═══ End Webhook Config Modal ══════════════════════════════════════ -->
 
-<!-- ═══ Webhook Delivery History Modal (Issue #219, Phase 13) ═══════ -->
+<!-- ═══ Webhook Delivery History Modal (Issue #219, Phase 13 + Phase 15 Health Stats) ═══════ -->
 <div class="tb-delivery-overlay" id="tbDeliveryHistoryModal" onclick="if(event.target===this)tbCloseDeliveryHistory()">
   <div class="tb-delivery-panel">
     <div class="tb-delivery-header">
       <span>📊 Webhook Delivery History</span>
       <div class="tb-delivery-controls">
+        <div class="tab-bar" style="margin-bottom:0;">
+          <button class="tab-btn active" id="tbDeliveryTabHistory" onclick="tbSwitchDeliveryTab('history')">📋 History</button>
+          <button class="tab-btn" id="tbDeliveryTabHealth" onclick="tbSwitchDeliveryTab('health')">💚 Health</button>
+        </div>
         <button onclick="tbSendTestPingFromDeliveries()" class="tb-webhook-test-btn" id="tbDeliveryTestBtn" style="font-size:11px;padding:4px 10px;">🔔 Send Test Ping</button>
         <button onclick="tbRefreshDeliveryHistory()" class="tb-btn tb-btn-secondary" style="font-size:11px;padding:4px 10px;">↻ Refresh</button>
         <button onclick="tbCloseDeliveryHistory()" class="tb-detail-close" aria-label="Close delivery history">✕</button>
@@ -4757,6 +4979,9 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
     </div>
     <div class="tb-delivery-body" id="tbDeliveryHistoryBody">
       <!-- Populated dynamically -->
+    </div>
+    <div class="tb-delivery-body" id="tbDeliveryHealthBody" style="display:none;">
+      <!-- Health stats populated dynamically -->
     </div>
     <div class="tb-delivery-footer">
       <span id="tbDeliveryFooterInfo"></span>
@@ -10009,9 +10234,13 @@ function tbCloseDeliveryHistory() {
   if (overlay) overlay.classList.remove('active');
 }
 
-/** Refresh delivery history data. */
+/** Refresh delivery history data (and health stats if on that tab). */
 async function tbRefreshDeliveryHistory() {
-  await tbFetchDeliveryHistory();
+  if (tbCurrentDeliveryTab === 'health') {
+    await tbFetchHealthStats();
+  } else {
+    await tbFetchDeliveryHistory();
+  }
 }
 
 /** Fetch delivery history from the API with current filter state. */
@@ -10188,6 +10417,167 @@ async function tbSendTestPingFromDeliveries() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🔔 Send Test Ping'; }
   }
+}
+
+// ── Webhook Health Stats UI (Issue #219, Phase 15) ──────────────────────────
+// Per-target health dashboard tab within the delivery history modal.
+// Aggregates from delivery history — no new persistence.
+
+let tbHealthStatsCache = null;
+let tbCurrentDeliveryTab = 'history';
+
+/** Switch between History and Health tabs in the delivery modal. */
+function tbSwitchDeliveryTab(tab) {
+  tbCurrentDeliveryTab = tab;
+  var historyBody = document.getElementById('tbDeliveryHistoryBody');
+  var healthBody = document.getElementById('tbDeliveryHealthBody');
+  var tabHistory = document.getElementById('tbDeliveryTabHistory');
+  var tabHealth = document.getElementById('tbDeliveryTabHealth');
+
+  if (tab === 'health') {
+    if (historyBody) historyBody.style.display = 'none';
+    if (healthBody) healthBody.style.display = 'block';
+    if (tabHistory) tabHistory.classList.remove('active');
+    if (tabHealth) tabHealth.classList.add('active');
+    tbFetchHealthStats();
+  } else {
+    if (historyBody) historyBody.style.display = 'block';
+    if (healthBody) healthBody.style.display = 'none';
+    if (tabHistory) tabHistory.classList.add('active');
+    if (tabHealth) tabHealth.classList.remove('active');
+  }
+}
+
+/** Fetch webhook health stats from the API. */
+async function tbFetchHealthStats() {
+  var body = document.getElementById('tbDeliveryHealthBody');
+  if (!body) return;
+  body.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;">Loading health stats…</div>';
+
+  try {
+    var windowSel = document.getElementById('tbHealthWindowSelect');
+    var windowMs = windowSel ? windowSel.value : '86400000';
+    var params = new URLSearchParams();
+    if (windowMs) params.set('windowMs', windowMs);
+
+    var res = await fetch('/api/task-board/webhooks/health?' + params.toString());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    tbHealthStatsCache = data;
+    tbRenderHealthStats(data);
+  } catch (e) {
+    console.warn('[webhook-health] fetch error', e);
+    body.innerHTML = '<div style="text-align:center;color:var(--red);padding:30px;">Failed to load health stats: ' + tbEsc(e.message) + '</div>';
+  }
+}
+
+/** Format a success rate as a percentage string. */
+function tbFmtRate(rate) {
+  if (rate === null || rate === undefined) return '—';
+  return (rate * 100).toFixed(1) + '%';
+}
+
+/** Format a timestamp as a relative time, or "—" if null. */
+function tbFmtTs(ts) {
+  if (!ts) return '—';
+  return tbRelTime(ts);
+}
+
+/** Render the health stats panel. */
+function tbRenderHealthStats(data) {
+  var body = document.getElementById('tbDeliveryHealthBody');
+  if (!body || !data) return;
+
+  var targets = data.targets || [];
+  var summary = data.summary || {};
+  var html = '';
+
+  // Window selector
+  html += '<div class="tb-health-section">';
+  html += '<div class="tb-health-section-header">';
+  html += '  <span class="title">🩺 Target Health Overview</span>';
+  html += '  <select id="tbHealthWindowSelect" onchange="tbFetchHealthStats()" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:11px;font-family:inherit;">';
+  html += '    <option value="3600000"' + (data.windowMs === 3600000 ? ' selected' : '') + '>Last 1h</option>';
+  html += '    <option value="21600000"' + (data.windowMs === 21600000 ? ' selected' : '') + '>Last 6h</option>';
+  html += '    <option value="86400000"' + (data.windowMs === 86400000 ? ' selected' : '') + '>Last 24h</option>';
+  html += '    <option value="172800000"' + (data.windowMs === 172800000 ? ' selected' : '') + '>Last 48h</option>';
+  html += '  </select>';
+  html += '  <span class="subtitle">Computed ' + new Date(data.computedAt).toLocaleTimeString() + '</span>';
+  html += '</div>';
+
+  // Overall summary cards
+  var rateColor = summary.overallSuccessRate === null ? 'var(--text-muted)' :
+    summary.overallSuccessRate >= 0.9 ? 'var(--green)' :
+    summary.overallSuccessRate >= 0.5 ? 'var(--yellow)' : 'var(--red)';
+
+  html += '<div class="tb-health-overall">';
+  html += '  <div class="tb-health-overall-card"><div class="value" style="color:var(--text-primary);">' + (summary.totalDeliveries || 0) + '</div><div class="label">Total Deliveries</div></div>';
+  html += '  <div class="tb-health-overall-card"><div class="value" style="color:' + rateColor + ';">' + tbFmtRate(summary.overallSuccessRate) + '</div><div class="label">Success Rate</div></div>';
+  html += '  <div class="tb-health-overall-card"><div class="value" style="color:var(--text-primary);">' + (summary.overallAvgLatencyMs != null ? summary.overallAvgLatencyMs + 'ms' : '—') + '</div><div class="label">Avg Latency</div></div>';
+  html += '  <div class="tb-health-overall-card"><div class="value" style="color:var(--text-primary);">';
+  html += '    <span style="color:var(--green);">' + (summary.healthyCount || 0) + '</span>';
+  html += '    <span style="color:var(--text-muted);font-size:14px;">/</span>';
+  if (summary.degradedCount) html += '    <span style="color:var(--yellow);">' + summary.degradedCount + '</span><span style="color:var(--text-muted);font-size:14px;">/</span>';
+  if (summary.unhealthyCount) html += '    <span style="color:var(--red);">' + summary.unhealthyCount + '</span><span style="color:var(--text-muted);font-size:14px;">/</span>';
+  html += '    <span style="color:var(--text-muted);">' + (summary.targetCount || 0) + '</span>';
+  html += '  </div><div class="label">Targets (Healthy/Total)</div></div>';
+  html += '</div>';
+
+  // Per-target cards
+  if (targets.length === 0) {
+    html += '<div class="tb-health-empty">No webhook delivery data found in the selected window.</div>';
+  } else {
+    html += '<div class="tb-health-target-cards">';
+
+    for (var i = 0; i < targets.length; i++) {
+      var t = targets[i];
+      var tRateColor = t.successRate === null ? 'var(--text-muted)' :
+        t.successRate >= 0.9 ? 'var(--green)' :
+        t.successRate >= 0.5 ? 'var(--yellow)' : 'var(--red)';
+      var pctWidth = t.successRate !== null ? (t.successRate * 100).toFixed(1) : '0';
+      var progressClass = t.healthStatus === 'healthy' ? 'healthy' : t.healthStatus === 'degraded' ? 'degraded' : t.healthStatus === 'unhealthy' ? 'unhealthy' : 'healthy';
+
+      html += '<div class="tb-health-target-card ' + tbEsc(t.healthStatus) + '">';
+
+      // Header row
+      html += '  <div class="tb-health-target-header">';
+      html += '    <span class="tb-health-target-name">' + tbEsc(t.targetName) + '</span>';
+      if (t.maskedUrl) {
+        html += '    <span class="tb-health-target-url">' + tbEsc(t.maskedUrl) + '</span>';
+      }
+      html += '    <span class="tb-health-status-badge ' + tbEsc(t.healthStatus) + '">' + tbEsc(t.healthStatus) + '</span>';
+      html += '  </div>';
+
+      // Stats row
+      html += '  <div class="tb-health-target-stats">';
+      html += '    <div class="tb-health-stat"><div class="value" style="color:' + tRateColor + ';">' + tbFmtRate(t.successRate) + '</div><div class="label">Success Rate</div></div>';
+      html += '    <div class="tb-health-stat"><div class="value" style="color:var(--green);">' + t.successCount + '</div><div class="label">Successes</div></div>';
+      html += '    <div class="tb-health-stat"><div class="value" style="color:' + (t.failureCount > 0 ? 'var(--red)' : 'var(--text-muted)') + ';">' + t.failureCount + '</div><div class="label">Failures</div></div>';
+      html += '    <div class="tb-health-stat"><div class="value">' + (t.avgLatencyMs != null ? t.avgLatencyMs + '<span style="font-size:11px;color:var(--text-muted);">ms</span>' : '—') + '</div><div class="label">Avg Latency</div></div>';
+      html += '  </div>';
+
+      // Success rate progress bar
+      html += '  <div class="tb-health-progress-bar">';
+      html += '    <div class="tb-health-progress-fill ' + progressClass + '" style="width:' + pctWidth + '%;"></div>';
+      html += '  </div>';
+
+      // Timestamps
+      html += '  <div class="tb-health-target-timestamps">';
+      html += '    <span>Last success: <span class="ts-ok">' + tbFmtTs(t.lastSuccessTs) + '</span></span>';
+      html += '    <span>Last failure: <span class="ts-fail">' + tbFmtTs(t.lastFailureTs) + '</span></span>';
+      if (t.lastStatusCode !== null) {
+        html += '    <span>Last HTTP: <span style="font-weight:600;">' + t.lastStatusCode + '</span></span>';
+      }
+      html += '  </div>';
+
+      html += '</div>'; // end target card
+    }
+
+    html += '</div>'; // end target cards container
+  }
+
+  html += '</div>'; // end health section
+  body.innerHTML = html;
 }
 
 // ── Real-time SSE subscription (Issue #219) ─────────────────────────────────
