@@ -963,6 +963,257 @@ body {
 
 .mb-24 { margin-bottom: 24px; }
 
+/* ─── Task Board (Kanban) — Issue #219 ──────────────────────────────── */
+
+.tb-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  min-height: 400px;
+}
+
+.tb-column {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+}
+
+.tb-column-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-column-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tb-column-count {
+  margin-left: auto;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-column-cards {
+  flex: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.tb-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: default;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.tb-card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tb-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.tb-card-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  line-height: 1.4;
+  max-height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tb-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 10px;
+}
+
+.tb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tb-badge-critical { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+.tb-badge-high { background: rgba(245, 158, 11, 0.15); color: var(--yellow); }
+.tb-badge-medium { background: rgba(99, 102, 241, 0.12); color: var(--accent); }
+.tb-badge-low { background: rgba(113, 113, 122, 0.15); color: var(--text-muted); }
+
+.tb-badge-agent {
+  background: rgba(6, 182, 212, 0.12);
+  color: var(--cyan);
+}
+
+.tb-card-actions {
+  display: none;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  gap: 4px;
+}
+
+.tb-card:hover .tb-card-actions {
+  display: flex;
+}
+
+.tb-card-action-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.tb-card-action-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+.tb-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.tb-btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.tb-btn-primary:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.tb-btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.tb-btn-secondary:hover {
+  border-color: var(--accent);
+}
+
+.tb-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.tb-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.tb-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.tb-card-transitions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.tb-transition-btn {
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.tb-transition-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.tb-time-ago {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@media (max-width: 1200px) {
+  .tb-board { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .tb-board { grid-template-columns: 1fr; }
+}
+
+/* ─── End Task Board ────────────────────────────────────────────────── */
+
 /* Mobile + Tablet Responsive */
 @media (max-width: 1024px) {
   /* Bottom nav */
@@ -1321,6 +1572,10 @@ body {
       <div class="nav-item" data-page="memory">
         <span class="icon">🧠</span>
         <span class="nav-text">Memory</span>
+      </div>
+      <div class="nav-item" data-page="taskboard">
+        <span class="icon">📌</span>
+        <span class="nav-text">Task Board</span>
       </div>
       <div class="nav-item" data-page="logs">
         <span class="icon">📋</span>
@@ -2395,6 +2650,141 @@ body {
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Task Board (Kanban) — Issue #219, Phase 2
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="page" id="taskboard">
+      <div class="page-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+          <div>
+            <h1 class="page-title">Task Board</h1>
+            <p class="page-subtitle">Kanban view — agent task lifecycle management</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="tbRefresh()" class="tb-btn tb-btn-secondary" title="Refresh">🔄 Refresh</button>
+            <button onclick="tbShowCreateForm()" class="tb-btn tb-btn-primary" title="New Task">＋ New Task</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="grid mb-24" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="card" style="padding:16px;">
+          <div class="metric" style="gap:6px;">
+            <div class="metric-value" style="font-size:28px;color:var(--text-muted);" id="tbCountBacklog">0</div>
+            <div class="metric-label">Backlog</div>
+          </div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div class="metric" style="gap:6px;">
+            <div class="metric-value" style="font-size:28px;color:var(--blue);" id="tbCountQueued">0</div>
+            <div class="metric-label">Queued</div>
+          </div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div class="metric" style="gap:6px;">
+            <div class="metric-value" style="font-size:28px;color:var(--yellow);" id="tbCountRunning">0</div>
+            <div class="metric-label">Running</div>
+          </div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div class="metric" style="gap:6px;">
+            <div class="metric-value" style="font-size:28px;color:var(--green);" id="tbCountDone">0</div>
+            <div class="metric-label">Done</div>
+          </div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div class="metric" style="gap:6px;">
+            <div class="metric-value" style="font-size:28px;color:var(--red);" id="tbCountFailed">0</div>
+            <div class="metric-label">Failed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create task form (hidden by default) -->
+      <div class="card mb-24" id="tbCreateForm" style="display:none;">
+        <h3 class="card-title">Create Task</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="grid-column:1/-1;">
+            <label class="tb-label">Title *</label>
+            <input type="text" id="tbNewTitle" class="tb-input" placeholder="Task title…" maxlength="200">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="tb-label">Description</label>
+            <textarea id="tbNewDesc" class="tb-input" placeholder="Optional description…" rows="2" maxlength="2000" style="resize:vertical;"></textarea>
+          </div>
+          <div>
+            <label class="tb-label">Priority</label>
+            <select id="tbNewPriority" class="tb-input">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+          <div>
+            <label class="tb-label">Agent ID (optional)</label>
+            <input type="text" id="tbNewAgent" class="tb-input" placeholder="e.g. synth, nexus…">
+          </div>
+          <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+            <button onclick="tbHideCreateForm()" class="tb-btn tb-btn-secondary">Cancel</button>
+            <button onclick="tbCreateTask()" class="tb-btn tb-btn-primary">Create</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kanban columns -->
+      <div class="tb-board">
+        <div class="tb-column" data-status="backlog">
+          <div class="tb-column-header">
+            <span class="tb-column-dot" style="background:var(--text-muted);"></span>
+            <span>Backlog</span>
+            <span class="tb-column-count" id="tbColBacklog">0</span>
+          </div>
+          <div class="tb-column-cards" id="tbCardsBacklog"></div>
+        </div>
+        <div class="tb-column" data-status="queued">
+          <div class="tb-column-header">
+            <span class="tb-column-dot" style="background:var(--blue);"></span>
+            <span>Queued</span>
+            <span class="tb-column-count" id="tbColQueued">0</span>
+          </div>
+          <div class="tb-column-cards" id="tbCardsQueued"></div>
+        </div>
+        <div class="tb-column" data-status="running">
+          <div class="tb-column-header">
+            <span class="tb-column-dot" style="background:var(--yellow);"></span>
+            <span>Running</span>
+            <span class="tb-column-count" id="tbColRunning">0</span>
+          </div>
+          <div class="tb-column-cards" id="tbCardsRunning"></div>
+        </div>
+        <div class="tb-column" data-status="done">
+          <div class="tb-column-header">
+            <span class="tb-column-dot" style="background:var(--green);"></span>
+            <span>Done</span>
+            <span class="tb-column-count" id="tbColDone">0</span>
+          </div>
+          <div class="tb-column-cards" id="tbCardsDone"></div>
+        </div>
+        <div class="tb-column" data-status="failed">
+          <div class="tb-column-header">
+            <span class="tb-column-dot" style="background:var(--red);"></span>
+            <span>Failed</span>
+            <span class="tb-column-count" id="tbColFailed">0</span>
+          </div>
+          <div class="tb-column-cards" id="tbCardsFailed"></div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="tbEmpty" style="display:none;text-align:center;padding:60px 20px;color:var(--text-muted);">
+        <div style="font-size:48px;margin-bottom:16px;opacity:0.5;">📌</div>
+        <div style="font-size:16px;margin-bottom:8px;">No tasks yet</div>
+        <div style="font-size:13px;">Click "New Task" to create your first card.</div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -2547,6 +2937,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
     }
     if (page === 'observations') {
       fetchObservationsNow();
+    }
+    if (page === 'taskboard') {
+      tbRefresh();
     }
     if (page === 'logs') {
       loadLogSources();
@@ -5717,6 +6110,217 @@ function renderChangelog() {
 }
 
 function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Task Board (Kanban) — Issue #219, Phase 2
+// ═══════════════════════════════════════════════════════════════════════════
+
+const TB_TRANSITIONS = {
+  backlog: ['queued', 'done'],
+  queued: ['running', 'backlog', 'done'],
+  running: ['done', 'failed'],
+  done: ['backlog'],
+  failed: ['backlog', 'queued'],
+};
+
+const TB_STATUS_EMOJI = {
+  backlog: '📋', queued: '⏳', running: '⚡', done: '✅', failed: '❌',
+};
+
+const TB_PRIORITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
+
+let tbTasks = [];
+let tbAutoRefreshTimer = null;
+
+async function tbRefresh() {
+  try {
+    const [tasksRes, summaryRes] = await Promise.all([
+      fetch('/api/task-board').then(r => r.json()),
+      fetch('/api/task-board/summary').then(r => r.json()),
+    ]);
+    tbTasks = (tasksRes.tasks || []).sort((a, b) =>
+      (TB_PRIORITY_ORDER[a.priority] ?? 9) - (TB_PRIORITY_ORDER[b.priority] ?? 9)
+    );
+
+    // Update summary counts
+    const cols = summaryRes.columns || {};
+    document.getElementById('tbCountBacklog').textContent = cols.backlog ?? 0;
+    document.getElementById('tbCountQueued').textContent = cols.queued ?? 0;
+    document.getElementById('tbCountRunning').textContent = cols.running ?? 0;
+    document.getElementById('tbCountDone').textContent = cols.done ?? 0;
+    document.getElementById('tbCountFailed').textContent = cols.failed ?? 0;
+
+    tbRenderBoard();
+  } catch (e) {
+    console.error('[task-board] refresh error', e);
+  }
+}
+
+function tbRenderBoard() {
+  const groups = { backlog: [], queued: [], running: [], done: [], failed: [] };
+  for (const t of tbTasks) {
+    if (groups[t.status]) groups[t.status].push(t);
+  }
+
+  const isEmpty = tbTasks.length === 0;
+  document.getElementById('tbEmpty').style.display = isEmpty ? '' : 'none';
+  document.querySelector('.tb-board').style.display = isEmpty ? 'none' : '';
+
+  for (const [status, cards] of Object.entries(groups)) {
+    const colId = 'tbCards' + status.charAt(0).toUpperCase() + status.slice(1);
+    const countId = 'tbCol' + status.charAt(0).toUpperCase() + status.slice(1);
+    const container = document.getElementById(colId);
+    const countEl = document.getElementById(countId);
+    if (!container) continue;
+
+    countEl.textContent = cards.length;
+    if (cards.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px 8px;opacity:0.6;">No tasks</div>';
+      continue;
+    }
+
+    container.innerHTML = cards.map(c => tbRenderCard(c)).join('');
+  }
+}
+
+function tbRenderCard(card) {
+  const transitions = TB_TRANSITIONS[card.status] || [];
+  const priClass = 'tb-badge-' + card.priority;
+  const ago = tbTimeAgo(card.createdAt);
+  const desc = card.description ? `<div class="tb-card-desc">${tbEsc(card.description)}</div>` : '';
+  const agent = card.agentId ? `<span class="tb-badge tb-badge-agent">🤖 ${tbEsc(card.agentId)}</span>` : '';
+  const result = card.resultSummary ? `<div style="margin-top:6px;font-size:11px;color:var(--green);"><b>Result:</b> ${tbEsc(card.resultSummary)}</div>` : '';
+  const errorMsg = card.error ? `<div style="margin-top:6px;font-size:11px;color:var(--red);"><b>Error:</b> ${tbEsc(card.error)}</div>` : '';
+  const tokens = card.tokensUsed ? `<span class="tb-badge" style="background:rgba(168,85,247,0.12);color:var(--purple);">🪙 ${card.tokensUsed.toLocaleString()}</span>` : '';
+  const elapsed = card.startedAt && card.completedAt
+    ? `<span class="tb-time-ago">${tbDuration(card.completedAt - card.startedAt)}</span>`
+    : card.startedAt
+    ? `<span class="tb-time-ago" style="color:var(--yellow);">⏱ running…</span>`
+    : '';
+
+  const transitionBtns = transitions.map(s =>
+    `<button class="tb-transition-btn" onclick="tbTransition('${card.id}','${s}')" title="Move to ${s}">${TB_STATUS_EMOJI[s] || ''} ${s}</button>`
+  ).join('');
+
+  return `<div class="tb-card" data-id="${card.id}">
+    <div class="tb-card-actions">
+      <button class="tb-card-action-btn" onclick="tbDeleteTask('${card.id}')" title="Delete">🗑</button>
+    </div>
+    <div class="tb-card-title">${tbEsc(card.title)}</div>
+    ${desc}
+    <div class="tb-card-meta">
+      <span class="tb-badge ${priClass}">${card.priority}</span>
+      ${agent}
+      ${tokens}
+      ${elapsed}
+      <span class="tb-time-ago" style="margin-left:auto;">${ago}</span>
+    </div>
+    ${result}
+    ${errorMsg}
+    ${transitionBtns ? `<div class="tb-card-transitions">${transitionBtns}</div>` : ''}
+  </div>`;
+}
+
+function tbEsc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function tbTimeAgo(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+  return Math.floor(diff / 86400000) + 'd ago';
+}
+
+function tbDuration(ms) {
+  if (ms < 1000) return ms + 'ms';
+  if (ms < 60000) return (ms / 1000).toFixed(1) + 's';
+  if (ms < 3600000) return Math.floor(ms / 60000) + 'm ' + Math.floor((ms % 60000) / 1000) + 's';
+  return Math.floor(ms / 3600000) + 'h ' + Math.floor((ms % 3600000) / 60000) + 'm';
+}
+
+function tbShowCreateForm() {
+  document.getElementById('tbCreateForm').style.display = '';
+  document.getElementById('tbNewTitle').focus();
+}
+
+function tbHideCreateForm() {
+  document.getElementById('tbCreateForm').style.display = 'none';
+  document.getElementById('tbNewTitle').value = '';
+  document.getElementById('tbNewDesc').value = '';
+  document.getElementById('tbNewPriority').value = 'medium';
+  document.getElementById('tbNewAgent').value = '';
+}
+
+async function tbCreateTask() {
+  const title = document.getElementById('tbNewTitle').value.trim();
+  if (!title) { document.getElementById('tbNewTitle').focus(); return; }
+  const body = {
+    title,
+    description: document.getElementById('tbNewDesc').value.trim(),
+    priority: document.getElementById('tbNewPriority').value,
+    agentId: document.getElementById('tbNewAgent').value.trim() || null,
+  };
+  try {
+    const res = await fetch('/api/task-board', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert('Failed to create task: ' + (err.error || res.statusText));
+      return;
+    }
+    tbHideCreateForm();
+    await tbRefresh();
+  } catch (e) {
+    alert('Network error creating task: ' + e.message);
+  }
+}
+
+async function tbTransition(id, newStatus) {
+  try {
+    const res = await fetch('/api/task-board/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert('Transition failed: ' + (err.error || res.statusText));
+      return;
+    }
+    await tbRefresh();
+  } catch (e) {
+    alert('Network error: ' + e.message);
+  }
+}
+
+async function tbDeleteTask(id) {
+  if (!confirm('Delete this task?')) return;
+  try {
+    await fetch('/api/task-board/' + id, { method: 'DELETE' });
+    await tbRefresh();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
+// Auto-refresh task board every 15s when visible
+function tbStartAutoRefresh() {
+  if (tbAutoRefreshTimer) return;
+  tbAutoRefreshTimer = setInterval(() => {
+    const activePage = document.querySelector('.page.active');
+    if (activePage && activePage.id === 'taskboard') tbRefresh();
+  }, 15000);
+}
+tbStartAutoRefresh();
 </script>
 </body>
 </html>
