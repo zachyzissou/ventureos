@@ -1711,6 +1711,235 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 /* ─── End Multi-Select & Bulk Operations ────────────────────────────── */
 
+/* ─── Task Metrics Dashboard — Issue #219, Phase 7 ──────────────────── */
+
+.tb-metrics-toggle {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.tb-metrics-toggle:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.tb-metrics-toggle .tb-metrics-toggle-icon {
+  transition: transform 0.2s;
+}
+
+.tb-metrics-toggle.open .tb-metrics-toggle-icon {
+  transform: rotate(90deg);
+}
+
+.tb-metrics-panel {
+  display: none;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 8px;
+}
+
+.tb-metrics-panel.open {
+  display: block;
+}
+
+.tb-metrics-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tb-metrics-kpi {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.tb-metrics-kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.tb-metrics-kpi-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tb-metrics-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+/* Mini bar chart for completion trend */
+.tb-trend-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 80px;
+  padding: 0 4px;
+}
+
+.tb-trend-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.tb-trend-bars {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  width: 100%;
+  justify-content: center;
+}
+
+.tb-trend-bar {
+  width: 12px;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s;
+}
+
+.tb-trend-bar.done { background: var(--green); }
+.tb-trend-bar.failed { background: var(--red); opacity: 0.7; }
+
+.tb-trend-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 4px;
+}
+
+/* Agent breakdown table */
+.tb-agent-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tb-agent-table th {
+  text-align: left;
+  padding: 6px 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tb-agent-table td {
+  padding: 6px 10px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-agent-table tr:last-child td { border-bottom: none; }
+
+/* Stuck task alert */
+.tb-stuck-alert {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--yellow);
+}
+
+.tb-stuck-alert-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  animation: tb-stuck-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tb-stuck-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.tb-stuck-alert-list {
+  flex: 1;
+}
+
+.tb-stuck-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.tb-stuck-item-title {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.tb-stuck-item-time {
+  color: var(--yellow);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+/* Stuck badge on kanban cards */
+.tb-card-stuck-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--yellow);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  animation: tb-stuck-pulse 2s ease-in-out infinite;
+}
+
+.tb-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .tb-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── End Task Metrics Dashboard ────────────────────────────────────── */
+
 /* ─── End Task Board ────────────────────────────────────────────────── */
 
 /* Mobile + Tablet Responsive */
@@ -3217,6 +3446,87 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
           <div class="metric" style="gap:6px;">
             <div class="metric-value" style="font-size:28px;color:var(--red);" id="tbCountFailed">0</div>
             <div class="metric-label">Failed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Metrics Dashboard — Issue #219, Phase 7 -->
+      <div class="mb-24">
+        <div class="tb-metrics-toggle" id="tbMetricsToggle" onclick="tbToggleMetrics()">
+          <span class="tb-metrics-toggle-icon">▸</span>
+          <span>📊 Task Metrics &amp; Health</span>
+          <span id="tbMetricsStuckBadge" style="display:none;margin-left:auto;background:rgba(245,158,11,0.15);color:var(--yellow);font-size:11px;padding:2px 8px;border-radius:8px;font-weight:600;"></span>
+        </div>
+        <div class="tb-metrics-panel" id="tbMetricsPanel">
+          <!-- Stuck tasks alert (shown only when stuck tasks exist) -->
+          <div id="tbStuckAlert" class="tb-stuck-alert mb-24" style="display:none;">
+            <span class="tb-stuck-alert-icon">⚠️</span>
+            <div class="tb-stuck-alert-list" id="tbStuckAlertList"></div>
+          </div>
+
+          <!-- KPI row -->
+          <div class="tb-metrics-kpi-row">
+            <div class="tb-metrics-kpi">
+              <div class="tb-metrics-kpi-value" id="tbMetricsThroughput24h">—</div>
+              <div class="tb-metrics-kpi-label">Completed 24h</div>
+            </div>
+            <div class="tb-metrics-kpi">
+              <div class="tb-metrics-kpi-value" id="tbMetricsThroughput7d">—</div>
+              <div class="tb-metrics-kpi-label">Completed 7d</div>
+            </div>
+            <div class="tb-metrics-kpi">
+              <div class="tb-metrics-kpi-value" id="tbMetricsAvgRuntime">—</div>
+              <div class="tb-metrics-kpi-label">Avg Runtime</div>
+            </div>
+            <div class="tb-metrics-kpi">
+              <div class="tb-metrics-kpi-value" id="tbMetricsMedianRuntime">—</div>
+              <div class="tb-metrics-kpi-label">Median Runtime</div>
+            </div>
+            <div class="tb-metrics-kpi">
+              <div class="tb-metrics-kpi-value" id="tbMetricsSuccessRate">—</div>
+              <div class="tb-metrics-kpi-label">Success Rate</div>
+            </div>
+            <div class="tb-metrics-kpi" id="tbMetricsStuckKpi" style="border-color:transparent;">
+              <div class="tb-metrics-kpi-value" id="tbMetricsStuckCount" style="color:var(--text-muted);">0</div>
+              <div class="tb-metrics-kpi-label">Stuck Tasks</div>
+            </div>
+          </div>
+
+          <div class="tb-metrics-grid">
+            <!-- Completion trend chart -->
+            <div>
+              <div class="tb-metrics-section-title">7-Day Completion Trend</div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;">
+                <div class="tb-trend-chart" id="tbTrendChart">
+                  <div style="text-align:center;color:var(--text-muted);font-size:12px;width:100%;padding:20px;">No data yet</div>
+                </div>
+                <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:11px;">
+                  <span style="display:flex;align-items:center;gap:4px;color:var(--text-muted);"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block;"></span> Done</span>
+                  <span style="display:flex;align-items:center;gap:4px;color:var(--text-muted);"><span style="width:10px;height:10px;background:var(--red);opacity:0.7;border-radius:2px;display:inline-block;"></span> Failed</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Agent breakdown -->
+            <div>
+              <div class="tb-metrics-section-title">Agent Breakdown</div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;overflow-x:auto;">
+                <table class="tb-agent-table" id="tbAgentTable">
+                  <thead>
+                    <tr>
+                      <th>Agent</th>
+                      <th>Running</th>
+                      <th>Done</th>
+                      <th>Failed</th>
+                      <th>Avg Runtime</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbAgentTableBody">
+                    <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px;">No agent data</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -6850,6 +7160,9 @@ async function tbRefresh() {
     tbPopulateAgentFilter(tbTasks);
 
     tbRenderBoard();
+
+    // Also refresh metrics if the panel is open
+    if (tbMetricsOpen) tbRefreshMetrics();
   } catch (e) {
     console.error('[task-board] refresh error', e);
   }
@@ -6905,6 +7218,8 @@ function tbRenderCard(card) {
   const result = card.resultSummary ? `<div style="margin-top:6px;font-size:11px;color:var(--green);"><b>Result:</b> ${tbEsc(card.resultSummary)}</div>` : '';
   const errorMsg = card.error ? `<div style="margin-top:6px;font-size:11px;color:var(--red);"><b>Error:</b> ${tbEsc(card.error)}</div>` : '';
   const tokens = card.tokensUsed ? `<span class="tb-badge" style="background:rgba(168,85,247,0.12);color:var(--purple);">🪙 ${card.tokensUsed.toLocaleString()}</span>` : '';
+  const isStuck = tbStuckIds.has(card.id);
+  const stuckBadge = isStuck ? '<span class="tb-card-stuck-badge">⚠️ Stuck</span>' : '';
   const elapsed = card.startedAt && card.completedAt
     ? `<span class="tb-time-ago">${tbDuration(card.completedAt - card.startedAt)}</span>`
     : card.startedAt
@@ -6934,6 +7249,7 @@ function tbRenderCard(card) {
     <div class="tb-card-meta">
       <span class="tb-badge ${priClass}">${card.priority}</span>
       ${agent}
+      ${stuckBadge}
       ${tokens}
       ${elapsed}
       <span class="tb-time-ago" style="margin-left:auto;">${ago}</span>
@@ -7607,6 +7923,152 @@ async function tbBulkArchive() {
   }
 }
 
+// ── Task Metrics Dashboard (Issue #219 — Phase 7) ───────────────────────────
+// Fetches computed metrics from /api/task-board/metrics and renders KPIs,
+// trend chart, agent breakdown, and stuck-task alerts.
+
+let tbMetricsOpen = false;
+let tbMetricsData = null;
+let tbStuckIds = new Set(); // Track stuck task IDs for card badge rendering
+
+/** Toggle the metrics panel open/closed. */
+function tbToggleMetrics() {
+  tbMetricsOpen = !tbMetricsOpen;
+  const toggle = document.getElementById('tbMetricsToggle');
+  const panel = document.getElementById('tbMetricsPanel');
+  if (toggle) toggle.classList.toggle('open', tbMetricsOpen);
+  if (panel) panel.classList.toggle('open', tbMetricsOpen);
+  if (tbMetricsOpen) tbRefreshMetrics();
+}
+
+/** Fetch metrics from the API and render all panels. */
+async function tbRefreshMetrics() {
+  try {
+    const res = await fetch('/api/task-board/metrics');
+    if (!res.ok) return;
+    tbMetricsData = await res.json();
+    tbRenderMetrics(tbMetricsData);
+  } catch (e) {
+    console.warn('[task-board] metrics fetch error', e);
+  }
+}
+
+/** Render all metrics panels from data. */
+function tbRenderMetrics(m) {
+  if (!m) return;
+
+  // KPIs
+  const el = (id) => document.getElementById(id);
+  el('tbMetricsThroughput24h').textContent = m.throughput?.last24h ?? '—';
+  el('tbMetricsThroughput7d').textContent = m.throughput?.last7d ?? '—';
+  el('tbMetricsAvgRuntime').textContent = m.avgRuntimeMs != null ? tbDuration(m.avgRuntimeMs) : '—';
+  el('tbMetricsMedianRuntime').textContent = m.medianRuntimeMs != null ? tbDuration(m.medianRuntimeMs) : '—';
+  el('tbMetricsSuccessRate').textContent = m.successRate != null
+    ? (m.successRate * 100).toFixed(1) + '%'
+    : '—';
+
+  // Stuck count + highlight
+  const stuckCount = m.stuckCount ?? 0;
+  const stuckEl = el('tbMetricsStuckCount');
+  const stuckKpi = el('tbMetricsStuckKpi');
+  if (stuckEl) {
+    stuckEl.textContent = stuckCount;
+    stuckEl.style.color = stuckCount > 0 ? 'var(--yellow)' : 'var(--text-muted)';
+  }
+  if (stuckKpi) {
+    stuckKpi.style.borderColor = stuckCount > 0 ? 'rgba(245, 158, 11, 0.3)' : 'transparent';
+    stuckKpi.style.background = stuckCount > 0 ? 'rgba(245, 158, 11, 0.05)' : '';
+  }
+
+  // Stuck badge on toggle button
+  const stuckBadge = el('tbMetricsStuckBadge');
+  if (stuckBadge) {
+    if (stuckCount > 0) {
+      stuckBadge.style.display = '';
+      stuckBadge.textContent = '⚠️ ' + stuckCount + ' stuck';
+    } else {
+      stuckBadge.style.display = 'none';
+    }
+  }
+
+  // Stuck tasks alert panel
+  tbStuckIds = new Set((m.stuckTasks || []).map(s => s.id));
+  const alertEl = el('tbStuckAlert');
+  const alertList = el('tbStuckAlertList');
+  if (alertEl && alertList) {
+    if (stuckCount > 0) {
+      alertEl.style.display = '';
+      alertList.innerHTML = m.stuckTasks.map(s =>
+        `<div class="tb-stuck-item">
+          <span class="tb-stuck-item-title">${tbEsc(s.title)}</span>
+          ${s.agentId ? `<span class="tb-badge tb-badge-agent" style="font-size:10px;">🤖 ${tbEsc(s.agentId)}</span>` : ''}
+          <span class="tb-stuck-item-time">⏱ ${tbDuration(s.runningMs)} (${s.overshootRatio.toFixed(1)}× threshold)</span>
+        </div>`
+      ).join('');
+    } else {
+      alertEl.style.display = 'none';
+    }
+  }
+
+  // Completion trend chart
+  tbRenderTrendChart(m.completionTrend7d || []);
+
+  // Agent breakdown table
+  tbRenderAgentTable(m.agentBreakdown || []);
+
+  // Re-render board to pick up stuck badges on cards
+  tbRenderBoard();
+}
+
+/** Render the 7-day completion trend mini bar chart. */
+function tbRenderTrendChart(trend) {
+  const container = document.getElementById('tbTrendChart');
+  if (!container) return;
+
+  if (trend.length === 0 || trend.every(d => d.done === 0 && d.failed === 0)) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:12px;width:100%;padding:20px;">No completions in the last 7 days</div>';
+    return;
+  }
+
+  // Find max value for scaling
+  const maxVal = Math.max(1, ...trend.map(d => Math.max(d.done, d.failed)));
+
+  container.innerHTML = trend.map(d => {
+    const doneH = Math.max(2, (d.done / maxVal) * 60);
+    const failH = Math.max(d.failed > 0 ? 2 : 0, (d.failed / maxVal) * 60);
+    const dayLabel = d.date.slice(5); // MM-DD
+    return `<div class="tb-trend-bar-group">
+      <div class="tb-trend-bars">
+        <div class="tb-trend-bar done" style="height:${doneH}px;" title="Done: ${d.done}"></div>
+        ${d.failed > 0 ? `<div class="tb-trend-bar failed" style="height:${failH}px;" title="Failed: ${d.failed}"></div>` : ''}
+      </div>
+      <span class="tb-trend-label">${dayLabel}</span>
+    </div>`;
+  }).join('');
+}
+
+/** Render the agent breakdown table. */
+function tbRenderAgentTable(agents) {
+  const tbody = document.getElementById('tbAgentTableBody');
+  if (!tbody) return;
+
+  if (agents.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px;">No agent data</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = agents.map(a => {
+    const rt = a.avgRuntimeMs != null ? tbDuration(a.avgRuntimeMs) : '—';
+    return `<tr>
+      <td style="color:var(--cyan);font-weight:500;">🤖 ${tbEsc(a.agentId)}</td>
+      <td style="color:${a.running > 0 ? 'var(--yellow)' : 'var(--text-muted)'};">${a.running}</td>
+      <td style="color:${a.done > 0 ? 'var(--green)' : 'var(--text-muted)'};">${a.done}</td>
+      <td style="color:${a.failed > 0 ? 'var(--red)' : 'var(--text-muted)'};">${a.failed}</td>
+      <td>${rt}</td>
+    </tr>`;
+  }).join('');
+}
+
 // ── Real-time SSE subscription (Issue #219) ─────────────────────────────────
 // Prefer SSE for live updates; fall back to 15s polling if unavailable.
 
@@ -7724,6 +8186,26 @@ function tbStartPollingFallback() {
 
 // Start SSE on load; falls back to polling automatically
 tbConnectSse();
+
+// Fetch metrics on initial load to populate stuck-task badges even when panel is closed
+(async function tbInitMetrics() {
+  try {
+    const res = await fetch('/api/task-board/metrics');
+    if (res.ok) {
+      tbMetricsData = await res.json();
+      // Populate stuck IDs for card badges
+      tbStuckIds = new Set((tbMetricsData.stuckTasks || []).map(s => s.id));
+      // Update stuck badge on toggle button
+      const stuckBadge = document.getElementById('tbMetricsStuckBadge');
+      if (stuckBadge && tbMetricsData.stuckCount > 0) {
+        stuckBadge.style.display = '';
+        stuckBadge.textContent = '⚠️ ' + tbMetricsData.stuckCount + ' stuck';
+      }
+      // Re-render to apply stuck badges
+      tbRenderBoard();
+    }
+  } catch {}
+})();
 </script>
 </body>
 </html>
