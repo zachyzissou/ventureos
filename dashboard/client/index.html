@@ -1573,6 +1573,144 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 /* ─── End Task Detail Modal ─────────────────────────────────────────── */
 
+/* ─── Multi-Select & Bulk Operations (Issue #219, Phase 6) ──────────── */
+
+.tb-card.tb-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow), 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.tb-card-checkbox {
+  position: absolute;
+  top: 10px;
+  right: 32px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: transparent;
+  transition: all 0.15s;
+  z-index: 2;
+  opacity: 0;
+}
+
+.tb-select-mode .tb-card-checkbox,
+.tb-card:hover .tb-card-checkbox {
+  opacity: 1;
+}
+
+.tb-card.tb-selected .tb-card-checkbox {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  opacity: 1;
+}
+
+.tb-bulk-bar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  animation: tb-bulk-bar-in 0.25s ease;
+}
+
+.tb-bulk-bar.active {
+  display: flex;
+}
+
+@keyframes tb-bulk-bar-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tb-bulk-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+
+.tb-bulk-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.tb-bulk-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.tb-bulk-btn:hover {
+  border-color: var(--accent);
+  background: var(--bg-card);
+}
+
+.tb-bulk-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tb-bulk-btn-danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--red);
+}
+
+.tb-bulk-btn-danger:hover {
+  border-color: var(--red);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.tb-bulk-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.tb-bulk-select-all {
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.tb-bulk-select-all:hover {
+  color: var(--text-primary);
+}
+
+/* In select mode, shift cursor to pointer for cards */
+.tb-select-mode .tb-card {
+  cursor: pointer;
+}
+
+/* ─── End Multi-Select & Bulk Operations ────────────────────────────── */
+
 /* ─── End Task Board ────────────────────────────────────────────────── */
 
 /* Mobile + Tablet Responsive */
@@ -3042,6 +3180,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
               <option value="low">🟢 Low</option>
             </select>
             <button onclick="tbClearFilters()" class="tb-btn tb-btn-secondary" title="Clear filters" style="padding:6px 10px;font-size:12px;">✕ Clear</button>
+            <button onclick="tbToggleSelectMode()" class="tb-btn tb-btn-secondary" id="tbSelectModeBtn" title="Toggle multi-select mode">☑ Select</button>
             <button onclick="tbRefresh()" class="tb-btn tb-btn-secondary" title="Refresh">🔄 Refresh</button>
             <button onclick="tbShowCreateForm()" class="tb-btn tb-btn-primary" title="New Task">＋ New Task</button>
           </div>
@@ -3112,6 +3251,22 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
             <button onclick="tbCreateTask()" class="tb-btn tb-btn-primary">Create</button>
           </div>
         </div>
+      </div>
+
+      <!-- Bulk operations bar (Issue #219, Phase 6) -->
+      <div class="tb-bulk-bar" id="tbBulkBar">
+        <span class="tb-bulk-count" id="tbBulkCount">0 selected</span>
+        <div class="tb-bulk-actions">
+          <button class="tb-bulk-btn" onclick="tbBulkTransition('queued')" id="tbBulkToQueued" title="Move selected to Queued">⏳ → Queued</button>
+          <button class="tb-bulk-btn" onclick="tbBulkTransition('backlog')" id="tbBulkToBacklog" title="Move selected to Backlog">📋 → Backlog</button>
+          <button class="tb-bulk-btn" onclick="tbBulkTransition('done')" id="tbBulkToDone" title="Mark selected as Done">✅ → Done</button>
+          <div class="tb-bulk-divider"></div>
+          <button class="tb-bulk-btn tb-bulk-btn-danger" onclick="tbBulkArchive()" id="tbBulkArchive" title="Archive selected done/failed cards">🗑 Archive</button>
+        </div>
+        <div class="tb-bulk-divider"></div>
+        <span class="tb-bulk-select-all" onclick="tbSelectAll()">Select all</span>
+        <span class="tb-bulk-select-all" onclick="tbDeselectAll()">Deselect</span>
+        <button class="tb-bulk-btn" onclick="tbExitSelectMode()" title="Exit select mode" style="padding:4px 10px;">✕</button>
       </div>
 
       <!-- Kanban columns -->
@@ -6728,6 +6883,17 @@ function tbRenderBoard() {
 
   // Attach DnD event listeners to columns after render
   tbAttachDropZones();
+
+  // Prune stale selections (cards that no longer exist in data)
+  const currentIds = new Set(tbTasks.map(t => t.id));
+  for (const id of [...tbSelectedIds]) {
+    if (!currentIds.has(id)) tbSelectedIds.delete(id);
+  }
+
+  // Re-apply select mode class to board
+  const board = document.querySelector('.tb-board');
+  if (board) board.classList.toggle('tb-select-mode', tbSelectMode);
+  tbUpdateBulkBar();
 }
 
 function tbRenderCard(card) {
@@ -6749,11 +6915,16 @@ function tbRenderCard(card) {
     `<button class="tb-transition-btn" onclick="event.stopPropagation();tbTransition('${card.id}','${s}')" title="Move to ${s}">${TB_STATUS_EMOJI[s] || ''} ${s}</button>`
   ).join('');
 
-  return `<div class="tb-card" data-id="${card.id}" data-status="${card.status}" draggable="true"
+  const isSelected = tbSelectedIds.has(card.id);
+  const selClass = isSelected ? ' tb-selected' : '';
+  const checkMark = isSelected ? '✓' : '';
+
+  return `<div class="tb-card${selClass}" data-id="${card.id}" data-status="${card.status}" draggable="${tbSelectMode ? 'false' : 'true'}"
       ondragstart="tbDragStart(event)" ondragend="tbDragEnd(event)"
-      onclick="tbOpenDetail('${card.id}', event)"
+      onclick="tbCardClick('${card.id}', event)"
       role="listitem" aria-roledescription="draggable task card" aria-label="${tbEsc(card.title)} — ${card.status}"
       style="cursor:pointer;">
+    <div class="tb-card-checkbox" onclick="event.stopPropagation();tbToggleCardSelect('${card.id}', event)" title="Select">${checkMark}</div>
     <div class="tb-drag-handle" aria-hidden="true" title="Drag to move">⠿</div>
     <div class="tb-card-actions">
       <button class="tb-card-action-btn" onclick="event.stopPropagation();tbDeleteTask('${card.id}')" title="Delete">🗑</button>
@@ -7212,6 +7383,229 @@ document.addEventListener('keydown', function(e) {
     tbCloseDetail();
   }
 });
+
+// ── Multi-Select & Bulk Operations (Issue #219 — Phase 6) ───────────────────
+// Adds card selection via checkboxes, bulk status transitions, and archive.
+
+let tbSelectMode = false;
+let tbSelectedIds = new Set();
+
+/** Toggle multi-select mode on/off. */
+function tbToggleSelectMode() {
+  tbSelectMode = !tbSelectMode;
+  tbSelectedIds.clear();
+  const btn = document.getElementById('tbSelectModeBtn');
+  if (btn) {
+    btn.textContent = tbSelectMode ? '☑ Exit Select' : '☑ Select';
+    btn.style.borderColor = tbSelectMode ? 'var(--accent)' : '';
+    btn.style.color = tbSelectMode ? 'var(--accent)' : '';
+  }
+  const board = document.querySelector('.tb-board');
+  if (board) board.classList.toggle('tb-select-mode', tbSelectMode);
+  tbUpdateBulkBar();
+  tbRenderBoard();
+}
+
+/** Exit select mode (from bulk bar X button). */
+function tbExitSelectMode() {
+  if (tbSelectMode) tbToggleSelectMode();
+}
+
+/** Toggle selection on a single card. */
+function tbToggleCardSelect(cardId, event) {
+  if (event) event.stopPropagation();
+  if (tbSelectedIds.has(cardId)) {
+    tbSelectedIds.delete(cardId);
+  } else {
+    tbSelectedIds.add(cardId);
+  }
+  tbUpdateCardSelectVisual(cardId);
+  tbUpdateBulkBar();
+}
+
+/** Handle card click in select mode — toggle selection instead of opening detail. */
+function tbCardClick(cardId, event) {
+  if (tbSelectMode) {
+    tbToggleCardSelect(cardId, event);
+    return;
+  }
+  tbOpenDetail(cardId, event);
+}
+
+/** Update visual state for a single card. */
+function tbUpdateCardSelectVisual(cardId) {
+  const el = document.querySelector(`.tb-card[data-id="${cardId}"]`);
+  if (!el) return;
+  const isSelected = tbSelectedIds.has(cardId);
+  el.classList.toggle('tb-selected', isSelected);
+  const cb = el.querySelector('.tb-card-checkbox');
+  if (cb) cb.textContent = isSelected ? '✓' : '';
+}
+
+/** Select all currently visible cards. */
+function tbSelectAll() {
+  tbSelectedIds.clear();
+  for (const t of tbTasks) {
+    tbSelectedIds.add(t.id);
+  }
+  // Update all card visuals
+  document.querySelectorAll('.tb-card[data-id]').forEach(el => {
+    const id = el.dataset.id;
+    if (id && tbSelectedIds.has(id)) {
+      el.classList.add('tb-selected');
+      const cb = el.querySelector('.tb-card-checkbox');
+      if (cb) cb.textContent = '✓';
+    }
+  });
+  tbUpdateBulkBar();
+}
+
+/** Deselect all cards. */
+function tbDeselectAll() {
+  tbSelectedIds.clear();
+  document.querySelectorAll('.tb-card.tb-selected').forEach(el => {
+    el.classList.remove('tb-selected');
+    const cb = el.querySelector('.tb-card-checkbox');
+    if (cb) cb.textContent = '';
+  });
+  tbUpdateBulkBar();
+}
+
+/** Update the bulk action bar: show/hide, count, enable/disable buttons. */
+function tbUpdateBulkBar() {
+  const bar = document.getElementById('tbBulkBar');
+  const count = tbSelectedIds.size;
+  if (!bar) return;
+
+  if (count > 0 && tbSelectMode) {
+    bar.classList.add('active');
+  } else {
+    bar.classList.remove('active');
+  }
+
+  const countEl = document.getElementById('tbBulkCount');
+  if (countEl) countEl.textContent = count + ' selected';
+
+  // Enable/disable transition buttons based on what's selected
+  const selectedCards = tbTasks.filter(t => tbSelectedIds.has(t.id));
+  const statuses = new Set(selectedCards.map(t => t.status));
+
+  // Queued button: useful when any selected card can transition to queued
+  const canToQueued = selectedCards.some(t =>
+    (TB_TRANSITIONS[t.status] || []).includes('queued'));
+  const qBtn = document.getElementById('tbBulkToQueued');
+  if (qBtn) qBtn.disabled = !canToQueued;
+
+  // Backlog button
+  const canToBacklog = selectedCards.some(t =>
+    (TB_TRANSITIONS[t.status] || []).includes('backlog'));
+  const bBtn = document.getElementById('tbBulkToBacklog');
+  if (bBtn) bBtn.disabled = !canToBacklog;
+
+  // Done button
+  const canToDone = selectedCards.some(t =>
+    (TB_TRANSITIONS[t.status] || []).includes('done'));
+  const dBtn = document.getElementById('tbBulkToDone');
+  if (dBtn) dBtn.disabled = !canToDone;
+
+  // Archive button: only for done/failed
+  const canArchive = selectedCards.some(t =>
+    t.status === 'done' || t.status === 'failed');
+  const aBtn = document.getElementById('tbBulkArchive');
+  if (aBtn) aBtn.disabled = !canArchive;
+}
+
+/** Perform a bulk status transition on selected cards. */
+async function tbBulkTransition(targetStatus) {
+  const ids = [...tbSelectedIds];
+  if (ids.length === 0) return;
+
+  // Filter to only cards that can actually transition
+  const eligible = ids.filter(id => {
+    const card = tbTasks.find(t => t.id === id);
+    return card && (TB_TRANSITIONS[card.status] || []).includes(targetStatus);
+  });
+
+  if (eligible.length === 0) {
+    tbShowToast('No selected cards can transition to ' + targetStatus, 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/task-board/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'transition', ids: eligible, status: targetStatus }),
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      tbShowToast('Batch error: ' + data.error, 'error');
+    } else {
+      const msg = `Moved ${data.succeeded}/${data.total} cards to ${targetStatus}`;
+      tbShowToast(msg + (data.failed > 0 ? ` (${data.failed} failed)` : ''), data.failed > 0 ? 'error' : 'success');
+    }
+
+    // Clear selection for succeeded cards
+    if (data.results) {
+      for (const r of data.results) {
+        if (r.ok) tbSelectedIds.delete(r.id);
+      }
+    }
+    tbUpdateBulkBar();
+    await tbRefresh();
+  } catch (e) {
+    tbShowToast('Network error: ' + e.message, 'error');
+  }
+}
+
+/** Perform a bulk archive (delete) on selected done/failed cards. */
+async function tbBulkArchive() {
+  const ids = [...tbSelectedIds];
+  if (ids.length === 0) return;
+
+  // Filter to only archivable (done/failed) cards
+  const eligible = ids.filter(id => {
+    const card = tbTasks.find(t => t.id === id);
+    return card && (card.status === 'done' || card.status === 'failed');
+  });
+
+  if (eligible.length === 0) {
+    tbShowToast('No selected cards are archivable (only done/failed)', 'error');
+    return;
+  }
+
+  if (!confirm(`Archive ${eligible.length} card${eligible.length > 1 ? 's' : ''}? This will permanently remove them.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/task-board/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'archive', ids: eligible }),
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      tbShowToast('Archive error: ' + data.error, 'error');
+    } else {
+      const msg = `Archived ${data.succeeded}/${data.total} cards`;
+      tbShowToast(msg + (data.failed > 0 ? ` (${data.failed} failed)` : ''), data.failed > 0 ? 'error' : 'success');
+    }
+
+    // Clear selection for succeeded cards
+    if (data.results) {
+      for (const r of data.results) {
+        if (r.ok) tbSelectedIds.delete(r.id);
+      }
+    }
+    tbUpdateBulkBar();
+    await tbRefresh();
+  } catch (e) {
+    tbShowToast('Network error: ' + e.message, 'error');
+  }
+}
 
 // ── Real-time SSE subscription (Issue #219) ─────────────────────────────────
 // Prefer SSE for live updates; fall back to 15s polling if unavailable.
