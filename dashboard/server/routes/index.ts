@@ -125,6 +125,12 @@ export {
   pruneDeliveryEvents,
   createDeliveryEvent,
   truncateError,
+  exportDeliveryHistory,
+  exportRetryActivity,
+  deliveryEventsToCsv,
+  deliveryEventsToJson,
+  csvEscape,
+  EXPORT_MAX_EVENTS,
 } from '../webhook-delivery-history.js';
 export type {
   WebhookDeliveryEvent,
@@ -137,4 +143,8 @@ export type {
   RetryActivityQuery,
   RetryTargetSummary,
   RetryActivityResponse,
+  ExportFormat,
+  DeliveryExportQuery,
+  RetryExportQuery,
+  ExportResult,
 } from '../webhook-delivery-history.js';

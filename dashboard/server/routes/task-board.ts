@@ -73,7 +73,10 @@ import {
 import {
   queryDeliveryHistory,
   queryRetryActivity,
+  exportDeliveryHistory,
+  exportRetryActivity,
 } from '../webhook-delivery-history.js';
+import type { ExportFormat } from '../webhook-delivery-history.js';
 
 import {
   computeWebhookHealth,
@@ -889,6 +892,33 @@ export async function handleTaskBoard(
     return true;
   }
 
+  // ── GET /api/task-board/webhooks/retries/export — Issue #219, Phase 17 ────
+  // Export retry activity as CSV or JSON file download.
+  // Query params: same as /retries + ?format=csv|json (default json)
+  // Bounded: max 200 events per export. Secret-safe: URLs pre-masked.
+  if (url.startsWith('/api/task-board/webhooks/retries/export') && method === 'GET') {
+    const retryExportParams = new URL(url, 'http://localhost').searchParams;
+    const format = (retryExportParams.get('format') === 'csv' ? 'csv' : 'json') as ExportFormat;
+    const limit = retryExportParams.has('limit')
+      ? Math.max(1, Math.min(Number(retryExportParams.get('limit')) || 200, 200))
+      : 200;
+    const sinceMs = retryExportParams.has('sinceMs')
+      ? Math.max(0, Number(retryExportParams.get('sinceMs')) || 0)
+      : undefined;
+    const targetId = retryExportParams.get('targetId') || undefined;
+
+    const result = exportRetryActivity(dataDir, { format, limit, sinceMs, targetId });
+
+    res.writeHead(200, {
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+      'Cache-Control': 'no-store',
+      'X-Export-Count': String(result.count),
+    });
+    res.end(result.content);
+    return true;
+  }
+
   // ── GET /api/task-board/webhooks/retries — Issue #219, Phase 16 ──────────
   // Returns retry activity: deliveries that required multiple attempts,
   // per-attempt breakdown, and per-target retry summaries.
@@ -906,6 +936,35 @@ export async function handleTaskBoard(
 
     const result = queryRetryActivity(dataDir, { limit, sinceMs, targetId });
     sendJson(res, result);
+    return true;
+  }
+
+  // ── GET /api/task-board/webhooks/deliveries/export — Issue #219, Phase 17 ──
+  // Export delivery history as CSV or JSON file download.
+  // Query params: same as /deliveries + ?format=csv|json (default json)
+  // Bounded: max 200 events per export. Secret-safe: URLs pre-masked.
+  if (url.startsWith('/api/task-board/webhooks/deliveries/export') && method === 'GET') {
+    const exportParams = new URL(url, 'http://localhost').searchParams;
+    const format = (exportParams.get('format') === 'csv' ? 'csv' : 'json') as ExportFormat;
+    const limit = exportParams.has('limit')
+      ? Math.max(1, Math.min(Number(exportParams.get('limit')) || 200, 200))
+      : 200;
+    const sinceMs = exportParams.has('sinceMs')
+      ? Math.max(0, Number(exportParams.get('sinceMs')) || 0)
+      : undefined;
+    const targetId = exportParams.get('targetId') || undefined;
+    const statusRaw = exportParams.get('status');
+    const status = statusRaw === 'success' || statusRaw === 'failure' ? statusRaw : undefined;
+
+    const result = exportDeliveryHistory(dataDir, { format, limit, sinceMs, targetId, status });
+
+    res.writeHead(200, {
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+      'Cache-Control': 'no-store',
+      'X-Export-Count': String(result.count),
+    });
+    res.end(result.content);
     return true;
   }
 
