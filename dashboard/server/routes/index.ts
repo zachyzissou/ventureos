@@ -121,15 +121,20 @@ export {
   readDeliveryHistory,
   appendDeliveryEvents,
   queryDeliveryHistory,
+  queryRetryActivity,
   pruneDeliveryEvents,
   createDeliveryEvent,
   truncateError,
 } from '../webhook-delivery-history.js';
 export type {
   WebhookDeliveryEvent,
+  WebhookDeliveryAttemptDetail,
   WebhookDeliveryHistoryFile,
   WebhookDeliveryHistoryConfig,
   DeliveryHistoryQuery,
   DeliveryHistorySummary,
   DeliveryHistoryResponse,
+  RetryActivityQuery,
+  RetryTargetSummary,
+  RetryActivityResponse,
 } from '../webhook-delivery-history.js';

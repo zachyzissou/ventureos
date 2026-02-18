@@ -2888,6 +2888,264 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 /* ─── End Webhook Health Stats ───────────────────────────────────────── */
 
+/* ─── Webhook Retry Activity (Issue #219, Phase 16) ──────────────────── */
+
+.tb-retry-section {
+  padding: 0;
+}
+
+.tb-retry-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tb-retry-section-header .title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tb-retry-section-header .subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.tb-retry-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.tb-retry-summary-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+
+.tb-retry-summary-card .value {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-retry-summary-card .label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.tb-retry-target-cards {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.tb-retry-target-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tb-retry-target-card .name {
+  font-weight: 600;
+  font-size: 12px;
+  min-width: 100px;
+}
+
+.tb-retry-target-card .stat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.tb-retry-target-card .stat .num {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tb-retry-event-row {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.tb-retry-event-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.tb-retry-event-header:hover {
+  background: var(--bg-card);
+}
+
+.tb-retry-event-header .expand-icon {
+  font-size: 10px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  width: 14px;
+  text-align: center;
+}
+
+.tb-retry-event-header.expanded .expand-icon {
+  transform: rotate(90deg);
+}
+
+.tb-retry-event-header .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tb-retry-event-header .status-dot.success { background: var(--green); }
+.tb-retry-event-header .status-dot.failure { background: var(--red); }
+
+.tb-retry-event-header .target-name {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.tb-retry-event-header .attempt-badge {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--yellow);
+}
+
+.tb-retry-event-header .meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-retry-attempt-details {
+  display: none;
+  padding: 0 12px 10px 38px;
+  border-top: 1px solid var(--border);
+}
+
+.tb-retry-attempt-details.visible {
+  display: block;
+}
+
+.tb-retry-attempt-timeline {
+  position: relative;
+  padding-left: 16px;
+}
+
+.tb-retry-attempt-timeline::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--border);
+  border-radius: 1px;
+}
+
+.tb-retry-attempt-item {
+  position: relative;
+  padding: 6px 0 6px 12px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-retry-attempt-item::before {
+  content: '';
+  position: absolute;
+  left: -13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.tb-retry-attempt-item.ok::before {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.tb-retry-attempt-item.fail::before {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.tb-retry-attempt-item .attempt-num {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 20px;
+}
+
+.tb-retry-attempt-item .attempt-status {
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 50px;
+}
+
+.tb-retry-attempt-item .attempt-latency {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+}
+
+.tb-retry-attempt-item .attempt-delay {
+  font-size: 10px;
+  color: var(--yellow);
+  margin-left: auto;
+}
+
+.tb-retry-attempt-item .attempt-error {
+  color: var(--red);
+  font-size: 10px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tb-retry-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 30px 20px;
+  font-size: 13px;
+}
+
+.tb-retry-empty .emoji {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* ─── End Webhook Retry Activity ─────────────────────────────────────── */
+
 /* ─── Alert Timeline (Issue #219, Phase 10) ─────────────────────────── */
 
 .tb-alert-timeline {
@@ -4962,7 +5220,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 </div>
 <!-- ═══ End Webhook Config Modal ══════════════════════════════════════ -->
 
-<!-- ═══ Webhook Delivery History Modal (Issue #219, Phase 13 + Phase 15 Health Stats) ═══════ -->
+<!-- ═══ Webhook Delivery History Modal (Issue #219, Phase 13 + Phase 15 Health Stats + Phase 16 Retry Activity) ═══════ -->
 <div class="tb-delivery-overlay" id="tbDeliveryHistoryModal" onclick="if(event.target===this)tbCloseDeliveryHistory()">
   <div class="tb-delivery-panel">
     <div class="tb-delivery-header">
@@ -4971,6 +5229,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         <div class="tab-bar" style="margin-bottom:0;">
           <button class="tab-btn active" id="tbDeliveryTabHistory" onclick="tbSwitchDeliveryTab('history')">📋 History</button>
           <button class="tab-btn" id="tbDeliveryTabHealth" onclick="tbSwitchDeliveryTab('health')">💚 Health</button>
+          <button class="tab-btn" id="tbDeliveryTabRetries" onclick="tbSwitchDeliveryTab('retries')">🔄 Retries</button>
         </div>
         <button onclick="tbSendTestPingFromDeliveries()" class="tb-webhook-test-btn" id="tbDeliveryTestBtn" style="font-size:11px;padding:4px 10px;">🔔 Send Test Ping</button>
         <button onclick="tbRefreshDeliveryHistory()" class="tb-btn tb-btn-secondary" style="font-size:11px;padding:4px 10px;">↻ Refresh</button>
@@ -4982,6 +5241,9 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
     </div>
     <div class="tb-delivery-body" id="tbDeliveryHealthBody" style="display:none;">
       <!-- Health stats populated dynamically -->
+    </div>
+    <div class="tb-delivery-body" id="tbDeliveryRetryBody" style="display:none;">
+      <!-- Retry activity populated dynamically -->
     </div>
     <div class="tb-delivery-footer">
       <span id="tbDeliveryFooterInfo"></span>
@@ -10234,10 +10496,12 @@ function tbCloseDeliveryHistory() {
   if (overlay) overlay.classList.remove('active');
 }
 
-/** Refresh delivery history data (and health stats if on that tab). */
+/** Refresh delivery history data (and health/retries if on that tab). */
 async function tbRefreshDeliveryHistory() {
   if (tbCurrentDeliveryTab === 'health') {
     await tbFetchHealthStats();
+  } else if (tbCurrentDeliveryTab === 'retries') {
+    await tbFetchRetryActivity();
   } else {
     await tbFetchDeliveryHistory();
   }
@@ -10426,25 +10690,35 @@ async function tbSendTestPingFromDeliveries() {
 let tbHealthStatsCache = null;
 let tbCurrentDeliveryTab = 'history';
 
-/** Switch between History and Health tabs in the delivery modal. */
+/** Switch between History, Health, and Retries tabs in the delivery modal. */
 function tbSwitchDeliveryTab(tab) {
   tbCurrentDeliveryTab = tab;
   var historyBody = document.getElementById('tbDeliveryHistoryBody');
   var healthBody = document.getElementById('tbDeliveryHealthBody');
+  var retryBody = document.getElementById('tbDeliveryRetryBody');
   var tabHistory = document.getElementById('tbDeliveryTabHistory');
   var tabHealth = document.getElementById('tbDeliveryTabHealth');
+  var tabRetries = document.getElementById('tbDeliveryTabRetries');
+
+  // Hide all bodies, deactivate all tabs
+  if (historyBody) historyBody.style.display = 'none';
+  if (healthBody) healthBody.style.display = 'none';
+  if (retryBody) retryBody.style.display = 'none';
+  if (tabHistory) tabHistory.classList.remove('active');
+  if (tabHealth) tabHealth.classList.remove('active');
+  if (tabRetries) tabRetries.classList.remove('active');
 
   if (tab === 'health') {
-    if (historyBody) historyBody.style.display = 'none';
     if (healthBody) healthBody.style.display = 'block';
-    if (tabHistory) tabHistory.classList.remove('active');
     if (tabHealth) tabHealth.classList.add('active');
     tbFetchHealthStats();
+  } else if (tab === 'retries') {
+    if (retryBody) retryBody.style.display = 'block';
+    if (tabRetries) tabRetries.classList.add('active');
+    tbFetchRetryActivity();
   } else {
     if (historyBody) historyBody.style.display = 'block';
-    if (healthBody) healthBody.style.display = 'none';
     if (tabHistory) tabHistory.classList.add('active');
-    if (tabHealth) tabHealth.classList.remove('active');
   }
 }
 
@@ -10578,6 +10852,197 @@ function tbRenderHealthStats(data) {
 
   html += '</div>'; // end health section
   body.innerHTML = html;
+}
+
+// ── Webhook Retry Activity UI (Issue #219, Phase 16) ────────────────────────
+// Per-attempt breakdown and retry queue visualization within the delivery modal.
+// Fetches from GET /api/task-board/webhooks/retries — bounded view of retry behavior.
+
+let tbRetryActivityCache = null;
+
+/** Fetch retry activity from the API. */
+async function tbFetchRetryActivity() {
+  var body = document.getElementById('tbDeliveryRetryBody');
+  if (!body) return;
+  body.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;">Loading retry activity…</div>';
+
+  try {
+    var params = new URLSearchParams();
+    var windowSel = document.getElementById('tbRetryWindowSelect');
+    var targetSel = document.getElementById('tbRetryTargetFilter');
+
+    if (windowSel && windowSel.value) params.set('sinceMs', windowSel.value);
+    if (targetSel && targetSel.value) params.set('targetId', targetSel.value);
+    params.set('limit', '100');
+
+    var res = await fetch('/api/task-board/webhooks/retries?' + params.toString());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    tbRetryActivityCache = data;
+    tbRenderRetryActivity(data);
+  } catch (e) {
+    console.warn('[retry-activity] fetch error', e);
+    if (body) body.innerHTML = '<div style="text-align:center;color:var(--red);padding:30px;">Failed to load retry activity: ' + tbEsc(e.message) + '</div>';
+  }
+}
+
+/** Toggle expand/collapse of a retry event's attempt details. */
+function tbToggleRetryDetails(eventId) {
+  var header = document.getElementById('tbRetryHeader_' + eventId);
+  var details = document.getElementById('tbRetryDetails_' + eventId);
+  if (!header || !details) return;
+
+  if (details.classList.contains('visible')) {
+    details.classList.remove('visible');
+    header.classList.remove('expanded');
+  } else {
+    details.classList.add('visible');
+    header.classList.add('expanded');
+  }
+}
+
+/** Render the retry activity panel. */
+function tbRenderRetryActivity(data) {
+  var body = document.getElementById('tbDeliveryRetryBody');
+  if (!body || !data) return;
+
+  var events = data.events || [];
+  var summary = data.summary || {};
+  var targetSummaries = data.targetSummaries || [];
+  var html = '';
+
+  // Header with filters
+  html += '<div class="tb-retry-section">';
+  html += '<div class="tb-retry-section-header">';
+  html += '  <span class="title">🔄 Retry Activity</span>';
+  html += '  <select id="tbRetryWindowSelect" onchange="tbFetchRetryActivity()" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:11px;font-family:inherit;">';
+  html += '    <option value="3600000">Last 1h</option>';
+  html += '    <option value="21600000" selected>Last 6h</option>';
+  html += '    <option value="86400000">Last 24h</option>';
+  html += '    <option value="172800000">Last 48h</option>';
+  html += '    <option value="">All retained</option>';
+  html += '  </select>';
+
+  // Target filter
+  html += '  <select id="tbRetryTargetFilter" onchange="tbFetchRetryActivity()" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:11px;font-family:inherit;">';
+  html += '    <option value="">All targets</option>';
+  for (var ti = 0; ti < targetSummaries.length; ti++) {
+    html += '    <option value="' + tbEsc(targetSummaries[ti].targetId) + '">' + tbEsc(targetSummaries[ti].targetName || targetSummaries[ti].targetId) + '</option>';
+  }
+  html += '  </select>';
+
+  html += '  <span class="subtitle">' + events.length + ' retried deliver' + (events.length !== 1 ? 'ies' : 'y') + '</span>';
+  html += '</div>';
+
+  // Summary cards
+  var retryRateColor = summary.retryRate === null ? 'var(--text-muted)' :
+    summary.retryRate <= 0.1 ? 'var(--green)' :
+    summary.retryRate <= 0.3 ? 'var(--yellow)' : 'var(--red)';
+  var retriedSuccessColor = summary.retriedSuccessCount > 0 ? 'var(--green)' : 'var(--text-muted)';
+  var retriedFailColor = summary.retriedFailureCount > 0 ? 'var(--red)' : 'var(--text-muted)';
+
+  html += '<div class="tb-retry-summary">';
+  html += '  <div class="tb-retry-summary-card"><div class="value" style="color:var(--text-primary);">' + (summary.totalDeliveries || 0) + '</div><div class="label">Total Deliveries</div></div>';
+  html += '  <div class="tb-retry-summary-card"><div class="value" style="color:var(--yellow);">' + (summary.retriedDeliveries || 0) + '</div><div class="label">Required Retries</div></div>';
+  html += '  <div class="tb-retry-summary-card"><div class="value" style="color:' + retryRateColor + ';">' + (summary.retryRate != null ? (summary.retryRate * 100).toFixed(1) + '%' : '—') + '</div><div class="label">Retry Rate</div></div>';
+  html += '  <div class="tb-retry-summary-card"><div class="value" style="color:var(--text-primary);">' + (summary.avgAttemptsPerRetry != null ? summary.avgAttemptsPerRetry.toFixed(1) : '—') + '</div><div class="label">Avg Attempts/Retry</div></div>';
+  html += '  <div class="tb-retry-summary-card"><div class="value" style="color:' + retriedSuccessColor + ';">' + (summary.retriedSuccessCount || 0) + '</div><div class="label">Retries → OK</div></div>';
+  html += '  <div class="tb-retry-summary-card"><div class="value" style="color:' + retriedFailColor + ';">' + (summary.retriedFailureCount || 0) + '</div><div class="label">Retries → Failed</div></div>';
+  html += '</div>';
+
+  // Per-target retry summary
+  if (targetSummaries.length > 0) {
+    var hasRetries = targetSummaries.some(function(ts) { return ts.retriedDeliveries > 0; });
+    if (hasRetries) {
+      html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Per-Target Retry Summary</div>';
+      html += '<div class="tb-retry-target-cards">';
+      for (var si = 0; si < targetSummaries.length; si++) {
+        var ts = targetSummaries[si];
+        if (ts.retriedDeliveries === 0) continue;
+        var tsRate = ts.totalDeliveries > 0 ? ((ts.retriedDeliveries / ts.totalDeliveries) * 100).toFixed(1) : '0';
+        html += '<div class="tb-retry-target-card">';
+        html += '  <span class="name">' + tbEsc(ts.targetName || ts.targetId) + '</span>';
+        html += '  <span class="stat"><span class="num">' + ts.retriedDeliveries + '</span>/' + ts.totalDeliveries + ' retried (' + tsRate + '%)</span>';
+        html += '  <span class="stat">Avg <span class="num">' + (ts.avgAttemptsPerDelivery != null ? ts.avgAttemptsPerDelivery.toFixed(1) : '—') + '</span> attempts</span>';
+        html += '  <span class="stat">Total <span class="num">' + ts.totalAttempts + '</span> attempts</span>';
+        if (ts.lastRetryTs) {
+          html += '  <span class="stat" style="margin-left:auto;color:var(--text-muted);">Last retry: ' + tbRelTime(ts.lastRetryTs) + '</span>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+  }
+
+  // Retry events with expandable attempt details
+  if (events.length === 0) {
+    html += '<div class="tb-retry-empty">';
+    html += '  <span class="emoji">✅</span>';
+    html += '  No retries needed in the selected window.<br>';
+    html += '  <span style="font-size:11px;">All deliveries succeeded on the first attempt.</span>';
+    html += '</div>';
+  } else {
+    html += '<div style="font-size:11px;color:var(--text-muted);margin:10px 0 6px;text-transform:uppercase;letter-spacing:0.5px;">Retried Deliveries (click to expand)</div>';
+
+    for (var ei = 0; ei < events.length; ei++) {
+      var ev = events[ei];
+      var evId = ev.id || ei;
+      var statusClass = ev.success ? 'success' : 'failure';
+      var statusLabel = ev.success ? '✓ OK after retry' : '✗ Failed after retries';
+      var timeAgo = tbRelTime(ev.ts);
+
+      html += '<div class="tb-retry-event-row">';
+
+      // Clickable header
+      html += '  <div class="tb-retry-event-header" id="tbRetryHeader_' + evId + '" onclick="tbToggleRetryDetails(' + evId + ')">';
+      html += '    <span class="expand-icon">▸</span>';
+      html += '    <span class="status-dot ' + statusClass + '"></span>';
+      html += '    <span class="target-name">' + tbEsc(ev.targetName || ev.targetId) + '</span>';
+      html += '    <span class="attempt-badge">' + ev.attempts + ' attempt' + (ev.attempts !== 1 ? 's' : '') + '</span>';
+      html += '    <span style="font-size:11px;color:' + (ev.success ? 'var(--green)' : 'var(--red)') + ';">' + statusLabel + '</span>';
+      html += '    <span class="meta">' + ev.durationMs + 'ms total · ' + timeAgo + '</span>';
+      html += '  </div>';
+
+      // Expandable attempt details
+      html += '  <div class="tb-retry-attempt-details" id="tbRetryDetails_' + evId + '">';
+
+      if (ev.attemptDetails && ev.attemptDetails.length > 0) {
+        html += '    <div class="tb-retry-attempt-timeline">';
+        for (var ai = 0; ai < ev.attemptDetails.length; ai++) {
+          var ad = ev.attemptDetails[ai];
+          var adClass = (ad.error === null && ad.statusCode !== null && ad.statusCode >= 200 && ad.statusCode < 300) ? 'ok' : 'fail';
+          var adStatus = ad.statusCode !== null ? 'HTTP ' + ad.statusCode : 'Error';
+
+          html += '      <div class="tb-retry-attempt-item ' + adClass + '">';
+          html += '        <span class="attempt-num">#' + ad.attempt + '</span>';
+          html += '        <span class="attempt-status" style="color:' + (adClass === 'ok' ? 'var(--green)' : 'var(--red)') + ';">' + adStatus + '</span>';
+          html += '        <span class="attempt-latency">' + ad.durationMs + 'ms</span>';
+          if (ad.error) {
+            html += '        <span class="attempt-error" title="' + tbEsc(ad.error) + '">' + tbEsc(ad.error) + '</span>';
+          }
+          if (ad.nextRetryDelayMs !== null) {
+            html += '        <span class="attempt-delay">⏱ ' + (ad.nextRetryDelayMs / 1000).toFixed(1) + 's retry delay</span>';
+          }
+          html += '      </div>';
+        }
+        html += '    </div>';
+      } else {
+        html += '    <div style="font-size:11px;color:var(--text-muted);padding:8px 0;">Per-attempt details not available for this delivery (recorded before Phase 16).</div>';
+      }
+
+      html += '  </div>'; // end attempt details
+      html += '</div>'; // end event row
+    }
+  }
+
+  html += '</div>'; // end retry section
+  body.innerHTML = html;
+
+  // Update footer
+  var footer = document.getElementById('tbDeliveryFooterInfo');
+  if (footer) {
+    footer.textContent = 'Showing ' + events.length + ' retried deliver' + (events.length !== 1 ? 'ies' : 'y');
+  }
 }
 
 // ── Real-time SSE subscription (Issue #219) ─────────────────────────────────
