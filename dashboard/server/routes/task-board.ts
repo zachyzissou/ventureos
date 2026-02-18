@@ -60,6 +60,15 @@ import {
   queryAlertTimeline,
 } from '../alert-history.js';
 
+import {
+  readWebhookConfig,
+  writeWebhookConfig,
+  validateWebhookConfig,
+  sanitizeConfig as sanitizeWebhookConfig,
+  redactConfig as redactWebhookConfig,
+  maybeDeliverWebhooks,
+} from '../alert-webhook.js';
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -761,6 +770,38 @@ export async function handleTaskBoard(
     return true;
   }
 
+  // ── GET /api/task-board/webhooks/config — Issue #219, Phase 11 ──────────────
+  // Read/write webhook notification configuration.
+  // GET: returns current config (secrets redacted).
+  // PUT: updates config (validated).
+  if (url.startsWith('/api/task-board/webhooks/config') && method === 'GET') {
+    const config = readWebhookConfig(dataDir);
+    sendJson(res, { config: redactWebhookConfig(config) });
+    return true;
+  }
+
+  if (url.startsWith('/api/task-board/webhooks/config') && method === 'PUT') {
+    let body: unknown;
+    try {
+      const raw = await readRequestBody(req, { maxBytes: 8192 });
+      body = JSON.parse(raw);
+    } catch {
+      sendJson(res, { error: 'invalid JSON body' }, 400);
+      return true;
+    }
+
+    const errors = validateWebhookConfig(body);
+    if (errors.length > 0) {
+      sendJson(res, { error: 'validation failed', errors }, 400);
+      return true;
+    }
+
+    const sanitized = sanitizeWebhookConfig(body);
+    writeWebhookConfig(dataDir, sanitized);
+    sendJson(res, { config: redactWebhookConfig(sanitized) });
+    return true;
+  }
+
   // ── GET /api/task-board/metrics — Issue #219, Task Metrics Dashboard ───────
   // Returns computed metrics: throughput, runtime stats, trends, stuck tasks.
   // Optional query params:
@@ -799,6 +840,17 @@ export async function handleTaskBoard(
     if (metrics.alerts) {
       try {
         maybeAppendAlertEvent(dataDir, metrics.alerts);
+      } catch {
+        // Non-critical — don't break the metrics response
+      }
+    }
+
+    // Piggyback (Phase 11): fire webhook notifications on severity transitions.
+    // Fire-and-forget — delivery is async and non-blocking.
+    if (metrics.alerts) {
+      try {
+        // Intentionally not awaited — delivery runs in background
+        void maybeDeliverWebhooks(dataDir, metrics.alerts);
       } catch {
         // Non-critical — don't break the metrics response
       }
