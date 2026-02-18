@@ -24,7 +24,7 @@ export type MissionPhase =
   | 'closed'
   | 'error';
 
-export type SquadRole = 'oracle' | 'atlas' | 'sentinel' | 'verifier' | 'archivist' | 'synth';
+export type SquadRole = 'oracle' | 'atlas' | 'sentinel' | 'verifier' | 'archivist' | 'synth' | 'curator';
 
 export interface MissionBrief {
   title: string;
