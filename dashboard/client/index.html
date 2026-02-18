@@ -1032,6 +1032,122 @@ body {
   position: relative;
 }
 
+/* ─── Drag-and-Drop States (Issue #219 — Kanban DnD) ───────────────── */
+
+.tb-card[draggable="true"] {
+  cursor: grab;
+}
+
+.tb-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.tb-card.tb-dragging {
+  opacity: 0.4;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+  transform: scale(0.97);
+}
+
+.tb-drag-handle {
+  position: absolute;
+  top: 10px;
+  left: 6px;
+  width: 14px;
+  height: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s;
+  color: var(--text-muted);
+  font-size: 9px;
+  letter-spacing: 1px;
+  user-select: none;
+}
+
+.tb-card:hover .tb-drag-handle {
+  opacity: 0.6;
+}
+
+.tb-drag-handle:hover {
+  opacity: 1 !important;
+  color: var(--text-primary);
+}
+
+.tb-column.tb-drop-target {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.06);
+  box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.tb-column.tb-drop-invalid {
+  border-color: var(--red);
+  background: rgba(239, 68, 68, 0.04);
+  box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.12);
+}
+
+.tb-column-cards.tb-drop-zone-active {
+  min-height: 80px;
+}
+
+.tb-card.tb-drop-preview {
+  border: 2px dashed var(--accent);
+  background: rgba(99, 102, 241, 0.05);
+  height: 48px;
+  border-radius: 10px;
+  margin: 4px 0;
+}
+
+.tb-card.tb-transition-error {
+  animation: tb-shake 0.4s ease-in-out;
+  border-color: var(--red);
+}
+
+@keyframes tb-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.tb-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 9999;
+  animation: tb-toast-in 0.3s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+}
+
+.tb-toast-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--red);
+  color: var(--red);
+}
+
+.tb-toast-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid var(--green);
+  color: var(--green);
+}
+
+@keyframes tb-toast-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── End Drag-and-Drop States ──────────────────────────────────────── */
+
 .tb-card:hover {
   border-color: rgba(99, 102, 241, 0.4);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -6181,6 +6297,9 @@ function tbRenderBoard() {
 
     container.innerHTML = cards.map(c => tbRenderCard(c)).join('');
   }
+
+  // Attach DnD event listeners to columns after render
+  tbAttachDropZones();
 }
 
 function tbRenderCard(card) {
@@ -6202,11 +6321,14 @@ function tbRenderCard(card) {
     `<button class="tb-transition-btn" onclick="tbTransition('${card.id}','${s}')" title="Move to ${s}">${TB_STATUS_EMOJI[s] || ''} ${s}</button>`
   ).join('');
 
-  return `<div class="tb-card" data-id="${card.id}">
+  return `<div class="tb-card" data-id="${card.id}" data-status="${card.status}" draggable="true"
+      ondragstart="tbDragStart(event)" ondragend="tbDragEnd(event)"
+      role="listitem" aria-roledescription="draggable task card" aria-label="${tbEsc(card.title)} — ${card.status}">
+    <div class="tb-drag-handle" aria-hidden="true" title="Drag to move">⠿</div>
     <div class="tb-card-actions">
       <button class="tb-card-action-btn" onclick="tbDeleteTask('${card.id}')" title="Delete">🗑</button>
     </div>
-    <div class="tb-card-title">${tbEsc(card.title)}</div>
+    <div class="tb-card-title" style="padding-left:12px;">${tbEsc(card.title)}</div>
     ${desc}
     <div class="tb-card-meta">
       <span class="tb-badge ${priClass}">${card.priority}</span>
@@ -6300,6 +6422,171 @@ async function tbTransition(id, newStatus) {
   } catch (e) {
     alert('Network error: ' + e.message);
   }
+}
+
+// ── Drag-and-Drop (Issue #219 — Kanban DnD) ────────────────────────────────
+// HTML5 Drag and Drop with backend state-machine enforcement.
+// On drop: calls PATCH transition API. On rejection: rollback + error toast.
+
+let tbDragCardId = null;
+let tbDragFromStatus = null;
+
+/** Check if a drag-to-column transition is allowed (client-side preview). */
+function tbCanDrop(fromStatus, toStatus) {
+  if (fromStatus === toStatus) return false;
+  const allowed = TB_TRANSITIONS[fromStatus] || [];
+  return allowed.includes(toStatus);
+}
+
+function tbDragStart(event) {
+  const card = event.target.closest('.tb-card');
+  if (!card) return;
+  tbDragCardId = card.dataset.id;
+  tbDragFromStatus = card.dataset.status;
+
+  // Set drag data
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', tbDragCardId);
+
+  // Visual: dim the dragged card after a tick (so the ghost renders first)
+  requestAnimationFrame(() => {
+    card.classList.add('tb-dragging');
+  });
+
+  // Highlight valid/invalid drop targets
+  document.querySelectorAll('.tb-column').forEach(col => {
+    const colStatus = col.dataset.status;
+    if (colStatus === tbDragFromStatus) return;
+    if (tbCanDrop(tbDragFromStatus, colStatus)) {
+      col.classList.add('tb-drop-target');
+    } else {
+      col.classList.add('tb-drop-invalid');
+    }
+  });
+}
+
+function tbDragEnd(event) {
+  // Clean up all drag classes
+  const card = event.target.closest('.tb-card');
+  if (card) card.classList.remove('tb-dragging');
+
+  document.querySelectorAll('.tb-column').forEach(col => {
+    col.classList.remove('tb-drop-target', 'tb-drop-invalid');
+  });
+  document.querySelectorAll('.tb-column-cards').forEach(zone => {
+    zone.classList.remove('tb-drop-zone-active');
+  });
+
+  tbDragCardId = null;
+  tbDragFromStatus = null;
+}
+
+/** Attach drag-over/drop listeners to each column's card container. */
+function tbAttachDropZones() {
+  document.querySelectorAll('.tb-column').forEach(col => {
+    const colStatus = col.dataset.status;
+    const cardZone = col.querySelector('.tb-column-cards');
+    if (!cardZone) return;
+
+    // Prevent default to allow drop
+    col.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (!tbDragCardId || !tbDragFromStatus) return;
+      if (colStatus === tbDragFromStatus) {
+        e.dataTransfer.dropEffect = 'none';
+        return;
+      }
+      if (tbCanDrop(tbDragFromStatus, colStatus)) {
+        e.dataTransfer.dropEffect = 'move';
+        cardZone.classList.add('tb-drop-zone-active');
+      } else {
+        e.dataTransfer.dropEffect = 'none';
+      }
+    });
+
+    col.addEventListener('dragleave', (e) => {
+      // Only remove highlight if leaving the column entirely
+      if (!col.contains(e.relatedTarget)) {
+        cardZone.classList.remove('tb-drop-zone-active');
+      }
+    });
+
+    col.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      cardZone.classList.remove('tb-drop-zone-active');
+
+      const cardId = e.dataTransfer.getData('text/plain');
+      if (!cardId || !tbDragFromStatus) return;
+      if (colStatus === tbDragFromStatus) return;
+      if (!tbCanDrop(tbDragFromStatus, colStatus)) return;
+
+      // Perform the transition via backend API
+      await tbDragTransition(cardId, tbDragFromStatus, colStatus);
+    });
+  });
+}
+
+/**
+ * Perform a drag-drop transition: call PATCH, handle success/failure.
+ * On error: show a toast + shake the card (rollback is implicit since
+ * we re-render from the server's authoritative state).
+ */
+async function tbDragTransition(cardId, fromStatus, toStatus) {
+  // Optimistic: move card to target column visually
+  const cardEl = document.querySelector(`.tb-card[data-id="${cardId}"]`);
+  const targetColId = 'tbCards' + toStatus.charAt(0).toUpperCase() + toStatus.slice(1);
+  const targetContainer = document.getElementById(targetColId);
+
+  if (cardEl && targetContainer) {
+    targetContainer.appendChild(cardEl);
+    cardEl.dataset.status = toStatus;
+  }
+
+  try {
+    const res = await fetch('/api/task-board/' + cardId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: toStatus }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const msg = err.error || res.statusText || 'Unknown error';
+      tbShowToast(`Transition rejected: ${fromStatus} → ${toStatus}. ${msg}`, 'error');
+
+      // Rollback: shake the card, then re-render from server state
+      if (cardEl) {
+        cardEl.classList.add('tb-transition-error');
+        setTimeout(() => cardEl.classList.remove('tb-transition-error'), 500);
+      }
+      await tbRefresh();
+      return;
+    }
+
+    // Success: refresh from server to get authoritative timestamps
+    tbShowToast(`Moved to ${toStatus}`, 'success');
+    await tbRefresh();
+  } catch (e) {
+    tbShowToast(`Network error: ${e.message}`, 'error');
+    await tbRefresh(); // Rollback to server state
+  }
+}
+
+/** Show a temporary toast notification. */
+function tbShowToast(message, type) {
+  const existing = document.querySelectorAll('.tb-toast');
+  existing.forEach(el => el.remove());
+
+  const toast = document.createElement('div');
+  toast.className = `tb-toast tb-toast-${type || 'error'}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 350);
+  }, 3000);
 }
 
 async function tbDeleteTask(id) {
