@@ -49,6 +49,10 @@ echo ""
 echo "── 4. Build ──"
 [[ -f "$DIST_SERVER" ]] && ok "dist/server.js" || fail "dist/server.js MISSING"
 [[ -f "$DIST_LIB_PKG" ]] && ok "dist/lib/package.json (CJS)" || fail "dist/lib/package.json MISSING"
+DIST_LOGIN="${VENTUREOS_ROOT}/dashboard/dist/dashboard/client/login.html"
+DIST_INDEX="${VENTUREOS_ROOT}/dashboard/dist/dashboard/client/index.html"
+[[ -f "$DIST_LOGIN" ]] && ok "dist/client/login.html" || fail "dist/client/login.html MISSING — run: npm run compile"
+[[ -f "$DIST_INDEX" ]] && ok "dist/client/index.html" || fail "dist/client/index.html MISSING — run: npm run compile"
 if [[ -f "$DIST_SERVER" && -f "$SRC_SERVER" ]]; then
   DM=$(stat -f "%m" "$DIST_SERVER" 2>/dev/null || stat -c "%Y" "$DIST_SERVER")
   SM=$(stat -f "%m" "$SRC_SERVER" 2>/dev/null || stat -c "%Y" "$SRC_SERVER")

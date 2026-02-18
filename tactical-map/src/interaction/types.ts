@@ -183,7 +183,13 @@ export type InteractionEventType =
   | 'palette:open'
   | 'palette:close'
   | 'panel:open'
-  | 'panel:close';
+  | 'panel:close'
+  | 'tour:start'
+  | 'tour:next'
+  | 'tour:back'
+  | 'tour:dismiss'
+  | 'tour:complete'
+  | 'help:toggle';
 
 export interface InteractionEvent {
   type: InteractionEventType;
@@ -235,6 +241,10 @@ export interface InteractiveUIState {
   missionListOpen: boolean;
   /** Whether mission edit modal is open. */
   missionEditOpen: boolean;
+  /** Whether the onboarding tour is active (Issue #210). */
+  tourActive: boolean;
+  /** Whether the help overlay is visible (Issue #210). */
+  helpOverlayOpen: boolean;
   /** Current user role. */
   userRole: UserRole;
 }
@@ -249,6 +259,8 @@ export function createInitialUIState(): InteractiveUIState {
     configEditorOpen: false,
     missionListOpen: false,
     missionEditOpen: false,
+    tourActive: false,
+    helpOverlayOpen: false,
     userRole: 'operator',
   };
 }
