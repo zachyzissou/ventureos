@@ -88,6 +88,11 @@ import {
   computeEscalationStatus,
 } from '../escalation-policy.js';
 
+import {
+  queryEscalationHistory,
+} from '../escalation-history.js';
+import type { EscalationEventType } from '../escalation-history.js';
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -731,6 +736,54 @@ export async function handleTaskBoard(
       sendJson(res, { status });
     } catch {
       sendJson(res, { error: 'Failed to compute escalation status' }, 500);
+    }
+    return true;
+  }
+
+  // ── GET /api/task-board/escalation/history — Issue #219, Phase 22 ──────────
+  // Read-only endpoint returning persisted escalation event history (audit trail).
+  // Query params:
+  //   ?limit=50            — max events to return (default 50, max 200)
+  //   ?sinceMs=86400000    — only events within this time window from now
+  //   ?eventType=tier_triggered — filter by event type
+  //   ?tierIndex=0         — filter by tier index
+  //   ?deliveryStatus=success — filter: 'success' or 'failure'
+  if (url.startsWith('/api/task-board/escalation/history') && method === 'GET') {
+    try {
+      const histParams = new URL(url, 'http://localhost').searchParams;
+      const limit = Math.max(1, Math.min(Number(histParams.get('limit')) || 50, 200));
+      const sinceMs = histParams.has('sinceMs')
+        ? Math.max(0, Number(histParams.get('sinceMs')) || 0)
+        : undefined;
+
+      const eventTypeRaw = histParams.get('eventType');
+      const validEventTypes: EscalationEventType[] = [
+        'tier_triggered', 'tier_renotified', 'notification_sent', 'escalation_reset',
+      ];
+      const eventType = eventTypeRaw && validEventTypes.includes(eventTypeRaw as EscalationEventType)
+        ? (eventTypeRaw as EscalationEventType)
+        : undefined;
+
+      const tierIndexRaw = histParams.get('tierIndex');
+      const tierIndex = tierIndexRaw !== null && !isNaN(Number(tierIndexRaw))
+        ? Number(tierIndexRaw)
+        : undefined;
+
+      const deliveryStatusRaw = histParams.get('deliveryStatus');
+      const deliveryStatus = deliveryStatusRaw === 'success' || deliveryStatusRaw === 'failure'
+        ? deliveryStatusRaw
+        : undefined;
+
+      const result = queryEscalationHistory(dataDir, {
+        limit,
+        sinceMs,
+        eventType,
+        tierIndex,
+        deliveryStatus,
+      });
+      sendJson(res, result);
+    } catch {
+      sendJson(res, { error: 'Failed to query escalation history' }, 500);
     }
     return true;
   }
