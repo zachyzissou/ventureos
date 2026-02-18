@@ -10283,7 +10283,7 @@ function tbRenderEscalationStatus(status) {
     } else if (t.status === 'cooldown' && t.timeRemainingMs != null) {
       timeInfo = `<span class="tb-escalation-tier-time">🔄 ${tbEscDuration(t.timeRemainingMs)}</span>`;
     } else if (t.status === 'triggered' && t.lastNotifiedAt) {
-      timeInfo = `<span class="tb-escalation-tier-time">✅ ${tbTimelineAgo(t.lastNotifiedAt)}</span>`;
+      timeInfo = `<span class="tb-escalation-tier-time">✅ ${tbTimelineTimeAgo(t.lastNotifiedAt)}</span>`;
     } else if (t.status === 'inactive') {
       timeInfo = `<span class="tb-escalation-tier-time">after ${tbEscDuration(t.afterMs)}</span>`;
     }
