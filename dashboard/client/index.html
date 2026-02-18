@@ -2405,6 +2405,205 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 /* ─── End Webhook Config ────────────────────────────────────────────── */
 
+/* ─── Webhook Delivery History (Issue #219, Phase 13) ────────────────── */
+
+.tb-delivery-history-link {
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  margin-left: 6px;
+}
+
+.tb-delivery-history-link:hover {
+  color: var(--text-primary);
+}
+
+.tb-delivery-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 700;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.tb-delivery-overlay.active {
+  display: flex;
+}
+
+.tb-delivery-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 94%;
+  max-width: 760px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  animation: tb-detail-in 0.25s ease;
+}
+
+.tb-delivery-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.tb-delivery-header .tb-delivery-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-delivery-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.tb-delivery-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tb-delivery-summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.tb-delivery-summary-card .value {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-delivery-summary-card .label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.tb-delivery-summary-card .value.success { color: var(--green); }
+.tb-delivery-summary-card .value.failure { color: var(--red); }
+.tb-delivery-summary-card .value.neutral { color: var(--text-primary); }
+
+.tb-delivery-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.tb-delivery-filters select,
+.tb-delivery-filters input {
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.tb-delivery-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.tb-delivery-table th {
+  text-align: left;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.tb-delivery-table td {
+  padding: 8px 8px;
+  border-bottom: 1px solid rgba(42, 42, 58, 0.5);
+  vertical-align: middle;
+}
+
+.tb-delivery-table tr:hover td {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.tb-delivery-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.tb-delivery-status-dot.success { background: var(--green); box-shadow: 0 0 6px var(--green-glow); }
+.tb-delivery-status-dot.failure { background: var(--red); }
+
+.tb-delivery-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tb-delivery-badge.http-2xx { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+.tb-delivery-badge.http-4xx { background: rgba(245, 158, 11, 0.15); color: var(--yellow); }
+.tb-delivery-badge.http-5xx { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+.tb-delivery-badge.http-none { background: rgba(113, 113, 122, 0.15); color: var(--text-muted); }
+
+.tb-delivery-error-text {
+  color: var(--red);
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tb-delivery-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 32px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.tb-delivery-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ─── End Webhook Delivery History ──────────────────────────────────── */
+
 /* ─── Alert Timeline (Issue #219, Phase 10) ─────────────────────────── */
 
 .tb-alert-timeline {
@@ -4088,6 +4287,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
               <span id="tbAlertsBannerTitle">Alerts</span>
               <span class="tb-alert-config-link" onclick="tbOpenAlertConfig()">⚙️ Configure</span>
               <span class="tb-webhook-config-link" onclick="tbOpenWebhookConfig()">🔗 Webhooks</span>
+              <span class="tb-delivery-history-link" onclick="tbOpenDeliveryHistory()">📊 Deliveries</span>
             </div>
             <div id="tbAlertsBannerRules"></div>
           </div>
@@ -4476,6 +4676,27 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
   </div>
 </div>
 <!-- ═══ End Webhook Config Modal ══════════════════════════════════════ -->
+
+<!-- ═══ Webhook Delivery History Modal (Issue #219, Phase 13) ═══════ -->
+<div class="tb-delivery-overlay" id="tbDeliveryHistoryModal" onclick="if(event.target===this)tbCloseDeliveryHistory()">
+  <div class="tb-delivery-panel">
+    <div class="tb-delivery-header">
+      <span>📊 Webhook Delivery History</span>
+      <div class="tb-delivery-controls">
+        <button onclick="tbRefreshDeliveryHistory()" class="tb-btn tb-btn-secondary" style="font-size:11px;padding:4px 10px;">↻ Refresh</button>
+        <button onclick="tbCloseDeliveryHistory()" class="tb-detail-close" aria-label="Close delivery history">✕</button>
+      </div>
+    </div>
+    <div class="tb-delivery-body" id="tbDeliveryHistoryBody">
+      <!-- Populated dynamically -->
+    </div>
+    <div class="tb-delivery-footer">
+      <span id="tbDeliveryFooterInfo"></span>
+      <span>Retention: 200 events / 48h</span>
+    </div>
+  </div>
+</div>
+<!-- ═══ End Webhook Delivery History Modal ════════════════════════════ -->
 
 <div class="status-bar">
   <div class="status-bar-section">
@@ -9561,6 +9782,168 @@ function tbResetWebhookConfig() {
   };
   tbRenderWebhookConfigForm(defaults);
   tbShowToast('Form reset to defaults (click Save to apply)', 'info');
+}
+
+// ── Webhook Delivery History UI (Issue #219, Phase 13) ──────────────────────
+// Dashboard modal for viewing recent webhook delivery attempts/results.
+// Integrates with GET /api/task-board/webhooks/deliveries endpoint.
+// Never displays raw secrets — URLs are pre-masked by the server.
+
+let tbDeliveryHistoryCache = null;
+
+/** Open the delivery history modal and fetch data. */
+async function tbOpenDeliveryHistory() {
+  const overlay = document.getElementById('tbDeliveryHistoryModal');
+  if (!overlay) return;
+  overlay.classList.add('active');
+  await tbFetchDeliveryHistory();
+}
+
+/** Close the delivery history modal. */
+function tbCloseDeliveryHistory() {
+  const overlay = document.getElementById('tbDeliveryHistoryModal');
+  if (overlay) overlay.classList.remove('active');
+}
+
+/** Refresh delivery history data. */
+async function tbRefreshDeliveryHistory() {
+  await tbFetchDeliveryHistory();
+}
+
+/** Fetch delivery history from the API with current filter state. */
+async function tbFetchDeliveryHistory() {
+  const body = document.getElementById('tbDeliveryHistoryBody');
+  if (body) body.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;">Loading…</div>';
+
+  try {
+    const params = new URLSearchParams();
+    const windowEl = document.getElementById('tbDeliveryWindow');
+    const statusEl = document.getElementById('tbDeliveryStatusFilter');
+    const targetEl = document.getElementById('tbDeliveryTargetFilter');
+
+    if (windowEl && windowEl.value) params.set('sinceMs', windowEl.value);
+    if (statusEl && statusEl.value) params.set('status', statusEl.value);
+    if (targetEl && targetEl.value) params.set('targetId', targetEl.value);
+    params.set('limit', '100');
+
+    const res = await fetch('/api/task-board/webhooks/deliveries?' + params.toString());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    tbDeliveryHistoryCache = data;
+    tbRenderDeliveryHistory(data);
+  } catch (e) {
+    console.warn('[delivery-history] fetch error', e);
+    if (body) body.innerHTML = '<div style="text-align:center;color:var(--red);padding:30px;">Failed to load delivery history: ' + tbEsc(e.message) + '</div>';
+  }
+}
+
+/** Render the delivery history panel contents. */
+function tbRenderDeliveryHistory(data) {
+  const body = document.getElementById('tbDeliveryHistoryBody');
+  if (!body || !data) return;
+
+  const events = data.events || [];
+  const summary = data.summary || {};
+  let html = '';
+
+  // Summary cards
+  html += '<div class="tb-delivery-summary">';
+  html += '  <div class="tb-delivery-summary-card"><div class="value neutral">' + (summary.total || 0) + '</div><div class="label">Total</div></div>';
+  html += '  <div class="tb-delivery-summary-card"><div class="value success">' + (summary.succeeded || 0) + '</div><div class="label">Succeeded</div></div>';
+  html += '  <div class="tb-delivery-summary-card"><div class="value failure">' + (summary.failed || 0) + '</div><div class="label">Failed</div></div>';
+  html += '  <div class="tb-delivery-summary-card"><div class="value neutral">' + (summary.avgDurationMs != null ? summary.avgDurationMs + 'ms' : '—') + '</div><div class="label">Avg Latency</div></div>';
+  html += '</div>';
+
+  // Filters
+  html += '<div class="tb-delivery-filters">';
+
+  // Time window
+  html += '  <select id="tbDeliveryWindow" onchange="tbFetchDeliveryHistory()">';
+  html += '    <option value="3600000">Last 1h</option>';
+  html += '    <option value="21600000" selected>Last 6h</option>';
+  html += '    <option value="86400000">Last 24h</option>';
+  html += '    <option value="172800000">Last 48h</option>';
+  html += '    <option value="">All retained</option>';
+  html += '  </select>';
+
+  // Status filter
+  html += '  <select id="tbDeliveryStatusFilter" onchange="tbFetchDeliveryHistory()">';
+  html += '    <option value="">All statuses</option>';
+  html += '    <option value="success">Success only</option>';
+  html += '    <option value="failure">Failures only</option>';
+  html += '  </select>';
+
+  // Target filter (dynamically from summary)
+  var targetIds = summary.targetIds || [];
+  html += '  <select id="tbDeliveryTargetFilter" onchange="tbFetchDeliveryHistory()">';
+  html += '    <option value="">All targets</option>';
+  for (var i = 0; i < targetIds.length; i++) {
+    html += '    <option value="' + tbEsc(targetIds[i]) + '">' + tbEsc(targetIds[i]) + '</option>';
+  }
+  html += '  </select>';
+
+  html += '</div>';
+
+  // Events table
+  if (events.length === 0) {
+    html += '<div class="tb-delivery-empty">No webhook delivery events found for the selected window.</div>';
+  } else {
+    html += '<table class="tb-delivery-table">';
+    html += '<thead><tr>';
+    html += '  <th>Status</th>';
+    html += '  <th>Target</th>';
+    html += '  <th>HTTP</th>';
+    html += '  <th>Latency</th>';
+    html += '  <th>Attempts</th>';
+    html += '  <th>Severity</th>';
+    html += '  <th>Time</th>';
+    html += '  <th>Error</th>';
+    html += '</tr></thead>';
+    html += '<tbody>';
+
+    for (var j = 0; j < events.length; j++) {
+      var ev = events[j];
+      var statusClass = ev.success ? 'success' : 'failure';
+      var statusLabel = ev.success ? 'OK' : 'FAIL';
+      var httpBadge = 'http-none';
+      var httpText = '—';
+      if (ev.statusCode != null) {
+        httpText = '' + ev.statusCode;
+        if (ev.statusCode >= 200 && ev.statusCode < 300) httpBadge = 'http-2xx';
+        else if (ev.statusCode >= 400 && ev.statusCode < 500) httpBadge = 'http-4xx';
+        else if (ev.statusCode >= 500) httpBadge = 'http-5xx';
+      }
+
+      var sevColor = ev.triggerSeverity === 'critical' ? 'var(--red)' : ev.triggerSeverity === 'warning' ? 'var(--yellow)' : 'var(--green)';
+      var timeAgo = tbRelTime(ev.ts);
+
+      html += '<tr>';
+      html += '  <td><span class="tb-delivery-status-dot ' + statusClass + '"></span>' + statusLabel + '</td>';
+      html += '  <td title="' + tbEsc(ev.maskedUrl) + '">' + tbEsc(ev.targetName || ev.targetId) + '</td>';
+      html += '  <td><span class="tb-delivery-badge ' + httpBadge + '">' + httpText + '</span></td>';
+      html += '  <td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;">' + ev.durationMs + 'ms</td>';
+      html += '  <td style="text-align:center;">' + ev.attempts + '</td>';
+      html += '  <td style="color:' + sevColor + ';font-size:11px;">';
+      if (ev.previousSeverity) {
+        html += tbEsc(ev.previousSeverity) + ' → ';
+      }
+      html += tbEsc(ev.triggerSeverity);
+      html += '</td>';
+      html += '  <td style="font-size:11px;color:var(--text-muted);" title="' + new Date(ev.ts).toISOString() + '">' + timeAgo + '</td>';
+      html += '  <td>' + (ev.error ? '<span class="tb-delivery-error-text" title="' + tbEsc(ev.error) + '">' + tbEsc(ev.error) + '</span>' : '<span style="color:var(--text-muted);">—</span>') + '</td>';
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+  }
+
+  body.innerHTML = html;
+
+  // Update footer
+  var footer = document.getElementById('tbDeliveryFooterInfo');
+  if (footer) {
+    footer.textContent = 'Showing ' + events.length + ' event' + (events.length !== 1 ? 's' : '');
+  }
 }
 
 // ── Real-time SSE subscription (Issue #219) ─────────────────────────────────
