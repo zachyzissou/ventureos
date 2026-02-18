@@ -25,6 +25,7 @@ import { appendDeliveryEvents } from './webhook-delivery-history.js';
 import type { WebhookDeliveryAttemptDetail } from './webhook-delivery-history.js';
 import { formatPayload, isValidProvider, ALLOWED_PROVIDERS } from './webhook-formatters.js';
 import type { WebhookProvider, FormattedPayload } from './webhook-formatters.js';
+import type { EscalationPolicyConfig } from './escalation-policy.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,14 @@ export interface WebhookConfig {
    * Maximum retry attempts on failure. Default: 3.
    */
   maxRetries?: number;
+  /**
+   * Optional escalation policy configuration.
+   * When enabled, persistent alert states trigger escalation tiers
+   * with designated targets and cooldowns.
+   * Disabled by default — backward-compatible.
+   * Issue #219 — Phase 19.
+   */
+  escalation?: EscalationPolicyConfig;
 }
 
 /** Payload sent to webhook targets. */
@@ -297,7 +306,16 @@ export function sanitizeConfig(raw: unknown): WebhookConfig {
     }
   }
 
-  return { enabled, targets, cooldownMs, timeoutMs, maxRetries };
+  // Escalation policy (Phase 19): pass through if present, omit if absent.
+  // Sanitization of the escalation sub-object is handled by sanitizeEscalationPolicy()
+  // in escalation-policy.ts (called separately to avoid circular runtime deps).
+  const result: WebhookConfig = { enabled, targets, cooldownMs, timeoutMs, maxRetries };
+  if (obj.escalation !== undefined && obj.escalation !== null && typeof obj.escalation === 'object') {
+    // Preserve raw escalation config — the escalation module owns sanitization.
+    // readWebhookConfig() returns this as-is; escalation-policy.ts sanitizes on read.
+    result.escalation = obj.escalation as EscalationPolicyConfig;
+  }
+  return result;
 }
 
 // ─── Validation ──────────────────────────────────────────────────────────────
@@ -409,6 +427,91 @@ export function validateWebhookConfig(input: unknown): WebhookConfigValidationEr
               field: `${prefix}.provider`,
               message: `provider must be one of: ${ALLOWED_PROVIDERS.join(', ')}`,
             });
+          }
+        }
+      }
+    }
+  }
+
+  // Escalation policy validation (Phase 19) — inline to avoid circular imports.
+  // Validates the escalation sub-object if present in the input.
+  if (obj.escalation !== undefined) {
+    if (obj.escalation === null) {
+      // Explicitly null — allowed (removes escalation config)
+    } else if (typeof obj.escalation !== 'object' || Array.isArray(obj.escalation)) {
+      errors.push({ field: 'escalation', message: 'escalation must be an object or null' });
+    } else {
+      const esc = obj.escalation as Record<string, unknown>;
+      if (esc.enabled !== undefined && typeof esc.enabled !== 'boolean') {
+        errors.push({ field: 'escalation.enabled', message: 'enabled must be a boolean' });
+      }
+      if (esc.triggerSeverity !== undefined) {
+        if (typeof esc.triggerSeverity !== 'string' || !['ok', 'warning', 'critical'].includes(esc.triggerSeverity)) {
+          errors.push({ field: 'escalation.triggerSeverity', message: 'triggerSeverity must be ok, warning, or critical' });
+        }
+      }
+      if (esc.cooldownMs !== undefined) {
+        if (typeof esc.cooldownMs !== 'number' || !isFinite(esc.cooldownMs) || esc.cooldownMs < 0) {
+          errors.push({ field: 'escalation.cooldownMs', message: 'cooldownMs must be a non-negative finite number' });
+        }
+      }
+      if (esc.tiers !== undefined) {
+        if (!Array.isArray(esc.tiers)) {
+          errors.push({ field: 'escalation.tiers', message: 'tiers must be an array' });
+        } else {
+          if (esc.tiers.length > 3) {
+            errors.push({ field: 'escalation.tiers', message: 'maximum 3 escalation tiers allowed' });
+          }
+          // Collect available target IDs for cross-reference validation
+          const availableTargetIds = new Set<string>();
+          if (Array.isArray(obj.targets)) {
+            for (const t of obj.targets) {
+              if (t && typeof t === 'object' && typeof (t as Record<string, unknown>).id === 'string') {
+                availableTargetIds.add((t as Record<string, unknown>).id as string);
+              }
+            }
+          }
+          let prevAfterMs = 0;
+          for (let i = 0; i < esc.tiers.length; i++) {
+            const tier = esc.tiers[i];
+            const prefix = `escalation.tiers[${i}]`;
+            if (!tier || typeof tier !== 'object' || Array.isArray(tier)) {
+              errors.push({ field: prefix, message: 'tier must be an object' });
+              continue;
+            }
+            const tierObj = tier as Record<string, unknown>;
+            if (typeof tierObj.afterMs !== 'number' || !isFinite(tierObj.afterMs)) {
+              errors.push({ field: `${prefix}.afterMs`, message: 'afterMs is required and must be a finite number' });
+            } else {
+              if (tierObj.afterMs < 60000) {
+                errors.push({ field: `${prefix}.afterMs`, message: 'afterMs must be >= 60000ms (1 minute)' });
+              }
+              if (tierObj.afterMs > 86400000) {
+                errors.push({ field: `${prefix}.afterMs`, message: 'afterMs must be <= 86400000ms (24 hours)' });
+              }
+              if (tierObj.afterMs <= prevAfterMs) {
+                errors.push({ field: `${prefix}.afterMs`, message: `afterMs must be strictly greater than previous tier (${prevAfterMs}ms)` });
+              }
+              prevAfterMs = tierObj.afterMs;
+            }
+            if (!Array.isArray(tierObj.targetIds)) {
+              errors.push({ field: `${prefix}.targetIds`, message: 'targetIds must be an array' });
+            } else {
+              if (tierObj.targetIds.length > 5) {
+                errors.push({ field: `${prefix}.targetIds`, message: 'maximum 5 targets per tier' });
+              }
+              for (let j = 0; j < tierObj.targetIds.length; j++) {
+                const tid = tierObj.targetIds[j];
+                if (typeof tid !== 'string' || tid.trim().length === 0) {
+                  errors.push({ field: `${prefix}.targetIds[${j}]`, message: 'target ID must be a non-empty string' });
+                } else if (availableTargetIds.size > 0 && !availableTargetIds.has(tid)) {
+                  errors.push({ field: `${prefix}.targetIds[${j}]`, message: `target ID "${tid}" does not match any configured webhook target` });
+                }
+              }
+            }
+            if (tierObj.label !== undefined && typeof tierObj.label !== 'string') {
+              errors.push({ field: `${prefix}.label`, message: 'label must be a string' });
+            }
           }
         }
       }
