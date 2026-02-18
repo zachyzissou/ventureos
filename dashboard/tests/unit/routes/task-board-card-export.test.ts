@@ -25,9 +25,6 @@ import {
   filterCardsForExport,
   CARD_EXPORT_MAX_ITEMS,
 } from '../../../server/task-card-export.js';
-import type {
-  CardExportResult,
-} from '../../../server/task-card-export.js';
 
 import type { TaskCard } from '../../../server/types.js';
 

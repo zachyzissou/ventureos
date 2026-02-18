@@ -54,15 +54,16 @@ export interface CardExportResult {
  * Conservative field allowlist for task card export.
  * Explicitly enumerates safe, user-facing fields only.
  *
+ * Included fields:
+ * - id: stable card identifier for cross-referencing (UUIDs leak no secrets)
+ * - title, description, status, priority, agentId: user-facing metadata
+ * - createdAt, queuedAt, startedAt, completedAt, runtimeMs: timing info
+ * - resultSummary: user-facing execution summary
+ *
  * Excluded fields and rationale:
- * - id: internal UUID, not user-meaningful for export
  * - error: may contain stack traces or internal paths
  * - tokensUsed: internal resource accounting
  * - costEstimate: internal cost tracking
- *
- * The id field IS included because it serves as a stable card identifier
- * that users may need for cross-referencing. However it is the only
- * internal-ish field included, and UUIDs leak no secrets.
  */
 const EXPORT_FIELDS = [
   'id',
