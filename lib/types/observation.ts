@@ -122,6 +122,11 @@ export interface Observation {
    * Populated by the observer agent (Phase 2).
    */
   sourceMessageIds?: string[];
+  /**
+   * Timestamp when the reflector soft-deleted this observation (Phase 3 / #232).
+   * Non-null means the observation is "GC'd" — excluded from prompt cache.
+   */
+  reflectedAt?: string;
   /** Arbitrary metadata for future extension. */
   metadata?: Record<string, unknown>;
 }
@@ -233,7 +238,133 @@ export interface ObserverLLMObservation {
   source_message_ids: string[];
 }
 
+// ─── Memory State Snapshot (Phase 4 — #233) ────────────────────────────────
+
+/**
+ * A point-in-time snapshot of an agent's observational memory state.
+ * Returned by GET /api/memory/state and used by the dashboard gauge widget.
+ */
+export interface MemoryStateSnapshot {
+  /** Agent ID. */
+  agentId: string;
+  /** Whether observational memory is enabled for this agent. */
+  enabled: boolean;
+  /** Total compressed observation tokens. */
+  observationsTokens: number;
+  /** Raw buffer tokens awaiting observation. */
+  rawBufferTokens: number;
+  /** Total observations stored. */
+  observationCount: number;
+  /** Breakdown of observations by priority. */
+  priorityCounts: {
+    high: number;
+    medium: number;
+    info: number;
+  };
+  /** ISO timestamp of last observation pass (null if never). */
+  lastObservationAt: string | null;
+  /** ISO timestamp of last reflection pass (null if never). */
+  lastReflectionAt: string | null;
+  /** Whether the reflected_at column is available (Phase 3 / #232). */
+  reflectionSupported: boolean;
+}
+
 // ─── Observer Agent Config (Phase 2) ───────────────────────────────────────
+
+// ─── Reflector Types (Phase 3 / #232) ───────────────────────────────────────
+
+/**
+ * Decision the reflector can make about a single observation.
+ * - keep:    Observation remains active in the prompt cache.
+ * - merge:   Observation is merged into another (content combined).
+ * - discard: Observation is soft-deleted via `reflected_at` timestamp.
+ */
+export type ReflectionDecision = 'keep' | 'merge' | 'discard';
+
+/**
+ * Per-observation decision returned by the LLM reflector pass.
+ */
+export interface ReflectionObservationDecision {
+  /** Observation ID being evaluated. */
+  observationId: string;
+  /** Decision: keep, merge, or discard. */
+  decision: ReflectionDecision;
+  /** Brief reasoning for the decision. */
+  reason: string;
+  /** If decision=merge, the observation ID to merge into. */
+  mergeIntoId?: string;
+  /** If decision=merge, the merged content text. */
+  mergedContent?: string;
+}
+
+/**
+ * Complete result returned by the LLM for a reflection pass.
+ */
+export interface ReflectionLLMResult {
+  /** Per-observation decisions. */
+  decisions: ReflectionObservationDecision[];
+  /** Optional summary of what the reflector found. */
+  summary?: string;
+}
+
+/**
+ * Log entry for a completed reflection pass.
+ * Persisted in the `reflection_log` table for auditability.
+ */
+export interface ReflectionLogEntry {
+  /** Unique log entry ID. */
+  id: string;
+  /** Agent whose observations were reflected. */
+  agentId: string;
+  /** When the reflection pass ran (ISO 8601). */
+  runAt: string;
+  /** Number of observations evaluated. */
+  observationsEvaluated: number;
+  /** Number of observations kept. */
+  observationsKept: number;
+  /** Number of observations merged. */
+  observationsMerged: number;
+  /** Number of observations discarded (soft-deleted). */
+  observationsDiscarded: number;
+  /** Token count of observations before reflection. */
+  tokensBefore: number;
+  /** Token count of observations after reflection. */
+  tokensAfter: number;
+  /** Model used for reflection. */
+  modelUsed: string;
+  /** Duration of the reflection pass in milliseconds. */
+  durationMs: number;
+  /** Error message if the pass failed. */
+  error?: string;
+}
+
+/**
+ * Configuration for the Reflector Agent.
+ */
+export interface ReflectorAgentConfig {
+  /** Enable/disable the reflector. Default: true */
+  enabled: boolean;
+  /** Characters-per-token for estimation. Default: 4 */
+  charsPerToken: number;
+  /**
+   * Token budget threshold that triggers reflection.
+   * When observations_tokens in memory_state exceeds this, reflector runs.
+   * Default: 50_000
+   */
+  tokenBudgetThreshold: number;
+  /**
+   * Minimum number of active observations to retain after reflection.
+   * The reflector will never reduce below this floor.
+   * Default: 5
+   */
+  minRetainedObservations: number;
+  /** Maximum retries on LLM failure. Default: 1 */
+  maxRetries: number;
+  /** Model ID used for the reflection pass. Default: 'gpt-4o-mini' */
+  modelId: string;
+  /** Suppress console.warn on errors. Default: false */
+  silent: boolean;
+}
 
 /**
  * Configuration for the Observer Agent.
