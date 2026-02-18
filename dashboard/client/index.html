@@ -5264,6 +5264,10 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
               <option value="low">🟢 Low</option>
             </select>
             <button onclick="tbClearFilters()" class="tb-btn tb-btn-secondary" title="Clear filters" style="padding:6px 10px;font-size:12px;">✕ Clear</button>
+            <div class="tb-export-controls" style="margin-left:4px;">
+              <button class="tb-export-btn" onclick="tbExportCards('csv')" title="Download task cards as CSV">📥 CSV</button>
+              <button class="tb-export-btn" onclick="tbExportCards('json')" title="Download task cards as JSON">📥 JSON</button>
+            </div>
             <button onclick="tbToggleSelectMode()" class="tb-btn tb-btn-secondary" id="tbSelectModeBtn" title="Toggle multi-select mode">☑ Select</button>
             <button onclick="tbRefresh()" class="tb-btn tb-btn-secondary" title="Refresh">🔄 Refresh</button>
             <button onclick="tbShowCreateForm()" class="tb-btn tb-btn-primary" title="New Task">＋ New Task</button>
@@ -10252,6 +10256,29 @@ function tbRenderHistoryChart() {
     <div style="position:absolute;top:0;right:8px;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">${yMax}</div>
     <div style="position:absolute;bottom:20px;right:8px;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">${yMin}</div>
   `;
+}
+
+// ── Task Card Export (Issue #219, Phase 26) ──────────────────────────────────
+// Download task board cards as CSV/JSON file.
+// Passes current filter state (status/agent/priority) to the export endpoint.
+
+/**
+ * Export task cards as CSV or JSON.
+ * Reads current filter state and triggers a file download via the export API.
+ */
+function tbExportCards(format) {
+  var params = new URLSearchParams();
+  params.set('format', format);
+  params.set('limit', '500');
+
+  if (tbActiveFilters.status) params.set('status', tbActiveFilters.status);
+  if (tbActiveFilters.agentId) params.set('agentId', tbActiveFilters.agentId);
+  if (tbActiveFilters.priority) params.set('priority', tbActiveFilters.priority);
+
+  tbTriggerExportDownload(
+    '/api/task-board/export?' + params.toString(),
+    format
+  );
 }
 
 // ── Metrics History Export (Issue #219, Phase 25) ────────────────────────────

@@ -106,6 +106,12 @@ import {
 } from '../webhook-health-stats.js';
 import type { HealthExportFormat } from '../webhook-health-stats.js';
 
+import {
+  exportTaskCards,
+  CARD_EXPORT_MAX_ITEMS,
+} from '../task-card-export.js';
+import type { CardExportFormat } from '../task-card-export.js';
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
@@ -698,6 +704,46 @@ export async function handleTaskBoard(
       removeClient(res);
     });
 
+    return true;
+  }
+
+  // ── GET /api/task-board/export — Issue #219, Phase 26 (Task Card Export) ──
+  // Export task board cards as CSV or JSON file download.
+  // Query params: same as /api/task-board list + ?format=csv|json (default json)
+  //   ?status=running     — filter by status
+  //   ?agentId=oracle     — filter by agent
+  //   ?priority=high      — filter by priority
+  //   ?search=deploy      — substring search in title/description
+  //   ?limit=500          — max cards to export (default 500, max 500)
+  // Bounded: max 500 cards per export. Secret-safe: conservative field allowlist.
+  if (url.startsWith('/api/task-board/export') && method === 'GET') {
+    const exportParams = new URL(url, 'http://localhost').searchParams;
+    const format = (exportParams.get('format') === 'csv' ? 'csv' : 'json') as CardExportFormat;
+    const limit = exportParams.has('limit')
+      ? Math.max(1, Math.min(Number(exportParams.get('limit')) || CARD_EXPORT_MAX_ITEMS, CARD_EXPORT_MAX_ITEMS))
+      : CARD_EXPORT_MAX_ITEMS;
+    const status = exportParams.get('status') || undefined;
+    const agentId = exportParams.get('agentId') || undefined;
+    const priority = exportParams.get('priority') || undefined;
+    const search = exportParams.get('search') || undefined;
+
+    const tasks = loadTasks(dataDir);
+    const result = exportTaskCards(tasks, {
+      format,
+      limit,
+      status,
+      agentId,
+      priority,
+      search,
+    });
+
+    res.writeHead(200, {
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+      'Cache-Control': 'no-store',
+      'X-Export-Count': String(result.count),
+    });
+    res.end(result.content);
     return true;
   }
 
