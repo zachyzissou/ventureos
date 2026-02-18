@@ -1952,3 +1952,26 @@ The RPG system ships features at AI-native velocity (Phase 4 Track 1-2 delivered
 **Current Priority:** Phase 5 P0 Remediation Tier 1 (Security Foundation, Synth + Oracle + Atlas, started 03:57 CST)
 
 **"My life for Aiur! En Taro Adun! Through the Khala, we are eternal!"**
+
+---
+
+## Phase 4.5 Phase 2: Visual Skill Tree UI & Progression Polish (Issue #207)
+
+### New API Endpoints (prefix: `/api/rpg/progression/`)
+- `GET /tree` — Full tree + layouts + validation
+- `GET /tree/state/:agentId` — Tree with per-agent node states
+- `POST /tree/nodes` / `DELETE /tree/nodes` — CRUD skill nodes
+- `POST /tree/layouts` — Save node positions
+- `GET /tree/validate` — Validate tree graph
+- `GET /tree/export` / `POST /tree/import` — Export/import JSON
+- `GET /attribution/:agentId` / `GET /attribution` — XP attribution
+- `GET /simulate/:agentId` — Prestige simulation
+- `GET /milestones` — Milestones feed
+- `POST /unlock` — Unlock skill (deducts XP)
+- `GET /history/:agentId` — XP history
+
+### New Components
+- `<skill-tree-renderer>` — SVG interactive skill tree
+- `<progression-dashboard>` — XP attribution, prestige sim, milestones
+
+### Schema: `skill_node_layouts`, `progression_milestones`

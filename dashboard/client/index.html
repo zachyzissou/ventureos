@@ -1077,6 +1077,15 @@ body {
   .grid-4, .grid-3, .grid-2 {
     grid-template-columns: 1fr !important;
   }
+  #tbBoard {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  #tbBoard {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
 }
 
 .qa-btn {
@@ -5717,6 +5726,139 @@ function renderChangelog() {
 }
 
 function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ─── Task Board / Kanban (Issue #219) ────────────────────────────────────────
+
+let _tbData = null;
+
+async function loadTaskBoard() {
+  const agentFilter = document.getElementById('tbAgentFilter')?.value || '';
+  const qs = agentFilter ? `?agent=${encodeURIComponent(agentFilter)}` : '';
+  try {
+    const r = await authFetch('/api/task-board' + qs);
+    const data = await r.json();
+    _tbData = data;
+    renderTaskBoard(data);
+  } catch (e) {
+    console.error('Task board load failed:', e);
+  }
+}
+
+function renderTaskBoard(data) {
+  if (!data || !data.cards) return;
+
+  // Update counters
+  const bc = data.summary?.byColumn || {};
+  document.getElementById('tbCountQueued').textContent = bc.queued || 0;
+  document.getElementById('tbCountInProgress').textContent = bc.in_progress || 0;
+  document.getElementById('tbCountReview').textContent = bc.review || 0;
+  document.getElementById('tbCountDone').textContent = bc.done || 0;
+  document.getElementById('tbCountFailed').textContent = bc.failed || 0;
+
+  // Populate agent filter dropdown (once)
+  const sel = document.getElementById('tbAgentFilter');
+  if (sel && sel.options.length <= 1 && data.summary?.byAgent) {
+    const agents = Object.keys(data.summary.byAgent).sort();
+    for (const a of agents) {
+      const opt = document.createElement('option');
+      opt.value = a;
+      opt.textContent = a.charAt(0).toUpperCase() + a.slice(1);
+      sel.appendChild(opt);
+    }
+  }
+
+  // Column mapping
+  const colMap = {
+    queued: document.getElementById('tbColQueued'),
+    in_progress: document.getElementById('tbColInProgress'),
+    review: document.getElementById('tbColReview'),
+    done: document.getElementById('tbColDone'),
+    failed: document.getElementById('tbColFailed'),
+  };
+
+  // Clear columns
+  for (const el of Object.values(colMap)) {
+    if (el) el.innerHTML = '';
+  }
+
+  // Group cards by column
+  const grouped = {};
+  for (const card of data.cards) {
+    if (!grouped[card.column]) grouped[card.column] = [];
+    grouped[card.column].push(card);
+  }
+
+  // Render cards
+  const colorMap = {
+    queued: 'var(--text-muted)',
+    in_progress: 'var(--blue)',
+    review: 'var(--yellow)',
+    done: 'var(--green)',
+    failed: 'var(--red)',
+  };
+
+  for (const [col, cards] of Object.entries(grouped)) {
+    const container = colMap[col];
+    if (!container) continue;
+
+    for (const card of cards) {
+      const age = Date.now() - card.updatedAt;
+      const ago = age < 60000 ? 'just now'
+        : age < 3600000 ? Math.round(age / 60000) + 'm ago'
+        : age < 86400000 ? Math.round(age / 3600000) + 'h ago'
+        : Math.round(age / 86400000) + 'd ago';
+
+      const isActive = col === 'in_progress';
+      const modelShort = (card.model || '-').split('/').pop() || '-';
+      const msgSnippet = escHtml((card.lastMessage || '').substring(0, 80));
+
+      const el = document.createElement('div');
+      el.className = 'tb-card';
+      el.style.cssText = `
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-left: 3px solid ${colorMap[col] || 'var(--border)'};
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 12px;
+        transition: all 0.2s;
+        cursor: default;
+      `;
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-weight:600;color:var(--text-primary);font-size:12px;">${escHtml(card.label)}</span>
+          ${isActive ? '<span style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green-glow);animation:pulse 2s ease-in-out infinite;flex-shrink:0;"></span>' : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span class="badge" style="background:rgba(99,102,241,0.15);color:var(--accent);font-size:9px;padding:1px 5px;">${escHtml(card.agentId)}</span>
+          <span class="model-tag">${escHtml(modelShort)}</span>
+        </div>
+        ${msgSnippet ? `<div style="color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;">${msgSnippet}</div>` : ''}
+        <div style="font-size:10px;color:var(--text-muted);">${ago}</div>
+      `;
+      el.addEventListener('mouseenter', () => {
+        el.style.borderColor = colorMap[col] || 'var(--accent)';
+        el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+        el.style.transform = 'translateY(-1px)';
+      });
+      el.addEventListener('mouseleave', () => {
+        el.style.borderColor = 'var(--border)';
+        el.style.borderLeftColor = colorMap[col] || 'var(--border)';
+        el.style.boxShadow = 'none';
+        el.style.transform = 'none';
+      });
+      container.appendChild(el);
+    }
+  }
+
+  // Empty state for columns with no cards
+  for (const [col, container] of Object.entries(colMap)) {
+    if (container && !container.children.length) {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;font-style:italic;">No tasks</div>';
+    }
+  }
+}
+
 </script>
 </body>
 </html>

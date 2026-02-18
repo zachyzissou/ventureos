@@ -193,3 +193,11 @@ export interface ProgressionErrorResponse {
   ok: false;
   error: string;
 }
+
+// ─── Phase 2 Types (Issue #207) ─────────────────────────────────────────────
+export interface SkillNodeLayout { node_id: string; x: number; y: number; }
+export interface SkillTreeValidation { valid: boolean; errors: string[]; warnings: string[]; }
+export interface XpAttribution { source_category: string; total_raw_xp: number; total_effective_xp: number; event_count: number; avg_multiplier: number; }
+export type MilestoneType = 'level_up' | 'skill_unlock' | 'prestige' | 'diversification';
+export interface ProgressionMilestone { id: string; agent_id: string; type: MilestoneType; title: string; description: string; created_at: string; metadata?: Record<string, unknown>; }
+export interface PrestigeSimulation { agent_id: string; current_rank: number; next_rank: number; eligible: boolean; preview: { xp_reset_from: number; level_reset_from: number; unlocks_lost: number; lifetime_xp_kept: number; level_requirement: number; xp_requirement: number; }; }
