@@ -527,3 +527,233 @@ export function queryRetryActivity(
     },
   };
 }
+
+// ─── Export Helpers (Phase 17: Delivery History Export) ───────────────────────
+
+/**
+ * Maximum number of events allowed in a single export.
+ * Prevents unbounded memory/CPU usage on export requests.
+ */
+export const EXPORT_MAX_EVENTS = 200;
+
+/** Supported export formats. */
+export type ExportFormat = 'csv' | 'json';
+
+/** Export query — same filters as DeliveryHistoryQuery, plus format. */
+export interface DeliveryExportQuery {
+  format?: ExportFormat;
+  limit?: number;
+  sinceMs?: number;
+  targetId?: string;
+  status?: 'success' | 'failure';
+  now?: number;
+}
+
+/** Export query for retries — same filters as RetryActivityQuery, plus format. */
+export interface RetryExportQuery {
+  format?: ExportFormat;
+  limit?: number;
+  sinceMs?: number;
+  targetId?: string;
+  now?: number;
+}
+
+/** Result of an export operation. */
+export interface ExportResult {
+  /** The serialized export content (CSV string or JSON string). */
+  content: string;
+  /** MIME type for the response Content-Type header. */
+  contentType: string;
+  /** Suggested filename for the Content-Disposition header. */
+  filename: string;
+  /** Number of events included in the export. */
+  count: number;
+}
+
+/**
+ * Escape a value for CSV output.
+ * Wraps in double quotes if the value contains commas, quotes, or newlines.
+ * Pure function.
+ */
+export function csvEscape(value: string | number | boolean | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+/**
+ * Format a timestamp as ISO 8601 string for export.
+ * Returns empty string for null/undefined.
+ */
+function formatExportTs(ts: number | null | undefined): string {
+  if (ts == null) return '';
+  return new Date(ts).toISOString();
+}
+
+/**
+ * Sanitize an event for export: strips any fields that could leak secrets.
+ * Returns a plain object safe for serialization.
+ * The maskedUrl is already safe (set during recording), but we double-check
+ * that no `url` or `secret` field leaks through.
+ */
+function sanitizeEventForExport(event: WebhookDeliveryEvent): Record<string, unknown> {
+  return {
+    id: event.id,
+    timestamp: formatExportTs(event.ts),
+    targetId: event.targetId,
+    targetName: event.targetName,
+    success: event.success,
+    statusCode: event.statusCode,
+    attempts: event.attempts,
+    durationMs: event.durationMs,
+    error: event.error,
+    maskedUrl: event.maskedUrl,
+    triggerSeverity: event.triggerSeverity,
+    previousSeverity: event.previousSeverity,
+    // Explicitly omit: url, secret, payload, headers
+  };
+}
+
+/** CSV column headers for delivery export. */
+const DELIVERY_CSV_HEADERS = [
+  'id', 'timestamp', 'targetId', 'targetName', 'success',
+  'statusCode', 'attempts', 'durationMs', 'error',
+  'maskedUrl', 'triggerSeverity', 'previousSeverity',
+];
+
+/**
+ * Convert delivery events to CSV format.
+ * Pure function — no I/O, bounded by input array length.
+ */
+export function deliveryEventsToCsv(events: WebhookDeliveryEvent[]): string {
+  const rows: string[] = [DELIVERY_CSV_HEADERS.join(',')];
+
+  for (const event of events) {
+    const safe = sanitizeEventForExport(event);
+    const row = DELIVERY_CSV_HEADERS.map((h) => csvEscape(safe[h] as string | number | boolean | null));
+    rows.push(row.join(','));
+  }
+
+  return rows.join('\n');
+}
+
+/**
+ * Convert delivery events to a safe JSON export format.
+ * Returns a JSON string with sanitized events (no secrets).
+ * Pure function.
+ */
+export function deliveryEventsToJson(events: WebhookDeliveryEvent[]): string {
+  const safeEvents = events.map(sanitizeEventForExport);
+  return JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    format: 'ventureos-webhook-delivery-export-v1',
+    count: safeEvents.length,
+    events: safeEvents,
+  }, null, 2);
+}
+
+/**
+ * Export delivery history with the same filter capabilities as queryDeliveryHistory.
+ * Returns formatted content (CSV or JSON), content type, and suggested filename.
+ *
+ * Secret-safe: all events pass through sanitizeEventForExport() which strips
+ * any non-masked fields. URLs are pre-masked at recording time.
+ */
+export function exportDeliveryHistory(
+  dataDir: string,
+  opts: DeliveryExportQuery = {},
+): ExportResult {
+  const format: ExportFormat = opts.format === 'csv' ? 'csv' : 'json';
+  const limit = Math.max(1, Math.min(opts.limit ?? EXPORT_MAX_EVENTS, EXPORT_MAX_EVENTS));
+
+  // Reuse the same query logic for filter parity
+  const queryResult = queryDeliveryHistory(dataDir, {
+    limit,
+    sinceMs: opts.sinceMs,
+    targetId: opts.targetId,
+    status: opts.status,
+    now: opts.now,
+  });
+
+  const events = queryResult.events;
+  const dateSuffix = new Date().toISOString().slice(0, 10);
+
+  if (format === 'csv') {
+    return {
+      content: deliveryEventsToCsv(events),
+      contentType: 'text/csv; charset=utf-8',
+      filename: `webhook-deliveries-${dateSuffix}.csv`,
+      count: events.length,
+    };
+  }
+
+  return {
+    content: deliveryEventsToJson(events),
+    contentType: 'application/json; charset=utf-8',
+    filename: `webhook-deliveries-${dateSuffix}.json`,
+    count: events.length,
+  };
+}
+
+/** CSV column headers for retry export (includes attempt count emphasis). */
+const RETRY_CSV_HEADERS = [
+  'id', 'timestamp', 'targetId', 'targetName', 'success',
+  'statusCode', 'attempts', 'durationMs', 'error',
+  'maskedUrl', 'triggerSeverity', 'previousSeverity',
+];
+
+/**
+ * Export retry activity with the same filter capabilities as queryRetryActivity.
+ * Returns formatted content (CSV or JSON), content type, and suggested filename.
+ *
+ * Secret-safe: same sanitization pipeline as delivery export.
+ */
+export function exportRetryActivity(
+  dataDir: string,
+  opts: RetryExportQuery = {},
+): ExportResult {
+  const format: ExportFormat = opts.format === 'csv' ? 'csv' : 'json';
+  const limit = Math.max(1, Math.min(opts.limit ?? EXPORT_MAX_EVENTS, EXPORT_MAX_EVENTS));
+
+  const queryResult = queryRetryActivity(dataDir, {
+    limit,
+    sinceMs: opts.sinceMs,
+    targetId: opts.targetId,
+    now: opts.now,
+  });
+
+  const events = queryResult.events;
+  const dateSuffix = new Date().toISOString().slice(0, 10);
+
+  if (format === 'csv') {
+    const rows: string[] = [RETRY_CSV_HEADERS.join(',')];
+    for (const event of events) {
+      const safe = sanitizeEventForExport(event);
+      const row = RETRY_CSV_HEADERS.map((h) => csvEscape(safe[h] as string | number | boolean | null));
+      rows.push(row.join(','));
+    }
+    return {
+      content: rows.join('\n'),
+      contentType: 'text/csv; charset=utf-8',
+      filename: `webhook-retries-${dateSuffix}.csv`,
+      count: events.length,
+    };
+  }
+
+  const safeEvents = events.map(sanitizeEventForExport);
+  return {
+    content: JSON.stringify({
+      exportedAt: new Date().toISOString(),
+      format: 'ventureos-webhook-retry-export-v1',
+      count: safeEvents.length,
+      summary: queryResult.summary,
+      events: safeEvents,
+    }, null, 2),
+    contentType: 'application/json; charset=utf-8',
+    filename: `webhook-retries-${dateSuffix}.json`,
+    count: events.length,
+  };
+}
