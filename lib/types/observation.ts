@@ -1,11 +1,12 @@
 /**
- * Observation Data Model Types — VentureOS Observational Memory (Phase 1)
+ * Observation Data Model Types — VentureOS Observational Memory
  *
  * Type contracts for the observation data layer. Observations are raw
  * data captured from conversations that can later be processed by the
  * observer/reflector pipeline (Issues #231/#232).
  *
- * Issue #230 — Phase 1 of #218: Observation Data Model + Token Counter Hook
+ * Phase 1 (#230): Data Model + Token Counter Hook
+ * Phase 2 (#231): Observer Agent — Compress Raw Messages → Observations
  */
 
 // ─── Core Types ─────────────────────────────────────────────────────────────
@@ -37,6 +38,21 @@ export type ObservationStatus =
   | 'processed'      // Observer has extracted semantics
   | 'archived'       // Moved to long-term storage
   | 'discarded';     // Marked as not useful
+
+/**
+ * Observation priority (three-tier system).
+ * 🔴 high   — Actionable commitments, decisions, deadlines
+ * 🟡 medium — Preferences, context, notable facts
+ * 🟢 info   — Background information, pleasantries retained for context
+ */
+export type ObservationPriority = 'high' | 'medium' | 'info';
+
+/** Priority emoji mapping for display. */
+export const PRIORITY_EMOJI: Record<ObservationPriority, string> = {
+  high: '🔴',
+  medium: '🟡',
+  info: '🟢',
+};
 
 /**
  * Source information for an observation — where it came from.
@@ -72,13 +88,13 @@ export interface TokenUsageData {
  * A single observation record — the atomic unit of observational memory.
  *
  * Observations are write-heavy, read-seldom raw data. The observer
- * pipeline (Issue #231) will batch-process pending observations into
- * the knowledge graph.
+ * pipeline (Issue #231) batch-processes raw messages into compressed
+ * observations with priority and temporal metadata.
  */
 export interface Observation {
   /** Unique observation identifier. */
   id: ObservationId;
-  /** When the observation was captured. */
+  /** When the observation was captured (observation_date in three-date model). */
   createdAt: string;
   /** Category classification. */
   category: ObservationCategory;
@@ -90,6 +106,22 @@ export interface Observation {
   status: ObservationStatus;
   /** Token usage data (populated for category='token_usage'). */
   tokenUsage?: TokenUsageData;
+  /**
+   * Priority level assigned by the observer agent (Phase 2).
+   * Null/undefined for raw Phase 1 observations.
+   */
+  priority?: ObservationPriority;
+  /**
+   * The date the fact/event refers to (three-date model: referenced_date).
+   * Extracted by LLM when temporal information is present in the source.
+   * ISO 8601 date string (date only or full datetime).
+   */
+  referencedDate?: string;
+  /**
+   * IDs of source messages that were compressed into this observation.
+   * Populated by the observer agent (Phase 2).
+   */
+  sourceMessageIds?: string[];
   /** Arbitrary metadata for future extension. */
   metadata?: Record<string, unknown>;
 }
@@ -160,4 +192,65 @@ export interface IObservationStore {
   count(opts?: Pick<ObservationQuery, 'category' | 'status' | 'agentId' | 'conversationId'>): number;
   /** Close the database connection. */
   close(): void;
+}
+
+// ─── Memory State (Phase 2) ────────────────────────────────────────────────
+
+/**
+ * Tracks the memory budget state for an agent.
+ * One row per agent — upserted after each observation pass.
+ */
+export interface MemoryState {
+  /** Agent ID (primary key). */
+  agentId: string;
+  /** Total tokens consumed by compressed observations. */
+  observationsTokens: number;
+  /** Total tokens in the raw message buffer (reset after observation). */
+  rawBufferTokens: number;
+  /** ISO timestamp of last successful observation pass. */
+  lastObservationAt: string | null;
+  /** ISO timestamp of last reflection pass (Phase 3 / #232). */
+  lastReflectionAt: string | null;
+  /** Total number of observations produced. */
+  observationCount: number;
+}
+
+// ─── Observer LLM Output Schema (Phase 2) ──────────────────────────────────
+
+/**
+ * A single observation extracted by the observer LLM.
+ * This is the raw JSON shape returned by the LLM and validated before
+ * being transformed into full Observation records.
+ */
+export interface ObserverLLMObservation {
+  /** Compressed content of the observation. */
+  content: string;
+  /** Priority classification. */
+  priority: ObservationPriority;
+  /** The date the fact/event refers to (ISO date string or null). */
+  referenced_date: string | null;
+  /** IDs of source messages that contributed to this observation. */
+  source_message_ids: string[];
+}
+
+// ─── Observer Agent Config (Phase 2) ───────────────────────────────────────
+
+/**
+ * Configuration for the Observer Agent.
+ */
+export interface ObserverAgentConfig {
+  /** Enable/disable the observer. Default: true */
+  enabled: boolean;
+  /** Characters-per-token for token estimation. Default: 4 */
+  charsPerToken: number;
+  /** Raw buffer token threshold that triggers observation. Default: 30000 */
+  thresholdTokens: number;
+  /** Maximum retries on LLM failure. Default: 1 */
+  maxRetries: number;
+  /** Model ID to use for observation compression. Default: 'gpt-4o-mini' */
+  modelId: string;
+  /** If true, suppress console.warn on errors. Default: false */
+  silent: boolean;
+  /** Trim raw messages from context after observation. Default: false */
+  trimAfterObservation: boolean;
 }
