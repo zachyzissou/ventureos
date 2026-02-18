@@ -82,6 +82,58 @@ export interface ManifestEntry {
   sizeBytes: number;
 }
 
+// ─── Symlink Types ──────────────────────────────────────────────────────────
+
+/**
+ * Result of a symlink operation (create, repair, remove).
+ */
+export interface SymlinkResult {
+  /** Agent the symlink belongs to. */
+  agentId: string;
+  /** Team the symlink points to. */
+  teamId: string;
+  /** The action that was performed. */
+  action: 'created' | 'already_valid' | 'repaired' | 'removed' | 'noop';
+  /** Full path to the symlink. */
+  linkPath: string;
+  /** Full path to the target directory. */
+  targetPath: string;
+}
+
+/**
+ * Health status of a single agent's workspace symlink.
+ */
+export interface SymlinkHealthEntry {
+  /** Agent identifier. */
+  agentId: string;
+  /** Whether the symlink exists and points to the correct target. */
+  healthy: boolean;
+  /** Full path to the symlink. */
+  linkPath: string;
+  /** Expected target path. */
+  expectedTarget: string;
+  /** Actual target the symlink points to (null if missing/broken). */
+  actualTarget: string | null;
+  /** Diagnostic message. */
+  status: 'valid' | 'missing' | 'broken' | 'wrong_target' | 'not_symlink';
+}
+
+/**
+ * Health report for all symlinks within a team.
+ */
+export interface SymlinkHealthReport {
+  /** Team identifier. */
+  teamId: string;
+  /** Team name. */
+  teamName: string;
+  /** Whether all symlinks are healthy. */
+  allHealthy: boolean;
+  /** Per-agent symlink status. */
+  entries: SymlinkHealthEntry[];
+  /** ISO 8601 timestamp of the check. */
+  checkedAt: string;
+}
+
 // ─── Composite Types ────────────────────────────────────────────────────────
 
 /**
