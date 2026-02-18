@@ -42,3 +42,20 @@ export {
 export type { SseSubscriptionFilter } from '../task-board-events.js';
 export { handleMemoryState } from './memory-state.js';
 export { handleSharedContext } from './shared-context.js';
+export {
+  readAlertConfig,
+  writeAlertConfig,
+  evaluateAlerts,
+  validateAlertConfig,
+  mergeWithDefaults,
+  DEFAULT_ALERT_CONFIG,
+} from '../alert-rules.js';
+export type {
+  AlertRulesConfig,
+  AlertThreshold,
+  AlertSeverity,
+  AlertRuleResult,
+  AlertEvaluation,
+  AlertMetricsInput,
+  AlertConfigValidationError,
+} from '../alert-rules.js';
