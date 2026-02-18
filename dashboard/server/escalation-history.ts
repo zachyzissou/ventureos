@@ -149,12 +149,46 @@ export interface EscalationHistoryResponse {
   summary: EscalationHistorySummary;
 }
 
+// ─── Export Types (Phase 23: Escalation History Export) ───────────────────────
+
+/** Supported export formats. */
+export type EscalationExportFormat = 'csv' | 'json';
+
+/** Export query options — same filters as EscalationHistoryQuery, plus format. */
+export interface EscalationExportQuery {
+  format?: EscalationExportFormat;
+  limit?: number;
+  sinceMs?: number;
+  eventType?: EscalationEventType;
+  tierIndex?: number;
+  deliveryStatus?: 'success' | 'failure';
+  now?: number;
+}
+
+/** Result of an export operation. */
+export interface EscalationExportResult {
+  /** The serialized export content (CSV string or JSON string). */
+  content: string;
+  /** MIME type for the response Content-Type header. */
+  contentType: string;
+  /** Suggested filename for the Content-Disposition header. */
+  filename: string;
+  /** Number of events included in the export. */
+  count: number;
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const DEFAULT_MAX_EVENTS = 200;
 const DEFAULT_MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48 hours
 const MAX_ERROR_LENGTH = 200;
 const HISTORY_FILENAME = 'task-board-escalation-history.json';
+
+/**
+ * Maximum number of events allowed in a single export.
+ * Prevents unbounded memory/CPU usage on export requests.
+ */
+export const ESCALATION_EXPORT_MAX_EVENTS = 200;
 
 // ─── File I/O ────────────────────────────────────────────────────────────────
 
@@ -400,5 +434,139 @@ export function queryEscalationHistory(
       latestEventTs,
       oldestEventTs,
     },
+  };
+}
+
+// ─── Export Helpers (Phase 23: Escalation History Export) ─────────────────────
+
+/**
+ * Escape a value for CSV output.
+ * Wraps in double quotes if the value contains commas, quotes, or newlines.
+ * Pure function.
+ */
+export function csvEscapeEscalation(value: string | number | boolean | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+/**
+ * Format a timestamp as ISO 8601 string for export.
+ * Returns empty string for null/undefined.
+ */
+function formatExportTs(ts: number | null | undefined): string {
+  if (ts == null) return '';
+  return new Date(ts).toISOString();
+}
+
+/**
+ * Conservative field allowlist for escalation history export.
+ * Explicitly enumerates safe fields — no webhook URLs, secrets, or payload data.
+ * Delivery outcomes are flattened to counts only (target names preserved, no URLs).
+ */
+function sanitizeEscalationEventForExport(event: EscalationHistoryEvent): Record<string, unknown> {
+  return {
+    id: event.id,
+    timestamp: formatExportTs(event.ts),
+    eventType: event.eventType,
+    tierIndex: event.tierIndex,
+    tierLabel: event.tierLabel,
+    qualifyingSeverity: event.qualifyingSeverity,
+    qualifyingDurationMs: event.qualifyingDurationMs,
+    reason: event.reason,
+    deliverySuccessCount: event.deliverySuccessCount,
+    deliveryFailureCount: event.deliveryFailureCount,
+    deliveryTargets: event.deliveries.map((d) => d.targetName).join('; '),
+    // Explicitly omit: raw delivery details (targetId, statusCode, error, durationMs)
+    // to prevent any indirect information leakage about webhook infrastructure.
+  };
+}
+
+/** CSV column headers for escalation history export. */
+const ESCALATION_CSV_HEADERS = [
+  'id', 'timestamp', 'eventType', 'tierIndex', 'tierLabel',
+  'qualifyingSeverity', 'qualifyingDurationMs', 'reason',
+  'deliverySuccessCount', 'deliveryFailureCount', 'deliveryTargets',
+];
+
+/**
+ * Convert escalation history events to CSV format.
+ * Pure function — no I/O, bounded by input array length.
+ */
+export function escalationEventsToCsv(events: EscalationHistoryEvent[]): string {
+  const rows: string[] = [ESCALATION_CSV_HEADERS.join(',')];
+
+  for (const event of events) {
+    const safe = sanitizeEscalationEventForExport(event);
+    const row = ESCALATION_CSV_HEADERS.map((h) =>
+      csvEscapeEscalation(safe[h] as string | number | boolean | null),
+    );
+    rows.push(row.join(','));
+  }
+
+  return rows.join('\n');
+}
+
+/**
+ * Convert escalation history events to a safe JSON export format.
+ * Returns a JSON string with sanitized events (conservative allowlist).
+ * Pure function.
+ */
+export function escalationEventsToJson(events: EscalationHistoryEvent[]): string {
+  const safeEvents = events.map(sanitizeEscalationEventForExport);
+  return JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    format: 'ventureos-escalation-history-export-v1',
+    count: safeEvents.length,
+    events: safeEvents,
+  }, null, 2);
+}
+
+/**
+ * Export escalation history with the same filter capabilities as queryEscalationHistory.
+ * Returns formatted content (CSV or JSON), content type, and suggested filename.
+ *
+ * Secret-safe: all events pass through sanitizeEscalationEventForExport() which
+ * strips delivery detail fields and applies a conservative allowlist.
+ * The underlying events already omit webhook URLs/secrets at recording time,
+ * and this export layer adds an additional defense-in-depth allowlist.
+ */
+export function exportEscalationHistory(
+  dataDir: string,
+  opts: EscalationExportQuery = {},
+): EscalationExportResult {
+  const format: EscalationExportFormat = opts.format === 'csv' ? 'csv' : 'json';
+  const limit = Math.max(1, Math.min(opts.limit ?? ESCALATION_EXPORT_MAX_EVENTS, ESCALATION_EXPORT_MAX_EVENTS));
+
+  // Reuse the same query logic for filter parity
+  const queryResult = queryEscalationHistory(dataDir, {
+    limit,
+    sinceMs: opts.sinceMs,
+    eventType: opts.eventType,
+    tierIndex: opts.tierIndex,
+    deliveryStatus: opts.deliveryStatus,
+    now: opts.now,
+  });
+
+  const events = queryResult.events;
+  const dateSuffix = new Date().toISOString().slice(0, 10);
+
+  if (format === 'csv') {
+    return {
+      content: escalationEventsToCsv(events),
+      contentType: 'text/csv; charset=utf-8',
+      filename: `escalation-history-${dateSuffix}.csv`,
+      count: events.length,
+    };
+  }
+
+  return {
+    content: escalationEventsToJson(events),
+    contentType: 'application/json; charset=utf-8',
+    filename: `escalation-history-${dateSuffix}.json`,
+    count: events.length,
   };
 }
