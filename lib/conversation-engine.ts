@@ -442,7 +442,7 @@ export class ConversationEngine {
       }
 
       // Resolve recipients.
-      const intendedTo = await this.resolveRecipients(params.from, params.to, params.payload);
+      const intendedTo = await this.resolveRecipients(params.from, params.to, params.payload, state.participants);
       const toList = Array.isArray(intendedTo) ? intendedTo : [intendedTo];
 
       // Affinity-based mediation (agent↔agent only).
@@ -621,7 +621,12 @@ export class ConversationEngine {
   // Internals
   // ─────────────────────────────────────────────────────────────────────
 
-  private async resolveRecipients(from: AgentId, to: SendMessageParams['to'], payload?: SendMessageParams['payload']): Promise<AgentId | AgentId[]> {
+  private async resolveRecipients(
+    from: AgentId,
+    to: SendMessageParams['to'],
+    payload?: SendMessageParams['payload'],
+    participants: AgentId[] = []
+  ): Promise<AgentId | AgentId[]> {
     if (to) return to;
 
     // Route based on role-card outputs if type is provided.
@@ -635,7 +640,23 @@ export class ConversationEngine {
     }
 
     // If multiple targets exist for same type, send to all.
-    return outputs.map((o) => o.target);
+    // '*' and 'broadcast' resolve to all non-user/system participants.
+    const resolved = new Set<AgentId>();
+    for (const o of outputs) {
+      if (o.target === '*' || o.target === 'broadcast' || o.target === 'all') {
+        for (const p of participants) {
+          if (p !== from && p !== 'user' && p !== 'system') resolved.add(p);
+        }
+      } else {
+        resolved.add(o.target);
+      }
+    }
+
+    const toList = [...resolved];
+    if (!toList.length) {
+      throw new Error(`No valid recipients for from=${from} type=${type}`);
+    }
+    return toList;
   }
 
   private toHITLConversationState(state: ConversationState) {

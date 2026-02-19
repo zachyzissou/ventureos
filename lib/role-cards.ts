@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import Ajv, { type ErrorObject, type ValidateFunction } from 'ajv';
+import { existsSync } from 'node:fs';
+import type { KhaydarinCard } from '../role-cards/schema';
 
 export type RoleCardFormat =
   | 'natural_language'
@@ -64,7 +66,7 @@ export interface RoleCard {
 export interface RoleCardLoadOptions {
   roleCardsDir?: string;
   schemaPath?: string;
-  /** If true, ignore missing JSON files when loading all role cards. */
+  /** If true, ignore invalid/unsupported card files when loading all cards. */
   allowMissing?: boolean;
 }
 
@@ -85,29 +87,48 @@ function expandHome(p: string): string {
   return path.join(home, p.slice(2));
 }
 
+function normalizeUnitsForLegacy(id: string, caste: KhaydarinCard['caste']): RoleCard['protossUnit'] {
+  const byCaste: Record<KhaydarinCard['caste'], RoleCard['protossUnit']> = {
+    templar: 'High Templar',
+    judicator: 'Nexus',
+    khalai: 'Probe',
+    nerazim: 'Dark Templar',
+  };
+
+  return byCaste[caste] ?? 'Observer';
+}
+
 export function getDefaultRoleCardsDir(): string {
-  // ventureos/lib -> clawd/agents/role-cards
-  return path.resolve(__dirname, '../../agents/role-cards');
+  // Usually this resolves to ventureos/lib -> ventureos/role-cards.
+  const primary = path.resolve(__dirname, '../../role-cards');
+  if (existsSync(primary)) return primary;
+
+  // Fallback for jest/runtime from repository root or unusual compile locations.
+  return path.resolve(process.cwd(), 'role-cards');
 }
 
 export function getDefaultRoleCardSchemaPath(): string {
+  // No bundled JSON schema in repo yet; schema validation will fallback to a no-op.
   return path.join(getDefaultRoleCardsDir(), 'schema.json');
 }
 
 let _ajv: Ajv | null = null;
 let _schemaValidator: ValidateFunction<RoleCard> | null = null;
 
-async function getSchemaValidator(schemaPath: string): Promise<ValidateFunction<RoleCard>> {
+async function getSchemaValidator(schemaPath: string): Promise<ValidateFunction<RoleCard> | null> {
   const resolved = expandHome(schemaPath);
-  if (_schemaValidator) return _schemaValidator;
 
-  const schemaRaw = await fs.readFile(resolved, 'utf8');
-  const schema = JSON.parse(schemaRaw) as Record<string, unknown>;
+  try {
+    const schemaRaw = await fs.readFile(resolved, 'utf8');
+    const schema = JSON.parse(schemaRaw) as Record<string, unknown>;
 
-  _ajv = _ajv ?? new Ajv({ allErrors: true, strict: false });
-  _schemaValidator = _ajv.compile<RoleCard>(schema);
-
-  return _schemaValidator;
+    _ajv = _ajv ?? new Ajv({ allErrors: true, strict: false });
+    _schemaValidator = _ajv.compile<RoleCard>(schema);
+    return _schemaValidator;
+  } catch (err) {
+    // If schema isn't available yet, do not block startup.
+    return null;
+  }
 }
 
 export async function validateRoleCard(
@@ -117,6 +138,8 @@ export async function validateRoleCard(
   const schemaPath = opts.schemaPath ?? getDefaultRoleCardSchemaPath();
   const validate = await getSchemaValidator(schemaPath);
 
+  if (!validate) return card as RoleCard;
+
   const ok = validate(card);
   if (!ok) {
     throw new RoleCardValidationError(
@@ -125,6 +148,145 @@ export async function validateRoleCard(
     );
   }
   return card as RoleCard;
+}
+
+function toLegacyRoleCard(card: KhaydarinCard): RoleCard {
+  return {
+    agentId: card.id,
+    displayName: card.name,
+    protossUnit: normalizeUnitsForLegacy(card.id, card.caste),
+    role: card.title,
+    domain: {
+      mission: card.nexusSphere.domain,
+      responsibilities: card.nexusSphere.jurisdiction,
+      boundaries: card.nexusSphere.boundaries,
+    },
+    inputs: card.warpChannels.inputs.map((ch) => ({
+      source: '*',
+      type: ch.type,
+      format: (['text', 'json', 'markdown', 'yaml', 'code'].includes(ch.format) ? ch.format : 'text') as RoleCardFormat,
+      schema: ch.description ? { description: ch.description } : undefined,
+      optional: false,
+    })),
+    outputs: card.warpChannels.outputs.map((ch) => ({
+      target: '*',
+      type: ch.type,
+      format: (['text', 'json', 'markdown', 'yaml', 'code'].includes(ch.format) ? ch.format : 'text') as RoleCardFormat,
+      guarantees: ch.description ? [ch.description] : [],
+      schema: ch.description ? { description: ch.description } : undefined,
+    })),
+    definitionOfDone: card.warpComplete.conditions,
+    hardBans: {
+      infrastructure: card.voidInterdicts.hardBans.map((rule, idx) => ({
+        rule,
+        enforcement: 'permission_check',
+        rationale: card.voidInterdicts.rationale[idx] ?? 'Policy guard',
+      })),
+      heuristic: card.voidInterdicts.hardBans.map((rule) => ({
+        rule,
+        enforcement: 'pattern_matcher',
+        severity: 'block',
+      })),
+      quality: card.resonanceReadings.metrics.map((metric) => ({
+        rule: metric.name,
+        enforcement: 'manual_review',
+        examples: [metric.measurement, metric.target],
+      })),
+    },
+    escalation: {
+      triggers: [
+        ...card.psionicCascade.escalateTo.map((target) => ({ condition: 'Escalation target needed', action: `handoff to ${target}`, target, priority: 'medium' as const })),
+        ...card.psionicCascade.escalateTriggers.map((condition) => ({ condition, action: 'route per policy', priority: 'medium' as const })),
+      ],
+      qualityTracking: {
+        signalRatioTarget: 0.5,
+        adaptiveSensitivity: true,
+      },
+    },
+    metrics: card.resonanceReadings.metrics.map((metric) => ({
+      name: metric.name,
+      kpi_id: `${card.id}.${metric.name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
+      category: 'quality',
+    })),
+    personalityProtocol: card.psionicSignature.voice,
+    conversationDirectives: {
+      alliance_pairs: Object.keys(card.khalaBonds)
+        .filter((partner) => card.khalaBonds[partner] >= 0.75)
+        .map((partner) => ({ agent: partner, directive: 'Collaborate strongly', affinity: card.khalaBonds[partner] })),
+    },
+  };
+}
+
+function stripKhaydarinImportsAndTypes(source: string): string {
+  let sanitized = source
+    .replace(/^import\s+.*;\s*$/gm, '')
+    .replace(/:\s*KhaydarinCard/g, '');
+
+  return sanitized;
+}
+
+function extractExportedKhaydarinObject(source: string): KhaydarinCard | null {
+  const match = source.match(/export\s+const\s+[A-Za-z0-9_]+\s*(?:[:][^=]+)?=\s*/);
+  if (!match || match.index === undefined) return null;
+
+  const tail = source.slice(match.index);
+  const transformed = tail.replace(
+    /export\s+const\s+[A-Za-z0-9_]+\s*(?:[:][^=]+)?=\s*/,
+    'const card = '
+  );
+
+  try {
+    const fn = new Function(`${transformed}
+return card;`);
+    return fn() as KhaydarinCard;
+  } catch {
+    return null;
+  }
+}
+
+
+async function loadKhaydarinRoleCardFromFile(file: string): Promise<KhaydarinCard> {
+  const raw = await fs.readFile(file, 'utf8');
+  const sanitized = stripKhaydarinImportsAndTypes(raw);
+  const card = extractExportedKhaydarinObject(sanitized);
+  if (!card) {
+    throw new Error(`Failed to parse Khaydarin card from ${file}`);
+  }
+  return card;
+}
+
+async function loadKhaydarinRoleCard(agentId: string, roleCardsDir: string): Promise<KhaydarinCard> {
+  const direct = path.join(roleCardsDir, `${agentId}.ts`);
+  let candidate: string | null = null;
+
+  try {
+    await fs.access(direct);
+    candidate = direct;
+  } catch {
+    const dirEntries = await fs.readdir(roleCardsDir, { withFileTypes: true });
+    const tsCards = dirEntries.filter((entry) => entry.isFile() && /^\d+-/.test(entry.name) && entry.name.endsWith('.ts'));
+
+    for (const entry of tsCards) {
+      const file = path.join(roleCardsDir, entry.name);
+      const sample = await fs.readFile(file, 'utf8');
+      const idMatch = sample.match(/id:\s*["']([^"']+)["']/);
+      if (idMatch && idMatch[1] === agentId) {
+        candidate = file;
+        break;
+      }
+    }
+  }
+
+  if (!candidate) {
+    throw new Error(`Unable to find Khaydarin card file for ${agentId}`);
+  }
+
+  const card = await loadKhaydarinRoleCardFromFile(candidate);
+  if (card.id && card.id !== agentId) {
+    throw new Error(`Requested agentId ${agentId} but parsed card id is ${card.id}`);
+  }
+
+  return card;
 }
 
 export function getRoleCardFilePath(agentId: string, roleCardsDir = getDefaultRoleCardsDir()): string {
@@ -141,11 +303,23 @@ export async function loadRoleCard(agentId: string, opts: RoleCardLoadOptions = 
   const cached = roleCardCache.get(cacheKey);
   if (cached) return cached;
 
-  const filePath = getRoleCardFilePath(agentId, roleCardsDir);
-  const raw = await fs.readFile(filePath, 'utf8');
-  const parsed = JSON.parse(raw) as unknown;
-  const validated = await validateRoleCard(parsed, { schemaPath });
+  const normalizedDir = expandHome(roleCardsDir);
+  const jsonPath = path.join(normalizedDir, `${agentId}.json`);
+  let parsed: unknown;
+  try {
+    const raw = await fs.readFile(jsonPath, 'utf8');
+    parsed = JSON.parse(raw) as unknown;
+  } catch (err: any) {
+    if (err?.code === 'ENOENT') {
+      // Legacy source format in this repo is TypeScript Khaydarin cards.
+      const khaydarCard = await loadKhaydarinRoleCard(agentId, normalizedDir);
+      parsed = toLegacyRoleCard(khaydarCard);
+    } else {
+      throw err;
+    }
+  }
 
+  const validated = await validateRoleCard(parsed, { schemaPath });
   roleCardCache.set(cacheKey, validated);
   return validated;
 }
@@ -155,15 +329,32 @@ export async function loadAllRoleCards(opts: RoleCardLoadOptions = {}): Promise<
   const schemaPath = opts.schemaPath ?? getDefaultRoleCardSchemaPath();
 
   const entries = await fs.readdir(roleCardsDir, { withFileTypes: true });
-  const files = entries
-    .filter((e) => e.isFile() && e.name.endsWith('.json') && e.name !== 'schema.json')
-    .map((e) => e.name);
-
   const cards: RoleCard[] = [];
-  for (const file of files) {
-    const agentId = path.basename(file, '.json');
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const isJson = entry.name.endsWith('.json');
+    const isTs = entry.name.endsWith('.ts');
+    if (!isJson && !isTs) continue;
+    if (entry.name === 'schema.json' || entry.name.startsWith('schema.')) continue;
+    if (entry.name.startsWith('_')) continue;
+
+    const agentIdFromFile = entry.name.replace(/\.(json|ts)$/i, '');
+
+    if (/^\d+-/.test(agentIdFromFile) && isTs) {
+      // Number-prefixed files (e.g. 01-echo.ts) require parsing to get canonical id.
+      try {
+        const card = await loadKhaydarinRoleCardFromFile(path.join(roleCardsDir, entry.name));
+        cards.push(toLegacyRoleCard(card));
+        continue;
+      } catch (err) {
+        if (!opts.allowMissing) throw err;
+        continue;
+      }
+    }
+
     try {
-      cards.push(await loadRoleCard(agentId, { roleCardsDir, schemaPath }));
+      cards.push(await loadRoleCard(agentIdFromFile, { roleCardsDir, schemaPath }));
     } catch (err) {
       if (opts.allowMissing) continue;
       throw err;

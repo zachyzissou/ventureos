@@ -1,15 +1,11 @@
 import { validateHandoff } from '../handoff-validator';
 
 describe('handoff validator', () => {
-  test('validates oracle -> archivist knowledge artifact handoff', async () => {
+  test('validates oracle -> archivist artifact handoff using wildcard contracts', async () => {
     const res = await validateHandoff('oracle', 'archivist', {
-      type: 'knowledge_artifact',
-      format: 'json',
-      data: {
-        title: 'Test Insight',
-        summary: 'Short summary',
-        sources: [{ url: 'https://example.com', note: 'Example source' }]
-      }
+      type: 'artifact',
+      format: 'markdown',
+      data: '## Test Insight\n\nShort summary with source links.'
     });
 
     expect(res.valid).toBe(true);
@@ -17,23 +13,27 @@ describe('handoff validator', () => {
     expect(res.contract?.to.agentId).toBe('archivist');
   });
 
-  test('rejects invalid payload missing required fields', async () => {
+  test('rejects payload when envelope type does not match resolved contract', async () => {
     const res = await validateHandoff('oracle', 'archivist', {
       type: 'knowledge_artifact',
       format: 'json',
       data: {
-        title: 'Missing sources',
-        summary: 'No sources array'
+        title: 'Mismatch',
+        summary: 'Type does not match card contract'
       }
     });
 
     expect(res.valid).toBe(false);
-    expect(res.errors?.join('\n')).toMatch(/Schema validation failed/i);
+    expect(res.errors?.join('\n')).toMatch(/Payload type mismatch/i);
   });
 
-  test('rejects handoff when no explicit contract exists', async () => {
-    const res = await validateHandoff('atlas', 'oracle', { type: 'deployment_status', format: 'json', data: {} });
+  test('rejects handoff when data format does not match contract format', async () => {
+    const res = await validateHandoff('oracle', 'archivist', {
+      type: 'artifact',
+      format: 'markdown',
+      data: { unexpected: 'object' }
+    });
     expect(res.valid).toBe(false);
-    expect(res.reason).toMatch(/No contract/);
+    expect(res.errors?.join('\n')).toMatch(/does not match expected format=markdown/i);
   });
 });

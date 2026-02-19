@@ -50,11 +50,11 @@ function findBestContract(fromCard: RoleCard, toCard: RoleCard, payload: Handoff
 
   for (let oi = 0; oi < fromCard.outputs.length; oi++) {
     const o = fromCard.outputs[oi];
-    if (o.target !== toCard.agentId) continue;
+    if (!(o.target === toCard.agentId || o.target === "*" || o.target === "broadcast" || o.target === "all")) continue;
 
     for (let ii = 0; ii < toCard.inputs.length; ii++) {
       const i = toCard.inputs[ii];
-      if (i.source !== fromCard.agentId) continue;
+      if (!(i.source === fromCard.agentId || i.source === "*" || i.source === "broadcast" || i.source === "all")) continue;
 
       let score = 0;
       if (o.type === i.type) score += 10;
