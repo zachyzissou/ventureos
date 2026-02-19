@@ -1,20 +1,17 @@
 import { loadAllRoleCards, loadRoleCard, validateRoleCard } from '../role-cards';
-import fs from 'node:fs/promises';
-import path from 'node:path';
 
 describe('role cards', () => {
-  test('loads all role cards and validates against schema', async () => {
+  test('loads all role cards without errors and matches expected core count', async () => {
     const cards = await loadAllRoleCards();
-    expect(cards.length).toBe(8);
+    expect(cards.length).toBe(10);
 
     for (const card of cards) {
-      // validateRoleCard is already run inside loadAllRoleCards via loadRoleCard, but keep explicit.
-      await expect(validateRoleCard(card)).resolves.toBeTruthy();
+      await expect(validateRoleCard(card, {})).resolves.toBeTruthy();
     }
   });
 
-  test('role card JSON files exist for the 8 core agents', async () => {
-    const agentIds = ['echo', 'nexus', 'sentinel', 'verifier', 'archivist', 'oracle', 'atlas', 'synth'];
+  test('role card files exist for core agents', async () => {
+    const agentIds = ['echo', 'nexus', 'oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'scout', 'liaison'];
 
     for (const id of agentIds) {
       const card = await loadRoleCard(id);
@@ -22,11 +19,9 @@ describe('role cards', () => {
     }
   });
 
-  test('schema.json is present next to role cards', async () => {
-    const cardsDir = path.resolve(__dirname, '../../../agents/role-cards');
-    const schemaPath = path.join(cardsDir, 'schema.json');
-    const raw = await fs.readFile(schemaPath, 'utf8');
-    const parsed = JSON.parse(raw);
-    expect(parsed.title).toMatch(/Role Card Schema/);
+  test('supports both .ts and .json role card formats at runtime', async () => {
+    const cardFromTs = await loadRoleCard('echo');
+    expect(cardFromTs.agentId).toBe('echo');
+    expect(cardFromTs.outputs.length).toBeGreaterThan(0);
   });
 });

@@ -264,4 +264,28 @@ describe('ConversationEngine', () => {
     await cleanupDb();
     await cleanupDir();
   });
+
+  it('resolves wildcard contract recipients to active non-system participants', async () => {
+    const { dir: persistDir, cleanup: cleanupDir } = await makeTempDir('ventureos-convstore-');
+    const { db, cleanup: cleanupDb } = await makeTempAffinityDb();
+
+    const engine = makeEngine({ persistDir, affinityDb: db, enforceTurns: false });
+    const state = await engine.startConversation({
+      participants: ['oracle', 'archivist', 'synth', 'user', 'system'],
+      currentTurn: 'oracle',
+    });
+
+    const msg = await engine.sendMessage({
+      conversationId: state.conversationId,
+      from: 'oracle',
+      content: 'broadcast test',
+      payload: { type: 'artifact', format: 'markdown', data: 'artifact payload' },
+    });
+
+    expect(msg.status).toBe('delivered');
+    expect(msg.deliveredTo?.sort()).toEqual(['archivist', 'synth'].sort());
+
+    await cleanupDb();
+    await cleanupDir();
+  });
 });
