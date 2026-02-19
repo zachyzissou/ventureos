@@ -85,4 +85,39 @@ describe('MissionRunner — integration', () => {
     const out = await runner.resume(created.missionId);
     expect(out.mission.phase).toBe('closed');
   });
+
+  it('requires human approval for mission close when configured', async () => {
+    const persistDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vos-mission-state-'));
+    const artifactsDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vos-mission-artifacts-'));
+    const now = makeNow();
+
+    const runner = new MissionRunner({
+      persistDir,
+      artifactsDir,
+      now,
+      requireHumanFinalApproval: true,
+      approve: async () => false,
+      agents: [
+        {
+          id: 'synth',
+          async runTask(task) {
+            return {
+              summary: `done: ${task.title}`,
+              artifacts: [{ name: 'output.md', content: '# Output\n\nHello' }],
+            };
+          },
+        },
+      ],
+    });
+
+    const out = await runner.runFromBrief({
+      title: 'Approval Mission',
+      description: 'Must not auto-close without human approval.',
+      requirements: ['Produce at least one artifact'],
+    });
+
+    expect(out.mission.phase).toBe('error');
+    expect(out.mission.error?.code).toBe('requires_approval');
+    expect(out.mission.error?.message).toMatch(/approval/i);
+  });
 });
