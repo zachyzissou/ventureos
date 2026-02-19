@@ -1,5 +1,6 @@
 import Ajv from 'ajv';
 import { loadRoleCard, type RoleCard } from './role-cards';
+import { isWildcardTarget } from './contract-wildcards';
 
 export interface HandoffResult {
   valid: boolean;
@@ -50,11 +51,12 @@ function findBestContract(fromCard: RoleCard, toCard: RoleCard, payload: Handoff
 
   for (let oi = 0; oi < fromCard.outputs.length; oi++) {
     const o = fromCard.outputs[oi];
-    if (!(o.target === toCard.agentId || o.target === "*" || o.target === "broadcast" || o.target === "all")) continue;
+    // Wildcard semantics: '*', 'broadcast', and 'all' are treated as equivalent broadcast targets.
+    if (!(o.target === toCard.agentId || isWildcardTarget(o.target))) continue;
 
     for (let ii = 0; ii < toCard.inputs.length; ii++) {
       const i = toCard.inputs[ii];
-      if (!(i.source === fromCard.agentId || i.source === "*" || i.source === "broadcast" || i.source === "all")) continue;
+      if (!(i.source === fromCard.agentId || isWildcardTarget(i.source))) continue;
 
       let score = 0;
       if (o.type === i.type) score += 10;

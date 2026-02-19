@@ -87,7 +87,7 @@ function expandHome(p: string): string {
   return path.join(home, p.slice(2));
 }
 
-function normalizeUnitsForLegacy(id: string, caste: KhaydarinCard['caste']): RoleCard['protossUnit'] {
+function normalizeUnitsForLegacy(caste: KhaydarinCard['caste']): RoleCard['protossUnit'] {
   const byCaste: Record<KhaydarinCard['caste'], RoleCard['protossUnit']> = {
     templar: 'High Templar',
     judicator: 'Nexus',
@@ -113,20 +113,23 @@ export function getDefaultRoleCardSchemaPath(): string {
 }
 
 let _ajv: Ajv | null = null;
-let _schemaValidator: ValidateFunction<RoleCard> | null = null;
+const _schemaValidators = new Map<string, ValidateFunction<RoleCard> | null>();
 
 async function getSchemaValidator(schemaPath: string): Promise<ValidateFunction<RoleCard> | null> {
   const resolved = expandHome(schemaPath);
+  if (_schemaValidators.has(resolved)) return _schemaValidators.get(resolved) ?? null;
 
   try {
     const schemaRaw = await fs.readFile(resolved, 'utf8');
     const schema = JSON.parse(schemaRaw) as Record<string, unknown>;
 
     _ajv = _ajv ?? new Ajv({ allErrors: true, strict: false });
-    _schemaValidator = _ajv.compile<RoleCard>(schema);
-    return _schemaValidator;
+    const compiled = _ajv.compile<RoleCard>(schema);
+    _schemaValidators.set(resolved, compiled);
+    return compiled;
   } catch (err) {
     // If schema isn't available yet, do not block startup.
+    _schemaValidators.set(resolved, null);
     return null;
   }
 }
@@ -154,7 +157,7 @@ function toLegacyRoleCard(card: KhaydarinCard): RoleCard {
   return {
     agentId: card.id,
     displayName: card.name,
-    protossUnit: normalizeUnitsForLegacy(card.id, card.caste),
+    protossUnit: normalizeUnitsForLegacy(card.caste),
     role: card.title,
     domain: {
       mission: card.nexusSphere.domain,
@@ -218,8 +221,10 @@ function toLegacyRoleCard(card: KhaydarinCard): RoleCard {
 }
 
 function stripKhaydarinImportsAndTypes(source: string): string {
+  // NOTE(security): role-cards directory is a trusted boundary; we still strip imports/types
+  // to reduce parse surprises in our constrained object-literal extraction path.
   let sanitized = source
-    .replace(/^import\s+.*;\s*$/gm, '')
+    .replace(/^\s*import[\s\S]*?;?\s*$/gm, '')
     .replace(/:\s*KhaydarinCard/g, '');
 
   return sanitized;
@@ -236,6 +241,8 @@ function extractExportedKhaydarinObject(source: string): KhaydarinCard | null {
   );
 
   try {
+    // SECURITY: This executes local role-card source. Treat role-cards dir as trusted-only.
+    // M5 will add explicit deployment preflight checks for directory permissions.
     const fn = new Function(`${transformed}
 return card;`);
     return fn() as KhaydarinCard;
@@ -282,7 +289,7 @@ async function loadKhaydarinRoleCard(agentId: string, roleCardsDir: string): Pro
   }
 
   const card = await loadKhaydarinRoleCardFromFile(candidate);
-  if (card.id && card.id !== agentId) {
+  if (card.id != null && card.id !== agentId) {
     throw new Error(`Requested agentId ${agentId} but parsed card id is ${card.id}`);
   }
 
@@ -341,11 +348,13 @@ export async function loadAllRoleCards(opts: RoleCardLoadOptions = {}): Promise<
 
     const agentIdFromFile = entry.name.replace(/\.(json|ts)$/i, '');
 
-    if (/^\d+-/.test(agentIdFromFile) && isTs) {
-      // Number-prefixed files (e.g. 01-echo.ts) require parsing to get canonical id.
+    if (/^(0[1-9]|[1-9]\d)-/.test(agentIdFromFile) && isTs) {
+      // Number-prefixed files (01- through 99-, e.g. 01-echo.ts) require parsing to get canonical id.
       try {
         const card = await loadKhaydarinRoleCardFromFile(path.join(roleCardsDir, entry.name));
-        cards.push(toLegacyRoleCard(card));
+        const normalized = toLegacyRoleCard(card);
+        roleCardCache.set(`${roleCardsDir}::${normalized.agentId}`, normalized);
+        cards.push(normalized);
         continue;
       } catch (err) {
         if (!opts.allowMissing) throw err;

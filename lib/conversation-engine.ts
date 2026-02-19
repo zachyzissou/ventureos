@@ -14,6 +14,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 
 import { loadRoleCard } from './role-cards';
+import { isWildcardTarget } from './contract-wildcards';
 import { validateHandoff, type HandoffResult } from './handoff-validator';
 import { AffinityManager } from './affinity-manager';
 import { runOutboundSecurityPipeline, type OutboundSecurityDeps, type OutboundSecurityConfig } from './conversation-security';
@@ -643,7 +644,7 @@ export class ConversationEngine {
     // '*' and 'broadcast' resolve to all non-user/system participants.
     const resolved = new Set<AgentId>();
     for (const o of outputs) {
-      if (o.target === '*' || o.target === 'broadcast' || o.target === 'all') {
+      if (isWildcardTarget(o.target)) {
         for (const p of participants) {
           if (p !== from && p !== 'user' && p !== 'system') resolved.add(p);
         }
@@ -654,7 +655,9 @@ export class ConversationEngine {
 
     const toList = [...resolved];
     if (!toList.length) {
-      throw new Error(`No valid recipients for from=${from} type=${type}`);
+      throw new Error(
+        `No valid recipients for from=${from} type=${type} (found ${outputs.length} outputs, ${participants.length} participants, ${resolved.size} after filtering)`
+      );
     }
     return toList;
   }

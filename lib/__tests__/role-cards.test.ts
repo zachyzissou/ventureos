@@ -1,9 +1,9 @@
 import { loadAllRoleCards, loadRoleCard, validateRoleCard } from '../role-cards';
 
 describe('role cards', () => {
-  test('loads all role cards and validates against available schema (if present)', async () => {
-    const cards = await loadAllRoleCards({ allowMissing: true });
-    expect(cards.length).toBeGreaterThan(8);
+  test('loads all role cards without errors and matches expected core count', async () => {
+    const cards = await loadAllRoleCards();
+    expect(cards.length).toBe(10);
 
     for (const card of cards) {
       await expect(validateRoleCard(card, {})).resolves.toBeTruthy();
