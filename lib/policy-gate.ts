@@ -34,13 +34,5 @@ export function evaluatePolicyGate(input: PolicyGateInput): PolicyGateResult {
     };
   }
 
-  if (input.action === 'competition.accept' && input.actor.type !== 'nexus' && input.actor.type !== 'human') {
-    return {
-      allow: false,
-      code: 'authority_denied',
-      reason: 'Competition acceptance requires nexus or human authority',
-    };
-  }
-
   return { allow: true, code: 'allow', reason: 'Allowed by policy gate' };
 }

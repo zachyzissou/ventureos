@@ -29,7 +29,7 @@ export async function arbitrateMissionClose(input: ArbitrationInput): Promise<Ar
     return {
       allowClose: false,
       reason: gate.reason,
-      code: gate.code === 'invalid_state' ? 'authority_denied' : 'authority_denied',
+      code: 'authority_denied',
     };
   }
 
