@@ -25,6 +25,8 @@ import { SquadCoordinator, type SquadAgent } from './squad-coordinator';
 import { GateChecks, type GateDefinition } from './gate-checks';
 import { ArtifactCollector } from './artifact-collector';
 import type { MissionRunnerHooks } from './runtime-conversation-bridge';
+import type { AuthorityActor } from './authority-map';
+import { arbitrateMissionClose } from './nexus-arbiter';
 
 export interface MissionRunnerConfig {
   /** Directory where mission state is persisted. */
@@ -43,8 +45,19 @@ export interface MissionRunnerConfig {
   /** Optional deterministic time source for tests. */
   now?: () => Date;
 
-  /** Optional approval callback for approval gates. */
+  /** Optional approval callback for approval gates / final arbitration. */
   approve?: () => Promise<boolean>;
+
+  /**
+   * Authority actor for mission close arbitration (defaults to nexus control plane).
+   */
+  arbiterActor?: AuthorityActor;
+
+  /**
+   * Require human final approval before mission closure.
+   * Supports Nexus 2.0 invariant where human is final arbiter.
+   */
+  requireHumanFinalApproval?: boolean;
 
   /**
    * Optional lifecycle hooks for runtime integration.
@@ -89,6 +102,8 @@ export class MissionRunner {
   private readonly now: () => Date;
   private readonly approve?: () => Promise<boolean>;
   private readonly hooks?: MissionRunnerHooks;
+  private readonly arbiterActor: AuthorityActor;
+  private readonly requireHumanFinalApproval: boolean;
 
   constructor(config: MissionRunnerConfig) {
     if (!config?.agents?.length) throw new Error('MissionRunner requires agents[]');
@@ -96,6 +111,8 @@ export class MissionRunner {
     this.now = config.now ?? (() => new Date());
     this.approve = config.approve;
     this.hooks = config.hooks;
+    this.arbiterActor = config.arbiterActor ?? { id: 'nexus', type: 'nexus' };
+    this.requireHumanFinalApproval = config.requireHumanFinalApproval ?? false;
 
     this.sm = new MissionStateMachine({
       persistDir: config.persistDir,
@@ -259,6 +276,20 @@ export class MissionRunner {
     }
 
     if (m.phase === 'deliver') {
+      const arbitration = await arbitrateMissionClose({
+        mission: m,
+        actor: this.arbiterActor,
+        requireHumanFinalApproval: this.requireHumanFinalApproval,
+        approve: this.approve,
+      });
+
+      if (!arbitration.allowClose) {
+        const code = arbitration.code === 'requires_human_approval' ? 'requires_approval' : 'authority_denied';
+        const failed = await this.sm.fail(m, new Error(arbitration.reason), code, 'deliver');
+        await this.safeHook('onMissionError', () => this.hooks?.onMissionError?.(failed, new Error(arbitration.reason)));
+        return failed;
+      }
+
       const created = Date.parse(m.createdAt);
       const closedAt = this.now().toISOString();
       const durationMs = Number.isFinite(created) ? Date.parse(closedAt) - created : undefined;
