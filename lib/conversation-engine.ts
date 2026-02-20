@@ -280,6 +280,7 @@ export class ConversationEngine {
   private readonly summarizer: ContextSummarizer;
   private readonly securityDeps: OutboundSecurityDeps;
   private readonly securityConfig: OutboundSecurityConfig;
+  private affinityFallbackLogged = false;
 
   // Serialize per-conversation mutations.
   private locks = new Map<ConversationId, Promise<void>>();
@@ -294,9 +295,7 @@ export class ConversationEngine {
   }) {
     this.config = { ...DEFAULT_CONFIG, ...(params.config ?? {}) };
     this.store = params.store ?? new FileConversationStore(this.config.persistDir);
-    this.affinity = params.affinityManager ?? new AffinityManager({
-      lowAffinityThreshold: this.config.mediationAffinityThreshold,
-    });
+    this.affinity = params.affinityManager ?? this.createDefaultAffinityManager();
     this.summarizer = params.summarizer ?? new SimpleHeuristicSummarizer();
     this.securityDeps = params.securityDeps;
     this.securityConfig = params.securityConfig ?? {};
@@ -304,6 +303,25 @@ export class ConversationEngine {
     // Wire Discord alert handler if requested.
     if (this.config.discordAlertChannelId) {
       this.securityDeps.hitl.onAlert(createDiscordAlertHandler(this.config.discordAlertChannelId));
+    }
+  }
+
+  private createDefaultAffinityManager(): AffinityManager {
+    const lowAffinityThreshold = this.config.mediationAffinityThreshold;
+    try {
+      return new AffinityManager({ lowAffinityThreshold });
+    } catch (error) {
+      if (!this.affinityFallbackLogged) {
+        this.affinityFallbackLogged = true;
+        const msg = error instanceof Error ? error.message : String(error);
+        console.warn(
+          `[conversation-engine] Affinity DB unavailable (${msg}); falling back to in-memory affinity manager.`,
+        );
+      }
+      return new AffinityManager({
+        dbPath: ':memory:',
+        lowAffinityThreshold,
+      });
     }
   }
 

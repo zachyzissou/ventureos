@@ -816,13 +816,14 @@ describe('SharedContextWatcher — Integration', () => {
     const watcher = createWatcher({ debounceMs: 50 });
 
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    await waitForEvent(120);
 
     const before = new Date().toISOString();
     fs.writeFileSync(
       path.join(teamDir, 'agent-outputs', 'nexus', 'status.md'),
       'All systems go',
     );
-    await waitForEvent(300);
+    await waitForEvent(450);
     const after = new Date().toISOString();
 
     const audit = watcher.getAuditByTeam(TEAM_ID);
@@ -882,10 +883,13 @@ describe('SharedContextWatcher — Integration', () => {
 
     expect(watcher.watchCount).toBe(2);
 
+    // Give fs.watch time to attach both watchers before emitting writes.
+    await waitForEvent(120);
+
     fs.writeFileSync(path.join(teamDir, 'feedback', 'team1.md'), 'From team 1');
     fs.writeFileSync(path.join(team2Dir, 'feedback', 'team2.md'), 'From team 2');
 
-    await waitForEvent(300);
+    await waitForEvent(450);
     watcher.close();
 
     const team1Events = events.filter((e) => e.teamId === TEAM_ID);

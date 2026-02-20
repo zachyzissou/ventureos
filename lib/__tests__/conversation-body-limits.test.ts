@@ -7,7 +7,6 @@
  */
 
 import http from 'node:http';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 // ─── Constants (must match production values) ──────────────────────────────
 

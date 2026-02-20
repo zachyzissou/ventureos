@@ -9,6 +9,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import Database from 'better-sqlite3';
+import { KPI_DIR as PATHS_KPI_DIR, RPG_DB_PATH as PATHS_RPG_DB_PATH } from './paths';
 
 // ============================================================================
 // Types & Interfaces
@@ -93,8 +94,8 @@ export interface KPIComputationResult {
 // Configuration
 // ============================================================================
 
-const KPI_DIR = path.resolve(process.env.HOME!, 'clawd/agents/kpis');
-const DB_PATH = path.resolve(process.env.HOME!, 'clawd/agents/ventureos-rpg.db');
+const KPI_DIR = PATHS_KPI_DIR;
+const DB_PATH = PATHS_RPG_DB_PATH;
 
 /**
  * VULN-002: table allowlist for KPI query builder.

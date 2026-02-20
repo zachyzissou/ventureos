@@ -11,8 +11,8 @@
  *  - If an older table `psionic_bonds` exists, we will read from it (best-effort).
  */
 
-import path from 'node:path';
 import Database from 'better-sqlite3';
+import { RPG_DB_PATH } from './paths';
 
 export type AgentId = string;
 
@@ -67,7 +67,7 @@ export interface AffinityStats {
 }
 
 const DEFAULT_CONFIG: AffinityConfig = {
-  dbPath: path.resolve(process.env.HOME ?? '~', 'clawd/agents/ventureos-rpg.db'),
+  dbPath: RPG_DB_PATH,
   readonly: false,
   defaultAffinity: 0.7,
   minAffinity: 0.1,
