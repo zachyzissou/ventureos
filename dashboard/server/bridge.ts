@@ -1100,6 +1100,270 @@ function getObservationFile(relPath: string): string | null {
   return full;
 }
 
+interface BridgeLiveEvent {
+  timestamp: string;
+  session: string;
+  role: string;
+  content: string;
+}
+
+interface BridgeTelemetrySnapshot {
+  type: 'telemetry';
+  ts: number;
+  system: {
+    cpuUsage: number;
+    memoryPercent: number;
+    memoryUsedGB: string;
+    memoryTotalGB: string;
+    diskPercent: number;
+    loadAvg1m: string;
+    uptime: number;
+  };
+  agents: {
+    total: number;
+    active: number;
+    busyIds: string[];
+  };
+  sessions: {
+    total: number;
+    running: number;
+  };
+  costs: {
+    today: number;
+    week: number;
+  };
+  usage: {
+    opusPct: number;
+    sonnetPct: number;
+    totalCost5h: number;
+    totalCalls5h: number;
+    burnTokensPerMin: number;
+    burnCostPerMin: number;
+  };
+  kpi: {
+    successRate: number | null;
+    p95LatencyS: number | null;
+    sloStatus: string | null;
+    date: string | null;
+  };
+}
+
+function parseLiveMessageContent(content: unknown): string {
+  if (typeof content === 'string') return content.slice(0, 150);
+  if (!Array.isArray(content)) return '';
+
+  for (const block of content) {
+    if (!block || typeof block !== 'object') continue;
+    const type = String((block as { type?: string }).type ?? '');
+    if (type === 'text') {
+      const text = String((block as { text?: string }).text ?? '');
+      if (text) return text.slice(0, 150);
+      continue;
+    }
+    if (type === 'toolCall' || type === 'tool_use') {
+      const name = String((block as { name?: string; toolName?: string }).name ?? (block as { toolName?: string }).toolName ?? 'tool');
+      const args = (block as { arguments?: unknown; input?: unknown }).arguments ?? (block as { input?: unknown }).input ?? {};
+      return `🔧 ${name}(${JSON.stringify(args).slice(0, 80)})`;
+    }
+    if (type === 'toolResult' || type === 'tool_result') {
+      const rc = (block as { content?: unknown }).content;
+      return `📋 Result: ${typeof rc === 'string' ? rc.slice(0, 100) : JSON.stringify(rc ?? '').slice(0, 100)}`;
+    }
+    if (type === 'thinking') {
+      const thinking = String((block as { thinking?: string }).thinking ?? '');
+      return `💭 ${thinking.slice(0, 100)}`;
+    }
+  }
+
+  return content[0] ? JSON.stringify(content[0]).slice(0, 100) : '';
+}
+
+function formatBridgeLiveEvent(
+  sessionKey: string,
+  data: { timestamp?: string; type?: string; message?: { role?: string; content?: unknown; type?: string } },
+  sessions: Array<Record<string, unknown>>,
+): BridgeLiveEvent | null {
+  if (data.type !== 'message' || !data.message) return null;
+  const role = String(data.message.role ?? 'unknown');
+  let content = parseLiveMessageContent(data.message.content);
+  if (!content && data.message.type === 'tool_result') {
+    const raw = data.message.content;
+    content = `📋 ${typeof raw === 'string' ? raw.slice(0, 100) : JSON.stringify(raw ?? '').slice(0, 100)}`;
+  }
+  if (!content) return null;
+
+  const session = sessions.find(
+    (item) =>
+      String(item.sessionId ?? '') === sessionKey ||
+      String(item.key ?? '').includes(sessionKey),
+  );
+  const label = session ? String(session.label ?? sessionKey.slice(0, 8)) : sessionKey.slice(0, 8);
+
+  return {
+    timestamp: data.timestamp ?? new Date().toISOString(),
+    session: label,
+    role,
+    content: content.replace(/\n/g, ' ').trim(),
+  };
+}
+
+function readRecentBridgeLiveEvents(sinceMs: number, maxEvents = 60): BridgeLiveEvent[] {
+  const events: Array<{ event: BridgeLiveEvent; ts: number }> = [];
+  const sessions = getSessionsJson();
+  let files: string[] = [];
+  try {
+    files = fs.readdirSync(sessDir).filter((name) => name.endsWith('.jsonl'));
+  } catch {
+    return [];
+  }
+
+  for (const fileName of files) {
+    const filePath = path.join(sessDir, fileName);
+    let stats: fs.Stats;
+    try {
+      stats = fs.statSync(filePath);
+    } catch {
+      continue;
+    }
+    if (stats.mtimeMs < sinceMs - 60_000) continue;
+
+    const sessionKey = fileName.replace(/\.jsonl$/, '');
+    const lines = safeReadText(filePath, '')
+      .split('\n')
+      .filter((line) => line.trim())
+      .slice(-120);
+
+    for (const line of lines) {
+      let row: { timestamp?: string; type?: string; message?: { role?: string; content?: unknown; type?: string } };
+      try {
+        row = JSON.parse(line) as { timestamp?: string; type?: string; message?: { role?: string; content?: unknown; type?: string } };
+      } catch {
+        continue;
+      }
+      const ts = row.timestamp ? new Date(row.timestamp).getTime() : 0;
+      if (Number.isFinite(ts) && ts > 0 && ts < sinceMs) continue;
+      const event = formatBridgeLiveEvent(sessionKey, row, sessions);
+      if (event) events.push({ event, ts: Number.isFinite(ts) && ts > 0 ? ts : Date.now() });
+    }
+  }
+
+  events.sort((a, b) => a.ts - b.ts);
+  return events.slice(-maxEvents).map((item) => item.event);
+}
+
+function listKpiFiles(): string[] {
+  try {
+    if (!fs.existsSync(KPI_DIR)) return [];
+    return fs
+      .readdirSync(KPI_DIR)
+      .filter((name) => /^\d{4}-\d{2}-\d{2}\.json$/.test(name))
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+function getLatestKpiSummary(): {
+  date: string | null;
+  successRate: number | null;
+  p95LatencyS: number | null;
+  sloStatus: string | null;
+} {
+  const files = listKpiFiles();
+  const latest = files.length > 0 ? files[files.length - 1] : null;
+  if (!latest) {
+    return { date: null, successRate: null, p95LatencyS: null, sloStatus: null };
+  }
+
+  const row = safeReadJson(path.join(KPI_DIR, latest), null) as Record<string, unknown> | null;
+  if (!row) {
+    return { date: latest.replace('.json', ''), successRate: null, p95LatencyS: null, sloStatus: null };
+  }
+
+  const overall = (row.overall ?? {}) as Record<string, unknown>;
+  const successRate = typeof overall.success_rate === 'number' ? overall.success_rate : null;
+  const latency = (overall.latency_ms ?? {}) as Record<string, unknown>;
+  const p95LatencyS = typeof latency.p95 === 'number' ? latency.p95 / 1000 : null;
+  let sloStatus: string | null = null;
+  if (typeof successRate === 'number' && typeof p95LatencyS === 'number') {
+    if (successRate < 0.95 || p95LatencyS > 60) sloStatus = 'critical';
+    else if (successRate < 0.97 || p95LatencyS > 50) sloStatus = 'warn';
+    else sloStatus = 'ok';
+  }
+
+  return {
+    date: String(row.date ?? latest.replace('.json', '')),
+    successRate,
+    p95LatencyS,
+    sloStatus,
+  };
+}
+
+function buildBridgeTelemetrySnapshot(): BridgeTelemetrySnapshot {
+  const now = Date.now();
+  const stats = buildSystemStats();
+  const sessions = getSessionsJson();
+  const running = sessions.filter(
+    (session) => now - parseNumber(session.updatedAt, 0) < 300_000 && session.aborted !== true,
+  ).length;
+
+  if (!costCache || now - costCacheTime > 60_000) {
+    costCache = buildCostData({ sessDir, cronFile, allowedSessionIds: getAllowedSessionIds() });
+    costCacheTime = now;
+  }
+  if (!usageCache || now - usageCacheTime > 10_000) {
+    usageCache = buildUsageWindows({ sessDir, allowedSessionIds: getAllowedSessionIds() });
+    usageCacheTime = now;
+  }
+
+  const agents = getVentureosAgents();
+  const busyIds = Object.values(agents.agents)
+    .filter((agent) => agent.status === 'working')
+    .map((agent) => agent.agentId);
+  const kpi = getLatestKpiSummary();
+
+  return {
+    type: 'telemetry',
+    ts: now,
+    system: {
+      cpuUsage: stats.cpu?.usage ?? 0,
+      memoryPercent: stats.memory?.percent ?? 0,
+      memoryUsedGB: stats.memory?.usedGB ?? '0.0',
+      memoryTotalGB: stats.memory?.totalGB ?? '0.0',
+      diskPercent: stats.disk?.percent ?? 0,
+      loadAvg1m: stats.loadAvg?.['1m'] ?? '0',
+      uptime: stats.uptime ?? 0,
+    },
+    agents: {
+      total: Object.keys(agents.agents ?? {}).length,
+      active: busyIds.length,
+      busyIds,
+    },
+    sessions: {
+      total: sessions.length,
+      running,
+    },
+    costs: {
+      today: costCache?.today ?? 0,
+      week: costCache?.week ?? 0,
+    },
+    usage: {
+      opusPct: usageCache?.current?.opusPct ?? 0,
+      sonnetPct: usageCache?.current?.sonnetPct ?? 0,
+      totalCost5h: usageCache?.current?.totalCost ?? 0,
+      totalCalls5h: usageCache?.current?.totalCalls ?? 0,
+      burnTokensPerMin: usageCache?.burnRate?.tokensPerMinute ?? 0,
+      burnCostPerMin: usageCache?.burnRate?.costPerMinute ?? 0,
+    },
+    kpi: {
+      successRate: kpi.successRate,
+      p95LatencyS: kpi.p95LatencyS,
+      sloStatus: kpi.sloStatus,
+      date: kpi.date,
+    },
+  };
+}
+
 // ─── Metrics Cache ─────────────────────────────────────────────────────────
 
 let costCache: ReturnType<typeof buildCostData> | null = null;
@@ -1346,17 +1610,73 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // SSE live feed (stub)
-  if (pathname === '/api/bridge/live') {
+  // SSE live telemetry feed
+  if (pathname === '/api/bridge/live-telemetry') {
+    logAudit('live_telemetry', req);
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
-    res.write(`event: ready\ndata: ${JSON.stringify({ ok: true, ts: new Date().toISOString() })}\n\n`);
+
+    const sendSnapshot = () => {
+      try {
+        const snapshot = buildBridgeTelemetrySnapshot();
+        res.write(`data: ${JSON.stringify(snapshot)}\n\n`);
+      } catch {
+        // ignore transient snapshot build errors
+      }
+    };
+
+    sendSnapshot();
+    const interval = setInterval(sendSnapshot, 5000);
+    req.on('close', () => clearInterval(interval));
+    return;
+  }
+
+  // SSE live feed
+  if (pathname === '/api/bridge/live') {
+    logAudit('live_feed', req);
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    });
+
+    res.write('data: {"status":"connected"}\n\n');
+
+    const sentEventIds = new Set<string>();
+    let sinceMs = Date.now() - 60 * 60 * 1000;
+    const recent = readRecentBridgeLiveEvents(sinceMs, 60);
+    for (const event of recent) {
+      const id = `${event.timestamp}|${event.session}|${event.role}|${event.content}`;
+      if (sentEventIds.has(id)) continue;
+      sentEventIds.add(id);
+      res.write(`data: ${JSON.stringify(event)}\n\n`);
+      const ts = new Date(event.timestamp).getTime();
+      if (Number.isFinite(ts) && ts > sinceMs) sinceMs = ts;
+    }
+
     const interval = setInterval(() => {
-      res.write(`event: ping\ndata: ${Date.now()}\n\n`);
-    }, 15000);
+      const fresh = readRecentBridgeLiveEvents(Math.max(0, sinceMs - 1000), 80);
+      for (const event of fresh) {
+        const id = `${event.timestamp}|${event.session}|${event.role}|${event.content}`;
+        if (sentEventIds.has(id)) continue;
+        sentEventIds.add(id);
+        if (sentEventIds.size > 1200) {
+          sentEventIds.clear();
+          sentEventIds.add(id);
+        }
+        try {
+          res.write(`data: ${JSON.stringify(event)}\n\n`);
+        } catch {
+          // ignore write failures
+        }
+        const ts = new Date(event.timestamp).getTime();
+        if (Number.isFinite(ts) && ts > sinceMs) sinceMs = ts;
+      }
+    }, 5000);
+
     req.on('close', () => clearInterval(interval));
     return;
   }
