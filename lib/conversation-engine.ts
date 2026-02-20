@@ -71,8 +71,6 @@ const DEFAULT_CONFIG: ConversationEngineConfig = {
   mediatorAgentId: 'echo',
 };
 
-let loggedAffinityFallback = false;
-
 export interface ConversationSummary {
   summaryId: string;
   createdAt: string;
@@ -282,6 +280,7 @@ export class ConversationEngine {
   private readonly summarizer: ContextSummarizer;
   private readonly securityDeps: OutboundSecurityDeps;
   private readonly securityConfig: OutboundSecurityConfig;
+  private affinityFallbackLogged = false;
 
   // Serialize per-conversation mutations.
   private locks = new Map<ConversationId, Promise<void>>();
@@ -312,8 +311,8 @@ export class ConversationEngine {
     try {
       return new AffinityManager({ lowAffinityThreshold });
     } catch (error) {
-      if (!loggedAffinityFallback) {
-        loggedAffinityFallback = true;
+      if (!this.affinityFallbackLogged) {
+        this.affinityFallbackLogged = true;
         const msg = error instanceof Error ? error.message : String(error);
         console.warn(
           `[conversation-engine] Affinity DB unavailable (${msg}); falling back to in-memory affinity manager.`,
