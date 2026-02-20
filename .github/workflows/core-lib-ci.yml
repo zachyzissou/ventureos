@@ -46,7 +46,7 @@ jobs:
 
       - name: Run core lib regression suites
         run: |
-          npx jest lib/__tests__/conversation-body-limits.test.ts --runInBand
-          npx jest lib/__tests__/conversation-http.test.ts --runInBand
-          npx jest lib/__tests__/kpi-registry.test.ts --runInBand
-          npx jest lib/__tests__/shared-context-watcher.test.ts --runInBand
+          npx jest lib/__tests__/conversation-body-limits.test.ts --runInBand --forceExit
+          npx jest lib/__tests__/conversation-http.test.ts --runInBand --forceExit
+          npx jest lib/__tests__/kpi-registry.test.ts --runInBand --forceExit
+          npx jest lib/__tests__/shared-context-watcher.test.ts --runInBand --forceExit
