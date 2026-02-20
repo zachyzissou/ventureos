@@ -209,14 +209,21 @@ function hasHedgingLanguage(text: string): boolean {
   return /\b(probably|maybe|might|possibly|perhaps|likely|i think)\b/i.test(text);
 }
 
-export async function enforceInfrastructureBans(agentId: string, action: string): Promise<boolean> {
+interface InfrastructureDecision {
+  allowed: boolean;
+  source?: 'hard_ban' | 'boundary';
+  rule?: string;
+  enforcement?: string;
+}
+
+async function evaluateInfrastructureDecision(agentId: string, action: string): Promise<InfrastructureDecision> {
   const card = await loadRoleCard(agentId);
 
   // If any infra ban plausibly applies to this action, block.
   for (const ban of card.hardBans.infrastructure) {
     if (ruleLikelyAppliesToAction(ban.rule, action)) {
       defaultLogger.warn?.('Infrastructure ban triggered', { agentId, action, rule: ban.rule, enforcement: ban.enforcement });
-      return false;
+      return { allowed: false, source: 'hard_ban', rule: ban.rule, enforcement: ban.enforcement };
     }
   }
 
@@ -224,11 +231,16 @@ export async function enforceInfrastructureBans(agentId: string, action: string)
   for (const boundary of card.domain.boundaries) {
     if (boundaryLikelyAppliesToAction(boundary, action)) {
       defaultLogger.warn?.('Infrastructure boundary triggered', { agentId, action, boundary, enforcement: 'boundary_policy' });
-      return false;
+      return { allowed: false, source: 'boundary', rule: boundary, enforcement: 'boundary_policy' };
     }
   }
 
-  return true;
+  return { allowed: true };
+}
+
+export async function enforceInfrastructureBans(agentId: string, action: string): Promise<boolean> {
+  const decision = await evaluateInfrastructureDecision(agentId, action);
+  return decision.allowed;
 }
 
 export async function enforceHeuristicBans(agentId: string, message: string): Promise<Warning[]> {
@@ -303,19 +315,30 @@ export function logQualityViolations(agentId: string, message: string): void {
   // Tier 3 is explicitly non-blocking; we log to support training + periodic review.
   void (async () => {
     const card = await loadRoleCard(agentId);
+    let loggedFromExamples = false;
 
     for (const ban of card.hardBans.quality) {
       const examples = ban.examples ?? [];
       const hit = examples.find((ex) => ex && message.toLowerCase().includes(ex.toLowerCase()));
-      const hedgingHit = !hit && hasHedgingLanguage(message);
-      if (hit || hedgingHit) {
+      if (hit) {
+        loggedFromExamples = true;
         defaultLogger.info?.('Quality guideline violation', {
           agentId,
           rule: ban.rule,
           enforcement: ban.enforcement,
-          example: hit ?? 'hedging_language'
+          example: hit
         });
       }
+    }
+
+    // Log hedging once per message to avoid inflating violations across all quality bans.
+    if (!loggedFromExamples && hasHedgingLanguage(message)) {
+      defaultLogger.info?.('Quality guideline violation', {
+        agentId,
+        rule: card.hardBans.quality[0]?.rule ?? 'hedging_language',
+        enforcement: card.hardBans.quality[0]?.enforcement ?? 'manual_review',
+        example: 'hedging_language',
+      });
     }
   })().catch((err) => {
     defaultLogger.error?.('Failed to log quality violations', { agentId, error: String(err) });
@@ -325,7 +348,8 @@ export function logQualityViolations(agentId: string, message: string): void {
 export async function enforceAllTiers(agentId: string, action: string, message: string): Promise<EnforcementResult[]> {
   const results: EnforcementResult[] = [];
 
-  const infraAllowed = await enforceInfrastructureBans(agentId, action);
+  const infraDecision = await evaluateInfrastructureDecision(agentId, action);
+  const infraAllowed = infraDecision.allowed;
   results.push({
     tier: 'infrastructure',
     passed: infraAllowed,
@@ -334,9 +358,9 @@ export async function enforceAllTiers(agentId: string, action: string, message: 
       : [
           {
             tier: 'infrastructure',
-            rule: `Action blocked: ${action}`,
-            enforcement: 'infrastructure',
-            details: 'Matched an infrastructure hard ban'
+            rule: infraDecision.rule ?? `Action blocked: ${action}`,
+            enforcement: infraDecision.enforcement ?? 'infrastructure',
+            details: infraDecision.source === 'boundary' ? 'Matched a boundary policy' : 'Matched an infrastructure hard ban'
           }
         ],
     severity: 'block'
