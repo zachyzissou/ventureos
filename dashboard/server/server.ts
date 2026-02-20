@@ -2825,6 +2825,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 
   // VentureOS APIs
   if (req.url && req.url.startsWith('/api/ventureos-kpis')) {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/ventureos-kpis',
+        forwardQuery: true,
+      })
+    )
+      return;
     const params = new URL(req.url, 'http://localhost').searchParams;
     const days: number = clampInt(params.get('days'), 1, 60, 7);
     sendJson(res, getVentureosKpis(days));
@@ -2906,6 +2913,27 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     );
     return;
   }
+  if (req.url && req.url.startsWith('/api/observations/')) {
+    const targetPath = req.url.split('?')[0].replace('/api/observations', '/api/bridge/observations');
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath,
+        forwardQuery: true,
+      })
+    )
+      return;
+  }
+
+  if (req.url && req.url.startsWith('/api/kpis/')) {
+    const targetPath = req.url.split('?')[0].replace('/api/kpis', '/api/bridge/kpis');
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath,
+        forwardQuery: true,
+      })
+    )
+      return;
+  }
 
   // Modular route handlers
   try {
@@ -2957,6 +2985,15 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
 
   try {
+    if (
+      req.url &&
+      req.url.startsWith('/api/agent-health') &&
+      (await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/agent-health',
+        forwardQuery: true,
+      }))
+    )
+      return;
     if (handleAgentHealth(req, res, { OPENCLAW_DIR, WORKSPACE_DIR, sendJson })) return;
   } catch {
     // ignore
