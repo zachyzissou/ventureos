@@ -9,7 +9,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import Database from 'better-sqlite3';
-import paths from './paths';
+import { paths } from './paths';
 
 // ============================================================================
 // Types & Interfaces
