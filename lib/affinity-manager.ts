@@ -98,6 +98,12 @@ function tableExists(db: Database.Database, table: string): boolean {
   return !!row?.name;
 }
 
+function tableColumns(db: Database.Database, table: string): Set<string> {
+  if (!tableExists(db, table)) return new Set<string>();
+  const rows = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name?: string }>;
+  return new Set(rows.map((r) => r.name ?? '').filter(Boolean));
+}
+
 export class AffinityManager {
   private readonly config: AffinityConfig;
   private readonly db: Database.Database;
@@ -105,6 +111,8 @@ export class AffinityManager {
   private readonly hasKhalaNetwork: boolean;
   private readonly hasKhalaDriftHistory: boolean;
   private readonly hasLegacyPsionicBonds: boolean;
+  private readonly khalaNetworkColumns: Set<string>;
+  private readonly khalaDriftHistoryColumns: Set<string>;
 
   constructor(config: Partial<AffinityConfig> = {}, dbInstance?: Database.Database) {
     this.config = {
@@ -126,6 +134,8 @@ export class AffinityManager {
     this.hasKhalaNetwork = tableExists(this.db, 'khala_network');
     this.hasKhalaDriftHistory = tableExists(this.db, 'khala_drift_history');
     this.hasLegacyPsionicBonds = tableExists(this.db, 'psionic_bonds');
+    this.khalaNetworkColumns = tableColumns(this.db, 'khala_network');
+    this.khalaDriftHistoryColumns = tableColumns(this.db, 'khala_drift_history');
   }
 
   close(): void {
@@ -171,13 +181,12 @@ export class AffinityManager {
     const [a, b] = normalizePair(agentA, agentB);
 
     if (this.hasKhalaNetwork) {
+      const extraCols = ['seed_value', 'last_interaction_at', 'interaction_count', 'updated_at']
+        .filter((col) => this.khalaNetworkColumns.has(col));
+      const selectColumns = 'agent_a, agent_b, affinity' + (extraCols.length ? ', ' + extraCols.join(', ') : '');
+      const sql = 'SELECT ' + selectColumns + ' FROM khala_network WHERE agent_a = ? AND agent_b = ? LIMIT 1';
       const row = this.db
-        .prepare(
-          `SELECT agent_a, agent_b, affinity, seed_value, last_interaction_at, interaction_count, updated_at
-           FROM khala_network
-           WHERE agent_a = ? AND agent_b = ?
-           LIMIT 1`
-        )
+        .prepare(sql)
         .get(a, b) as any;
 
       if (row) {
@@ -210,13 +219,24 @@ export class AffinityManager {
     if (exists) return;
 
     const affinity = clamp(this.config.defaultAffinity, this.config.minAffinity, this.config.maxAffinity);
+    const columns = ['agent_a', 'agent_b', 'affinity'];
+    const values: unknown[] = [a, b, affinity];
 
-    this.db
-      .prepare(
-        `INSERT INTO khala_network(agent_a, agent_b, affinity, seed_value, last_interaction_at, interaction_count)
-         VALUES(?, ?, ?, ?, NULL, 0)`
-      )
-      .run(a, b, affinity, affinity);
+    if (this.khalaNetworkColumns.has('seed_value')) {
+      columns.push('seed_value');
+      values.push(affinity);
+    }
+    if (this.khalaNetworkColumns.has('last_interaction_at')) {
+      columns.push('last_interaction_at');
+      values.push(null);
+    }
+    if (this.khalaNetworkColumns.has('interaction_count')) {
+      columns.push('interaction_count');
+      values.push(0);
+    }
+
+    const sql = 'INSERT INTO khala_network(' + columns.join(', ') + ') VALUES(' + columns.map(() => '?').join(', ') + ')';
+    this.db.prepare(sql).run(...values);
   }
 
   /**
@@ -244,43 +264,61 @@ export class AffinityManager {
     const [a, b] = normalizePair(agentA, agentB);
     this.ensureBond(a, b);
 
+    const currentCols = ['affinity'];
+    if (this.khalaNetworkColumns.has('interaction_count')) currentCols.push('interaction_count');
+    const currentSql = 'SELECT ' + currentCols.join(', ') + ' FROM khala_network WHERE agent_a = ? AND agent_b = ? LIMIT 1';
     const current = this.db
-      .prepare(`SELECT affinity, interaction_count FROM khala_network WHERE agent_a = ? AND agent_b = ? LIMIT 1`)
-      .get(a, b) as { affinity: number; interaction_count: number } | undefined;
+      .prepare(currentSql)
+      .get(a, b) as { affinity: number; interaction_count?: number } | undefined;
 
     const oldAffinity = current?.affinity ?? this.config.defaultAffinity;
     const newAffinity = clamp(oldAffinity + params.delta, this.config.minAffinity, this.config.maxAffinity);
 
     const tx = this.db.transaction(() => {
-      this.db
-        .prepare(
-          `UPDATE khala_network
-           SET affinity = ?,
-               last_interaction_at = ?,
-               interaction_count = COALESCE(interaction_count, 0) + 1,
-               updated_at = CURRENT_TIMESTAMP
-           WHERE agent_a = ? AND agent_b = ?`
-        )
-        .run(newAffinity, nowIso, a, b);
+      const setClauses = ['affinity = ?'];
+      const updateParams: unknown[] = [newAffinity];
+      if (this.khalaNetworkColumns.has('last_interaction_at')) {
+        setClauses.push('last_interaction_at = ?');
+        updateParams.push(nowIso);
+      }
+      if (this.khalaNetworkColumns.has('interaction_count')) {
+        setClauses.push('interaction_count = COALESCE(interaction_count, 0) + 1');
+      }
+      if (this.khalaNetworkColumns.has('updated_at')) {
+        setClauses.push('updated_at = CURRENT_TIMESTAMP');
+      }
+
+      const updateSql = 'UPDATE khala_network SET ' + setClauses.join(', ') + ' WHERE agent_a = ? AND agent_b = ?';
+      this.db.prepare(updateSql).run(...updateParams, a, b);
 
       if (this.hasKhalaDriftHistory) {
-        this.db
-          .prepare(
-            `INSERT INTO khala_drift_history(
-              agent_a, agent_b, old_affinity, new_affinity, delta, reason, interaction_type, related_mission_id, created_at
-            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`
-          )
-          .run(
-            a,
-            b,
-            oldAffinity,
-            newAffinity,
-            newAffinity - oldAffinity,
-            params.reason,
-            params.interactionType ?? null,
-            params.relatedMissionId ?? null,
-            nowIso
-          );
+        const required = ['agent_a', 'agent_b', 'old_affinity', 'new_affinity', 'delta', 'reason'];
+        const canInsert = required.every((col) => this.khalaDriftHistoryColumns.has(col));
+        if (canInsert) {
+          const columns = [...required];
+          const values: unknown[] = [a, b, oldAffinity, newAffinity, newAffinity - oldAffinity, params.reason];
+
+          if (this.khalaDriftHistoryColumns.has('interaction_type')) {
+            columns.push('interaction_type');
+            values.push(params.interactionType ?? null);
+          }
+          if (this.khalaDriftHistoryColumns.has('related_mission_id')) {
+            columns.push('related_mission_id');
+            values.push(params.relatedMissionId ?? null);
+          }
+          if (this.khalaDriftHistoryColumns.has('created_at')) {
+            columns.push('created_at');
+            values.push(nowIso);
+          }
+
+          const sql =
+            'INSERT INTO khala_drift_history(' +
+            columns.join(', ') +
+            ') VALUES(' +
+            columns.map(() => '?').join(', ') +
+            ')';
+          this.db.prepare(sql).run(...values);
+        }
       }
     });
 
