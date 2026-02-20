@@ -89,7 +89,7 @@ import { rateLimit } from './middleware/rate-limit.js';
 import { auditLog } from './middleware/audit-log.js';
 import { authorizeActionRequest } from './middleware/action-guard.js';
 import { withCorrelationId, CORRELATION_HEADER } from './middleware/correlation-id.js';
-import { proxyBridgeJson } from './bridge-proxy.js';
+import { proxyBridgeJson, proxyBridgeSse } from './bridge-proxy.js';
 
 // Structured logging (Issue #195 — Observability)
 import structuredLogger from '../../lib/structured-logger.js';
@@ -3673,6 +3673,14 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 
   // ── Live Telemetry SSE (Issue #live-data-v1) ──────────────────────────────
   if (req.url === '/api/live-telemetry') {
+    if (
+      await proxyBridgeSse(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/live-telemetry',
+        forwardQuery: true,
+      })
+    )
+      return;
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -3783,6 +3791,14 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
 
   if (req.url === '/api/live') {
+    if (
+      await proxyBridgeSse(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/live',
+        forwardQuery: true,
+      })
+    )
+      return;
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',

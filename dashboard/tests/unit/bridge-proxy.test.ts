@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { proxyBridgeJson } from '../../server/bridge-proxy.js';
+import { proxyBridgeJson, proxyBridgeSse } from '../../server/bridge-proxy.js';
 import { mockRequest, mockResponse, parseJsonBody } from '../helpers.js';
 
 describe('bridge proxy', () => {
@@ -67,5 +67,68 @@ describe('bridge proxy', () => {
     const body = parseJsonBody<{ ok: boolean; url: string }>(res);
     expect(body.ok).toBe(true);
     expect(body.url).toContain('/api/bridge/costs');
+  });
+
+  it('returns false for SSE proxy when not in bridge mode', async () => {
+    const req = mockRequest({ url: '/api/live' });
+    const res = mockResponse();
+
+    const handled = await proxyBridgeSse(
+      req,
+      res,
+      { dataMode: 'filesystem' },
+      { targetPath: '/api/bridge/live' },
+    );
+
+    expect(handled).toBe(false);
+    expect(res._ended).toBe(false);
+  });
+
+  it('streams SSE from bridge', async () => {
+    const req = mockRequest({ url: '/api/live-telemetry?scope=all' });
+    const res = mockResponse();
+    const encoder = new TextEncoder();
+
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode('data: {"status":"connected"}\\n\\n'));
+          controller.enqueue(encoder.encode('data: {"type":"telemetry","ts":1}\\n\\n'));
+          controller.close();
+        },
+      });
+
+      return new Response(stream, {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      });
+    });
+
+    const handled = await proxyBridgeSse(
+      req,
+      res,
+      {
+        dataMode: 'bridge',
+        bridgeUrl: 'http://bridge.local:18790',
+        bridgeToken: 'bridge-token-123',
+        fetchImpl: fetchMock,
+      },
+      { targetPath: '/api/bridge/live-telemetry', forwardQuery: true },
+    );
+
+    expect(handled).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://bridge.local:18790/api/bridge/live-telemetry?scope=all',
+      {
+        headers: { Authorization: 'Bearer bridge-token-123' },
+        signal: expect.any(AbortSignal),
+      },
+    );
+    expect(res._statusCode).toBe(200);
+    expect(res._headers['content-type']).toContain('text/event-stream');
+    expect(res._body).toContain('status');
+    expect(res._body).toContain('telemetry');
+    expect(res._ended).toBe(true);
   });
 });
