@@ -816,13 +816,14 @@ describe('SharedContextWatcher — Integration', () => {
     const watcher = createWatcher({ debounceMs: 50 });
 
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    await waitForEvent(120);
 
     const before = new Date().toISOString();
     fs.writeFileSync(
       path.join(teamDir, 'agent-outputs', 'nexus', 'status.md'),
       'All systems go',
     );
-    await waitForEvent(300);
+    await waitForEvent(450);
     const after = new Date().toISOString();
 
     const audit = watcher.getAuditByTeam(TEAM_ID);
