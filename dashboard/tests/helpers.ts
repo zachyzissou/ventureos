@@ -96,8 +96,11 @@ export function mockResponse(): ServerResponse & {
       }
       ended = true;
       res._ended = true;
+      res.writableEnded = true;
       return res;
     },
+    writable: true,
+    writableEnded: false,
     on: () => res,
     once: () => res,
     emit: () => false,

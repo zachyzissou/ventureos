@@ -3672,7 +3672,7 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
 
   // ── Live Telemetry SSE (Issue #live-data-v1) ──────────────────────────────
-  if (req.url === '/api/live-telemetry') {
+  if (req.url === '/api/live-telemetry' || req.url?.startsWith('/api/live-telemetry?')) {
     if (
       await proxyBridgeSse(req, res, bridgeProxyDeps, {
         targetPath: '/api/bridge/live-telemetry',
@@ -3790,7 +3790,7 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
 
-  if (req.url === '/api/live') {
+  if (req.url === '/api/live' || req.url?.startsWith('/api/live?')) {
     if (
       await proxyBridgeSse(req, res, bridgeProxyDeps, {
         targetPath: '/api/bridge/live',
