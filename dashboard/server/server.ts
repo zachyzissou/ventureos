@@ -104,6 +104,7 @@ import { handleConversationApi } from './routes/conversation.js';
 import { handleTacticalMapControls } from './routes/tactical-map-controls.js';
 import { handleLogs } from './routes/logs.js';
 import { handleTacticalMapReplay } from './routes/tactical-map-replay.js';
+import { handleTacticalMapLive, handleTacticalMapLiveUpgrade } from './routes/tactical-map-live.js';
 import { handleProgressionApi } from './routes/progression.js';
 import { handleProgressionV2Api } from '../../lib/progression-http-v2.js';
 import { handleChangelog } from './routes/changelog.js';
@@ -2927,6 +2928,21 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
   try {
     if (
+      handleTacticalMapLive(req, res, {
+        openclawDir: OPENCLAW_DIR,
+        dataDir,
+        sendJson,
+        isAuthenticated,
+        primaryAgentId: AGENT_ID,
+      })
+    )
+      return;
+  } catch {
+    // ignore
+  }
+
+  try {
+    if (
       await handleTacticalMapControls(req, res, {
         dataDir,
         sendJson,
@@ -3818,6 +3834,26 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 });
 
 export { server };
+
+server.on('upgrade', (req: IncomingMessage, socket: import('node:net').Socket, head: Buffer) => {
+  if (
+    handleTacticalMapLiveUpgrade(req, socket, head, {
+      openclawDir: OPENCLAW_DIR,
+      dataDir,
+      sendJson,
+      isAuthenticated,
+      primaryAgentId: AGENT_ID,
+    })
+  ) {
+    return;
+  }
+
+  try {
+    socket.destroy();
+  } catch {
+    // ignore
+  }
+});
 
 // ─── Startup Diagnostics ─────────────────────────────────────────────────────
 
