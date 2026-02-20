@@ -100,6 +100,31 @@ function ruleLikelyAppliesToAction(rule: string, action: string): boolean {
   return false;
 }
 
+function boundaryLikelyAppliesToAction(boundary: string, action: string): boolean {
+  const actionNorm = normalize(action);
+  const boundaryNorm = normalize(boundary);
+
+  if (!/\b(does not|do not|never|not)\b/i.test(boundaryNorm)) {
+    return false;
+  }
+
+  if (/\bdb(_|-)write\b|\bdatabase(_|-)write\b|\bsql(_|-)write\b|\bwrite_db\b/i.test(actionNorm)) {
+    if (/\b(database|db|sql|schema|migration)\b/i.test(boundaryNorm)) return true;
+    // Natural-language Khaydarin boundaries often use "implement" instead of explicit DB verbs.
+    if (/\b(implement|execute|operate)\b/i.test(boundaryNorm)) return true;
+  }
+
+  if (/\bdeploy\b|\bdeployment\b/i.test(actionNorm)) {
+    if (/\b(deploy|deployment|release|infrastructure|operations)\b/i.test(boundaryNorm)) return true;
+  }
+
+  if (/\bfile(_|-)write\b|\bwrite_file\b/i.test(actionNorm)) {
+    if (/\b(file|filesystem|write|code|modify)\b/i.test(boundaryNorm)) return true;
+  }
+
+  return false;
+}
+
 function looksLikeHasCitation(text: string): boolean {
   const t = text;
   // URLs or markdown links.
@@ -118,6 +143,10 @@ function extractNumbers(text: string): string[] {
 
 function looksLikeComparativeClaim(text: string): boolean {
   return /\b(better|worse|faster|slower|higher|lower|more|less|best|worst)\b/i.test(text);
+}
+
+function looksLikeFactualClaim(text: string): boolean {
+  return /\b(revenue|profit|growth|metric|benchmark|study|report|data|stat|rate|increased|decreased|improved|declined)\b/i.test(text);
 }
 
 function applyPatternMatcher(rule: string, message: string): boolean {
@@ -146,18 +175,72 @@ function applyPatternMatcher(rule: string, message: string): boolean {
   }
 }
 
-export async function enforceInfrastructureBans(agentId: string, action: string): Promise<boolean> {
+type HeuristicEnforcement = RoleCard['hardBans']['heuristic'][number]['enforcement'];
+
+function inferHeuristicEnforcements(rule: string): HeuristicEnforcement[] {
+  const trimmed = rule.trim();
+  const lower = trimmed.toLowerCase();
+
+  // Keep explicit regex/pattern rules as pattern matchers.
+  if (/^regex:\s*\/.*\/[gimsuy]*$/i.test(trimmed) || /^\/.*\/[gimsuy]*$/.test(trimmed)) {
+    return ['pattern_matcher'];
+  }
+
+  const inferred = new Set<HeuristicEnforcement>();
+
+  if (/\b(source|sources|cite|citation|cited|evidence|unsourced)\b/i.test(lower)) {
+    inferred.add('citation_detector');
+  }
+  if (/\b(number|percent|percentage|stat|metric|count|rate|increase|decrease|growth)\b/i.test(lower)) {
+    inferred.add('number_source_tracker');
+  }
+  if (/\b(compare|comparison|better|worse|faster|slower|higher|lower|more|less|best|worst)\b/i.test(lower)) {
+    inferred.add('comparison_verifier');
+  }
+
+  if (inferred.size === 0) {
+    inferred.add('pattern_matcher');
+  }
+
+  return [...inferred];
+}
+
+function hasHedgingLanguage(text: string): boolean {
+  return /\b(probably|maybe|might|possibly|perhaps|likely|i think)\b/i.test(text);
+}
+
+interface InfrastructureDecision {
+  allowed: boolean;
+  source?: 'hard_ban' | 'boundary';
+  rule?: string;
+  enforcement?: string;
+}
+
+async function evaluateInfrastructureDecision(agentId: string, action: string): Promise<InfrastructureDecision> {
   const card = await loadRoleCard(agentId);
 
   // If any infra ban plausibly applies to this action, block.
   for (const ban of card.hardBans.infrastructure) {
     if (ruleLikelyAppliesToAction(ban.rule, action)) {
       defaultLogger.warn?.('Infrastructure ban triggered', { agentId, action, rule: ban.rule, enforcement: ban.enforcement });
-      return false;
+      return { allowed: false, source: 'hard_ban', rule: ban.rule, enforcement: ban.enforcement };
     }
   }
 
-  return true;
+  // Khaydarin cards encode many operational constraints in "boundaries".
+  for (const boundary of card.domain.boundaries) {
+    if (boundaryLikelyAppliesToAction(boundary, action)) {
+      defaultLogger.warn?.('Infrastructure boundary triggered', { agentId, action, boundary, enforcement: 'boundary_policy' });
+      return { allowed: false, source: 'boundary', rule: boundary, enforcement: 'boundary_policy' };
+    }
+  }
+
+  return { allowed: true };
+}
+
+export async function enforceInfrastructureBans(agentId: string, action: string): Promise<boolean> {
+  const decision = await evaluateInfrastructureDecision(agentId, action);
+  return decision.allowed;
 }
 
 export async function enforceHeuristicBans(agentId: string, message: string): Promise<Warning[]> {
@@ -169,54 +252,58 @@ export async function enforceHeuristicBans(agentId: string, message: string): Pr
   const comparative = looksLikeComparativeClaim(message);
 
   for (const ban of card.hardBans.heuristic) {
-    switch (ban.enforcement) {
-      case 'citation_detector': {
-        if (!hasCitation) {
-          warnings.push({
-            rule: ban.rule,
-            enforcement: ban.enforcement,
-            severity: ban.severity,
-            details: 'No obvious citation markers (URL, markdown link, or “Source:”) detected.'
-          });
+    const enforcements = ban.enforcement === 'pattern_matcher' ? inferHeuristicEnforcements(ban.rule) : [ban.enforcement];
+
+    for (const enforcement of enforcements) {
+      switch (enforcement) {
+        case 'citation_detector': {
+          if (!hasCitation && (numbers.length > 0 || comparative || looksLikeFactualClaim(message))) {
+            warnings.push({
+              rule: ban.rule,
+              enforcement,
+              severity: ban.severity,
+              details: 'No obvious citation markers (URL, markdown link, or “Source:”) detected.'
+            });
+          }
+          break;
         }
-        break;
-      }
-      case 'number_source_tracker': {
-        if (numbers.length && !hasCitation) {
-          warnings.push({
-            rule: ban.rule,
-            enforcement: ban.enforcement,
-            severity: ban.severity,
-            details: `Detected numbers without obvious citations: ${numbers.slice(0, 10).join(', ')}`
-          });
+        case 'number_source_tracker': {
+          if (numbers.length && !hasCitation) {
+            warnings.push({
+              rule: ban.rule,
+              enforcement,
+              severity: ban.severity,
+              details: `Detected numbers without obvious citations: ${numbers.slice(0, 10).join(', ')}`
+            });
+          }
+          break;
         }
-        break;
-      }
-      case 'comparison_verifier': {
-        if (comparative && !hasCitation) {
-          warnings.push({
-            rule: ban.rule,
-            enforcement: ban.enforcement,
-            severity: ban.severity,
-            details: 'Comparative language detected without citations.'
-          });
+        case 'comparison_verifier': {
+          if (comparative && !hasCitation) {
+            warnings.push({
+              rule: ban.rule,
+              enforcement,
+              severity: ban.severity,
+              details: 'Comparative language detected without citations.'
+            });
+          }
+          break;
         }
-        break;
-      }
-      case 'pattern_matcher': {
-        if (applyPatternMatcher(ban.rule, message)) {
-          warnings.push({
-            rule: ban.rule,
-            enforcement: ban.enforcement,
-            severity: ban.severity,
-            details: 'Pattern matcher triggered.'
-          });
+        case 'pattern_matcher': {
+          if (applyPatternMatcher(ban.rule, message)) {
+            warnings.push({
+              rule: ban.rule,
+              enforcement,
+              severity: ban.severity,
+              details: 'Pattern matcher triggered.'
+            });
+          }
+          break;
         }
-        break;
-      }
-      default: {
-        const never: never = ban.enforcement;
-        void never;
+        default: {
+          const never: never = enforcement;
+          void never;
+        }
       }
     }
   }
@@ -228,11 +315,13 @@ export function logQualityViolations(agentId: string, message: string): void {
   // Tier 3 is explicitly non-blocking; we log to support training + periodic review.
   void (async () => {
     const card = await loadRoleCard(agentId);
+    let loggedFromExamples = false;
 
     for (const ban of card.hardBans.quality) {
       const examples = ban.examples ?? [];
       const hit = examples.find((ex) => ex && message.toLowerCase().includes(ex.toLowerCase()));
       if (hit) {
+        loggedFromExamples = true;
         defaultLogger.info?.('Quality guideline violation', {
           agentId,
           rule: ban.rule,
@@ -240,6 +329,16 @@ export function logQualityViolations(agentId: string, message: string): void {
           example: hit
         });
       }
+    }
+
+    // Log hedging once per message to avoid inflating violations across all quality bans.
+    if (!loggedFromExamples && hasHedgingLanguage(message)) {
+      defaultLogger.info?.('Quality guideline violation', {
+        agentId,
+        rule: card.hardBans.quality[0]?.rule ?? 'hedging_language',
+        enforcement: card.hardBans.quality[0]?.enforcement ?? 'manual_review',
+        example: 'hedging_language',
+      });
     }
   })().catch((err) => {
     defaultLogger.error?.('Failed to log quality violations', { agentId, error: String(err) });
@@ -249,7 +348,8 @@ export function logQualityViolations(agentId: string, message: string): void {
 export async function enforceAllTiers(agentId: string, action: string, message: string): Promise<EnforcementResult[]> {
   const results: EnforcementResult[] = [];
 
-  const infraAllowed = await enforceInfrastructureBans(agentId, action);
+  const infraDecision = await evaluateInfrastructureDecision(agentId, action);
+  const infraAllowed = infraDecision.allowed;
   results.push({
     tier: 'infrastructure',
     passed: infraAllowed,
@@ -258,9 +358,9 @@ export async function enforceAllTiers(agentId: string, action: string, message: 
       : [
           {
             tier: 'infrastructure',
-            rule: `Action blocked: ${action}`,
-            enforcement: 'infrastructure',
-            details: 'Matched an infrastructure hard ban'
+            rule: infraDecision.rule ?? `Action blocked: ${action}`,
+            enforcement: infraDecision.enforcement ?? 'infrastructure',
+            details: infraDecision.source === 'boundary' ? 'Matched a boundary policy' : 'Matched an infrastructure hard ban'
           }
         ],
     severity: 'block'
