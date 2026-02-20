@@ -171,7 +171,7 @@ export async function proxyBridgeSse(
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      if (!res.writable || res.writableEnded) break;
+      if (res.writableEnded || (res as { writable?: boolean }).writable === false) break;
       if (value && value.length > 0) {
         res.write(Buffer.from(value));
       }
