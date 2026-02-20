@@ -80,6 +80,33 @@ ventureos/
 
 Roadmap tracking lives in GitHub issue [#138: Roadmap: VentureOS delivery plan (living)](https://github.com/zachyzissou/ventureos/issues/138). That issue is the source of truth; this section is a high-level snapshot.
 
+## Nexus 2.0 Trackable Milestones
+
+Nexus-native execution plan and clarifications:
+- Plan: [docs/NEXUS_2_0_MASTER_PLAN.md](docs/NEXUS_2_0_MASTER_PLAN.md)
+- Clarifications: [docs/NEXUS_2_0_QA_CLARIFICATIONS.md](docs/NEXUS_2_0_QA_CLARIFICATIONS.md)
+- Planning PR: [#283](https://github.com/zachyzissou/ventureos/pull/283)
+
+Implementation milestones (visible incremental rollout):
+- [M1 / #284 Contract Foundation](https://github.com/zachyzissou/ventureos/issues/284)
+- [M2 / #285 Nexus Authority Plane](https://github.com/zachyzissou/ventureos/issues/285)
+- [M3 / #286 Competition Engine](https://github.com/zachyzissou/ventureos/issues/286)
+- [M4 / #287 Observability + Replay Authority](https://github.com/zachyzissou/ventureos/issues/287)
+- [M5 / #288 Deployment Safety (Single Token First)](https://github.com/zachyzissou/ventureos/issues/288)
+- [M6 / #289 Production Readiness Report](https://github.com/zachyzissou/ventureos/issues/289)
+
+### Milestone status board
+
+| Milestone | Scope | Issue | Status |
+|---|---|---|---|
+| M1 | Contract Foundation | [#284](https://github.com/zachyzissou/ventureos/issues/284) | Open |
+| M2 | Nexus Authority Plane | [#285](https://github.com/zachyzissou/ventureos/issues/285) | Open |
+| M3 | Competition Engine | [#286](https://github.com/zachyzissou/ventureos/issues/286) | Open |
+| M4 | Observability + Replay Authority | [#287](https://github.com/zachyzissou/ventureos/issues/287) | Open |
+| M5 | Deployment Safety | [#288](https://github.com/zachyzissou/ventureos/issues/288) | Open |
+| M6 | Production Readiness Report | [#289](https://github.com/zachyzissou/ventureos/issues/289) | Open |
+
+
 ### Now (active)
 
 - Phase 5.8 server-side replay endpoints — promote 501 stubs to real implementations (#17)
