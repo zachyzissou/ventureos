@@ -1299,6 +1299,175 @@ function getLatestKpiSummary(): {
   };
 }
 
+function getVentureosKpis(days = 7): {
+  updatedAt: number;
+  latest: {
+    date: string;
+    successRate: number | null;
+    p95s: number | null;
+    handoffSuccessRate: null;
+    backupAgeH: number | null;
+    slo: Record<string, unknown> | null;
+    sloStatus: {
+      status: 'ok' | 'warn' | 'bad';
+      emoji: string;
+      checks: Array<{ metric: string; status: 'ok' | 'warn' | 'bad'; value: number; target: number }>;
+    } | null;
+  } | null;
+  baseline: {
+    successRate: number | null;
+    p95s: number | null;
+    backupAgeH: number | null;
+  };
+  history: Array<{
+    date: string;
+    successRate: number | null;
+    p50s: number | null;
+    p95s: number | null;
+    p99s: number | null;
+    backupAgeH: number | null;
+  }>;
+} {
+  const files = listKpiFiles();
+  const slice = files.slice(-Math.max(1, Math.min(days, 60)));
+  const history: Array<{
+    date: string;
+    successRate: number | null;
+    p50s: number | null;
+    p95s: number | null;
+    p99s: number | null;
+    backupAgeH: number | null;
+    raw?: Record<string, unknown>;
+  }> = [];
+
+  for (const fileName of slice) {
+    const row = safeReadJson(path.join(KPI_DIR, fileName), null) as Record<string, unknown> | null;
+    if (!row) continue;
+    const overall = (row.overall ?? {}) as Record<string, unknown>;
+    const latency = (overall.latency_ms ?? {}) as Record<string, unknown>;
+    const backup = (overall.backup ?? {}) as Record<string, unknown>;
+    history.push({
+      date: String(row.date ?? fileName.replace('.json', '')),
+      successRate: typeof overall.success_rate === 'number' ? overall.success_rate : null,
+      p50s: typeof latency.p50 === 'number' ? latency.p50 / 1000 : null,
+      p95s: typeof latency.p95 === 'number' ? latency.p95 / 1000 : null,
+      p99s: typeof latency.p99 === 'number' ? latency.p99 / 1000 : null,
+      backupAgeH: typeof backup.age_hours === 'number' ? backup.age_hours : null,
+      raw: row,
+    });
+  }
+
+  const mean = (values: Array<number | null>): number | null => {
+    const valid = values.filter((v): v is number => typeof v === 'number' && !Number.isNaN(v));
+    if (valid.length === 0) return null;
+    return valid.reduce((a, b) => a + b, 0) / valid.length;
+  };
+
+  const latest = history.length > 0 ? history[history.length - 1] : null;
+  const baselineWindow = history.slice(0, Math.max(0, history.length - 1));
+  const baseline = {
+    successRate: mean(baselineWindow.map((row) => row.successRate)),
+    p95s: mean(baselineWindow.map((row) => row.p95s)),
+    backupAgeH: mean(baselineWindow.map((row) => row.backupAgeH)),
+  };
+
+  let latestOut: {
+    date: string;
+    successRate: number | null;
+    p95s: number | null;
+    handoffSuccessRate: null;
+    backupAgeH: number | null;
+    slo: Record<string, unknown> | null;
+    sloStatus: {
+      status: 'ok' | 'warn' | 'bad';
+      emoji: string;
+      checks: Array<{ metric: string; status: 'ok' | 'warn' | 'bad'; value: number; target: number }>;
+    } | null;
+  } | null = null;
+
+  if (latest) {
+    const raw = latest.raw ?? {};
+    const slo = (raw.slo ?? null) as Record<string, unknown> | null;
+    const checks: Array<{ metric: string; status: 'ok' | 'warn' | 'bad'; value: number; target: number }> = [];
+
+    const successTarget = typeof slo?.success_rate === 'number' ? slo.success_rate : null;
+    if (successTarget != null && latest.successRate != null) {
+      checks.push({
+        metric: 'success_rate',
+        status:
+          latest.successRate < successTarget
+            ? 'bad'
+            : latest.successRate < successTarget + 0.01
+              ? 'warn'
+              : 'ok',
+        value: latest.successRate,
+        target: successTarget,
+      });
+    }
+
+    const p95Target = typeof slo?.p95_latency_s === 'number' ? slo.p95_latency_s : null;
+    if (p95Target != null && latest.p95s != null) {
+      checks.push({
+        metric: 'p95_latency_s',
+        status: latest.p95s > p95Target ? 'bad' : latest.p95s > p95Target * 0.8 ? 'warn' : 'ok',
+        value: latest.p95s,
+        target: p95Target,
+      });
+    }
+
+    const backupTarget = typeof slo?.backup_age_h === 'number' ? slo.backup_age_h : null;
+    if (backupTarget != null && latest.backupAgeH != null) {
+      checks.push({
+        metric: 'backup_age_h',
+        status:
+          latest.backupAgeH > backupTarget
+            ? 'bad'
+            : latest.backupAgeH > backupTarget * 0.8
+              ? 'warn'
+              : 'ok',
+        value: latest.backupAgeH,
+        target: backupTarget,
+      });
+    }
+
+    const worst =
+      checks.some((check) => check.status === 'bad')
+        ? 'bad'
+        : checks.some((check) => check.status === 'warn')
+          ? 'warn'
+          : 'ok';
+    latestOut = {
+      date: latest.date,
+      successRate: latest.successRate,
+      p95s: latest.p95s,
+      handoffSuccessRate: null,
+      backupAgeH: latest.backupAgeH,
+      slo,
+      sloStatus: checks.length
+        ? {
+            status: worst,
+            emoji: worst === 'ok' ? '✅' : worst === 'warn' ? '⚠️' : '🔴',
+            checks,
+          }
+        : null,
+    };
+  }
+
+  return {
+    updatedAt: Date.now(),
+    latest: latestOut,
+    baseline,
+    history: history.map((row) => ({
+      date: row.date,
+      successRate: row.successRate,
+      p50s: row.p50s,
+      p95s: row.p95s,
+      p99s: row.p99s,
+      backupAgeH: row.backupAgeH,
+    })),
+  };
+}
+
 function buildBridgeTelemetrySnapshot(): BridgeTelemetrySnapshot {
   const now = Date.now();
   const stats = buildSystemStats();
@@ -1543,6 +1712,13 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/bridge/ventureos-agents') {
     logAudit('ventureos_agents', req);
     sendJson(res, getVentureosAgents());
+    return;
+  }
+
+  if (pathname === '/api/bridge/ventureos-kpis') {
+    const days = clampInt(url.searchParams.get('days'), 1, 60, 7);
+    logAudit('ventureos_kpis', req, `days=${days}`);
+    sendJson(res, getVentureosKpis(days));
     return;
   }
 
