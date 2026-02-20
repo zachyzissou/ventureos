@@ -106,7 +106,10 @@ function parseRpgStats(resp: RpgStatsResponse): RpgStats {
 
 export function createApiClient(
   opts: ApiClientOptions,
-  scheduler: Scheduler = { setTimeout, clearTimeout }
+  scheduler: Scheduler = {
+    setTimeout: (fn: () => void, ms: number) => globalThis.setTimeout(fn, ms),
+    clearTimeout: (id: TimeoutId) => globalThis.clearTimeout(id),
+  }
 ): ApiClient {
   let timer: TimeoutId | null = null;
   let stopped = true;
