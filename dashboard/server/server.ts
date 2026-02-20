@@ -2831,18 +2831,46 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
   if (req.url === '/api/ventureos-agents') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/ventureos-agents',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getVentureosAgents());
     return;
   }
   if (req.url === '/api/workflow-patterns') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/workflow-patterns',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getWorkflowPatterns());
     return;
   }
   if (req.url === '/api/mission-control') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/mission-control',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getMissionControl());
     return;
   }
   if (req.url === '/api/observations-index') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/observations-index',
+        forwardQuery: true,
+      })
+    )
+      return;
     const obs = getAllObservations();
     sendJson(res, {
       updatedAt: obs.updatedAt,
@@ -2853,6 +2881,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
   if (req.url && req.url.startsWith('/api/observations?')) {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/observations',
+        forwardQuery: true,
+      })
+    )
+      return;
     const params = new URL(req.url, 'http://localhost').searchParams;
     const q: string = params.get('q') ?? '';
     const tag: string = params.get('tag') ?? '';
@@ -2970,6 +3005,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
 
   if (req.url === '/api/sessions') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/sessions',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getSessionsJson());
     return;
   }
@@ -3021,10 +3063,24 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 
   // VentureOS API aliases
   if (req.url === '/api/ventureos-mission-control') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/mission-control',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getMissionControl());
     return;
   }
   if (req.url === '/api/ventureos-workflow-patterns') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/workflow-patterns',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getWorkflowPatterns());
     return;
   }
@@ -3043,6 +3099,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
   if (req.url && req.url.startsWith('/api/ventureos-observation?')) {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/observation',
+        forwardQuery: true,
+      })
+    )
+      return;
     try {
       const params = new URL(req.url, 'http://localhost').searchParams;
       const rel: string = params.get('path') ?? '';
@@ -3060,6 +3123,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
 
   if (req.url && req.url.startsWith('/api/session-messages?')) {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/session-messages',
+        forwardQuery: true,
+      })
+    )
+      return;
     const params = new URL(req.url, 'http://localhost').searchParams;
     const rawId: string = params.get('id') ?? '';
     const sessionId: string = rawId.replace(/[^a-zA-Z0-9\-_:.]/g, '');
@@ -3120,18 +3190,46 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
   if (req.url === '/api/crons') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/crons',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getCronJobs());
     return;
   }
   if (req.url === '/api/git') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/git',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getGitActivity());
     return;
   }
   if (req.url === '/api/services') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/services',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getServicesStatus());
     return;
   }
   if (req.url === '/api/memory') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/memory',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getMemoryFiles());
     return;
   }
