@@ -47,6 +47,29 @@ async function makeTempDb(): Promise<{ dbPath: string; db: Database.Database; cl
   return { dbPath, db, cleanup };
 }
 
+async function makeTempDbMinimalKhala(): Promise<{ dbPath: string; db: Database.Database; cleanup: () => Promise<void> }> {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ventureos-affinity-min-'));
+  const dbPath = path.join(dir, 'test.db');
+  const db = new Database(dbPath);
+
+  db.exec(`
+    CREATE TABLE khala_network (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_a TEXT NOT NULL,
+      agent_b TEXT NOT NULL,
+      affinity REAL NOT NULL,
+      UNIQUE(agent_a, agent_b)
+    );
+  `);
+
+  const cleanup = async () => {
+    db.close();
+    await fs.rm(dir, { recursive: true, force: true });
+  };
+
+  return { dbPath, db, cleanup };
+}
+
 describe('AffinityManager', () => {
   it('returns default affinity when bond is missing', async () => {
     const { db, cleanup } = await makeTempDb();
@@ -98,6 +121,22 @@ describe('AffinityManager', () => {
     expect(stats.pairCount).toBe(3);
     expect(stats.lowest).toBe(0.4);
     expect(stats.lowestPair.sort()).toEqual(['oracle', 'synth']);
+
+    am.close();
+    await cleanup();
+  });
+
+  it('updates affinity against minimal khala_network schema (legacy compatibility)', async () => {
+    const { db, cleanup } = await makeTempDbMinimalKhala();
+    const am = new AffinityManager({ defaultAffinity: 0.7 }, db);
+
+    const after = am.recordHandoffOutcome({ from: 'oracle', to: 'atlas', success: true });
+    expect(after).toBeGreaterThan(0.7);
+
+    const row = db
+      .prepare('SELECT affinity FROM khala_network WHERE agent_a = ? AND agent_b = ?')
+      .get('atlas', 'oracle') as any;
+    expect(row.affinity).toBeCloseTo(after);
 
     am.close();
     await cleanup();

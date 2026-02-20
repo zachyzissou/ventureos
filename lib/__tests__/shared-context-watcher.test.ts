@@ -299,6 +299,8 @@ describe('SharedContextWatcher — File Events', () => {
 
     watcher.on('change', (evt: SharedContextEvent) => events.push(evt));
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    // Ensure FS watcher has attached before first write (avoids CI race on macOS/Linux).
+    await waitForEvent(100);
 
     // Create a file
     fs.writeFileSync(path.join(teamDir, 'feedback', 'note.md'), 'Hello from nexus');
