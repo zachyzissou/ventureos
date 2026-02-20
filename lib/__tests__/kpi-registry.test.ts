@@ -25,7 +25,7 @@ import path from 'path';
 // Test Database Setup
 // ============================================================================
 
-const DB_PATH = path.resolve(process.env.HOME!, 'clawd/agents/ventureos-rpg.db');
+const DB_PATH = process.env.VENTUREOS_RPG_DB ?? path.resolve(process.env.HOME!, 'clawd/agents/ventureos-rpg.db');
 
 describe('KPI Registry - Definition Loading', () => {
   test('loadKPIDefinition - loads valid KPI definition', async () => {
