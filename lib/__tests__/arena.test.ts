@@ -69,4 +69,38 @@ describe('competition arena', () => {
     expect(out.accepted).toBe(false);
     expect(out.acceptanceReason).toMatch(/authority/i);
   });
+
+  test('handles edge-case speed metadata and deterministic tie-breaking', () => {
+    const out = runArena({
+      mission: makeMission(),
+      actor: { id: 'nexus', type: 'nexus' },
+      candidates: [
+        { candidateId: 'c-a', agentId: 'zeta', output: '', metadata: { speedScore: 'fast' } },
+        { candidateId: 'c-b', agentId: 'alpha', output: '', metadata: { speedScore: -5 } },
+        { candidateId: 'c-c', agentId: 'beta', output: '', metadata: { speedScore: 500 } },
+      ],
+      rubric: { qualityWeight: 0.4, reliabilityWeight: 0.25, safetyWeight: 0.25, speedWeight: 0.1 },
+    });
+
+    expect(out.judged.scorecards).toHaveLength(3);
+    // Should not emit NaN values for speed/total
+    for (const s of out.judged.scorecards) {
+      expect(Number.isNaN(s.speed)).toBe(false);
+      expect(Number.isNaN(s.total)).toBe(false);
+    }
+  });
+
+  test('throws on invalid rubric weights', () => {
+    expect(() =>
+      runArena({
+        mission: makeMission(),
+        actor: { id: 'nexus', type: 'nexus' },
+        candidates: [
+          { candidateId: 'c1', agentId: 'oracle', output: 'x' },
+          { candidateId: 'c2', agentId: 'atlas', output: 'y' },
+        ],
+        rubric: { qualityWeight: 0.5, reliabilityWeight: 0.5, safetyWeight: 0.5, speedWeight: 0.5 },
+      })
+    ).toThrow(/weights must sum to 1.0/i);
+  });
 });

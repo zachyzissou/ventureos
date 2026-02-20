@@ -19,6 +19,7 @@ export interface ArenaRunResult {
 }
 
 export function runArena(input: ArenaRunInput): ArenaRunResult {
+  // TODO(M4): include mission context in replay/observability events for each judged round.
   const judged = judgeSubmissions(input.candidates, input.rubric);
 
   if (!input.acceptWinner) {

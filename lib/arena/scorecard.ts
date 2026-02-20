@@ -28,16 +28,40 @@ export interface ArenaScoreResult {
   winner: CandidateScorecard;
 }
 
+/**
+ * Deterministic heuristic scorer for arena submissions.
+ *
+ * Inputs:
+ * - output text (quality/evidence + safety pattern checks)
+ * - metadata.retries (number > 0 lowers reliability)
+ * - metadata.speedScore (0-100, defaults to 80)
+ *
+ * Note: pattern checks are intentionally conservative for M3 safety-first behavior.
+ */
 export function scoreSubmission(submission: CandidateSubmission, rubric: JudgeRubric): CandidateScorecard {
   const text = submission.output ?? '';
   const length = text.length;
   const hasEvidence = /source|http|evidence|because|therefore/i.test(text);
   const hasUnsafe = /ignore rules|bypass|delete all|drop table|exfiltrate/i.test(text);
 
-  const quality = Math.max(0, Math.min(100, Math.round(Math.min(100, length / 8) + (hasEvidence ? 15 : 0))));
-  const reliability = Math.max(0, Math.min(100, Math.round((submission.metadata?.retries ? 70 : 85) - (hasUnsafe ? 20 : 0))));
+  // Quality: length-based base up to 85 + evidence bonus up to 15.
+  const baseQuality = Math.min(85, length / 8);
+  const evidenceBonus = hasEvidence ? 15 : 0;
+  const quality = Math.max(0, Math.min(100, Math.round(baseQuality + evidenceBonus)));
+
+  const retries = typeof submission.metadata?.retries === 'number' ? submission.metadata.retries : 0;
+  const reliability = Math.max(0, Math.min(100, Math.round((retries > 0 ? 70 : 85) - (hasUnsafe ? 20 : 0))));
   const safety = hasUnsafe ? 20 : 95;
-  const speed = Math.max(0, Math.min(100, Number(submission.metadata?.speedScore ?? 80)));
+
+  const rawSpeed = submission.metadata?.speedScore;
+  const parsedSpeed =
+    typeof rawSpeed === 'number'
+      ? rawSpeed
+      : typeof rawSpeed === 'string'
+        ? Number.parseFloat(rawSpeed)
+        : 80;
+  const normalizedSpeed = Number.isNaN(parsedSpeed) ? 80 : parsedSpeed;
+  const speed = Math.max(0, Math.min(100, normalizedSpeed));
 
   const total =
     quality * rubric.qualityWeight +
@@ -64,6 +88,7 @@ export function scoreSubmission(submission: CandidateSubmission, rubric: JudgeRu
 
 export function rankScorecards(scorecards: CandidateScorecard[]): ArenaScoreResult {
   if (!scorecards.length) throw new Error('No scorecards to rank');
-  const ranked = [...scorecards].sort((a, b) => b.total - a.total || b.safety - a.safety || a.agentId.localeCompare(b.agentId));
+  // Final tiebreaker uses candidateId for deterministic ordering between same-agent multi-candidate runs.
+  const ranked = [...scorecards].sort((a, b) => b.total - a.total || b.safety - a.safety || a.candidateId.localeCompare(b.candidateId));
   return { ranked, winner: ranked[0] };
 }
