@@ -35,8 +35,8 @@ type Deps = {
 };
 
 const DEFAULT_SCHEDULER: Scheduler = {
-  setTimeout,
-  clearTimeout
+  setTimeout: (fn: () => void, ms: number) => globalThis.setTimeout(fn, ms),
+  clearTimeout: (id: TimeoutId) => globalThis.clearTimeout(id),
 };
 
 const DEFAULT_DEPS: Deps = {
