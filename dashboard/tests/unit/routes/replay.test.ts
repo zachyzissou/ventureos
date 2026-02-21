@@ -390,6 +390,100 @@ describe('tactical-map replay routes', () => {
     expect(res._statusCode).toBe(400);
   });
 
+  it('builds replay-only route/verdict explanation from authority timeline events', async () => {
+    const dataDir = path.join(baseTmp, 'explain');
+    writeSessionDetail(dataDir, 'auth-sess', {
+      id: 'auth-sess',
+      events: [
+        { type: 'route.evaluated', ts: 1000, details: { phase: 'verify' } },
+        { type: 'verdict.generated', ts: 1010, details: { winnerAgentId: 'oracle' } },
+        { type: 'arbitration.accepted', ts: 1020, details: { acceptedBy: 'nexus' } },
+      ],
+    });
+
+    const req = mockRequest({
+      method: 'GET',
+      url: '/api/replay/explain?sessionId=auth-sess',
+    }) as any;
+    const { res } = await runRoute(req, dataDir);
+    expect(res._statusCode).toBe(200);
+    const body = parseJsonBody<{
+      explanation: string;
+      timeline: Array<{ type: string }>;
+      totalCount: number;
+    }>(res);
+    expect(body.totalCount).toBe(3);
+    expect(body.timeline[0].type).toBe('route.evaluated');
+    expect(body.explanation).toContain('Route event');
+    expect(body.explanation).toContain('Verdict event');
+    expect(body.explanation).toContain('Arbitration event');
+  });
+
+  it('returns replay control-health metrics for a session', async () => {
+    const dataDir = path.join(baseTmp, 'control-health');
+    writeSessionDetail(dataDir, 'health-sess', {
+      id: 'health-sess',
+      events: [
+        { type: 'route.evaluated', ts: 1000 },
+        { type: 'verdict.generated', ts: 1010 },
+        { type: 'arbitration.accepted', ts: 1020 },
+        { type: 'contract.gate.rejected', ts: 1030, reason: 'policy' },
+      ],
+    });
+
+    const req = mockRequest({
+      method: 'GET',
+      url: '/api/replay/control-health?sessionId=health-sess',
+    }) as any;
+    const { res } = await runRoute(req, dataDir);
+    expect(res._statusCode).toBe(200);
+    const body = parseJsonBody<{
+      health: {
+        status: string;
+        counts: { routeDecisions: number; verdicts: number; arbitrationAccepted: number; contractFailures: number };
+        incidents: Array<{ type: string }>;
+      };
+    }>(res);
+    expect(body.health.counts.routeDecisions).toBe(1);
+    expect(body.health.counts.verdicts).toBe(1);
+    expect(body.health.counts.arbitrationAccepted).toBe(1);
+    expect(body.health.counts.contractFailures).toBe(1);
+    expect(body.health.status).toBe('at-risk');
+    expect(body.health.incidents.some((i) => i.type === 'contract.gate.rejected')).toBe(true);
+  });
+
+  it('aggregates replay control-health across recent sessions when sessionId is omitted', async () => {
+    const dataDir = path.join(baseTmp, 'control-health-multi');
+    writeIndex(dataDir, [
+      { id: 's1', name: 'S1', startedAt: 1000 },
+      { id: 's2', name: 'S2', startedAt: 2000 },
+    ]);
+    writeSessionDetail(dataDir, 's1', {
+      id: 's1',
+      events: [{ type: 'arbitration.accepted', ts: 1000 }],
+    });
+    writeSessionDetail(dataDir, 's2', {
+      id: 's2',
+      events: [{ type: 'arbitration.rejected', ts: 2000 }],
+    });
+
+    const req = mockRequest({
+      method: 'GET',
+      url: '/api/replay/control-health?sessionLimit=5',
+    }) as any;
+    const { res } = await runRoute(req, dataDir);
+    expect(res._statusCode).toBe(200);
+    const body = parseJsonBody<{
+      scope: string;
+      sessionIds: string[];
+      health: { counts: { arbitrationAccepted: number; arbitrationRejected: number } };
+    }>(res);
+    expect(body.scope).toBe('recent-sessions');
+    expect(body.sessionIds.length).toBeGreaterThanOrEqual(2);
+    expect(body.health.counts.arbitrationAccepted).toBe(1);
+    expect(body.health.counts.arbitrationRejected).toBe(1);
+  });
+
   // ── TIMESTAMP LOOKUP ─────────────────────────────────────────────────────
 
   it('finds session covering a timestamp', async () => {

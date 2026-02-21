@@ -422,6 +422,37 @@ describe('Dashboard HTTP smoke tests', () => {
     expect(unified.total).toBeGreaterThanOrEqual(1);
     expect(Array.isArray(unified.results)).toBe(true);
     expect(unified.results.some((r: { source?: string }) => r.source === 'obsidian')).toBe(true);
+
+    const replayCreateRes = await fetch(`${BASE_URL}/api/replay/sessions`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: 'smoke-authority-1',
+        name: 'Smoke Authority Replay',
+        startedAt: Date.now() - 1000,
+        endedAt: Date.now(),
+        events: [
+          { type: 'route.evaluated', ts: Date.now() - 900, details: { phase: 'verify' } },
+          { type: 'verdict.generated', ts: Date.now() - 700, details: { winnerAgentId: 'nexus' } },
+          { type: 'arbitration.accepted', ts: Date.now() - 500, details: { acceptedBy: 'nexus' } },
+        ],
+      }),
+    });
+    expect(replayCreateRes.status).toBe(201);
+
+    const replayExplainRes = await fetch(`${BASE_URL}/api/replay/explain?sessionId=smoke-authority-1`, {
+      headers: authHeaders(),
+    });
+    expect(replayExplainRes.status).toBe(200);
+    const replayExplain = await replayExplainRes.json();
+    expect(replayExplain.explanation).toContain('Route event');
+
+    const replayHealthRes = await fetch(`${BASE_URL}/api/replay/control-health?sessionId=smoke-authority-1`, {
+      headers: authHeaders(),
+    });
+    expect(replayHealthRes.status).toBe(200);
+    const replayHealth = await replayHealthRes.json();
+    expect(replayHealth.health?.counts?.arbitrationAccepted).toBeGreaterThanOrEqual(1);
   });
 
   it('reports system metrics and redirects unauthenticated dashboard access', async () => {

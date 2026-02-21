@@ -570,6 +570,58 @@ Connection: keep-alive
 
 **Auth for SSE:** same as all API routes (Bearer header or HttpOnly cookie). Query-parameter token auth is disabled.
 
+### Replay Authority Endpoints
+
+### `GET /api/replay/explain?sessionId=<id>&limit=200&offset=0`
+
+Returns replay-only route/verdict/arbitration timeline and derived explanation text for one session.
+
+Response shape:
+```json
+{
+  "ok": true,
+  "sessionId": "replay-123",
+  "explanation": "Route event: ... Verdict event: ... Arbitration event: ...",
+  "timeline": [
+    { "sessionId": "replay-123", "ts": 1700000000000, "type": "route.evaluated", "missionId": "m-1", "summary": "..." }
+  ],
+  "totalCount": 3,
+  "limit": 200,
+  "offset": 0
+}
+```
+
+### `GET /api/replay/control-health?sessionId=<id>`
+
+Returns control-health summary for one replay session.
+
+### `GET /api/replay/control-health?sessionLimit=20`
+
+Returns aggregated control-health summary across recent replay sessions.
+
+Response shape:
+```json
+{
+  "ok": true,
+  "scope": "session",
+  "sessionIds": ["replay-123"],
+  "health": {
+    "status": "healthy",
+    "counts": {
+      "routeDecisions": 4,
+      "verdicts": 4,
+      "arbitrationAccepted": 3,
+      "arbitrationRejected": 1,
+      "contractFailures": 0
+    },
+    "arbitrationResolutionRate": 0.75,
+    "incidents": [],
+    "evaluatedEventCount": 9
+  },
+  "updatedAt": 1700000000000
+}
+```
+
 ---
 
 ## Action Endpoints
