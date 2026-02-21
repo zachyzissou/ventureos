@@ -21,6 +21,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 - [Code Factory Endpoints](#code-factory-endpoints)
 - [WebMCP Endpoints](#webmcp-endpoints)
 - [Visual Explainer Endpoints](#visual-explainer-endpoints)
+- [Proposal Lifecycle Endpoints](#proposal-lifecycle-endpoints)
 - [Schemas](#schemas)
 
 ---
@@ -1200,6 +1201,93 @@ The rendered HTML includes:
 
 ---
 
+## Proposal Lifecycle Endpoints
+
+Closed-loop proposal → mission → step orchestration with human approval gate and live event streaming (Issue #227).
+
+### `POST /api/proposal-lifecycle/proposals`
+
+Submit a structured work proposal from an agent.
+
+**Request:**
+```json
+{
+  "title": "Ship partner onboarding flow",
+  "goal": "Implement and verify onboarding automation",
+  "submittedByAgentId": "echo",
+  "estimatedCostUsd": 8.5,
+  "requiredSkills": ["backend", "qa", "docs"],
+  "riskAssessment": {
+    "level": "medium",
+    "summary": "API contract drift risk",
+    "mitigations": ["contract tests", "staged rollout"]
+  },
+  "steps": [
+    {
+      "stepId": "build",
+      "title": "Implement workflow",
+      "description": "Create onboarding orchestration",
+      "agentId": "synth"
+    },
+    {
+      "stepId": "verify",
+      "title": "Run validation",
+      "description": "Execute QA + acceptance tests",
+      "agentId": "verifier",
+      "dependsOnStepIds": ["build"]
+    }
+  ]
+}
+```
+
+### `GET /api/proposal-lifecycle/proposals`
+
+List proposals (`?status=pending|approved|rejected|needs_changes&limit=50`).
+
+### `POST /api/proposal-lifecycle/proposals/:proposalId/review`
+
+Human review decision. Approval is required before mission execution.
+
+**Request:**
+```json
+{
+  "action": "approve",
+  "reviewerId": "human",
+  "notes": "Approved for execution",
+  "autoStart": true
+}
+```
+
+### `GET /api/proposal-lifecycle/missions`
+
+List derived missions (`?status=pending|running|completed|failed|blocked`).
+
+### `GET /api/proposal-lifecycle/missions/:missionId`
+
+Get mission detail including step states and current step pointer.
+
+### `POST /api/proposal-lifecycle/missions/:missionId/start`
+
+Manually start an approved mission (if not auto-started during review).
+
+### `GET /api/proposal-lifecycle/events`
+
+Query lifecycle events (`?missionId=...&proposalId=...&limit=100`).
+
+### `GET /api/proposal-lifecycle/summary`
+
+Dashboard summary payload:
+- pending proposal queue
+- active proposal missions
+- recent event timeline
+
+### `GET /api/proposal-lifecycle/events/stream`
+
+WebSocket stream endpoint for real-time lifecycle events.
+If requested over plain HTTP, returns `426 Upgrade Required`.
+
+---
+
 ## Rate Limiting
 
 Per-IP, per-endpoint sliding window rate limits:
@@ -1215,6 +1303,7 @@ Per-IP, per-endpoint sliding window rate limits:
 | `/api/code-factory*` | 20 req | 60s |
 | `/api/webmcp*` | 30 req | 60s |
 | `/api/visual-explainer*` | 30 req | 60s |
+| `/api/proposal-lifecycle*` | 30 req | 60s |
 | `/api/ventureos-agents` | 30 req | 60s |
 | `/api/ventureos-kpis` | 30 req | 60s |
 | `/api/rpg/*` | 20 req | 60s |

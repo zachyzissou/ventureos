@@ -42,6 +42,7 @@ export {
 } from '../task-board-events.js';
 export type { SseSubscriptionFilter } from '../task-board-events.js';
 export { handleMemoryState } from './memory-state.js';
+export { handleProposalLifecycle, handleProposalLifecycleUpgrade } from './proposal-lifecycle.js';
 export { handleSharedContext } from './shared-context.js';
 export {
   readAlertConfig,
