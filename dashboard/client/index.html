@@ -4795,6 +4795,11 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
       </div>
 
       <div class="card mb-24">
+        <h3 class="card-title">Living Files Freshness</h3>
+        <div id="mcLivingFiles"></div>
+      </div>
+
+      <div class="card mb-24">
         <h3 class="card-title">Team Status</h3>
         <div id="mcTeamGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
       </div>
@@ -6478,6 +6483,7 @@ let workflowPatterns = null;
 let ventureosAgents = null;
 let missionControl = null;
 let proposalLifecycleSummary = null;
+let livingFilesSummary = null;
 let schedulerJobs = [];
 let ventureFeatureFlags = { officeViewEnabled: false, updatedAt: 0 };
 let missionOfficeTasks = [];
@@ -8169,19 +8175,21 @@ function renderBarChart(el, items, opts = {}) {
 
 async function fetchMissionControlNow() {
   try {
-    const [mc, kpis, agents, scheduler, flags, lifecycle] = await Promise.all([
+    const [mc, kpis, agents, scheduler, flags, lifecycle, living] = await Promise.all([
       fetchJson('/api/ventureos-mission-control'),
       fetchJson('/api/ventureos-kpis?days=7'),
       fetchJson('/api/ventureos-agents'),
       fetchJson('/api/scheduler-jobs'),
       fetchJson('/api/ventureos-feature-flags').catch(() => null),
       fetchJson('/api/proposal-lifecycle/summary').catch(() => null),
+      fetchJson('/api/living-files/dashboard').catch(() => null),
     ]);
     missionControl = mc;
     ventureosKpis = kpis;
     ventureosAgents = agents;
     schedulerJobs = Array.isArray(scheduler) ? scheduler : [];
     proposalLifecycleSummary = lifecycle?.summary || null;
+    livingFilesSummary = living?.summary || null;
     if (flags && typeof flags === 'object') {
       ventureFeatureFlags = {
         officeViewEnabled: !!flags.officeViewEnabled,
@@ -8219,10 +8227,11 @@ async function fetchVentureosNow() {
 
 async function fetchAgentsNow() {
   try {
-    const [agents, mc, lifecycle] = await Promise.all([
+    const [agents, mc, lifecycle, living] = await Promise.all([
       fetchJson('/api/ventureos-agents'),
       fetchJson('/api/ventureos-mission-control').catch(() => null),
       fetchJson('/api/proposal-lifecycle/summary').catch(() => null),
+      fetchJson('/api/living-files/dashboard').catch(() => null),
     ]);
     ventureosAgents = agents;
     if (mc && typeof mc === 'object' && !mc.error) {
@@ -8230,6 +8239,9 @@ async function fetchAgentsNow() {
     }
     if (lifecycle && lifecycle.summary) {
       proposalLifecycleSummary = lifecycle.summary;
+    }
+    if (living && living.summary) {
+      livingFilesSummary = living.summary;
     }
     updateDashboard();
   } catch (e) {
@@ -8683,6 +8695,43 @@ function updateMissionControl() {
       </div>`;
     }).join('');
     lifecycleEl.innerHTML = cards || '<div class="empty-state-text">No active proposal missions</div>';
+  }
+
+  const livingEl = document.getElementById('mcLivingFiles');
+  if (livingEl) {
+    const summary = livingFilesSummary || {};
+    const counts = summary.counts || {};
+    const countRow = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <span class="tb-badge" style="background:rgba(34,197,94,0.18);color:var(--green);">🟢 ${counts.fresh ?? 0} fresh</span>
+      <span class="tb-badge" style="background:rgba(250,204,21,0.18);color:var(--yellow);">🟡 ${counts.warning ?? 0} warning</span>
+      <span class="tb-badge" style="background:rgba(239,68,68,0.18);color:var(--red);">🔴 ${(counts.stale ?? 0) + (counts.missing ?? 0)} stale/missing</span>
+      <span class="tb-badge" style="background:rgba(148,163,184,0.18);color:var(--text-muted);">⚪ ${counts.static ?? 0} static</span>
+      <span class="tb-badge" style="background:rgba(99,102,241,0.18);color:var(--accent);">🚨 ${counts.openTriggers ?? 0} open triggers</span>
+    </div>`;
+
+    const files = (summary.files || []).slice(0, 12);
+    const rows = files.map((row) => {
+      const status = (row.status || '').toLowerCase();
+      const badge = status === 'fresh'
+        ? { emoji: '🟢', color: 'var(--green)' }
+        : status === 'warning'
+          ? { emoji: '🟡', color: 'var(--yellow)' }
+          : status === 'static'
+            ? { emoji: '⚪', color: 'var(--text-muted)' }
+            : { emoji: '🔴', color: 'var(--red)' };
+      const ageText = typeof row.ageHours === 'number' ? `${row.ageHours.toFixed(1)}h` : '—';
+      const owner = row.entry?.ownerAgentId || 'agent';
+      const pathText = row.entry?.filePath || '';
+      const cadence = row.expectedUpdateHours != null ? `${row.expectedUpdateHours}h` : '--';
+      return `<div style="display:grid;grid-template-columns:120px 1fr 120px 120px;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+        <div class="mono" style="color:${badge.color};font-weight:800;">${badge.emoji} ${escapeHtml(status.toUpperCase() || '--')}</div>
+        <div class="mono" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(pathText)}">${escapeHtml(pathText)}</div>
+        <div style="color:var(--text-muted);">owner ${escapeHtml(owner)}</div>
+        <div style="color:var(--text-muted);">age ${escapeHtml(ageText)} / ${escapeHtml(cadence)}</div>
+      </div>`;
+    }).join('');
+
+    livingEl.innerHTML = countRow + (rows || '<div class="empty-state-text">No living files registered</div>');
   }
 
   const schedulerEl = document.getElementById('mcSchedulerJobs');

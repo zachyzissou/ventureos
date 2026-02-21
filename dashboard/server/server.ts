@@ -123,6 +123,7 @@ import { handleCodeFactory } from './routes/code-factory.js';
 import { handleWebMcp } from './routes/webmcp.js';
 import { handleVisualExplainer } from './routes/visual-explainer.js';
 import { handleProposalLifecycle, handleProposalLifecycleUpgrade } from './routes/proposal-lifecycle.js';
+import { handleLivingFiles } from './routes/living-files.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -3237,6 +3238,18 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     })) return;
   } catch {
     sendJson(res, { ok: false, error: 'Failed to process proposal lifecycle request' }, 500);
+    return;
+  }
+
+  try {
+    if (await handleLivingFiles(req, res, {
+      dataDir,
+      workspaceDir: WORKSPACE_DIR,
+      sendJson,
+      readRequestBody,
+    })) return;
+  } catch {
+    sendJson(res, { ok: false, error: 'Failed to process living-files request' }, 500);
     return;
   }
 

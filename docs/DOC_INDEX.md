@@ -32,6 +32,7 @@
 - **docs/WEBMCP_INTEGRATION.md** – structured website tool discovery/invocation with cache + browser fallback (#225)
 - **docs/VISUAL_EXPLAINER_CANVAS.md** – slash-command visual explainer skill with 5 interactive HTML patterns (#226)
 - **docs/PROPOSAL_MISSION_STEP_LIFECYCLE.md** – proposal approval gate, step execution engine, cross-agent handoffs, and event streaming (#227)
+- **docs/LIVING_FILES.md** – file ownership registry, stale detection scheduler, auto-triggered remediation, and freshness dashboard (#228)
 
 ## VentureOS / Multi-Agent Orchestration
 - **docs/roles/VENTURE_OS.md** – venture studio OS overview (system vs persona)

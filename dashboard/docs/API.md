@@ -22,6 +22,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 - [WebMCP Endpoints](#webmcp-endpoints)
 - [Visual Explainer Endpoints](#visual-explainer-endpoints)
 - [Proposal Lifecycle Endpoints](#proposal-lifecycle-endpoints)
+- [Living Files Endpoints](#living-files-endpoints)
 - [Schemas](#schemas)
 
 ---
@@ -1288,6 +1289,70 @@ If requested over plain HTTP, returns `426 Upgrade Required`.
 
 ---
 
+## Living Files Endpoints
+
+Self-maintaining documentation ownership, freshness checks, and stale-file triggers (Issue #228).
+
+### `GET /api/living-files/dashboard`
+
+Returns freshness counts, per-file status snapshots, recent checks, and open triggers for Mission Control UI.
+
+### `GET /api/living-files/files`
+
+List registered file ownership records (`?ownerAgentId=archivist` optional filter).
+
+### `POST /api/living-files/files`
+
+Register (or upsert) a managed file.
+
+**Request:**
+```json
+{
+  "filePath": "docs/API.md",
+  "ownerAgentId": "archivist",
+  "expectedUpdateHours": 24,
+  "intentionallyStatic": false,
+  "notes": "API docs should be refreshed on endpoint changes"
+}
+```
+
+### `PATCH /api/living-files/files/:fileId`
+
+Update owner/cadence/notes, including manual static override:
+```json
+{ "intentionallyStatic": true }
+```
+
+### `DELETE /api/living-files/files/:fileId`
+
+Unregister a managed file.
+
+### `POST /api/living-files/check-run`
+
+Run staleness detection now.
+
+**Request (optional):**
+```json
+{
+  "source": "manual",
+  "autoTrigger": true
+}
+```
+
+### `GET /api/living-files/triggers`
+
+List stale-file trigger records (`?status=queued|acknowledged|resolved`).
+
+### `POST /api/living-files/triggers/:triggerId/acknowledge`
+
+Mark trigger in-progress.
+
+### `POST /api/living-files/triggers/:triggerId/resolve`
+
+Resolve trigger with optional note.
+
+---
+
 ## Rate Limiting
 
 Per-IP, per-endpoint sliding window rate limits:
@@ -1304,6 +1369,7 @@ Per-IP, per-endpoint sliding window rate limits:
 | `/api/webmcp*` | 30 req | 60s |
 | `/api/visual-explainer*` | 30 req | 60s |
 | `/api/proposal-lifecycle*` | 30 req | 60s |
+| `/api/living-files*` | 30 req | 60s |
 | `/api/ventureos-agents` | 30 req | 60s |
 | `/api/ventureos-kpis` | 30 req | 60s |
 | `/api/rpg/*` | 20 req | 60s |
