@@ -6,6 +6,7 @@
  *   GET  /api/obsidian/config          Read connector config.
  *   PUT  /api/obsidian/config          Update connector config.
  *   GET  /api/obsidian/notes           Index/search markdown notes.
+ *   POST /api/obsidian/daily-digest    Upsert daily ops digest note.
  *   POST /api/obsidian/notes/write     Safe markdown write adapter.
  *
  * Safety:
@@ -18,6 +19,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { execFileSync } from 'node:child_process';
 import {
   isObsidianTemplateKind,
   renderObsidianStructuredAppend,
@@ -247,6 +249,65 @@ function parseNoteTitle(body: string, fallback: string): string {
   return fallback;
 }
 
+function toIsoDay(input: string | null): string | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+  const d = new Date(`${trimmed}T00:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+function todayIsoDay(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getRepoFromRemote(): string | null {
+  const envRepo = process.env.GITHUB_REPOSITORY;
+  if (typeof envRepo === 'string' && /^[^/]+\/[^/]+$/.test(envRepo.trim())) return envRepo.trim();
+
+  try {
+    const remote = execFileSync('git', ['config', '--get', 'remote.origin.url'], { encoding: 'utf8' }).trim();
+    const m = remote.match(/github\.com[:/]([^/]+\/[^/.]+)(?:\.git)?$/i);
+    return m?.[1] || null;
+  } catch {
+    return null;
+  }
+}
+
+function runGhJson(args: string[]): unknown | null {
+  try {
+    const raw = execFileSync('gh', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function parseDigestLines(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter(Boolean)
+    .slice(0, 200);
+}
+
+function formatBulletLines(lines: string[], emptyLabel: string): string {
+  if (!lines.length) return `- ${emptyLabel}`;
+  return lines.map((line) => `- ${line}`).join('\n');
+}
+
+function upsertManagedDigestSection(doc: string, id: string, title: string, body: string): string {
+  const start = `<!-- ventureos-digest:${id}:start -->`;
+  const end = `<!-- ventureos-digest:${id}:end -->`;
+  const escapedStart = start.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedEnd = end.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const cleanup = new RegExp(`\\n*${escapedStart}[\\s\\S]*?${escapedEnd}\\n*`, 'g');
+  const trimmed = doc.replace(cleanup, '').trimEnd();
+  const block = `${start}\n## ${title}\n${body.trim()}\n${end}`;
+  return `${trimmed}\n\n${block}\n`;
+}
+
 function normalizeSectionItems(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value
@@ -269,6 +330,135 @@ function extractStructuredSections(body: Record<string, unknown>): {
   const nextActions = normalizeSectionItems(sectionsSource.nextActions);
   if (!decisions.length && !risks.length && !nextActions.length) return null;
   return { decisions, risks, nextActions };
+}
+
+function fetchOpenPrLines(repo: string): {
+  lines: string[];
+  blockers: string[];
+  prNumbers: number[];
+} {
+  const raw = runGhJson([
+    'pr',
+    'list',
+    '--repo',
+    repo,
+    '--state',
+    'open',
+    '--limit',
+    '30',
+    '--json',
+    'number,title,isDraft,reviewDecision,mergeStateStatus,url,updatedAt',
+  ]);
+  if (!Array.isArray(raw)) return { lines: [], blockers: [], prNumbers: [] };
+
+  const lines: string[] = [];
+  const blockers: string[] = [];
+  const prNumbers: number[] = [];
+  for (const entry of raw) {
+    if (!isObject(entry)) continue;
+    const number = typeof entry.number === 'number' ? Math.trunc(entry.number) : null;
+    const title = typeof entry.title === 'string' ? entry.title.trim() : '';
+    const url = typeof entry.url === 'string' ? entry.url : '';
+    const isDraft = entry.isDraft === true;
+    const reviewDecision = typeof entry.reviewDecision === 'string' ? entry.reviewDecision.toUpperCase() : '';
+    const mergeState = typeof entry.mergeStateStatus === 'string' ? entry.mergeStateStatus.toUpperCase() : '';
+    if (!number || !title) continue;
+    prNumbers.push(number);
+
+    const flags: string[] = [];
+    if (isDraft) flags.push('draft');
+    if (reviewDecision) flags.push(`review:${reviewDecision.toLowerCase()}`);
+    if (mergeState) flags.push(`merge:${mergeState.toLowerCase()}`);
+    const label = flags.length ? ` (${flags.join(', ')})` : '';
+    lines.push(`PR #${number}: ${title}${label}${url ? ` — ${url}` : ''}`);
+
+    if (isDraft) blockers.push(`PR #${number} is still draft`);
+    if (reviewDecision !== 'APPROVED') blockers.push(`PR #${number} is awaiting review approval`);
+    if (mergeState === 'DIRTY' || mergeState === 'BEHIND') {
+      blockers.push(`PR #${number} has merge-state blocker (${mergeState.toLowerCase()})`);
+    }
+  }
+  return { lines, blockers, prNumbers };
+}
+
+function fetchCiFailureLines(repo: string, prNumbers: number[]): string[] {
+  const failures: string[] = [];
+  for (const prNumber of prNumbers.slice(0, 12)) {
+    const raw = runGhJson([
+      'pr',
+      'checks',
+      String(prNumber),
+      '--repo',
+      repo,
+      '--json',
+      'name,state,link',
+    ]);
+    if (!Array.isArray(raw)) continue;
+    for (const check of raw) {
+      if (!isObject(check)) continue;
+      const name = typeof check.name === 'string' ? check.name.trim() : '';
+      const stateRaw = typeof check.state === 'string' ? check.state.trim().toLowerCase() : '';
+      const link = typeof check.link === 'string' ? check.link : '';
+      if (!name || !stateRaw) continue;
+      if (stateRaw === 'success' || stateRaw === 'passing' || stateRaw === 'pending' || stateRaw === 'skipping') {
+        continue;
+      }
+      failures.push(`PR #${prNumber} — ${name} [${stateRaw}]${link ? ` — ${link}` : ''}`);
+    }
+  }
+  return failures;
+}
+
+function fetchMilestoneProgressLines(repo: string): string[] {
+  const raw = runGhJson([
+    'issue',
+    'list',
+    '--repo',
+    repo,
+    '--state',
+    'all',
+    '--limit',
+    '200',
+    '--json',
+    'state,milestone',
+  ]);
+  if (!Array.isArray(raw)) return [];
+
+  type MilestoneRow = { open: number; closed: number };
+  const byMilestone = new Map<string, MilestoneRow>();
+  let openNoMilestone = 0;
+  let closedNoMilestone = 0;
+
+  for (const entry of raw) {
+    if (!isObject(entry)) continue;
+    const state = typeof entry.state === 'string' ? entry.state.toUpperCase() : '';
+    const isClosed = state === 'CLOSED';
+    const milestone = isObject(entry.milestone) && typeof entry.milestone.title === 'string'
+      ? entry.milestone.title.trim()
+      : '';
+    if (!milestone) {
+      if (isClosed) closedNoMilestone += 1;
+      else openNoMilestone += 1;
+      continue;
+    }
+    const row = byMilestone.get(milestone) || { open: 0, closed: 0 };
+    if (isClosed) row.closed += 1;
+    else row.open += 1;
+    byMilestone.set(milestone, row);
+  }
+
+  const lines: string[] = [];
+  for (const [title, row] of Array.from(byMilestone.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
+    const total = row.open + row.closed;
+    const pct = total > 0 ? Math.round((row.closed / total) * 100) : 0;
+    lines.push(`${title}: ${row.closed}/${total} closed (${pct}%)`);
+  }
+  const totalNoMilestone = openNoMilestone + closedNoMilestone;
+  if (totalNoMilestone > 0) {
+    const pct = Math.round((closedNoMilestone / totalNoMilestone) * 100);
+    lines.push(`Unmilestoned backlog: ${closedNoMilestone}/${totalNoMilestone} closed (${pct}%)`);
+  }
+  return lines;
 }
 
 export async function handleObsidianConnector(
@@ -410,6 +600,148 @@ export async function handleObsidianConnector(
       folder,
       total: results.length,
       notes: results,
+    });
+    return true;
+  }
+
+  // POST /api/obsidian/daily-digest
+  if (method === 'POST' && pathname === '/api/obsidian/daily-digest') {
+    const config = loadConnectorConfig(deps.dataDir);
+    const activeVault = resolveActiveVault(config, loadVaults());
+    if (!activeVault) return sendError(deps, res, 400, 'connector is not configured with a valid vault');
+
+    let body: unknown = {};
+    try {
+      const raw = await deps.readRequestBody(req, { maxBytes: 256_000 });
+      if (raw.trim()) body = JSON.parse(raw);
+    } catch {
+      return sendError(deps, res, 400, 'invalid JSON body');
+    }
+    if (!isObject(body)) return sendError(deps, res, 400, 'body must be an object');
+
+    const requestedDate = typeof body.date === 'string' ? body.date : null;
+    const digestDay = requestedDate ? toIsoDay(requestedDate) : todayIsoDay();
+    if (!digestDay) return sendError(deps, res, 400, 'date must be YYYY-MM-DD');
+
+    const folderSuffixRaw = typeof body.folder === 'string' && body.folder.trim()
+      ? body.folder
+      : 'Daily Ops';
+    const folderSuffix = normalizeRelativePath(folderSuffixRaw);
+    if (!folderSuffix) return sendError(deps, res, 400, 'folder must be a safe relative path');
+
+    const relativePath = normalizeRelativePath(`${config.missionFolder}/${folderSuffix}/${digestDay}.md`);
+    if (!relativePath) return sendError(deps, res, 400, 'daily digest path is invalid');
+    const targetPath = resolveInsideVault(activeVault.path, relativePath);
+    if (!targetPath) return sendError(deps, res, 400, 'daily digest path resolves outside configured vault');
+    if (hasDotObsidianSegment(targetPath)) return sendError(deps, res, 400, 'writes to .obsidian are forbidden');
+
+    const providedOpenPrStatus = parseDigestLines(body.openPrStatus);
+    const providedReviewBlockers = parseDigestLines(body.reviewBlockers);
+    const providedCiFailures = parseDigestLines(body.ciFailures);
+    const providedMilestoneProgress = parseDigestLines(body.milestoneProgress);
+
+    let openPrStatus = providedOpenPrStatus;
+    let reviewBlockers = providedReviewBlockers;
+    let ciFailures = providedCiFailures;
+    let milestoneProgress = providedMilestoneProgress;
+    const needsGitHubData = !openPrStatus.length
+      || !reviewBlockers.length
+      || !ciFailures.length
+      || !milestoneProgress.length;
+
+    const repo = typeof body.repo === 'string' && /^[^/]+\/[^/]+$/.test(body.repo.trim())
+      ? body.repo.trim()
+      : getRepoFromRemote();
+    if (repo && needsGitHubData) {
+      const ghOpenPrs = fetchOpenPrLines(repo);
+      if (!openPrStatus.length) openPrStatus = ghOpenPrs.lines;
+      if (!reviewBlockers.length) reviewBlockers = ghOpenPrs.blockers;
+      if (!ciFailures.length) ciFailures = fetchCiFailureLines(repo, ghOpenPrs.prNumbers);
+      if (!milestoneProgress.length) milestoneProgress = fetchMilestoneProgressLines(repo);
+    }
+
+    const source = repo && needsGitHubData ? 'github-cli' : 'manual';
+    const generatedAtIso = new Date().toISOString();
+    const summaryLines = [
+      `- Open PRs: ${openPrStatus.length}`,
+      `- Review blockers: ${reviewBlockers.length}`,
+      `- CI failures: ${ciFailures.length}`,
+      `- Milestone rows: ${milestoneProgress.length}`,
+    ].join('\n');
+
+    const initialNote = [
+      '---',
+      `missionId: daily-ops-${digestDay}`,
+      'prNumber: null',
+      'status: active',
+      'owner: nexus',
+      `updatedAt: ${generatedAtIso}`,
+      '---',
+      '',
+      `# Daily Ops Digest — ${digestDay}`,
+      '',
+      '_Automated daily operations snapshot._',
+      '',
+    ].join('\n');
+
+    let note = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, 'utf8') : initialNote;
+    if (!note.trim()) note = initialNote;
+    if (!note.includes('# Daily Ops Digest')) {
+      note = `${initialNote}\n${note.trim()}\n`;
+    }
+
+    note = upsertManagedDigestSection(note, 'summary', 'Summary', summaryLines);
+    note = upsertManagedDigestSection(
+      note,
+      'open-pr-status',
+      'Open PR Status',
+      formatBulletLines(openPrStatus, 'No open PR status available'),
+    );
+    note = upsertManagedDigestSection(
+      note,
+      'review-blockers',
+      'Review Blockers',
+      formatBulletLines(reviewBlockers, 'No review blockers detected'),
+    );
+    note = upsertManagedDigestSection(
+      note,
+      'ci-failures',
+      'CI Failures',
+      formatBulletLines(ciFailures, 'No CI failures detected'),
+    );
+    note = upsertManagedDigestSection(
+      note,
+      'milestone-progress',
+      'Milestone Progress',
+      formatBulletLines(milestoneProgress, 'No milestone data available'),
+    );
+    note = upsertManagedDigestSection(
+      note,
+      'metadata',
+      'Metadata',
+      [
+        `- generatedAt: ${generatedAtIso}`,
+        `- source: ${source}`,
+        `- repo: ${repo || 'n/a'}`,
+      ].join('\n'),
+    );
+
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    fs.writeFileSync(targetPath, `${note.trimEnd()}\n`);
+
+    deps.sendJson(res, {
+      ok: true,
+      path: relativePath,
+      date: digestDay,
+      source,
+      repo: repo || null,
+      stats: {
+        openPrStatus: openPrStatus.length,
+        reviewBlockers: reviewBlockers.length,
+        ciFailures: ciFailures.length,
+        milestoneProgress: milestoneProgress.length,
+      },
+      updatedAt: Date.now(),
     });
     return true;
   }

@@ -248,4 +248,49 @@ describe('handleObsidianConnector', () => {
     expect(appended).toContain('### Next Actions');
     expect(appended).toContain('Wire unified search');
   });
+
+  it('upserts one daily digest note per day without duplicating sections', async () => {
+    await handleObsidianConnector(
+      mockRequest({ method: 'PUT', url: '/api/obsidian/config' }),
+      mockResponse(),
+      createDeps({ vaultId: 'alpha', missionFolder: 'VentureOS/Missions' }),
+    );
+
+    const digestBody = {
+      date: '2026-02-21',
+      openPrStatus: ['PR #330: Mission log templates'],
+      reviewBlockers: ['PR #323 is awaiting review approval'],
+      ciFailures: ['PR #323 — build-and-test [failure]'],
+      milestoneProgress: ['Dashboard Merge: 10/10 closed (100%)'],
+    };
+
+    const first = mockResponse();
+    await handleObsidianConnector(
+      mockRequest({ method: 'POST', url: '/api/obsidian/daily-digest' }),
+      first,
+      createDeps(digestBody),
+    );
+    expect(first._statusCode).toBe(200);
+    const firstJson = parseJsonBody<{ path: string }>(first);
+    expect(firstJson.path).toBe('VentureOS/Missions/Daily Ops/2026-02-21.md');
+
+    const second = mockResponse();
+    await handleObsidianConnector(
+      mockRequest({ method: 'POST', url: '/api/obsidian/daily-digest' }),
+      second,
+      createDeps({
+        ...digestBody,
+        ciFailures: ['PR #323 — build-and-test [failure]', 'PR #323 — E2E [failure]'],
+      }),
+    );
+    expect(second._statusCode).toBe(200);
+
+    const notePath = path.join(vaultA, 'VentureOS', 'Missions', 'Daily Ops', '2026-02-21.md');
+    const note = fs.readFileSync(notePath, 'utf8');
+    expect((note.match(/^## Open PR Status$/gm) || []).length).toBe(1);
+    expect((note.match(/^## Review Blockers$/gm) || []).length).toBe(1);
+    expect((note.match(/^## CI Failures$/gm) || []).length).toBe(1);
+    expect((note.match(/^## Milestone Progress$/gm) || []).length).toBe(1);
+    expect(note).toContain('PR #323 — E2E [failure]');
+  });
 });

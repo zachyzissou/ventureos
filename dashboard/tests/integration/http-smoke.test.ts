@@ -377,6 +377,21 @@ describe('Dashboard HTTP smoke tests', () => {
     expect(notesRes.status).toBe(200);
     const notes = await notesRes.json();
     expect(notes.total).toBeGreaterThanOrEqual(1);
+
+    const digestRes = await fetch(`${BASE_URL}/api/obsidian/daily-digest`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date: '2026-02-21',
+        openPrStatus: ['PR #330: mission templates'],
+        reviewBlockers: ['PR #323 is awaiting review approval'],
+        ciFailures: ['PR #323 — build-and-test [failure]'],
+        milestoneProgress: ['Dashboard Merge: 10/10 closed (100%)'],
+      }),
+    });
+    expect(digestRes.status).toBe(200);
+    const digest = await digestRes.json();
+    expect(digest.path).toBe('VentureOS/Missions/Daily Ops/2026-02-21.md');
   });
 
   it('reports system metrics and redirects unauthenticated dashboard access', async () => {
