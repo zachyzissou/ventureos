@@ -419,6 +419,26 @@ describe('tactical-map replay routes', () => {
     expect(body.explanation).toContain('Arbitration event');
   });
 
+  it('returns 400 for replay explain when sessionId is missing', async () => {
+    const dataDir = path.join(baseTmp, 'explain-missing');
+    const req = mockRequest({
+      method: 'GET',
+      url: '/api/replay/explain',
+    }) as any;
+    const { res } = await runRoute(req, dataDir);
+    expect(res._statusCode).toBe(400);
+  });
+
+  it('returns 404 for replay explain when session is missing', async () => {
+    const dataDir = path.join(baseTmp, 'explain-404');
+    const req = mockRequest({
+      method: 'GET',
+      url: '/api/replay/explain?sessionId=missing-session',
+    }) as any;
+    const { res } = await runRoute(req, dataDir);
+    expect(res._statusCode).toBe(404);
+  });
+
   it('returns replay control-health metrics for a session', async () => {
     const dataDir = path.join(baseTmp, 'control-health');
     writeSessionDetail(dataDir, 'health-sess', {
@@ -482,6 +502,30 @@ describe('tactical-map replay routes', () => {
     expect(body.sessionIds.length).toBeGreaterThanOrEqual(2);
     expect(body.health.counts.arbitrationAccepted).toBe(1);
     expect(body.health.counts.arbitrationRejected).toBe(1);
+  });
+
+  it('returns 404 for control-health when sessionId does not exist', async () => {
+    const dataDir = path.join(baseTmp, 'control-health-404');
+    const req = mockRequest({
+      method: 'GET',
+      url: '/api/replay/control-health?sessionId=nonexistent-session',
+    }) as any;
+    const { res } = await runRoute(req, dataDir);
+    expect(res._statusCode).toBe(404);
+  });
+
+  it('returns no-data status for control-health aggregate when no sessions exist', async () => {
+    const dataDir = path.join(baseTmp, 'control-health-empty');
+    writeIndex(dataDir, []);
+    const req = mockRequest({
+      method: 'GET',
+      url: '/api/replay/control-health?sessionLimit=5',
+    }) as any;
+    const { res } = await runRoute(req, dataDir);
+    expect(res._statusCode).toBe(200);
+    const body = parseJsonBody<{ status: string; health: null }>(res);
+    expect(body.status).toBe('no-data');
+    expect(body.health).toBeNull();
   });
 
   // ── TIMESTAMP LOOKUP ─────────────────────────────────────────────────────

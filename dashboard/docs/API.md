@@ -598,6 +598,7 @@ Returns control-health summary for one replay session.
 ### `GET /api/replay/control-health?sessionLimit=20`
 
 Returns aggregated control-health summary across recent replay sessions.
+If no sessions exist, returns `status: "no-data"` with `health: null`.
 
 Response shape:
 ```json

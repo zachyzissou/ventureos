@@ -249,9 +249,23 @@ function buildReplayExplanation(timeline: AuthorityReplayEvent[]): string {
   if (timeline.length === 0) {
     return 'No authority timeline events were found in this replay session.';
   }
-  const route = [...timeline].reverse().find((e) => /route/i.test(e.type));
-  const verdict = [...timeline].reverse().find((e) => /verdict/i.test(e.type));
-  const arbitration = [...timeline].reverse().find((e) => /arbit/i.test(e.type));
+  let route: AuthorityReplayEvent | undefined;
+  let verdict: AuthorityReplayEvent | undefined;
+  let arbitration: AuthorityReplayEvent | undefined;
+  for (let i = timeline.length - 1; i >= 0 && (!route || !verdict || !arbitration); i -= 1) {
+    const e = timeline[i];
+    if (!route && /route/i.test(e.type)) {
+      route = e;
+      continue;
+    }
+    if (!verdict && /verdict/i.test(e.type)) {
+      verdict = e;
+      continue;
+    }
+    if (!arbitration && /arbit/i.test(e.type)) {
+      arbitration = e;
+    }
+  }
 
   const lines: string[] = [];
   if (route) lines.push(`Route event: ${route.summary}`);
@@ -797,6 +811,25 @@ export async function handleTacticalMapReplay(
         authorityEvents.push(...extractAuthorityEvents(session.id, allEvents));
         sessionIds.push(session.id);
       }
+    }
+
+    if (!sessionId && sessionIds.length === 0) {
+      auditLog('replay_control_health', req, {
+        sessionId: 'multi',
+        fromTs: 0,
+        toTs: 0,
+        resultCount: 0,
+      });
+      deps.sendJson(res, {
+        ok: true,
+        scope: 'recent-sessions',
+        sessionIds,
+        health: null,
+        status: 'no-data',
+        message: 'No replay sessions are available to compute control health.',
+        updatedAt: Date.now(),
+      });
+      return true;
     }
 
     const health = summarizeControlHealth(authorityEvents.sort((a, b) => a.ts - b.ts));
