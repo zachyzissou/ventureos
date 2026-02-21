@@ -166,6 +166,8 @@ See **[docs/API.md](docs/API.md)** for the complete API reference covering all e
 | `GET /api/costs` | Cost aggregation |
 | `POST /api/token-compaction/run` | Run deterministic 5-layer context compression |
 | `GET /api/token-compaction/metrics` | Per-session token/cost savings history |
+| `POST /api/self-improvement/generate` | Generate daily self-review digest with recommendations |
+| `GET /api/self-improvement/digests` | List historical digest runs and recommendation status |
 | `GET /api/live` | SSE real-time feed |
 
 ## Architecture

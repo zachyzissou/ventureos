@@ -95,6 +95,7 @@ export const LIMITS: Record<string, RateLimitConfig> = {
   '/api/usage':               { limit: 60, windowMs: 60000 },
   '/api/system':              { limit: 60, windowMs: 60000 },
   '/api/token-compaction':    { limit: 30, windowMs: 60000 },
+  '/api/self-improvement':    { limit: 20, windowMs: 60000 },
   '/api/replay':              { limit: 10, windowMs: 60000 },
   '/api/live':                { limit: 10, windowMs: 60000 },
   '/api/conversation':        { limit: 30, windowMs: 60000 },
