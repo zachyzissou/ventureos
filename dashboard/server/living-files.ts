@@ -137,6 +137,11 @@ function nowIso(now: () => Date): string {
   return now().toISOString();
 }
 
+/**
+ * Security-critical containment check for workspace-bound file operations.
+ * Uses canonical `path.relative(...)` semantics to prevent traversal,
+ * including sibling-prefix escapes that bypass naive string prefix checks.
+ */
 function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
   const relative = path.relative(rootDir, candidatePath);
   if (relative === '') return true;
@@ -164,7 +169,11 @@ function safeReadStore(storePath: string): LivingFileStore {
 }
 
 function normalizeRelativeFilePath(workspaceDir: string, rawPath: string): string {
-  const cleaned = sanitizeText(rawPath).replace(/\\/g, '/').replace(/^\/+/, '');
+  const normalizedInput = sanitizeText(rawPath).replace(/\\/g, '/');
+  if (path.posix.isAbsolute(normalizedInput) || /^[A-Za-z]:\//.test(normalizedInput)) {
+    throw new Error('filePath must stay inside workspace');
+  }
+  const cleaned = normalizedInput.replace(/^\/+/, '');
   if (!cleaned) throw new Error('filePath is required');
   const resolved = path.resolve(workspaceDir, cleaned);
   const root = path.resolve(workspaceDir);

@@ -111,4 +111,25 @@ describe('living-files engine', () => {
       }),
     ).toThrow('filePath must stay inside workspace');
   });
+
+  it('rejects absolute file paths outside the workspace', () => {
+    const engine = getLivingFileEngine(dataDir, workspaceDir, { now: fixedNow, checkIntervalMs: 0 });
+    const absoluteOutside = path.join(path.parse(workspaceDir).root, 'ventureos-outside', 'secret.txt');
+
+    expect(() =>
+      engine.registerFile({
+        filePath: absoluteOutside,
+        ownerAgentId: 'archivist',
+        expectedUpdateHours: 24,
+      }),
+    ).toThrow('filePath must stay inside workspace');
+
+    expect(() =>
+      engine.registerFile({
+        filePath: 'C:/Windows/System32/config/SAM',
+        ownerAgentId: 'archivist',
+        expectedUpdateHours: 24,
+      }),
+    ).toThrow('filePath must stay inside workspace');
+  });
 });
