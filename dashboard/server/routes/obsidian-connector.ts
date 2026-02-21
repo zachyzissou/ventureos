@@ -267,7 +267,11 @@ function getRepoFromRemote(): string | null {
   if (typeof envRepo === 'string' && /^[^/]+\/[^/]+$/.test(envRepo.trim())) return envRepo.trim();
 
   try {
-    const remote = execFileSync('git', ['config', '--get', 'remote.origin.url'], { encoding: 'utf8' }).trim();
+    const remote = execFileSync('git', ['config', '--get', 'remote.origin.url'], {
+      encoding: 'utf8',
+      timeout: 10_000,
+      maxBuffer: 10 * 1024 * 1024,
+    }).trim();
     const m = remote.match(/github\.com[:/]([^/]+\/[^/.]+)(?:\.git)?$/i);
     return m?.[1] || null;
   } catch {
@@ -277,7 +281,12 @@ function getRepoFromRemote(): string | null {
 
 function runGhJson(args: string[]): unknown | null {
   try {
-    const raw = execFileSync('gh', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    const raw = execFileSync('gh', args, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 5000,
+      maxBuffer: 10 * 1024 * 1024,
+    });
     return JSON.parse(raw) as unknown;
   } catch {
     return null;
@@ -373,7 +382,9 @@ function fetchOpenPrLines(repo: string): {
     lines.push(`PR #${number}: ${title}${label}${url ? ` — ${url}` : ''}`);
 
     if (isDraft) blockers.push(`PR #${number} is still draft`);
-    if (reviewDecision !== 'APPROVED') blockers.push(`PR #${number} is awaiting review approval`);
+    if (reviewDecision === 'CHANGES_REQUESTED') {
+      blockers.push(`PR #${number} has changes requested`);
+    }
     if (mergeState === 'DIRTY' || mergeState === 'BEHIND') {
       blockers.push(`PR #${number} has merge-state blocker (${mergeState.toLowerCase()})`);
     }
@@ -383,7 +394,7 @@ function fetchOpenPrLines(repo: string): {
 
 function fetchCiFailureLines(repo: string, prNumbers: number[]): string[] {
   const failures: string[] = [];
-  for (const prNumber of prNumbers.slice(0, 12)) {
+  for (const prNumber of prNumbers.slice(0, 8)) {
     const raw = runGhJson([
       'pr',
       'checks',
@@ -400,7 +411,13 @@ function fetchCiFailureLines(repo: string, prNumbers: number[]): string[] {
       const stateRaw = typeof check.state === 'string' ? check.state.trim().toLowerCase() : '';
       const link = typeof check.link === 'string' ? check.link : '';
       if (!name || !stateRaw) continue;
-      if (stateRaw === 'success' || stateRaw === 'passing' || stateRaw === 'pending' || stateRaw === 'skipping') {
+      if (
+        stateRaw === 'success'
+        || stateRaw === 'passing'
+        || stateRaw === 'pending'
+        || stateRaw === 'skipping'
+        || stateRaw === 'skipped'
+      ) {
         continue;
       }
       failures.push(`PR #${prNumber} — ${name} [${stateRaw}]${link ? ` — ${link}` : ''}`);
@@ -652,15 +669,17 @@ export async function handleObsidianConnector(
     const repo = typeof body.repo === 'string' && /^[^/]+\/[^/]+$/.test(body.repo.trim())
       ? body.repo.trim()
       : getRepoFromRemote();
+    let usedGitHubData = false;
     if (repo && needsGitHubData) {
       const ghOpenPrs = fetchOpenPrLines(repo);
+      usedGitHubData = true;
       if (!openPrStatus.length) openPrStatus = ghOpenPrs.lines;
       if (!reviewBlockers.length) reviewBlockers = ghOpenPrs.blockers;
       if (!ciFailures.length) ciFailures = fetchCiFailureLines(repo, ghOpenPrs.prNumbers);
       if (!milestoneProgress.length) milestoneProgress = fetchMilestoneProgressLines(repo);
     }
 
-    const source = repo && needsGitHubData ? 'github-cli' : 'manual';
+    const source = usedGitHubData ? 'github-cli' : 'manual';
     const generatedAtIso = new Date().toISOString();
     const summaryLines = [
       `- Open PRs: ${openPrStatus.length}`,
