@@ -265,6 +265,27 @@ describe('ModelRouter', () => {
       expect(decision.security.forcedByRequest).toBe(true);
     });
 
+    it('high-risk routing overrides restrictive maxTier policy', () => {
+      const router = makeRouter({
+        businessUnitOverrides: [
+          {
+            businessUnit: 'budget-locked',
+            priority: 'low',
+            maxTier: 1,
+          },
+        ],
+      });
+      const decision = router.selectModel(makeRequest({
+        businessUnit: 'budget-locked',
+        complexity: 'simple',
+        timeSensitivity: 'batch',
+        containsExternalContent: true,
+      }));
+
+      expect(decision.security.riskLevel).toBe('high');
+      expect(decision.tier).toBe(3);
+    });
+
     it('records injection detections from routing decisions', () => {
       const router = makeRouter();
       router.clearSecurityTelemetry();
@@ -499,6 +520,26 @@ describe('ModelRouter', () => {
       expect(decision.reason).toContain('Forced by business unit override');
     });
 
+    it('request forceModel takes precedence over BU forcedModel', () => {
+      const router = makeRouter({
+        businessUnitOverrides: [
+          {
+            businessUnit: 'ventureos',
+            priority: 'high',
+            forcedModel: 'claude-opus',
+          },
+        ],
+      });
+
+      const decision = router.selectModel(makeRequest({
+        businessUnit: 'ventureos',
+        forceModel: 'gpt-4o-mini',
+      }));
+
+      expect(decision.model.id).toBe('gpt-4o-mini');
+      expect(decision.security.forcedByRequest).toBe(true);
+    });
+
     it('falls back when forced model is unavailable', () => {
       const models = makeModels([{ id: 'claude-opus', status: 'unavailable' }]);
       const router = makeRouter({
@@ -700,6 +741,24 @@ describe('ModelRouter', () => {
         ])
       );
       expect(logger.error).toHaveBeenCalled();
+    });
+
+    it('surfaces critical warning when quotas filter all available models', () => {
+      const router = makeRouter();
+      router.quota.setQuota('openai', { total: 1000, used: 1000, resetsAt: '2026-03-01' });
+      router.quota.setQuota('anthropic', { total: 1000, used: 1000, resetsAt: '2026-03-01' });
+
+      const decision = router.selectModel(makeRequest({
+        complexity: 'complex',
+        timeSensitivity: 'urgent',
+      }));
+
+      expect(decision.fallbackUsed).toBe(true);
+      expect(decision.warnings).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('No models available after quota filtering'),
+        ]),
+      );
     });
 
     it('excludes unavailable models from fallback chain', () => {
