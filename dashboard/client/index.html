@@ -7878,8 +7878,11 @@ window.openSchedulerLogByIndex = async function(idx, event) {
     await loadLogSources();
   } catch {}
 
-  const sourceHint = job.logSourceHint || '';
-  const source = (logSources || []).find(s => s.id === sourceHint || s.id.includes(sourceHint));
+  const sourceHint = (job.logSourceHint || '').toString();
+  let source = (logSources || []).find(s => s.id === sourceHint);
+  if (!source && sourceHint) {
+    source = (logSources || []).find(s => s.id && s.id.includes(sourceHint));
+  }
   const sourceSelect = document.getElementById('logSource');
   if (sourceSelect && source) {
     sourceSelect.value = source.id;
