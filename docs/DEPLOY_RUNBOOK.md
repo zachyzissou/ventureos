@@ -13,6 +13,8 @@
 ./scripts/deploy.sh status        # Show state
 ./scripts/deploy.sh down          # Shutdown
 ./scripts/deploy.sh rollback      # Rollback
+./scripts/preflight-routing.sh    # M5 routing+binding preflight
+./scripts/rollback-last-known-good.sh   # M5 one-command rollback wrapper
 ```
 
 ---
@@ -25,6 +27,8 @@
 | **Quick redeploy** | `./scripts/deploy.sh up --skip-build` | ~1–2 min | No |
 | **Validate only** | `./scripts/deploy.sh preflight` | ~5s | No |
 | **CI validation** | `./scripts/deploy.sh preflight --dry-run` | ~2s | No |
+| **Routing preflight** | `./scripts/preflight-routing.sh` | ~5–15s | No |
+| **Routing preflight (dry-run)** | `./scripts/preflight-routing.sh --dry-run` | ~2–5s | No |
 | **Health check** | `./scripts/deploy.sh verify` | ~5s | No |
 | **Health check (JSON)** | `./scripts/deploy.sh verify --json` | ~5s | No |
 | **Deployment status** | `./scripts/deploy.sh status` | ~3s | No |
@@ -50,6 +54,9 @@ POSTGRES_PASSWORD=$(openssl rand -base64 24)
 
 # Edit .env.hybrid and config/bridge.env with generated values
 # IMPORTANT: BRIDGE_TOKEN must match in both files!
+
+# M5 safety lint (single-token-first + dangerous combo checks)
+./scripts/lint-dangerous-config.sh
 ```
 
 ### 2. Deploy
@@ -104,6 +111,8 @@ ls -lt runtime/logs/deploy-*.log | head -5
 
 ```bash
 ./scripts/deploy.sh rollback
+# equivalent wrapper:
+./scripts/rollback-last-known-good.sh
 ```
 
 **What happens:**

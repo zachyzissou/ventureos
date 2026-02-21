@@ -16,6 +16,9 @@ on:
       - '.env.hybrid.example'
       - '.github/workflows/hybrid-deploy.yml'
       - 'scripts/deploy.sh'
+      - 'scripts/lint-dangerous-config.sh'
+      - 'scripts/preflight-routing.sh'
+      - 'scripts/rollback-last-known-good.sh'
       - 'scripts/hybrid-*.sh'
   pull_request:
     paths:
@@ -27,6 +30,9 @@ on:
       - '.env.hybrid.example'
       - '.github/workflows/hybrid-deploy.yml'
       - 'scripts/deploy.sh'
+      - 'scripts/lint-dangerous-config.sh'
+      - 'scripts/preflight-routing.sh'
+      - 'scripts/rollback-last-known-good.sh'
       - 'scripts/hybrid-*.sh'
   workflow_dispatch:
 
@@ -53,6 +59,15 @@ jobs:
         run: |
           echo "Linting scripts/deploy.sh..."
           shellcheck -x -S warning scripts/deploy.sh || true
+          echo ""
+          echo "Linting scripts/lint-dangerous-config.sh..."
+          shellcheck -x -S warning scripts/lint-dangerous-config.sh || true
+          echo ""
+          echo "Linting scripts/preflight-routing.sh..."
+          shellcheck -x -S warning scripts/preflight-routing.sh || true
+          echo ""
+          echo "Linting scripts/rollback-last-known-good.sh..."
+          shellcheck -x -S warning scripts/rollback-last-known-good.sh || true
           echo ""
           echo "Linting scripts/hybrid-cutover.sh..."
           shellcheck -x -S warning scripts/hybrid-cutover.sh || true
@@ -86,18 +101,30 @@ jobs:
           cat > config/bridge.env <<'BENVEOF'
           BRIDGE_PORT=18790
           BRIDGE_TOKEN=ci-test-bridge-token-not-real
+          BRIDGE_ALLOW_CIDRS=127.0.0.1/32
           BENVEOF
 
           chmod +x scripts/deploy.sh
-          echo "Running deploy.sh preflight --dry-run..."
-          ./scripts/deploy.sh preflight --dry-run
+          chmod +x scripts/lint-dangerous-config.sh scripts/preflight-routing.sh scripts/rollback-last-known-good.sh
+          echo "Running preflight-routing.sh --dry-run..."
+          ./scripts/preflight-routing.sh --dry-run
           echo ""
           echo "✅ Preflight dry-run passed"
+
+      - name: Deployment safety lint tests
+        run: |
+          chmod +x scripts/tests/test-deployment-safety.sh
+          ./scripts/tests/test-deployment-safety.sh
+          echo ""
+          echo "✅ Deployment safety tests passed"
 
       - name: Deploy script help output
         run: |
           chmod +x scripts/deploy.sh
+          chmod +x scripts/preflight-routing.sh scripts/rollback-last-known-good.sh
           ./scripts/deploy.sh help
+          ./scripts/preflight-routing.sh --help
+          ./scripts/rollback-last-known-good.sh --help
           echo ""
           echo "✅ Help output renders correctly"
 
