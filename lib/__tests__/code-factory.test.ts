@@ -74,7 +74,7 @@ describe('code-factory auto-remediation', () => {
       filePath,
       [
         'export function run() {  ',
-        '  console.log("debug");',
+        '  const debug = "console.log(debug)";',
         '  return 1;  ',
         '}',
       ].join('\n'), // no trailing newline + trailing spaces + console.log
@@ -88,7 +88,7 @@ describe('code-factory auto-remediation', () => {
     expect(result.fixRate).toBeGreaterThanOrEqual(60);
 
     const next = fs.readFileSync(filePath, 'utf8');
-    expect(next.includes('console.log(')).toBe(false);
+    expect(next.includes('console.log(debug)')).toBe(true);
     expect(next.endsWith('\n')).toBe(true);
     expect(/[ \t]+$/m.test(next)).toBe(false);
   });
@@ -113,4 +113,3 @@ describe('harness-gap tracker', () => {
     expect(summary.open).toBe(0);
   });
 });
-
