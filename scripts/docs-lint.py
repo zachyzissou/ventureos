@@ -1,69 +1,104 @@
 #!/usr/bin/env python3
+import json
 import re
-import sys
 from pathlib import Path
 
-root = Path(__file__).resolve().parents[1]
-docs_dir = root / "docs"
-paths = sorted(docs_dir.glob("*.md"))
-# include templates markdown
-paths += sorted((docs_dir / "templates").glob("*.md"))
-readme = root / "README.md"
-if readme.exists():
-    paths.append(readme)
+LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+INLINE_CODE_RE = re.compile(r"`[^`]*`")
+DIRECTIVE_RE = re.compile(
+    r"^\s*(?:[-*+]\s+)?(?:\[[ xX]\]\s+)?(?:>+\s*)?(TODO|TBD|FIXME)\b(?:\s*[:\-].*|\s+.+|\s*)$",
+    re.IGNORECASE,
+)
+INLINE_LABEL_RE = re.compile(r"\b(TODO|TBD|FIXME)\b\s*:", re.IGNORECASE)
+HTML_COMMENT_RE = re.compile(r"<!--\s*(TODO|TBD|FIXME)\b", re.IGNORECASE)
 
-link_re = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
-placeholder_re = re.compile(r"\b(TODO|TBD|FIXME)\b|\?\?\?")
 
-missing_links = []
-placeholders = []
-invalid_json = []
+def strip_inline_code(line: str) -> str:
+    return INLINE_CODE_RE.sub("", line)
 
-# validate template json files
-for json_path in sorted((docs_dir / "templates").glob("*.json")):
-    try:
-        import json
-        json.loads(json_path.read_text(encoding="utf-8"))
-    except Exception as e:
-        invalid_json.append((json_path.name, str(e)))
 
-for path in paths:
-    text = path.read_text(encoding="utf-8")
-    for i, line in enumerate(text.splitlines(), start=1):
-        # Ignore placeholder tokens inside inline code spans.
-        scan_line = re.sub(r"`[^`]*`", "", line)
-        if placeholder_re.search(scan_line):
-            placeholders.append((path.name, i, line.strip()))
-    for _, target in link_re.findall(text):
-        if target.startswith("http") or target.startswith("#") or target.startswith("mailto:"):
-            continue
-        target = target.split("#", 1)[0]
-        if not target:
-            continue
-        target_path = (path.parent / target).resolve()
-        if not target_path.exists():
-            missing_links.append((path.name, target))
+def has_placeholder(line: str) -> bool:
+    scan_line = strip_inline_code(line)
+    if "???" in scan_line:
+        return True
+    if HTML_COMMENT_RE.search(scan_line):
+        return True
+    if DIRECTIVE_RE.match(scan_line):
+        return True
+    return bool(INLINE_LABEL_RE.search(scan_line))
 
-failed = False
-if missing_links:
-    failed = True
-    print("Broken links:")
-    for fname, target in missing_links:
-        print(f"  {fname}: {target}")
 
-if placeholders:
-    failed = True
-    print("Placeholders found:")
-    for fname, line_no, line in placeholders:
-        print(f"  {fname}:{line_no}: {line}")
+def collect_markdown_paths(root: Path) -> list[Path]:
+    docs_dir = root / "docs"
+    paths = sorted(docs_dir.glob("*.md"))
+    paths += sorted((docs_dir / "templates").glob("*.md"))
+    readme = root / "README.md"
+    if readme.exists():
+        paths.append(readme)
+    return paths
 
-if invalid_json:
-    failed = True
-    print("Invalid JSON templates:")
-    for fname, err in invalid_json:
-        print(f"  {fname}: {err}")
 
-if failed:
-    sys.exit(1)
+def validate_docs(root: Path) -> tuple[list[tuple[str, str]], list[tuple[str, int, str]], list[tuple[str, str]]]:
+    docs_dir = root / "docs"
+    paths = collect_markdown_paths(root)
 
-print("DOCS_LINT_OK")
+    missing_links: list[tuple[str, str]] = []
+    placeholders: list[tuple[str, int, str]] = []
+    invalid_json: list[tuple[str, str]] = []
+
+    for json_path in sorted((docs_dir / "templates").glob("*.json")):
+        try:
+            json.loads(json_path.read_text(encoding="utf-8"))
+        except Exception as exc:  # pragma: no cover - error path only
+            invalid_json.append((json_path.name, str(exc)))
+
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        for i, line in enumerate(text.splitlines(), start=1):
+            if has_placeholder(line):
+                placeholders.append((path.name, i, line.strip()))
+        for _, target in LINK_RE.findall(text):
+            if target.startswith("http") or target.startswith("#") or target.startswith("mailto:"):
+                continue
+            target = target.split("#", 1)[0]
+            if not target:
+                continue
+            target_path = (path.parent / target).resolve()
+            if not target_path.exists():
+                missing_links.append((path.name, target))
+
+    return missing_links, placeholders, invalid_json
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    missing_links, placeholders, invalid_json = validate_docs(root)
+
+    failed = False
+    if missing_links:
+        failed = True
+        print("Broken links:")
+        for fname, target in missing_links:
+            print(f"  {fname}: {target}")
+
+    if placeholders:
+        failed = True
+        print("Placeholders found:")
+        for fname, line_no, line in placeholders:
+            print(f"  {fname}:{line_no}: {line}")
+
+    if invalid_json:
+        failed = True
+        print("Invalid JSON templates:")
+        for fname, err in invalid_json:
+            print(f"  {fname}: {err}")
+
+    if failed:
+        return 1
+
+    print("DOCS_LINT_OK")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
