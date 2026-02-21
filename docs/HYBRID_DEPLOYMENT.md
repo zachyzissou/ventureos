@@ -169,6 +169,8 @@ Template: [`.env.hybrid.example`](../.env.hybrid.example)
 | `DASHBOARD_API_TOKEN` | **Yes** | — | Token to access dashboard UI/API |
 | `BRIDGE_TOKEN` | **Yes** | — | Token for dashboard → bridge communication |
 | `BRIDGE_URL` | No | `http://host.docker.internal:18790` | Bridge API base URL |
+| `DASHBOARD_BRIDGE_JSON_TIMEOUT_MS` | No | `10000` | JSON bridge request timeout (ms) before 504 |
+| `DASHBOARD_BRIDGE_SSE_CONNECT_TIMEOUT_MS` | No | `10000` | SSE bridge connect timeout (ms) before 504 |
 | `DASHBOARD_PORT` | No | `8001` | Dashboard port |
 | `POSTGRES_PORT` | No | `5433` | Host-exposed Postgres port |
 | `DASHBOARD_DATA_MODE` | No | `bridge` | Data source (`bridge` or `filesystem`) |

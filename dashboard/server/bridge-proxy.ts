@@ -9,6 +9,8 @@ export interface BridgeProxyDeps {
   bridgeUrl?: string;
   bridgeToken?: string;
   fetchImpl?: typeof fetch;
+  jsonTimeoutMs?: number;
+  sseConnectTimeoutMs?: number;
 }
 
 export interface BridgeProxyRequest {
@@ -22,6 +24,11 @@ export interface BridgeSseRequest {
   forwardQuery?: boolean;
 }
 
+const DEFAULT_JSON_TIMEOUT_MS = 10_000;
+const DEFAULT_SSE_CONNECT_TIMEOUT_MS = 10_000;
+const MIN_TIMEOUT_MS = 100;
+const MAX_TIMEOUT_MS = 120_000;
+
 function sendJson(res: ServerResponse, body: unknown, status = 200): void {
   res.writeHead(status, {
     'Content-Type': 'application/json',
@@ -32,6 +39,26 @@ function sendJson(res: ServerResponse, body: unknown, status = 200): void {
 
 function isBridgeMode(mode: string | undefined): boolean {
   return (mode ?? '').toLowerCase() === 'bridge';
+}
+
+function normalizeTimeoutMs(value: unknown, fallbackMs: number): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallbackMs;
+  return Math.min(MAX_TIMEOUT_MS, Math.max(MIN_TIMEOUT_MS, Math.round(parsed)));
+}
+
+function resolveJsonTimeoutMs(deps: BridgeProxyDeps): number {
+  return normalizeTimeoutMs(
+    deps.jsonTimeoutMs ?? process.env.DASHBOARD_BRIDGE_JSON_TIMEOUT_MS,
+    DEFAULT_JSON_TIMEOUT_MS,
+  );
+}
+
+function resolveSseConnectTimeoutMs(deps: BridgeProxyDeps): number {
+  return normalizeTimeoutMs(
+    deps.sseConnectTimeoutMs ?? process.env.DASHBOARD_BRIDGE_SSE_CONNECT_TIMEOUT_MS,
+    DEFAULT_SSE_CONNECT_TIMEOUT_MS,
+  );
 }
 
 function buildBridgeTarget(
@@ -76,20 +103,52 @@ export async function proxyBridgeJson(
   const target = buildBridgeTarget(req, bridgeUrl, request);
 
   const fetchImpl = deps.fetchImpl ?? fetch;
+  const timeoutMs = resolveJsonTimeoutMs(deps);
+  const abortController = new AbortController();
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    try {
+      abortController.abort();
+    } catch {
+      // ignore
+    }
+  }, timeoutMs);
+  timeout.unref();
+
   let bridgeResponse: Response;
   try {
     bridgeResponse = await fetchImpl(target.toString(), {
       headers: {
         Authorization: `Bearer ${bridgeToken}`,
       },
+      signal: abortController.signal,
     });
   } catch {
+    clearTimeout(timeout);
+    if (timedOut) {
+      sendJson(res, { ok: false, error: 'Bridge timeout' }, 504);
+      return true;
+    }
     sendJson(res, { ok: false, error: 'Bridge unavailable' }, 502);
     return true;
   }
 
+  let bodyText: string;
+  try {
+    bodyText = await bridgeResponse.text();
+  } catch {
+    clearTimeout(timeout);
+    if (timedOut) {
+      sendJson(res, { ok: false, error: 'Bridge timeout' }, 504);
+      return true;
+    }
+    sendJson(res, { ok: false, error: 'Bridge unavailable' }, 502);
+    return true;
+  }
+  clearTimeout(timeout);
+
   const contentType = bridgeResponse.headers.get('content-type') ?? 'application/json';
-  const bodyText = await bridgeResponse.text();
   res.writeHead(bridgeResponse.status, {
     'Content-Type': contentType,
     'Cache-Control': 'no-store',
@@ -121,8 +180,12 @@ export async function proxyBridgeSse(
 
   const target = buildBridgeTarget(req, bridgeUrl, request);
   const fetchImpl = deps.fetchImpl ?? fetch;
+  const timeoutMs = resolveSseConnectTimeoutMs(deps);
   const abortController = new AbortController();
+  let timedOut = false;
+  let clientDisconnected = false;
   const abort = () => {
+    clientDisconnected = true;
     try {
       abortController.abort();
     } catch {
@@ -130,6 +193,15 @@ export async function proxyBridgeSse(
     }
   };
   req.on('close', abort);
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    try {
+      abortController.abort();
+    } catch {
+      // ignore
+    }
+  }, timeoutMs);
+  timeout.unref();
 
   let bridgeResponse: Response;
   try {
@@ -140,9 +212,19 @@ export async function proxyBridgeSse(
       signal: abortController.signal,
     });
   } catch {
+    clearTimeout(timeout);
+    req.off('close', abort);
+    if (timedOut) {
+      sendJson(res, { ok: false, error: 'Bridge timeout' }, 504);
+      return true;
+    }
+    if (clientDisconnected || res.writableEnded) {
+      return true;
+    }
     sendJson(res, { ok: false, error: 'Bridge unavailable' }, 502);
     return true;
   }
+  clearTimeout(timeout);
 
   if (!bridgeResponse.ok) {
     const bodyText = await bridgeResponse.text();
@@ -151,6 +233,7 @@ export async function proxyBridgeSse(
       'Cache-Control': 'no-store',
     });
     res.end(bodyText);
+    req.off('close', abort);
     return true;
   }
 
@@ -163,6 +246,7 @@ export async function proxyBridgeSse(
   const body = bridgeResponse.body;
   if (!body) {
     res.end();
+    req.off('close', abort);
     return true;
   }
 
@@ -179,6 +263,7 @@ export async function proxyBridgeSse(
   } catch {
     // stream aborted/disconnected
   } finally {
+    req.off('close', abort);
     try {
       reader.releaseLock();
     } catch {
