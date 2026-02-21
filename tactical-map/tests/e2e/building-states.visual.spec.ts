@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { installDeterministicApiMocks, stabilizeForVisualSnapshot } from './helpers/tactical-map-test-harness';
 
+// Intentionally looser than 0.01 to account for CI GPU/canvas rasterization variance.
+const VISUAL_MAX_DIFF_RATIO = 0.03;
+
 async function setAllRingStates(page: any, state: 'IDLE' | 'ACTIVE' | 'OVERLOADED' | 'ERROR') {
   await page.evaluate((st: string) => {
     // @ts-expect-error - injected by app for tests
@@ -44,7 +47,7 @@ test.describe('visual regression - building states', () => {
 
     await setAllRingStates(page, 'IDLE');
     await expect(page.locator('canvas')).toHaveScreenshot('state-idle.png', {
-      maxDiffPixelRatio: 0.03
+      maxDiffPixelRatio: VISUAL_MAX_DIFF_RATIO
     });
   });
 
@@ -57,7 +60,7 @@ test.describe('visual regression - building states', () => {
 
     await setAllRingStates(page, 'ACTIVE');
     await expect(page.locator('canvas')).toHaveScreenshot('state-active.png', {
-      maxDiffPixelRatio: 0.03
+      maxDiffPixelRatio: VISUAL_MAX_DIFF_RATIO
     });
   });
 
@@ -70,7 +73,7 @@ test.describe('visual regression - building states', () => {
 
     await setAllRingStates(page, 'OVERLOADED');
     await expect(page.locator('canvas')).toHaveScreenshot('state-overloaded.png', {
-      maxDiffPixelRatio: 0.03
+      maxDiffPixelRatio: VISUAL_MAX_DIFF_RATIO
     });
   });
 
@@ -83,7 +86,7 @@ test.describe('visual regression - building states', () => {
 
     await setAllRingStates(page, 'ERROR');
     await expect(page.locator('canvas')).toHaveScreenshot('state-error.png', {
-      maxDiffPixelRatio: 0.03
+      maxDiffPixelRatio: VISUAL_MAX_DIFF_RATIO
     });
   });
 });

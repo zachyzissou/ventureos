@@ -12,8 +12,14 @@ function json(route: Route, body: unknown): Promise<void> {
 
 export async function installDeterministicApiMocks(page: Page): Promise<void> {
   // Prevent websocket noise/flakiness; clients fall back to mocked HTTP snapshots.
+  // Also pin tour completion so visual snapshots don't include onboarding overlays.
   await page.addInitScript(() => {
     (window as unknown as { WebSocket?: unknown }).WebSocket = undefined;
+    try {
+      localStorage.setItem('ventureos_tour_completed', 'true');
+    } catch {
+      // Ignore private-mode/storage-disabled contexts.
+    }
   });
 
   await page.route('**/api/**', async (route) => {
