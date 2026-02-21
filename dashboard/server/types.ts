@@ -428,6 +428,33 @@ export interface CronJobInfo {
   lastDuration: number;
 }
 
+export type SchedulerJobSource = 'openclaw-cron' | 'launchd';
+export type SchedulerJobStatus = 'ok' | 'failed' | 'running' | 'unknown';
+
+/** Unified scheduler row (OpenClaw cron + launchd LaunchAgents). */
+export interface SchedulerJobInfo {
+  id: string;
+  source: SchedulerJobSource;
+  label: string;
+  triggerTypes: string[];
+  triggerLabel: string;
+  nextRunAt: number | null;
+  nextRunLabel: string;
+  lastRunAt: number | null;
+  lastExit: SchedulerJobStatus;
+  lastExitLabel: string;
+  lastExitCode: number | null;
+  enabled: boolean;
+  logPath: string | null;
+  logSourceHint: string | null;
+  actions: {
+    canToggle: boolean;
+    canRun: boolean;
+    toggleId?: string;
+    runId?: string;
+  };
+}
+
 // ─── VentureOS Agents Domain ─────────────────────────────────────────────────
 
 /** Agent session index entry. */
