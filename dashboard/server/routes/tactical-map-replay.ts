@@ -16,6 +16,8 @@
  *   PUT    /api/replay/sessions/:id                (alias) Update session
  *   DELETE /api/replay/sessions/:id                (alias) Delete session
  *   GET    /api/replay/events                      Query events across sessions
+ *   GET    /api/replay/explain                     Replay-only route/verdict explanation
+ *   GET    /api/replay/control-health              Aggregated authority health metrics
  *
  * Storage layout (dataDir):
  *   data/replay/sessions.json            (index)
@@ -49,6 +51,16 @@ const MAX_TAGS = 20;
 const MAX_TAG_LENGTH = 64;
 const MAX_NAME_LENGTH = 256;
 const MAX_DESCRIPTION_LENGTH = 2048;
+const AUTHORITY_EVENT_PATTERN = /(route|verdict|arbit|contract|gate|authority)/i;
+
+type AuthorityReplayEvent = {
+  sessionId: string;
+  ts: number;
+  type: string;
+  missionId: string | null;
+  summary: string;
+  raw: unknown;
+};
 
 function isSafeSessionId(id: string): boolean {
   return SESSION_ID_PATTERN.test(id);
@@ -179,6 +191,138 @@ function sessionFilePath(baseDir: string, sessionId: string): string {
   return resolved;
 }
 
+function parseEventTs(v: unknown, fallback: number): number {
+  if (typeof v === 'number' && Number.isFinite(v)) return Math.trunc(v);
+  if (typeof v === 'string') {
+    const numeric = Number(v);
+    if (Number.isFinite(numeric)) return Math.trunc(numeric);
+    const parsed = Date.parse(v);
+    if (Number.isFinite(parsed)) return Math.trunc(parsed);
+  }
+  return fallback;
+}
+
+function asEventSummary(type: string, raw: Record<string, unknown>): string {
+  const message = typeof raw.message === 'string' ? raw.message.trim() : '';
+  if (message) return message.slice(0, 240);
+  const reason = typeof raw.reason === 'string' ? raw.reason.trim() : '';
+  const winnerAgent = typeof raw.winnerAgentId === 'string' ? raw.winnerAgentId.trim() : '';
+  const winnerCandidate = typeof raw.winnerCandidateId === 'string' ? raw.winnerCandidateId.trim() : '';
+  const detailBits = [
+    reason ? `reason=${reason}` : '',
+    winnerAgent ? `winnerAgent=${winnerAgent}` : '',
+    winnerCandidate ? `winnerCandidate=${winnerCandidate}` : '',
+  ].filter(Boolean);
+  if (detailBits.length > 0) return `${type}: ${detailBits.join(', ')}`.slice(0, 240);
+  return type.slice(0, 240);
+}
+
+function extractAuthorityEvents(sessionId: string, events: unknown[]): AuthorityReplayEvent[] {
+  const out: AuthorityReplayEvent[] = [];
+  for (let i = 0; i < events.length; i += 1) {
+    const raw = events[i];
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    const obj = raw as Record<string, unknown>;
+    const type = typeof obj.type === 'string' ? obj.type.trim() : '';
+    if (!type || !AUTHORITY_EVENT_PATTERN.test(type)) continue;
+    const details = obj.details && typeof obj.details === 'object' && !Array.isArray(obj.details)
+      ? (obj.details as Record<string, unknown>)
+      : obj;
+    const missionId = typeof obj.missionId === 'string'
+      ? obj.missionId
+      : typeof details.missionId === 'string'
+        ? details.missionId
+        : null;
+    out.push({
+      sessionId,
+      ts: parseEventTs(obj.ts ?? obj.timestamp, i),
+      type,
+      missionId,
+      summary: asEventSummary(type, details),
+      raw,
+    });
+  }
+  return out;
+}
+
+function buildReplayExplanation(timeline: AuthorityReplayEvent[]): string {
+  if (timeline.length === 0) {
+    return 'No authority timeline events were found in this replay session.';
+  }
+  let route: AuthorityReplayEvent | undefined;
+  let verdict: AuthorityReplayEvent | undefined;
+  let arbitration: AuthorityReplayEvent | undefined;
+  for (let i = timeline.length - 1; i >= 0 && (!route || !verdict || !arbitration); i -= 1) {
+    const e = timeline[i];
+    if (!route && /route/i.test(e.type)) {
+      route = e;
+      continue;
+    }
+    if (!verdict && /verdict/i.test(e.type)) {
+      verdict = e;
+      continue;
+    }
+    if (!arbitration && /arbit/i.test(e.type)) {
+      arbitration = e;
+    }
+  }
+
+  const lines: string[] = [];
+  if (route) lines.push(`Route event: ${route.summary}`);
+  if (verdict) lines.push(`Verdict event: ${verdict.summary}`);
+  if (arbitration) lines.push(`Arbitration event: ${arbitration.summary}`);
+  if (!lines.length) lines.push(`Authority timeline contains ${timeline.length} event(s) with no route/verdict/arbitration markers.`);
+  return lines.join(' ');
+}
+
+function summarizeControlHealth(authorityEvents: AuthorityReplayEvent[]) {
+  const counts = {
+    routeDecisions: 0,
+    verdicts: 0,
+    arbitrationAccepted: 0,
+    arbitrationRejected: 0,
+    contractFailures: 0,
+  };
+
+  for (const ev of authorityEvents) {
+    if (/route/i.test(ev.type)) counts.routeDecisions += 1;
+    if (/verdict/i.test(ev.type)) counts.verdicts += 1;
+    if (/arbit/i.test(ev.type) && /accept/i.test(ev.type)) counts.arbitrationAccepted += 1;
+    if (/arbit/i.test(ev.type) && /reject|den(y|ied)|block/i.test(ev.type)) counts.arbitrationRejected += 1;
+    if (/contract|gate/i.test(ev.type) && /fail|reject|deny|block/i.test(ev.type)) counts.contractFailures += 1;
+  }
+
+  const arbitrationTotal = counts.arbitrationAccepted + counts.arbitrationRejected;
+  const arbitrationResolutionRate = arbitrationTotal > 0
+    ? Number((counts.arbitrationAccepted / arbitrationTotal).toFixed(3))
+    : null;
+
+  const incidents = authorityEvents
+    .filter((e) => /reject|deny|block|fail/i.test(e.type))
+    .slice(-20)
+    .map((e) => ({
+      sessionId: e.sessionId,
+      ts: e.ts,
+      type: e.type,
+      summary: e.summary,
+      missionId: e.missionId,
+    }));
+
+  const status = counts.contractFailures > 0 || counts.arbitrationRejected > counts.arbitrationAccepted
+    ? 'at-risk'
+    : counts.arbitrationRejected > 0
+      ? 'degraded'
+      : 'healthy';
+
+  return {
+    status,
+    counts,
+    arbitrationResolutionRate,
+    incidents,
+    evaluatedEventCount: authorityEvents.length,
+  };
+}
+
 /** Result of parsing a session request body. */
 interface ParseSuccess { ok: true; data: Record<string, unknown> }
 interface ParseFailure { ok: false; error: string }
@@ -231,6 +375,20 @@ export async function handleTacticalMapReplay(
 
   const sendConflict = (error: string) => {
     deps.sendJson(res, { ok: false, error }, 409);
+  };
+
+  const readSessionDetail = (sessionId: string): Record<string, unknown> | null => {
+    if (!isSafeSessionId(sessionId)) return null;
+    const filePath = sessionFilePath(deps.dataDir, sessionId);
+    if (!filePath || !fs.existsSync(filePath)) return null;
+    try {
+      const detail = JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
+      return detail && typeof detail === 'object' && !Array.isArray(detail)
+        ? (detail as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
   };
 
   // ── GET /api/tactical-map/sessions or /api/replay/sessions ─────────────
@@ -582,6 +740,112 @@ export async function handleTacticalMapReplay(
       totalCount: allEvents.length,
       limit,
       offset,
+    });
+    return true;
+  }
+
+  // ── GET /api/replay/explain — replay-only route/verdict explanation ────
+  if (req.method === 'GET' && pathname === '/api/replay/explain') {
+    const sessionId = url.searchParams.get('sessionId') ?? null;
+    const limit = deps.clampInt(url.searchParams.get('limit'), 1, 1000, 200);
+    const offset = deps.clampInt(url.searchParams.get('offset'), 0, 100_000, 0);
+
+    if (!sessionId) {
+      return sendBadRequest('sessionId query parameter is required'), true;
+    }
+    const detail = readSessionDetail(sessionId);
+    if (!detail) {
+      return sendNotFound('Replay session not found'), true;
+    }
+
+    const allEvents = Array.isArray(detail.events) ? detail.events : [];
+    const authorityEvents = extractAuthorityEvents(sessionId, allEvents)
+      .sort((a, b) => a.ts - b.ts);
+    const sliced = authorityEvents.slice(offset, offset + limit);
+    const explanation = buildReplayExplanation(authorityEvents);
+
+    auditLog('replay_explain', req, {
+      sessionId,
+      fromTs: sliced[0]?.ts ?? 0,
+      toTs: sliced[sliced.length - 1]?.ts ?? 0,
+      resultCount: sliced.length,
+    });
+
+    deps.sendJson(res, {
+      ok: true,
+      sessionId,
+      explanation,
+      timeline: sliced,
+      totalCount: authorityEvents.length,
+      limit,
+      offset,
+    });
+    return true;
+  }
+
+  // ── GET /api/replay/control-health — authority disagreement visibility ──
+  if (req.method === 'GET' && pathname === '/api/replay/control-health') {
+    const sessionId = url.searchParams.get('sessionId')?.trim() || null;
+    const sessionLimit = deps.clampInt(url.searchParams.get('sessionLimit'), 1, 200, 20);
+
+    const authorityEvents: AuthorityReplayEvent[] = [];
+    const sessionIds: string[] = [];
+    if (sessionId) {
+      const detail = readSessionDetail(sessionId);
+      if (!detail) {
+        return sendNotFound('Replay session not found'), true;
+      }
+      const allEvents = Array.isArray(detail.events) ? detail.events : [];
+      authorityEvents.push(...extractAuthorityEvents(sessionId, allEvents));
+      sessionIds.push(sessionId);
+    } else {
+      const index = readIndex(indexPath);
+      const selected = index.sessions
+        .slice()
+        .sort((a, b) => b.startedAt - a.startedAt)
+        .slice(0, sessionLimit);
+      for (const session of selected) {
+        const detail = readSessionDetail(session.id);
+        if (!detail) continue;
+        const allEvents = Array.isArray(detail.events) ? detail.events : [];
+        authorityEvents.push(...extractAuthorityEvents(session.id, allEvents));
+        sessionIds.push(session.id);
+      }
+    }
+
+    if (!sessionId && sessionIds.length === 0) {
+      auditLog('replay_control_health', req, {
+        sessionId: 'multi',
+        fromTs: 0,
+        toTs: 0,
+        resultCount: 0,
+      });
+      deps.sendJson(res, {
+        ok: true,
+        scope: 'recent-sessions',
+        sessionIds,
+        health: null,
+        status: 'no-data',
+        message: 'No replay sessions are available to compute control health.',
+        updatedAt: Date.now(),
+      });
+      return true;
+    }
+
+    const health = summarizeControlHealth(authorityEvents.sort((a, b) => a.ts - b.ts));
+    auditLog('replay_control_health', req, {
+      sessionId: sessionId ?? 'multi',
+      fromTs: 0,
+      toTs: 0,
+      resultCount: health.evaluatedEventCount,
+    });
+
+    deps.sendJson(res, {
+      ok: true,
+      scope: sessionId ? 'session' : 'recent-sessions',
+      sessionIds,
+      health,
+      updatedAt: Date.now(),
     });
     return true;
   }

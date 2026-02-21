@@ -22,6 +22,7 @@
 - **docs/process/ROADMAP.md** – phased roadmap
 - **docs/process/PROJECT_PLAN.md** – milestones + success metrics
 - **docs/process/FEATURE_BACKLOG.md** – backlog by workstream
+- **docs/NEXUS_2_0_M4_OBSERVABILITY.md** – M4 replay authority surfaces (explain + control-health)
 
 ## VentureOS / Multi-Agent Orchestration
 - **docs/roles/VENTURE_OS.md** – venture studio OS overview (system vs persona)
