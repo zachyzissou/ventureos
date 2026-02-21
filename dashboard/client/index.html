@@ -4271,7 +4271,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
       </div>
       <div class="nav-item" data-page="observations">
         <span class="icon">🔍</span>
-        <span class="nav-text">Observations</span>
+        <span class="nav-text">Memory Explorer</span>
       </div>
       <div class="nav-item" data-page="sessions">
         <span class="icon">🤖</span>
@@ -4890,8 +4890,8 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
     <div class="page" id="observations">
       <div class="page-header">
-        <h1 class="page-title">Observations</h1>
-        <p class="page-subtitle">Archivist observational memory browser</p>
+        <h1 class="page-title">Memory Explorer</h1>
+        <p class="page-subtitle">Unified memory + replay exploration with mission-context search</p>
       </div>
 
       <div class="card mb-24" style="padding:16px 24px;">
@@ -4911,6 +4911,60 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
       <div class="card">
         <h3 class="card-title">Recent Observations</h3>
         <div id="obsResults" style="max-height:700px;overflow-y:auto;"></div>
+      </div>
+
+      <div class="card mb-24" style="margin-top:24px;">
+        <h3 class="card-title">Memory Explorer + Global Search</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;align-items:end;">
+          <div>
+            <label class="tb-label" style="font-size:11px;">Query</label>
+            <input id="mxQuery" class="tb-input" placeholder="Search memory + replay..." onkeydown="if(event.key==='Enter') runMemoryExplorerSearch()">
+          </div>
+          <div>
+            <label class="tb-label" style="font-size:11px;">Mode</label>
+            <select id="mxMode" class="tb-input" onchange="runMemoryExplorerSearch()">
+              <option value="recent">Recent-first</option>
+              <option value="mission">Mission-scoped</option>
+            </select>
+          </div>
+          <div>
+            <label class="tb-label" style="font-size:11px;">Agent</label>
+            <select id="mxAgent" class="tb-input" onchange="runMemoryExplorerSearch()">
+              <option value="">All agents</option>
+            </select>
+          </div>
+          <div>
+            <label class="tb-label" style="font-size:11px;">Tag</label>
+            <input id="mxTag" class="tb-input" placeholder="#tag" onkeydown="if(event.key==='Enter') runMemoryExplorerSearch()">
+          </div>
+          <div>
+            <label class="tb-label" style="font-size:11px;">Mission</label>
+            <input id="mxMission" class="tb-input" placeholder="mc-..." onkeydown="if(event.key==='Enter') runMemoryExplorerSearch()">
+          </div>
+          <div>
+            <label class="tb-label" style="font-size:11px;">From Date</label>
+            <input id="mxFromDate" type="date" class="tb-input" onchange="runMemoryExplorerSearch()">
+          </div>
+          <div>
+            <label class="tb-label" style="font-size:11px;">To Date</label>
+            <input id="mxToDate" type="date" class="tb-input" onchange="runMemoryExplorerSearch()">
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="tb-btn tb-btn-primary" onclick="runMemoryExplorerSearch()" style="width:100%;">Search</button>
+            <button class="tb-btn tb-btn-secondary" onclick="clearMemoryExplorerFilters()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-2 mb-24" style="align-items:start;">
+        <div class="card">
+          <h3 class="card-title">Timeline</h3>
+          <div id="mxTimeline"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Unified Results</h3>
+          <div id="mxResults"></div>
+        </div>
       </div>
     </div>
 
@@ -6187,6 +6241,9 @@ let observationsResults = null;
 let obsActiveTag = null;
 let obsActiveTopic = null;
 let obsSearchTimer = null;
+
+let memoryExplorerResults = [];
+let memoryExplorerBusy = false;
 
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
@@ -7755,6 +7812,270 @@ async function fetchAgentsNow() {
   }
 }
 
+function populateMemoryExplorerAgentFilter() {
+  const sel = document.getElementById('mxAgent');
+  if (!sel || sel.dataset.ready) return;
+  const ids = Object.keys(AGENT_LABELS).sort((a, b) => (AGENT_LABELS[a] || a).localeCompare(AGENT_LABELS[b] || b));
+  sel.innerHTML = '<option value="">All agents</option>' +
+    ids.map((id) => `<option value="${escapeHtml(id)}">${escapeHtml(AGENT_LABELS[id] || id)}</option>`).join('');
+  sel.dataset.ready = '1';
+}
+
+function extractAgentIdFromText(text) {
+  const lower = (text || '').toLowerCase();
+  for (const id of Object.keys(AGENT_LABELS)) {
+    if (lower.includes(id.toLowerCase())) return id;
+  }
+  return null;
+}
+
+function extractMissionId(text) {
+  const m = (text || '').match(/\b(mc-[a-z0-9-]{2,})\b/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
+function normalizeTagInput(tag) {
+  const t = (tag || '').trim();
+  if (!t) return '';
+  return t.startsWith('#') ? t : `#${t}`;
+}
+
+function memoryExplorerReadFilters() {
+  const query = (document.getElementById('mxQuery')?.value || '').trim();
+  const mode = (document.getElementById('mxMode')?.value || 'recent').trim();
+  const agent = (document.getElementById('mxAgent')?.value || '').trim();
+  const mission = (document.getElementById('mxMission')?.value || '').trim().toLowerCase();
+  const tag = normalizeTagInput(document.getElementById('mxTag')?.value || '');
+  const fromDate = (document.getElementById('mxFromDate')?.value || '').trim();
+  const toDate = (document.getElementById('mxToDate')?.value || '').trim();
+  const fromMs = fromDate ? new Date(`${fromDate}T00:00:00`).getTime() : null;
+  const toMs = toDate ? new Date(`${toDate}T23:59:59.999`).getTime() : null;
+  return { query, mode, agent, mission, tag, fromMs, toMs };
+}
+
+function memoryTextForSearch(entry) {
+  return [
+    entry.title || '',
+    entry.snippet || '',
+    (entry.tags || []).join(' '),
+    entry.agentId || '',
+    entry.missionId || '',
+  ].join(' ').toLowerCase();
+}
+
+function memoryExplorerApplyFilters(entries, filters) {
+  let out = entries.slice();
+  if (filters.agent) out = out.filter((e) => e.agentId === filters.agent);
+  if (filters.tag) out = out.filter((e) => (e.tags || []).map((t) => t.toLowerCase()).includes(filters.tag.toLowerCase()));
+  if (filters.mission) {
+    out = out.filter((e) => {
+      const hay = memoryTextForSearch(e);
+      return hay.includes(filters.mission);
+    });
+  }
+  if (Number.isFinite(filters.fromMs)) out = out.filter((e) => (e.tsMs || 0) >= filters.fromMs);
+  if (Number.isFinite(filters.toMs)) out = out.filter((e) => (e.tsMs || 0) <= filters.toMs);
+  if (filters.query) {
+    const q = filters.query.toLowerCase();
+    out = out.filter((e) => memoryTextForSearch(e).includes(q));
+  }
+  if (filters.mode === 'mission' && filters.mission) {
+    out = out.sort((a, b) => {
+      const am = (a.missionId || '').includes(filters.mission) ? 1 : 0;
+      const bm = (b.missionId || '').includes(filters.mission) ? 1 : 0;
+      if (am !== bm) return bm - am;
+      return (b.tsMs || 0) - (a.tsMs || 0);
+    });
+  } else {
+    out = out.sort((a, b) => (b.tsMs || 0) - (a.tsMs || 0));
+  }
+  return out;
+}
+
+async function memoryExplorerLoadRaw(filters) {
+  const obsParams = new URLSearchParams();
+  obsParams.set('limit', '120');
+  if (filters.query) obsParams.set('q', filters.query);
+  if (filters.tag) obsParams.set('tag', filters.tag);
+  const replayParams = new URLSearchParams();
+  replayParams.set('page', '1');
+  replayParams.set('pageSize', '120');
+  replayParams.set('sort', 'startedAt:desc');
+  if (filters.tag) replayParams.set('tags', filters.tag.replace(/^#/, ''));
+  if (Number.isFinite(filters.fromMs)) replayParams.set('startAfter', String(filters.fromMs));
+  if (Number.isFinite(filters.toMs)) replayParams.set('startBefore', String(filters.toMs));
+
+  const [obsData, replayData] = await Promise.all([
+    fetchJson('/api/observations?' + obsParams.toString()).catch(() => ({ entries: [] })),
+    fetchJson('/api/replay/sessions?' + replayParams.toString()).catch(() => ({ sessions: [] })),
+  ]);
+
+  const obsEntries = Array.isArray(obsData?.entries) ? obsData.entries : [];
+  const replayEntries = Array.isArray(replayData?.sessions) ? replayData.sessions : [];
+
+  const memoryResults = obsEntries.map((e, idx) => {
+    const text = `${e.title || ''} ${e.context || ''} ${e.action || ''} ${e.outcome || ''} ${(e.tags || []).join(' ')}`;
+    const tsMs = e.tsMs || (e.date ? new Date(`${e.date}T12:00:00`).getTime() : 0);
+    return {
+      uid: `mem-${e.date || 'na'}-${idx}-${tsMs}`,
+      kind: 'memory',
+      title: e.title || 'Observation',
+      snippet: [e.context, e.action, e.outcome].filter(Boolean).join(' • ').slice(0, 260),
+      tags: Array.isArray(e.tags) ? e.tags : [],
+      tsMs,
+      date: e.date || '',
+      agentId: extractAgentIdFromText(text),
+      missionId: extractMissionId(text),
+      sourceUrl: `/api/ventureos-observation?path=${encodeURIComponent((e.date || '') + '.md')}`,
+      sourceLabel: `${e.date || 'unknown'}.md`,
+    };
+  });
+
+  const replayResults = replayEntries.map((s) => {
+    const text = `${s.name || ''} ${s.description || ''} ${(s.tags || []).join(' ')}`;
+    return {
+      uid: `rep-${s.id}`,
+      kind: 'replay',
+      title: s.name || s.id,
+      snippet: s.description || `${s.eventCount || 0} events · ${s.checkpointCount || 0} checkpoints`,
+      tags: (s.tags || []).map((t) => t.startsWith('#') ? t : `#${t}`),
+      tsMs: s.startedAt || 0,
+      date: s.startedAt ? new Date(s.startedAt).toISOString().slice(0, 10) : '',
+      agentId: extractAgentIdFromText(text),
+      missionId: extractMissionId(text),
+      sourceUrl: `/api/replay/sessions/${encodeURIComponent(s.id)}`,
+      sourceLabel: s.id,
+    };
+  });
+
+  return memoryResults.concat(replayResults);
+}
+
+function renderMemoryExplorerResults() {
+  const el = document.getElementById('mxResults');
+  if (!el) return;
+  if (!memoryExplorerResults.length) {
+    el.innerHTML = '<div class="empty-state-text">No unified references found for this query.</div>';
+    return;
+  }
+
+  el.innerHTML = memoryExplorerResults.slice(0, 160).map((r) => {
+    const kindColor = r.kind === 'memory' ? 'var(--blue)' : 'var(--purple)';
+    const tsLabel = r.tsMs ? `${new Date(r.tsMs).toLocaleString()} · ${timeAgo(r.tsMs)}` : 'unknown time';
+    const tags = (r.tags || []).slice(0, 4).map((t) =>
+      `<span class="model-tag" style="margin-right:6px;">${escapeHtml(t)}</span>`
+    ).join('');
+    return `<div class="list-item" id="mx-row-${escapeHtml(r.uid)}">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="model-tag" style="color:${kindColor};border-color:${kindColor};">${r.kind === 'memory' ? 'Memory' : 'Replay'}</span>
+            <span style="font-weight:800;">${escapeHtml(r.title)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${escapeHtml(tsLabel)}</div>
+          <div style="margin-top:6px;font-size:12px;line-height:1.5;color:var(--text-secondary);">${escapeHtml(r.snippet || '')}</div>
+          <div style="margin-top:8px;">${tags}</div>
+          <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+            ${r.agentId ? `<span class="tb-badge tb-badge-agent">🤖 ${escapeHtml(r.agentId)}</span>` : ''}
+            ${r.missionId ? `<span class="tb-badge" style="background:rgba(99,102,241,0.14);color:var(--accent);">🎯 ${escapeHtml(r.missionId)}</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+          <button class="tb-btn tb-btn-secondary" style="padding:6px 10px;font-size:11px;" onclick="mxJumpToTimeline('${escapeHtml(r.uid)}')">Jump</button>
+          <a class="tb-btn tb-btn-primary" style="padding:6px 10px;font-size:11px;text-decoration:none;" href="${escapeHtml(r.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open Source</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMemoryExplorerTimeline() {
+  const el = document.getElementById('mxTimeline');
+  if (!el) return;
+  if (!memoryExplorerResults.length) {
+    el.innerHTML = '<div class="empty-state-text">Timeline is empty.</div>';
+    return;
+  }
+
+  const byDay = new Map();
+  for (const item of memoryExplorerResults.slice(0, 160)) {
+    const day = item.date || (item.tsMs ? new Date(item.tsMs).toISOString().slice(0, 10) : 'unknown');
+    if (!byDay.has(day)) byDay.set(day, []);
+    byDay.get(day).push(item);
+  }
+  const days = [...byDay.keys()].sort((a, b) => b.localeCompare(a));
+
+  el.innerHTML = days.map((day) => {
+    const rows = byDay.get(day) || [];
+    const itemsHtml = rows.slice(0, 8).map((r) =>
+      `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border);">
+        <button style="background:none;border:none;color:var(--text-primary);cursor:pointer;text-align:left;flex:1;min-width:0;font-size:12px;" onclick="mxJumpToResult('${escapeHtml(r.uid)}')">
+          ${escapeHtml((r.kind === 'memory' ? '🧠' : '🎞') + ' ' + r.title)}
+        </button>
+        <span class="mono" style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${timeAgo(r.tsMs)}</span>
+      </div>`
+    ).join('');
+    return `<div style="margin-bottom:12px;border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--bg-primary);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong>${escapeHtml(day)}</strong>
+        <span class="mono" style="font-size:11px;color:var(--text-muted);">${rows.length} refs</span>
+      </div>
+      ${itemsHtml || '<div class="empty-state-text">No entries</div>'}
+    </div>`;
+  }).join('');
+}
+
+function mxJumpToResult(uid) {
+  const el = document.getElementById(`mx-row-${uid}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.style.boxShadow = '0 0 0 1px var(--accent), 0 0 18px rgba(99,102,241,0.25)';
+  setTimeout(() => { el.style.boxShadow = ''; }, 1300);
+}
+
+function mxJumpToTimeline(uid) {
+  const timeline = document.getElementById('mxTimeline');
+  if (timeline) {
+    timeline.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  mxJumpToResult(uid);
+}
+
+async function runMemoryExplorerSearch() {
+  if (memoryExplorerBusy) return;
+  const resultsEl = document.getElementById('mxResults');
+  const timelineEl = document.getElementById('mxTimeline');
+  const filters = memoryExplorerReadFilters();
+  try {
+    memoryExplorerBusy = true;
+    if (resultsEl) resultsEl.innerHTML = '<div class="empty-state-text">Searching memory + replay…</div>';
+    if (timelineEl) timelineEl.innerHTML = '<div class="empty-state-text">Building timeline…</div>';
+    const raw = await memoryExplorerLoadRaw(filters);
+    memoryExplorerResults = memoryExplorerApplyFilters(raw, filters);
+    renderMemoryExplorerTimeline();
+    renderMemoryExplorerResults();
+  } catch (e) {
+    console.error('Memory explorer search error:', e);
+    if (resultsEl) resultsEl.innerHTML = `<div class="empty-state-text">Search failed: ${escapeHtml(e.message || 'unknown error')}</div>`;
+    if (timelineEl) timelineEl.innerHTML = '<div class="empty-state-text">Timeline unavailable</div>';
+  } finally {
+    memoryExplorerBusy = false;
+  }
+}
+
+function clearMemoryExplorerFilters() {
+  const ids = ['mxQuery', 'mxMission', 'mxTag', 'mxFromDate', 'mxToDate'];
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  }
+  const modeEl = document.getElementById('mxMode');
+  if (modeEl) modeEl.value = 'recent';
+  const agentEl = document.getElementById('mxAgent');
+  if (agentEl) agentEl.value = '';
+  runMemoryExplorerSearch();
+}
+
 async function fetchObservationsSearch() {
   try {
     const q = document.getElementById('obsSearchInput')?.value || '';
@@ -7772,10 +8093,12 @@ async function fetchObservationsSearch() {
 
 async function fetchObservationsNow() {
   try {
+    populateMemoryExplorerAgentFilter();
     observationsIndex = await fetchJson('/api/observations-index');
     // Ensure topic dropdown is populated before first query.
     updateObservationsView(true);
     await fetchObservationsSearch();
+    await runMemoryExplorerSearch();
   } catch (e) {
     console.error('Observations fetch error:', e);
   }
