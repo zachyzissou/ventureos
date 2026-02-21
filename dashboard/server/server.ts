@@ -92,6 +92,7 @@ import { auditLog } from './middleware/audit-log.js';
 import { authorizeActionRequest } from './middleware/action-guard.js';
 import { withCorrelationId, CORRELATION_HEADER } from './middleware/correlation-id.js';
 import { proxyBridgeJson, proxyBridgeSse } from './bridge-proxy.js';
+import { isPathInsideRoot } from './path-containment.js';
 
 // Structured logging (Issue #195 — Observability)
 import structuredLogger from '../../lib/structured-logger.js';
@@ -240,13 +241,6 @@ function contentTypeFor(filePath: string): string {
   if (ext === '.gif') return 'image/gif';
   if (ext === '.webp') return 'image/webp';
   return 'application/octet-stream';
-}
-
-function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
-  const relative = path.relative(rootDir, candidatePath);
-  if (relative === '') return true;
-  if (relative === '..' || relative.startsWith(`..${path.sep}`)) return false;
-  return !path.isAbsolute(relative);
 }
 
 function tryServeStatic(

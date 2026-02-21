@@ -31,6 +31,7 @@ import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ReplayCapturedStore, ReplaySessionListResponse, ReplaySessionMeta } from '../types.js';
 import { auditLog } from '../middleware/audit-log.js';
+import { isPathInsideRoot } from '../path-containment.js';
 
 export interface TacticalMapReplayDeps {
   dataDir: string;
@@ -181,13 +182,6 @@ function sortSessions(sessions: ReplaySessionMeta[], sortParam: string | null): 
     if (typeof av === 'string' && typeof bv === 'string') return av.localeCompare(bv) * dir;
     return (Number(av) - Number(bv)) * dir;
   });
-}
-
-function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
-  const relative = path.relative(rootDir, candidatePath);
-  if (relative === '') return true;
-  if (relative === '..' || relative.startsWith(`..${path.sep}`)) return false;
-  return !path.isAbsolute(relative);
 }
 
 function sessionFilePath(baseDir: string, sessionId: string): string {

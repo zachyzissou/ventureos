@@ -17,6 +17,7 @@ import path from 'node:path';
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { LogsDeps, LogEntry, LogSourceMeta } from '../types.js';
+import { isPathInsideRoot } from '../path-containment.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -54,13 +55,6 @@ const _lineCountCache = new Map<string, { mtimeMs: number; count: number }>();
 /** Characters that indicate a directory-traversal attempt. */
 function isSafeFilename(name: string): boolean {
   return !/[\/\\]/.test(name) && !name.startsWith('.') && name.length > 0 && name.length < 256;
-}
-
-function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
-  const relative = path.relative(rootDir, candidatePath);
-  if (relative === '') return true;
-  if (relative === '..' || relative.startsWith(`..${path.sep}`)) return false;
-  return !path.isAbsolute(relative);
 }
 
 /** Infer severity from a raw log line or parsed JSON. */
