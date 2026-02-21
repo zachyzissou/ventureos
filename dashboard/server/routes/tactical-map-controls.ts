@@ -10,10 +10,16 @@
  */
 
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { renderObsidianTemplateNote } from '../obsidian-note-templates.js';
+import {
+  DEFAULT_OBSIDIAN_MISSION_FOLDER as DEFAULT_MISSION_FOLDER,
+  hasDotObsidianSegment,
+  normalizeRelativePath,
+  obsidianAppConfigPath,
+  resolveInsideVault,
+} from './obsidian-path-utils.js';
 
 const AGENT_IDS = ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'echo', 'nexus'] as const;
 type AgentId = (typeof AGENT_IDS)[number];
@@ -56,8 +62,6 @@ type ObsidianMissionNoteResult = {
   reason?: string;
 };
 
-const DEFAULT_MISSION_FOLDER = 'VentureOS/Missions';
-
 export type TacticalMapControlDeps = {
   dataDir: string;
   sendJson: (res: ServerResponse, data: unknown, status?: number) => void;
@@ -96,32 +100,6 @@ function createDefaultStore(nowIso: string): ControlStore {
     missions: {},
     missionOrder: [],
   };
-}
-
-function obsidianAppConfigPath(): string {
-  return process.env.OBSIDIAN_CONFIG_PATH
-    ?? path.join(os.homedir(), 'Library', 'Application Support', 'obsidian', 'obsidian.json');
-}
-
-function hasDotObsidianSegment(p: string): boolean {
-  return p.split(/[\\/]+/).some((seg) => seg === '.obsidian');
-}
-
-function normalizeRelativePath(input: string): string | null {
-  const raw = input.replace(/\\/g, '/').trim();
-  if (!raw || raw.startsWith('/')) return null;
-  const normalized = path.posix.normalize(raw).replace(/^\/+/, '');
-  if (!normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../')) return null;
-  if (hasDotObsidianSegment(normalized)) return null;
-  return normalized;
-}
-
-function resolveInsideVault(vaultPath: string, relPath: string): string | null {
-  const resolvedVault = path.resolve(vaultPath);
-  const target = path.resolve(resolvedVault, relPath);
-  if (target !== resolvedVault && !target.startsWith(resolvedVault + path.sep)) return null;
-  if (hasDotObsidianSegment(path.relative(resolvedVault, target))) return null;
-  return target;
 }
 
 function safeMissionSlug(missionId: string): string {

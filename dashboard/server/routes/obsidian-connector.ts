@@ -16,7 +16,6 @@
  */
 
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { execFileSync } from 'node:child_process';
@@ -25,8 +24,14 @@ import {
   renderObsidianStructuredAppend,
   renderObsidianTemplateNote,
 } from '../obsidian-note-templates.js';
+import {
+  DEFAULT_OBSIDIAN_MISSION_FOLDER as DEFAULT_MISSION_FOLDER,
+  hasDotObsidianSegment,
+  normalizeRelativePath,
+  obsidianAppConfigPath,
+  resolveInsideVault,
+} from './obsidian-path-utils.js';
 
-const DEFAULT_MISSION_FOLDER = 'VentureOS/Missions';
 const MAX_NOTE_SCAN = 2000;
 const MAX_NOTE_BYTES = 128_000;
 const MAX_WRITE_BYTES = 512_000;
@@ -56,11 +61,6 @@ function connectorConfigPath(dataDir: string): string {
   return path.join(dataDir, 'obsidian-connector.json');
 }
 
-function obsidianAppConfigPath(): string {
-  return process.env.OBSIDIAN_CONFIG_PATH
-    ?? path.join(os.homedir(), 'Library', 'Application Support', 'obsidian', 'obsidian.json');
-}
-
 function defaultConnectorConfig(): ObsidianConnectorConfig {
   return {
     version: 1,
@@ -83,30 +83,6 @@ function sendError(
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
-}
-
-function hasDotObsidianSegment(p: string): boolean {
-  return p.split(/[\\/]+/).some((seg) => seg === '.obsidian');
-}
-
-function normalizeRelativePath(input: string): string | null {
-  const raw = input.replace(/\\/g, '/').trim();
-  if (!raw) return null;
-  if (raw.startsWith('/')) return null;
-  const normalized = path.posix.normalize(raw).replace(/^\/+/, '');
-  if (!normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../')) {
-    return null;
-  }
-  if (hasDotObsidianSegment(normalized)) return null;
-  return normalized;
-}
-
-function resolveInsideVault(vaultPath: string, relPath: string): string | null {
-  const resolvedVault = path.resolve(vaultPath);
-  const target = path.resolve(resolvedVault, relPath);
-  if (target !== resolvedVault && !target.startsWith(resolvedVault + path.sep)) return null;
-  if (hasDotObsidianSegment(path.relative(resolvedVault, target))) return null;
-  return target;
 }
 
 function toPosixRelative(root: string, absolutePath: string): string {
