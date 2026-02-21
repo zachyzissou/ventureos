@@ -11,7 +11,12 @@
  * No schema changes. No new dependencies. Additive only.
  */
 
-import type { TaskCard, TaskStatus, TaskPriority } from './types.js';
+import type {
+  TaskCard,
+  TaskStatus,
+  TaskPriority,
+  TaskAssigneeType,
+} from './types.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -33,6 +38,8 @@ export interface CardExportQuery {
   status?: string | null;
   agentId?: string | null;
   priority?: string | null;
+  missionId?: string | null;
+  assigneeType?: string | null;
   search?: string | null;
 }
 
@@ -57,8 +64,10 @@ export interface CardExportResult {
  * Included fields:
  * - id: stable card identifier for cross-referencing (UUIDs leak no secrets)
  * - title, description, status, priority, agentId: user-facing metadata
+ * - missionId, missionBrief, assigneeType, assigneeId: mission/owner metadata
  * - createdAt, queuedAt, startedAt, completedAt, runtimeMs: timing info
  * - resultSummary: user-facing execution summary
+ * - dependencies, artifactLinks, replaySessionId: linkage metadata
  *
  * Excluded fields and rationale:
  * - error: may contain stack traces or internal paths
@@ -72,12 +81,19 @@ const EXPORT_FIELDS = [
   'status',
   'priority',
   'agentId',
+  'missionId',
+  'missionBrief',
+  'assigneeType',
+  'assigneeId',
   'createdAt',
   'queuedAt',
   'startedAt',
   'completedAt',
   'runtimeMs',
   'resultSummary',
+  'dependencies',
+  'artifactLinks',
+  'replaySessionId',
 ] as const;
 
 type ExportField = typeof EXPORT_FIELDS[number];
@@ -96,12 +112,19 @@ export function sanitizeCardForExport(card: TaskCard): Record<string, unknown> {
     status: card.status,
     priority: card.priority,
     agentId: card.agentId ?? '',
+    missionId: card.missionId ?? '',
+    missionBrief: card.missionBrief ?? '',
+    assigneeType: card.assigneeType ?? '',
+    assigneeId: card.assigneeId ?? '',
     createdAt: formatExportTs(card.createdAt),
     queuedAt: formatExportTs(card.queuedAt),
     startedAt: formatExportTs(card.startedAt),
     completedAt: formatExportTs(card.completedAt),
     runtimeMs: card.runtimeMs,
     resultSummary: card.resultSummary ?? '',
+    dependencies: Array.isArray(card.dependencies) ? card.dependencies.join('; ') : '',
+    artifactLinks: Array.isArray(card.artifactLinks) ? card.artifactLinks.join('; ') : '',
+    replaySessionId: card.replaySessionId ?? '',
   };
 }
 
@@ -132,8 +155,17 @@ export function csvEscapeCard(value: string | number | boolean | null | undefine
 
 // ─── Filter ──────────────────────────────────────────────────────────────────
 
-const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
+const VALID_STATUSES: TaskStatus[] = [
+  'backlog',
+  'queued',
+  'running',
+  'blocked',
+  'review',
+  'done',
+  'failed',
+];
 const VALID_PRIORITIES: TaskPriority[] = ['critical', 'high', 'medium', 'low'];
+const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'nexus', 'agent'];
 
 /**
  * Filter task cards for export.
@@ -147,6 +179,8 @@ export function filterCardsForExport(
     status?: string | null;
     agentId?: string | null;
     priority?: string | null;
+    missionId?: string | null;
+    assigneeType?: string | null;
     search?: string | null;
   },
 ): TaskCard[] {
@@ -160,6 +194,12 @@ export function filterCardsForExport(
   }
   if (opts.priority && VALID_PRIORITIES.includes(opts.priority as TaskPriority)) {
     out = out.filter((t) => t.priority === opts.priority);
+  }
+  if (opts.missionId) {
+    out = out.filter((t) => t.missionId === opts.missionId);
+  }
+  if (opts.assigneeType && VALID_ASSIGNEE_TYPES.includes(opts.assigneeType as TaskAssigneeType)) {
+    out = out.filter((t) => (t.assigneeType ?? 'agent') === opts.assigneeType);
   }
   if (opts.search) {
     const q = opts.search.toLowerCase();
@@ -235,6 +275,8 @@ export function exportTaskCards(
     status: opts.status,
     agentId: opts.agentId,
     priority: opts.priority,
+    missionId: opts.missionId,
+    assigneeType: opts.assigneeType,
     search: opts.search,
   });
 

@@ -148,10 +148,38 @@ describe('buildSummary', () => {
 
 describe('filterTasks', () => {
   const tasks: TaskCard[] = [
-    makeSampleCard({ id: 'a', agentId: 'oracle', status: 'backlog', priority: 'high' }),
-    makeSampleCard({ id: 'b', agentId: 'sentinel', status: 'running', priority: 'low' }),
-    makeSampleCard({ id: 'c', agentId: 'oracle', status: 'running', priority: 'critical' }),
-    makeSampleCard({ id: 'd', agentId: null, status: 'done', priority: 'medium' }),
+    makeSampleCard({
+      id: 'a',
+      agentId: 'oracle',
+      status: 'backlog',
+      priority: 'high',
+      missionId: 'm-1',
+      assigneeType: 'agent',
+    }),
+    makeSampleCard({
+      id: 'b',
+      agentId: 'sentinel',
+      status: 'running',
+      priority: 'low',
+      missionId: 'm-1',
+      assigneeType: 'human',
+    }),
+    makeSampleCard({
+      id: 'c',
+      agentId: 'oracle',
+      status: 'running',
+      priority: 'critical',
+      missionId: 'm-2',
+      assigneeType: 'nexus',
+    }),
+    makeSampleCard({
+      id: 'd',
+      agentId: null,
+      status: 'done',
+      priority: 'medium',
+      missionId: null,
+      assigneeType: 'nexus',
+    }),
   ];
 
   it('returns all tasks with no filters', () => {
@@ -181,6 +209,18 @@ describe('filterTasks', () => {
     expect(result[0].id).toBe('c');
   });
 
+  it('filters by missionId', () => {
+    const result = filterTasks(tasks, { missionId: 'm-1' });
+    expect(result).toHaveLength(2);
+    expect(result.map((t) => t.id)).toEqual(['a', 'b']);
+  });
+
+  it('filters by assigneeType', () => {
+    const result = filterTasks(tasks, { assigneeType: 'nexus' });
+    expect(result).toHaveLength(2);
+    expect(result.map((t) => t.id)).toEqual(['c', 'd']);
+  });
+
   it('ignores invalid status', () => {
     const result = filterTasks(tasks, { status: 'invalid' });
     expect(result).toHaveLength(4); // no filtering applied
@@ -196,12 +236,24 @@ describe('isValidTransition', () => {
     expect(isValidTransition('queued', 'running')).toBe(true);
   });
 
+  it('allows queued → blocked', () => {
+    expect(isValidTransition('queued', 'blocked')).toBe(true);
+  });
+
   it('allows running → done', () => {
     expect(isValidTransition('running', 'done')).toBe(true);
   });
 
+  it('allows running → review', () => {
+    expect(isValidTransition('running', 'review')).toBe(true);
+  });
+
   it('allows running → failed', () => {
     expect(isValidTransition('running', 'failed')).toBe(true);
+  });
+
+  it('allows review → done', () => {
+    expect(isValidTransition('review', 'done')).toBe(true);
   });
 
   it('allows failed → backlog', () => {
@@ -231,6 +283,10 @@ describe('isValidTransition', () => {
 
   it('rejects queued → failed', () => {
     expect(isValidTransition('queued', 'failed')).toBe(false);
+  });
+
+  it('rejects done → review', () => {
+    expect(isValidTransition('done', 'review')).toBe(false);
   });
 });
 
@@ -307,6 +363,38 @@ describe('handleTaskBoard', () => {
       );
       const body = parseJsonBody(res);
       expect(body.tasks).toHaveLength(1);
+    });
+
+    it('filters by missionId query param', async () => {
+      seedTasks([
+        makeSampleCard({ id: '1', missionId: 'mission-a' }),
+        makeSampleCard({ id: '2', missionId: 'mission-b' }),
+      ]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board?missionId=mission-a' }),
+        res,
+        createDeps(),
+      );
+      const body = parseJsonBody<{ tasks: TaskCard[] }>(res);
+      expect(body.tasks).toHaveLength(1);
+      expect(body.tasks[0].id).toBe('1');
+    });
+
+    it('filters by assigneeType query param', async () => {
+      seedTasks([
+        makeSampleCard({ id: '1', assigneeType: 'human' }),
+        makeSampleCard({ id: '2', assigneeType: 'agent' }),
+      ]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board?assigneeType=human' }),
+        res,
+        createDeps(),
+      );
+      const body = parseJsonBody<{ tasks: TaskCard[] }>(res);
+      expect(body.tasks).toHaveLength(1);
+      expect(body.tasks[0].id).toBe('1');
     });
   });
 
@@ -408,6 +496,35 @@ describe('handleTaskBoard', () => {
       expect(body.card.priority).toBe('medium');
       expect(body.card.status).toBe('backlog');
     });
+
+    it('creates mission-linked card with owner, links, and status history', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST' }),
+        res,
+        depsWithBody({
+          title: 'Mission task',
+          missionId: 'mc-293',
+          missionBrief: 'Mission brief v2',
+          assigneeType: 'human',
+          assigneeId: 'zach',
+          dependencies: ['task-1', 'task-2'],
+          artifactLinks: ['https://example.com/doc'],
+          replaySessionId: 'replay-123',
+          status: 'queued',
+        }),
+      );
+      expect(res._statusCode).toBe(201);
+      const card = parseJsonBody<{ card: TaskCard }>(res).card;
+      expect(card.missionId).toBe('mc-293');
+      expect(card.assigneeType).toBe('human');
+      expect(card.assigneeId).toBe('zach');
+      expect(card.dependencies).toEqual(['task-1', 'task-2']);
+      expect(card.artifactLinks).toEqual(['https://example.com/doc']);
+      expect(card.replaySessionId).toBe('replay-123');
+      expect(card.statusHistory?.[0]?.status).toBe('queued');
+      expect(card.statusHistory?.[0]?.note).toContain('mission:mc-293');
+    });
   });
 
   describe('PATCH /api/task-board/:id', () => {
@@ -485,6 +602,42 @@ describe('handleTaskBoard', () => {
       expect(body.card.title).toBe('New');
       expect(body.card.priority).toBe('critical');
       expect(body.card.agentId).toBe('atlas');
+    });
+
+    it('updates mission-linked fields and appends status history on transition', async () => {
+      seedTasks([makeSampleCard({
+        id: 'card-1',
+        status: 'queued',
+        missionId: 'old-mission',
+        statusHistory: [{ status: 'queued', at: Date.now() - 1000, by: 'create', note: 'seed' }],
+      })]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/card-1', method: 'PATCH' }),
+        res,
+        depsWithBody({
+          status: 'running',
+          transitionNote: 'picked up',
+          missionId: 'new-mission',
+          missionBrief: 'Mission doc',
+          assigneeType: 'agent',
+          assigneeId: 'oracle',
+          dependencies: ['dep-1'],
+          artifactLinks: ['docs/spec.md'],
+          replaySessionId: 'replay-9',
+        }),
+      );
+      expect(res._statusCode).toBe(200);
+      const card = parseJsonBody<{ card: TaskCard }>(res).card;
+      expect(card.missionId).toBe('new-mission');
+      expect(card.assigneeType).toBe('agent');
+      expect(card.assigneeId).toBe('oracle');
+      expect(card.dependencies).toEqual(['dep-1']);
+      expect(card.artifactLinks).toEqual(['docs/spec.md']);
+      expect(card.replaySessionId).toBe('replay-9');
+      expect(card.status).toBe('running');
+      expect(card.statusHistory?.at(-1)?.status).toBe('running');
+      expect(card.statusHistory?.at(-1)?.note).toBe('picked up');
     });
   });
 

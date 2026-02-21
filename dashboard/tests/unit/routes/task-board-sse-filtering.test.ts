@@ -127,7 +127,13 @@ describe('parseSubscriptionFilter', () => {
   });
 
   it('returns empty filter with null params', () => {
-    const f = parseSubscriptionFilter({ status: null, agentId: null, priority: null });
+    const f = parseSubscriptionFilter({
+      status: null,
+      agentId: null,
+      priority: null,
+      missionId: null,
+      assigneeType: null,
+    });
     expect(f).toEqual({});
   });
 
@@ -166,14 +172,46 @@ describe('parseSubscriptionFilter', () => {
     expect(f).toEqual({ priority: 'critical' });
   });
 
+  it('parses valid missionId', () => {
+    const f = parseSubscriptionFilter({ missionId: 'mc-001' });
+    expect(f).toEqual({ missionId: 'mc-001' });
+  });
+
+  it('trims missionId whitespace', () => {
+    const f = parseSubscriptionFilter({ missionId: '  mc-002  ' });
+    expect(f).toEqual({ missionId: 'mc-002' });
+  });
+
+  it('parses valid assigneeType', () => {
+    const f = parseSubscriptionFilter({ assigneeType: 'human' });
+    expect(f).toEqual({ assigneeType: 'human' });
+  });
+
+  it('ignores invalid assigneeType', () => {
+    const f = parseSubscriptionFilter({ assigneeType: 'robot' });
+    expect(f).toEqual({});
+  });
+
   it('ignores invalid priority', () => {
     const f = parseSubscriptionFilter({ priority: 'ultra' });
     expect(f).toEqual({});
   });
 
-  it('parses all three filters together', () => {
-    const f = parseSubscriptionFilter({ status: 'running', agentId: 'nexus', priority: 'high' });
-    expect(f).toEqual({ status: 'running', agentId: 'nexus', priority: 'high' });
+  it('parses all filters together', () => {
+    const f = parseSubscriptionFilter({
+      status: 'running',
+      agentId: 'nexus',
+      priority: 'high',
+      missionId: 'mc-003',
+      assigneeType: 'agent',
+    });
+    expect(f).toEqual({
+      status: 'running',
+      agentId: 'nexus',
+      priority: 'high',
+      missionId: 'mc-003',
+      assigneeType: 'agent',
+    });
   });
 
   it('only keeps valid fields in mixed input', () => {
@@ -182,7 +220,7 @@ describe('parseSubscriptionFilter', () => {
   });
 
   it('parses all valid statuses', () => {
-    for (const s of ['backlog', 'queued', 'running', 'done', 'failed']) {
+    for (const s of ['backlog', 'queued', 'running', 'blocked', 'review', 'done', 'failed']) {
       const f = parseSubscriptionFilter({ status: s });
       expect(f.status).toBe(s);
     }
@@ -199,7 +237,13 @@ describe('parseSubscriptionFilter', () => {
 // ─── matchesFilter ───────────────────────────────────────────────────────────
 
 describe('matchesFilter', () => {
-  const card = makeSampleCard({ status: 'running', agentId: 'oracle', priority: 'high' });
+  const card = makeSampleCard({
+    status: 'running',
+    agentId: 'oracle',
+    priority: 'high',
+    missionId: 'mc-100',
+    assigneeType: 'agent',
+  });
 
   it('empty filter matches everything', () => {
     expect(matchesFilter(card, {})).toBe(true);
@@ -230,11 +274,33 @@ describe('matchesFilter', () => {
   });
 
   it('all matching filters pass', () => {
-    expect(matchesFilter(card, { status: 'running', agentId: 'oracle', priority: 'high' })).toBe(true);
+    expect(matchesFilter(card, {
+      status: 'running',
+      agentId: 'oracle',
+      priority: 'high',
+      missionId: 'mc-100',
+      assigneeType: 'agent',
+    })).toBe(true);
   });
 
   it('one non-matching filter fails even when others match', () => {
     expect(matchesFilter(card, { status: 'running', agentId: 'oracle', priority: 'low' })).toBe(false);
+  });
+
+  it('matching missionId passes', () => {
+    expect(matchesFilter(card, { missionId: 'mc-100' })).toBe(true);
+  });
+
+  it('non-matching missionId fails', () => {
+    expect(matchesFilter(card, { missionId: 'mc-999' })).toBe(false);
+  });
+
+  it('matching assigneeType passes', () => {
+    expect(matchesFilter(card, { assigneeType: 'agent' })).toBe(true);
+  });
+
+  it('non-matching assigneeType fails', () => {
+    expect(matchesFilter(card, { assigneeType: 'human' })).toBe(false);
   });
 
   it('null agentId on card does not match agentId filter', () => {
@@ -441,15 +507,19 @@ describe('GET /api/task-board/events with filter query params', () => {
     expect(res._body).toContain('"priority":"critical"');
   });
 
-  it('connects with all three filter params', async () => {
+  it('connects with all filter params', async () => {
     const res = mockSseResponse();
-    const req = mockRequest({ url: '/api/task-board/events?status=done&agentId=sentinel&priority=high' });
+    const req = mockRequest({
+      url: '/api/task-board/events?status=done&agentId=sentinel&priority=high&missionId=mc-200&assigneeType=nexus',
+    });
     const handled = await handleTaskBoard(req, res, createDeps());
     expect(handled).toBe(true);
     const body = res._body;
     expect(body).toContain('"status":"done"');
     expect(body).toContain('"agentId":"sentinel"');
     expect(body).toContain('"priority":"high"');
+    expect(body).toContain('"missionId":"mc-200"');
+    expect(body).toContain('"assigneeType":"nexus"');
   });
 
   it('ignores invalid filter values gracefully', async () => {

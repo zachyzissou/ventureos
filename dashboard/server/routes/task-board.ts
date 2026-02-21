@@ -26,7 +26,9 @@ import type {
   TaskCard,
   TaskStatus,
   TaskPriority,
+  TaskAssigneeType,
   TaskBoardSummary,
+  TaskStatusHistoryEntry,
 } from '../types.js';
 
 import {
@@ -114,16 +116,27 @@ import type { CardExportFormat } from '../task-card-export.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const VALID_STATUSES: TaskStatus[] = ['backlog', 'queued', 'running', 'done', 'failed'];
+const VALID_STATUSES: TaskStatus[] = [
+  'backlog',
+  'queued',
+  'running',
+  'blocked',
+  'review',
+  'done',
+  'failed',
+];
 const VALID_PRIORITIES: TaskPriority[] = ['critical', 'high', 'medium', 'low'];
+const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'nexus', 'agent'];
 
 /** Allowed state transitions (from → to[]). */
 const TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
-  backlog: ['queued', 'done'],
-  queued: ['running', 'backlog', 'done'],
-  running: ['done', 'failed'],
+  backlog: ['queued', 'blocked', 'review', 'done'],
+  queued: ['running', 'blocked', 'backlog', 'done'],
+  running: ['review', 'blocked', 'done', 'failed'],
+  blocked: ['queued', 'running', 'review', 'done'],
+  review: ['running', 'done', 'blocked'],
   done: ['backlog'],
-  failed: ['backlog', 'queued'],
+  failed: ['backlog', 'queued', 'blocked'],
 };
 
 // ─── Store helpers ───────────────────────────────────────────────────────────
@@ -132,14 +145,102 @@ function taskFilePath(dataDir: string): string {
   return path.join(dataDir, 'task-board.json');
 }
 
+function sanitizeStringList(
+  value: unknown,
+  opts: { maxItems: number; maxLen: number },
+): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  for (const item of value) {
+    if (typeof item !== 'string') continue;
+    const s = item.trim();
+    if (!s) continue;
+    out.push(s.slice(0, opts.maxLen));
+    if (out.length >= opts.maxItems) break;
+  }
+  return out;
+}
+
+function normalizeStatusHistory(card: TaskCard): TaskStatusHistoryEntry[] {
+  const history: TaskStatusHistoryEntry[] = [];
+  if (Array.isArray(card.statusHistory)) {
+    for (const entry of card.statusHistory) {
+      if (!entry || typeof entry !== 'object') continue;
+      const status = (entry as { status?: string }).status as TaskStatus;
+      const at = (entry as { at?: number }).at;
+      const by = (entry as { by?: string }).by;
+      const note = (entry as { note?: string | null }).note ?? null;
+      if (!VALID_STATUSES.includes(status)) continue;
+      if (typeof at !== 'number' || !Number.isFinite(at) || at <= 0) continue;
+      if (typeof by !== 'string' || !by.trim()) continue;
+      history.push({
+        status,
+        at: Math.trunc(at),
+        by: by.trim().slice(0, 80),
+        note: typeof note === 'string' ? note.slice(0, 200) : null,
+      });
+    }
+  }
+  if (history.length === 0) {
+    history.push({
+      status: card.status,
+      at: card.createdAt || Date.now(),
+      by: 'system',
+      note: 'initialized',
+    });
+  }
+  return history.sort((a, b) => a.at - b.at);
+}
+
+function normalizeTaskCard(raw: TaskCard): TaskCard {
+  const status: TaskStatus = VALID_STATUSES.includes(raw.status) ? raw.status : 'backlog';
+  const assigneeType: TaskAssigneeType = VALID_ASSIGNEE_TYPES.includes(raw.assigneeType as TaskAssigneeType)
+    ? (raw.assigneeType as TaskAssigneeType)
+    : 'agent';
+  const normalized: TaskCard = {
+    ...raw,
+    status,
+    missionId: raw.missionId ? String(raw.missionId).slice(0, 120) : null,
+    missionBrief: raw.missionBrief ? String(raw.missionBrief).slice(0, 300) : null,
+    assigneeType,
+    assigneeId: raw.assigneeId ? String(raw.assigneeId).slice(0, 120) : null,
+    dependencies: sanitizeStringList(raw.dependencies, { maxItems: 20, maxLen: 80 }),
+    artifactLinks: sanitizeStringList(raw.artifactLinks, { maxItems: 20, maxLen: 300 }),
+    replaySessionId: raw.replaySessionId ? String(raw.replaySessionId).slice(0, 120) : null,
+    statusHistory: [],
+  };
+  normalized.statusHistory = normalizeStatusHistory(normalized);
+  return normalized;
+}
+
+function appendStatusHistory(
+  card: TaskCard,
+  status: TaskStatus,
+  by: string,
+  note: string | null = null,
+  at = Date.now(),
+): void {
+  if (!card.statusHistory) card.statusHistory = [];
+  const last = card.statusHistory[card.statusHistory.length - 1];
+  if (last && last.status === status) return;
+  card.statusHistory.push({
+    status,
+    at,
+    by: by.slice(0, 80),
+    note: note ? note.slice(0, 200) : null,
+  });
+}
+
 export function loadTasks(dataDir: string): TaskCard[] {
   try {
     const fp = taskFilePath(dataDir);
     if (!fs.existsSync(fp)) return [];
     const raw = fs.readFileSync(fp, 'utf8');
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed as TaskCard[];
-    if (parsed && Array.isArray(parsed.tasks)) return parsed.tasks as TaskCard[];
+    if (Array.isArray(parsed)) return parsed.map((card) => normalizeTaskCard(card as TaskCard));
+    if (parsed && Array.isArray(parsed.tasks)) {
+      return parsed.tasks.map((card: TaskCard) => normalizeTaskCard(card));
+    }
     return [];
   } catch {
     return [];
@@ -251,7 +352,13 @@ export function computeMetrics(
 
   // Status counts
   const statusCounts: Record<TaskStatus, number> = {
-    backlog: 0, queued: 0, running: 0, done: 0, failed: 0,
+    backlog: 0,
+    queued: 0,
+    running: 0,
+    blocked: 0,
+    review: 0,
+    done: 0,
+    failed: 0,
   };
   for (const t of tasks) {
     statusCounts[t.status] = (statusCounts[t.status] ?? 0) + 1;
@@ -385,6 +492,8 @@ export function buildSummary(tasks: TaskCard[]): TaskBoardSummary {
     backlog: 0,
     queued: 0,
     running: 0,
+    blocked: 0,
+    review: 0,
     done: 0,
     failed: 0,
   };
@@ -394,7 +503,15 @@ export function buildSummary(tasks: TaskCard[]): TaskBoardSummary {
     columns[t.status] = (columns[t.status] ?? 0) + 1;
     const aid = t.agentId ?? '_unassigned';
     if (!byAgent[aid]) {
-      byAgent[aid] = { backlog: 0, queued: 0, running: 0, done: 0, failed: 0 };
+      byAgent[aid] = {
+        backlog: 0,
+        queued: 0,
+        running: 0,
+        blocked: 0,
+        review: 0,
+        done: 0,
+        failed: 0,
+      };
     }
     byAgent[aid][t.status] = (byAgent[aid][t.status] ?? 0) + 1;
   }
@@ -404,7 +521,13 @@ export function buildSummary(tasks: TaskCard[]): TaskBoardSummary {
 
 export function filterTasks(
   tasks: TaskCard[],
-  opts: { status?: string | null; agentId?: string | null; priority?: string | null },
+  opts: {
+    status?: string | null;
+    agentId?: string | null;
+    priority?: string | null;
+    missionId?: string | null;
+    assigneeType?: string | null;
+  },
 ): TaskCard[] {
   let out = tasks;
   if (opts.status && VALID_STATUSES.includes(opts.status as TaskStatus)) {
@@ -415,6 +538,12 @@ export function filterTasks(
   }
   if (opts.priority && VALID_PRIORITIES.includes(opts.priority as TaskPriority)) {
     out = out.filter((t) => t.priority === opts.priority);
+  }
+  if (opts.missionId) {
+    out = out.filter((t) => t.missionId === opts.missionId);
+  }
+  if (opts.assigneeType && VALID_ASSIGNEE_TYPES.includes(opts.assigneeType as TaskAssigneeType)) {
+    out = out.filter((t) => (t.assigneeType ?? 'agent') === opts.assigneeType);
   }
   return out;
 }
@@ -431,6 +560,13 @@ interface CreateInput {
   priority?: string;
   agentId?: string | null;
   status?: string;
+  missionId?: string | null;
+  missionBrief?: string | null;
+  assigneeType?: string | null;
+  assigneeId?: string | null;
+  dependencies?: unknown;
+  artifactLinks?: unknown;
+  replaySessionId?: string | null;
 }
 
 function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok: false; error: string } {
@@ -452,6 +588,30 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
   }
 
   const agentId = body.agentId?.trim() || null;
+  const missionId = body.missionId?.trim() || null;
+  if (missionId && missionId.length > 120) return { ok: false, error: 'missionId must be ≤ 120 chars' };
+
+  const missionBrief = body.missionBrief?.trim() || null;
+  if (missionBrief && missionBrief.length > 300) {
+    return { ok: false, error: 'missionBrief must be ≤ 300 chars' };
+  }
+
+  const assigneeType = (body.assigneeType ?? (agentId ? 'agent' : 'nexus')) as TaskAssigneeType;
+  if (!VALID_ASSIGNEE_TYPES.includes(assigneeType)) {
+    return { ok: false, error: `invalid assigneeType: ${assigneeType}` };
+  }
+  const assigneeId = (body.assigneeId ?? agentId ?? '').trim() || null;
+  if (assigneeId && assigneeId.length > 120) {
+    return { ok: false, error: 'assigneeId must be ≤ 120 chars' };
+  }
+
+  const dependencies = sanitizeStringList(body.dependencies, { maxItems: 20, maxLen: 80 });
+  const artifactLinks = sanitizeStringList(body.artifactLinks, { maxItems: 20, maxLen: 300 });
+  const replaySessionId = body.replaySessionId?.trim() || null;
+  if (replaySessionId && replaySessionId.length > 120) {
+    return { ok: false, error: 'replaySessionId must be ≤ 120 chars' };
+  }
+  const now = Date.now();
 
   const card: TaskCard = {
     id: crypto.randomUUID(),
@@ -460,8 +620,8 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
     description,
     priority,
     status,
-    createdAt: Date.now(),
-    queuedAt: status === 'queued' ? Date.now() : null,
+    createdAt: now,
+    queuedAt: status === 'queued' ? now : null,
     startedAt: null,
     completedAt: null,
     resultSummary: null,
@@ -469,6 +629,21 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
     error: null,
     costEstimate: null,
     runtimeMs: null,
+    missionId,
+    missionBrief,
+    assigneeType,
+    assigneeId,
+    dependencies,
+    artifactLinks,
+    replaySessionId,
+    statusHistory: [
+      {
+        status,
+        at: now,
+        by: 'create',
+        note: missionId ? `mission:${missionId}` : 'created',
+      },
+    ],
   };
 
   return { ok: true, card };
@@ -612,6 +787,7 @@ export function executeBatch(
           card.runtimeMs = now - card.startedAt;
         }
       }
+      appendStatusHistory(card, targetStatus, 'batch', null, now);
 
       results.push({ id, ok: true });
       succeeded++;
@@ -677,7 +853,7 @@ export async function handleTaskBoard(
   // ── GET /api/task-board/events (SSE) ─────────────────────────────────────
   // Real-time event stream for task mutations. Issue #219.
   // Supports optional subscription filters via query params:
-  //   ?status=running&agentId=oracle&priority=high
+  //   ?status=running&agentId=oracle&priority=high&missionId=mc-001&assigneeType=agent
   // Server-side filtering is applied before broadcasting to each client.
   if (url.startsWith('/api/task-board/events') && method === 'GET') {
     // Parse optional subscription filter from query string
@@ -686,6 +862,8 @@ export async function handleTaskBoard(
       status: evtParams.get('status'),
       agentId: evtParams.get('agentId'),
       priority: evtParams.get('priority'),
+      missionId: evtParams.get('missionId'),
+      assigneeType: evtParams.get('assigneeType'),
     });
 
     if (!addFilteredClient(res, filter)) {
@@ -713,6 +891,8 @@ export async function handleTaskBoard(
   //   ?status=running     — filter by status
   //   ?agentId=oracle     — filter by agent
   //   ?priority=high      — filter by priority
+  //   ?missionId=mc-001   — filter by mission id
+  //   ?assigneeType=agent — filter by owner type
   //   ?search=deploy      — substring search in title/description
   //   ?limit=500          — max cards to export (default 500, max 500)
   // Bounded: max 500 cards per export. Secret-safe: conservative field allowlist.
@@ -725,6 +905,8 @@ export async function handleTaskBoard(
     const status = exportParams.get('status') || undefined;
     const agentId = exportParams.get('agentId') || undefined;
     const priority = exportParams.get('priority') || undefined;
+    const missionId = exportParams.get('missionId') || undefined;
+    const assigneeType = exportParams.get('assigneeType') || undefined;
     const search = exportParams.get('search') || undefined;
 
     const tasks = loadTasks(dataDir);
@@ -734,6 +916,8 @@ export async function handleTaskBoard(
       status,
       agentId,
       priority,
+      missionId,
+      assigneeType,
       search,
     });
 
@@ -748,7 +932,8 @@ export async function handleTaskBoard(
   }
 
   // ── GET /api/task-board ────────────────────────────────────────────────────
-  // Returns filtered list of cards. Query params: status, agentId, priority.
+  // Returns filtered list of cards.
+  // Query params: status, agentId, priority, missionId, assigneeType.
   if (url.startsWith('/api/task-board') && !url.startsWith('/api/task-board/') && method === 'GET') {
     const params = new URL(url, 'http://localhost').searchParams;
     const tasks = loadTasks(dataDir);
@@ -756,6 +941,8 @@ export async function handleTaskBoard(
       status: params.get('status'),
       agentId: params.get('agentId'),
       priority: params.get('priority'),
+      missionId: params.get('missionId'),
+      assigneeType: params.get('assigneeType'),
     });
     sendJson(res, { tasks: filtered, total: filtered.length });
     return true;
@@ -1433,12 +1620,45 @@ export async function handleTaskBoard(
       if (newStatus === 'queued') card.queuedAt = now;
       if (newStatus === 'running') card.startedAt = now;
       if (newStatus === 'done' || newStatus === 'failed') card.completedAt = now;
+      const transitionNote =
+        typeof body.transitionNote === 'string' && body.transitionNote.trim()
+          ? body.transitionNote.trim()
+          : null;
+      appendStatusHistory(card, newStatus, 'patch', transitionNote, now);
     }
 
     // Mutable fields
     if (typeof body.title === 'string') card.title = (body.title as string).slice(0, 200);
     if (typeof body.description === 'string') card.description = (body.description as string).slice(0, 2000);
     if (typeof body.agentId === 'string') card.agentId = body.agentId || null;
+    if (typeof body.missionId === 'string') {
+      const v = body.missionId.trim();
+      card.missionId = v ? v.slice(0, 120) : null;
+    }
+    if (typeof body.missionBrief === 'string') {
+      const v = body.missionBrief.trim();
+      card.missionBrief = v ? v.slice(0, 300) : null;
+    }
+    if (
+      typeof body.assigneeType === 'string' &&
+      VALID_ASSIGNEE_TYPES.includes(body.assigneeType as TaskAssigneeType)
+    ) {
+      card.assigneeType = body.assigneeType as TaskAssigneeType;
+    }
+    if (typeof body.assigneeId === 'string') {
+      const v = body.assigneeId.trim();
+      card.assigneeId = v ? v.slice(0, 120) : null;
+    }
+    if (Array.isArray(body.dependencies)) {
+      card.dependencies = sanitizeStringList(body.dependencies, { maxItems: 20, maxLen: 80 });
+    }
+    if (Array.isArray(body.artifactLinks)) {
+      card.artifactLinks = sanitizeStringList(body.artifactLinks, { maxItems: 20, maxLen: 300 });
+    }
+    if (typeof body.replaySessionId === 'string') {
+      const v = body.replaySessionId.trim();
+      card.replaySessionId = v ? v.slice(0, 120) : null;
+    }
     if (typeof body.priority === 'string' && VALID_PRIORITIES.includes(body.priority as TaskPriority)) {
       card.priority = body.priority as TaskPriority;
     }
