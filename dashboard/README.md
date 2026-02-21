@@ -164,6 +164,8 @@ See **[docs/API.md](docs/API.md)** for the complete API reference covering all e
 | `GET /api/mission-control` | Mission Control overview |
 | `GET /api/sessions` | Active session list |
 | `GET /api/costs` | Cost aggregation |
+| `POST /api/token-compaction/run` | Run deterministic 5-layer context compression |
+| `GET /api/token-compaction/metrics` | Per-session token/cost savings history |
 | `GET /api/live` | SSE real-time feed |
 
 ## Architecture

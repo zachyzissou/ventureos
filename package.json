@@ -28,7 +28,8 @@
     "test:perf:memory": "cd tactical-map && PERF=1 npx playwright test tests/performance/memory-leak.test.ts",
     "test:perf:network": "cd tactical-map && PERF=1 npx playwright test tests/performance/network-latency.test.ts",
     "test:a11y": "cd tactical-map && npx playwright test tests/accessibility/",
-    "bench": "cd tactical-map && ./scripts/run-benchmarks.sh"
+    "bench": "cd tactical-map && ./scripts/run-benchmarks.sh",
+    "bench:token-compaction": "node -r ts-node/register ./scripts/benchmark-token-compactor.ts"
   },
   "dependencies": {
     "ajv": "^8.17.1",

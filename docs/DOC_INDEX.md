@@ -26,6 +26,7 @@
 - **docs/NEXUS_2_0_M4_OBSERVABILITY.md** – M4 replay authority surfaces (explain + control-health)
 - **docs/NEXUS_2_0_M6_PRODUCTION_READINESS_2026-02-21.md** – M6 readiness decision and evidence matrix
 - **docs/CRASH_RECOVERY_ACTIVE_TASKS.md** – active-tasks.md tracker, stale detection, and restart recovery flow (#223)
+- **docs/TOKEN_COMPACTION.md** – deterministic 5-layer token compression pipeline, metrics, and benchmark harness (#221)
 
 ## VentureOS / Multi-Agent Orchestration
 - **docs/roles/VENTURE_OS.md** – venture studio OS overview (system vs persona)
