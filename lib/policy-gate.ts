@@ -20,7 +20,10 @@ export interface PolicyGateResult {
   message: string;
   missionId: string;
   action: AuthorityAction;
-  actor: AuthorityActor;
+  actor: {
+    id: string;
+    type: AuthorityActor['type'] | 'unknown';
+  };
   allowedActorTypes?: readonly string[];
 }
 
@@ -37,7 +40,7 @@ export function runPolicyGate(input: PolicyGateInput): PolicyGateResult {
       action: input.action,
       actor: {
         id: actorId || 'unknown',
-        type: actorType === 'human' || actorType === 'nexus' || actorType === 'agent' ? actorType : 'agent',
+        type: actorType === 'human' || actorType === 'nexus' || actorType === 'agent' ? actorType : 'unknown',
       },
     };
   }

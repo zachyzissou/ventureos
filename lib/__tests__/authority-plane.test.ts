@@ -23,6 +23,11 @@ describe('nexus authority plane (M2)', () => {
     expect(authorityRuleFor('override').allowedActorTypes).toEqual(['human']);
   });
 
+  test('agents can still propose and execute', () => {
+    expect(isAuthorityActionAllowed({ id: 'atlas', type: 'agent' }, 'propose')).toBe(true);
+    expect(isAuthorityActionAllowed({ id: 'atlas', type: 'agent' }, 'execute')).toBe(true);
+  });
+
   test('policy gate returns machine-readable deny reason', () => {
     const gate = runPolicyGate({
       missionId: 'm2-test',
@@ -35,6 +40,17 @@ describe('nexus authority plane (M2)', () => {
     expect(gate.allowedActorTypes).toContain('human');
   });
 
+  test('policy gate returns INVALID_INPUT for malformed actor/mission payload', () => {
+    const gate = runPolicyGate({
+      missionId: 'm2-test',
+      actor: { id: 'x', type: 'robot' } as any,
+      action: 'approve',
+    });
+    expect(gate.ok).toBe(false);
+    expect(gate.code).toBe('INVALID_INPUT');
+    expect(gate.actor.type).toBe('unknown');
+  });
+
   test('arbiter rejects unauthorized acceptance', () => {
     const result = arbitrateRecommendation({
       missionId: 'm2-test',
@@ -44,6 +60,39 @@ describe('nexus authority plane (M2)', () => {
     });
     expect(result.accepted).toBe(false);
     expect(result.code).toBe('ARBITRATION_DENIED');
+  });
+
+  test('arbiter accepts authorized nexus arbitration', () => {
+    const result = arbitrateRecommendation({
+      missionId: 'm2-test',
+      actor: { id: 'nexus', type: 'nexus' },
+      recommendationId: 'cand-2',
+      accept: true,
+    });
+    expect(result.accepted).toBe(true);
+    expect(result.code).toBe('ARBITRATION_ACCEPTED');
+  });
+
+  test('arbiter returns advisory status when acceptance flag is false', () => {
+    const result = arbitrateRecommendation({
+      missionId: 'm2-test',
+      actor: { id: 'nexus', type: 'nexus' },
+      recommendationId: 'cand-2',
+      accept: false,
+    });
+    expect(result.accepted).toBe(false);
+    expect(result.code).toBe('ARBITRATION_ADVISORY');
+  });
+
+  test('arbiter returns invalid when recommendation id is missing', () => {
+    const result = arbitrateRecommendation({
+      missionId: 'm2-test',
+      actor: { id: 'nexus', type: 'nexus' },
+      recommendationId: '',
+      accept: true,
+    });
+    expect(result.accepted).toBe(false);
+    expect(result.code).toBe('ARBITRATION_INVALID');
   });
 
   test('human override path is available and explicit', () => {

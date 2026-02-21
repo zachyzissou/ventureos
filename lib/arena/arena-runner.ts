@@ -2,8 +2,9 @@ import { judgeSubmissions, type JudgeResult } from './judge';
 import type { CandidateSubmission, JudgeRubric } from './scorecard';
 import type { MissionRecord } from '../mission-state-machine';
 import { arbitrateRecommendation } from '../nexus-arbiter';
+import type { AuthorityActor } from '../authority-map';
 
-export type ArenaActor = { id: string; type: 'human' | 'nexus' | 'agent' };
+export type ArenaActor = AuthorityActor;
 
 export type ArenaReplayEventType =
   | 'route.evaluated'
