@@ -5,7 +5,7 @@
  * - CSV/JSON format correctness (column headers, field values, structure)
  * - Secret-safe allowlist (no internal fields leak — error, tokensUsed, costEstimate)
  * - Bounded export (max 500 cards)
- * - Filter parity with task board REST API (status, agentId, priority, search)
+ * - Filter parity with task board REST API (status, agentId, priority, missionId, assigneeType, search)
  * - API endpoint: GET /api/task-board/export
  * - CSV escaping edge cases (commas, quotes, newlines in text fields)
  * - Empty dataset export
@@ -101,12 +101,19 @@ describe('sanitizeCardForExport', () => {
     expect(safe).toHaveProperty('status');
     expect(safe).toHaveProperty('priority');
     expect(safe).toHaveProperty('agentId');
+    expect(safe).toHaveProperty('missionId');
+    expect(safe).toHaveProperty('missionBrief');
+    expect(safe).toHaveProperty('assigneeType');
+    expect(safe).toHaveProperty('assigneeId');
     expect(safe).toHaveProperty('createdAt');
     expect(safe).toHaveProperty('queuedAt');
     expect(safe).toHaveProperty('startedAt');
     expect(safe).toHaveProperty('completedAt');
     expect(safe).toHaveProperty('runtimeMs');
     expect(safe).toHaveProperty('resultSummary');
+    expect(safe).toHaveProperty('dependencies');
+    expect(safe).toHaveProperty('artifactLinks');
+    expect(safe).toHaveProperty('replaySessionId');
   });
 
   it('excludes sensitive/internal fields (error, tokensUsed, costEstimate)', () => {
@@ -187,7 +194,7 @@ describe('cardsToCsv', () => {
 
     expect(lines.length).toBe(2); // header + 1 data row
     expect(lines[0]).toBe(
-      'id,title,description,status,priority,agentId,createdAt,queuedAt,startedAt,completedAt,runtimeMs,resultSummary',
+      'id,title,description,status,priority,agentId,missionId,missionBrief,assigneeType,assigneeId,createdAt,queuedAt,startedAt,completedAt,runtimeMs,resultSummary,dependencies,artifactLinks,replaySessionId',
     );
   });
 
@@ -265,10 +272,42 @@ describe('cardsToJson', () => {
 
 describe('filterCardsForExport', () => {
   const cards: TaskCard[] = [
-    makeCard({ id: '1', status: 'running', agentId: 'oracle', priority: 'high', title: 'Deploy service' }),
-    makeCard({ id: '2', status: 'done', agentId: 'nexus', priority: 'medium', title: 'Write tests' }),
-    makeCard({ id: '3', status: 'failed', agentId: 'oracle', priority: 'critical', title: 'Fix deploy bug' }),
-    makeCard({ id: '4', status: 'backlog', agentId: null, priority: 'low', title: 'Cleanup docs' }),
+    makeCard({
+      id: '1',
+      status: 'running',
+      agentId: 'oracle',
+      priority: 'high',
+      title: 'Deploy service',
+      missionId: 'm-001',
+      assigneeType: 'agent',
+    }),
+    makeCard({
+      id: '2',
+      status: 'done',
+      agentId: 'nexus',
+      priority: 'medium',
+      title: 'Write tests',
+      missionId: 'm-002',
+      assigneeType: 'nexus',
+    }),
+    makeCard({
+      id: '3',
+      status: 'failed',
+      agentId: 'oracle',
+      priority: 'critical',
+      title: 'Fix deploy bug',
+      missionId: 'm-001',
+      assigneeType: 'human',
+    }),
+    makeCard({
+      id: '4',
+      status: 'backlog',
+      agentId: null,
+      priority: 'low',
+      title: 'Cleanup docs',
+      missionId: null,
+      assigneeType: 'nexus',
+    }),
   ];
 
   it('filters by status', () => {
@@ -287,6 +326,18 @@ describe('filterCardsForExport', () => {
     const result = filterCardsForExport(cards, { priority: 'critical' });
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('3');
+  });
+
+  it('filters by missionId', () => {
+    const result = filterCardsForExport(cards, { missionId: 'm-001' });
+    expect(result).toHaveLength(2);
+    expect(result.map((c) => c.id)).toEqual(['1', '3']);
+  });
+
+  it('filters by assigneeType', () => {
+    const result = filterCardsForExport(cards, { assigneeType: 'nexus' });
+    expect(result).toHaveLength(2);
+    expect(result.map((c) => c.id)).toEqual(['2', '4']);
   });
 
   it('filters by search (title substring)', () => {
@@ -318,6 +369,11 @@ describe('filterCardsForExport', () => {
 
   it('ignores invalid priority values', () => {
     const result = filterCardsForExport(cards, { priority: 'ultra' });
+    expect(result).toHaveLength(4);
+  });
+
+  it('ignores invalid assigneeType values', () => {
+    const result = filterCardsForExport(cards, { assigneeType: 'invalid' });
     expect(result).toHaveLength(4);
   });
 });
@@ -610,9 +666,10 @@ describe('secret safety', () => {
     const parsed = JSON.parse(json);
     const cardKeys = Object.keys(parsed.cards[0]).sort();
     const expectedKeys = [
-      'agentId', 'completedAt', 'createdAt', 'description', 'id',
-      'priority', 'queuedAt', 'resultSummary', 'runtimeMs', 'startedAt',
-      'status', 'title',
+      'agentId', 'artifactLinks', 'assigneeId', 'assigneeType', 'completedAt',
+      'createdAt', 'dependencies', 'description', 'id', 'missionBrief',
+      'missionId', 'priority', 'queuedAt', 'replaySessionId', 'resultSummary',
+      'runtimeMs', 'startedAt', 'status', 'title',
     ];
     expect(cardKeys).toEqual(expectedKeys);
   });

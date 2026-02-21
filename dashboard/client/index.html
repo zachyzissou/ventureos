@@ -5255,12 +5255,21 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
               <option value="backlog">📋 Backlog</option>
               <option value="queued">⏳ Queued</option>
               <option value="running">⚡ Running</option>
+              <option value="blocked">⛔ Blocked</option>
+              <option value="review">🧪 Review</option>
               <option value="done">✅ Done</option>
               <option value="failed">❌ Failed</option>
             </select>
             <select id="tbFilterAgent" class="tb-input" style="width:auto;min-width:110px;padding:6px 8px;font-size:12px;" onchange="tbApplyFilters()" title="Filter by agent">
               <option value="">All agents</option>
             </select>
+            <select id="tbFilterAssigneeType" class="tb-input" style="width:auto;min-width:110px;padding:6px 8px;font-size:12px;" onchange="tbApplyFilters()" title="Filter by owner type">
+              <option value="">All owners</option>
+              <option value="human">🧑 Human</option>
+              <option value="nexus">🧠 Nexus</option>
+              <option value="agent">🤖 Agent</option>
+            </select>
+            <input id="tbFilterMission" class="tb-input" style="width:auto;min-width:120px;padding:6px 8px;font-size:12px;" placeholder="Mission ID" onchange="tbApplyFilters()" title="Filter by mission id">
             <select id="tbFilterPriority" class="tb-input" style="width:auto;min-width:100px;padding:6px 8px;font-size:12px;" onchange="tbApplyFilters()" title="Filter by priority">
               <option value="">All priorities</option>
               <option value="critical">🔴 Critical</option>
@@ -5281,7 +5290,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
       </div>
 
       <!-- Summary cards -->
-      <div class="grid mb-24" style="grid-template-columns: repeat(5, 1fr);">
+      <div class="grid mb-24" style="grid-template-columns: repeat(7, 1fr);">
         <div class="card" style="padding:16px;">
           <div class="metric" style="gap:6px;">
             <div class="metric-value" style="font-size:28px;color:var(--text-muted);" id="tbCountBacklog">0</div>
@@ -5298,6 +5307,18 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
           <div class="metric" style="gap:6px;">
             <div class="metric-value" style="font-size:28px;color:var(--yellow);" id="tbCountRunning">0</div>
             <div class="metric-label">Running</div>
+          </div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div class="metric" style="gap:6px;">
+            <div class="metric-value" style="font-size:28px;color:var(--yellow);" id="tbCountBlocked">0</div>
+            <div class="metric-label">Blocked</div>
+          </div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div class="metric" style="gap:6px;">
+            <div class="metric-value" style="font-size:28px;color:var(--purple);" id="tbCountReview">0</div>
+            <div class="metric-label">Review</div>
           </div>
         </div>
         <div class="card" style="padding:16px;">
@@ -5534,6 +5555,49 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
             <label class="tb-label">Agent ID (optional)</label>
             <input type="text" id="tbNewAgent" class="tb-input" placeholder="e.g. synth, nexus…">
           </div>
+          <div>
+            <label class="tb-label">Mission ID</label>
+            <input type="text" id="tbNewMissionId" class="tb-input" placeholder="e.g. mc-2026-021" maxlength="120">
+          </div>
+          <div>
+            <label class="tb-label">Mission Origin</label>
+            <input type="text" id="tbNewMissionBrief" class="tb-input" placeholder="Mission brief title/path…" maxlength="300">
+          </div>
+          <div>
+            <label class="tb-label">Owner Type</label>
+            <select id="tbNewAssigneeType" class="tb-input">
+              <option value="agent" selected>Agent</option>
+              <option value="nexus">Nexus</option>
+              <option value="human">Human</option>
+            </select>
+          </div>
+          <div>
+            <label class="tb-label">Owner ID</label>
+            <input type="text" id="tbNewAssigneeId" class="tb-input" placeholder="agent id / nexus / your name" maxlength="120">
+          </div>
+          <div>
+            <label class="tb-label">Initial Status</label>
+            <select id="tbNewStatus" class="tb-input">
+              <option value="queued" selected>Queued</option>
+              <option value="running">Running</option>
+              <option value="blocked">Blocked</option>
+              <option value="review">Review</option>
+              <option value="done">Done</option>
+              <option value="backlog">Backlog</option>
+            </select>
+          </div>
+          <div>
+            <label class="tb-label">Replay Session ID</label>
+            <input type="text" id="tbNewReplayId" class="tb-input" placeholder="optional replay session id" maxlength="120">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="tb-label">Dependencies (comma-separated task IDs)</label>
+            <input type="text" id="tbNewDependencies" class="tb-input" placeholder="task-a, task-b">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="tb-label">Artifacts / Links (one per line)</label>
+            <textarea id="tbNewArtifacts" class="tb-input" placeholder="https://...&#10;docs/...&#10;replay:..." rows="2" maxlength="2000" style="resize:vertical;"></textarea>
+          </div>
           <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
             <button onclick="tbHideCreateForm()" class="tb-btn tb-btn-secondary">Cancel</button>
             <button onclick="tbCreateTask()" class="tb-btn tb-btn-primary">Create</button>
@@ -5546,6 +5610,9 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         <span class="tb-bulk-count" id="tbBulkCount">0 selected</span>
         <div class="tb-bulk-actions">
           <button class="tb-bulk-btn" onclick="tbBulkTransition('queued')" id="tbBulkToQueued" title="Move selected to Queued">⏳ → Queued</button>
+          <button class="tb-bulk-btn" onclick="tbBulkTransition('running')" id="tbBulkToRunning" title="Move selected to Running">⚡ → Running</button>
+          <button class="tb-bulk-btn" onclick="tbBulkTransition('blocked')" id="tbBulkToBlocked" title="Move selected to Blocked">⛔ → Blocked</button>
+          <button class="tb-bulk-btn" onclick="tbBulkTransition('review')" id="tbBulkToReview" title="Move selected to Review">🧪 → Review</button>
           <button class="tb-bulk-btn" onclick="tbBulkTransition('backlog')" id="tbBulkToBacklog" title="Move selected to Backlog">📋 → Backlog</button>
           <button class="tb-bulk-btn" onclick="tbBulkTransition('done')" id="tbBulkToDone" title="Mark selected as Done">✅ → Done</button>
           <div class="tb-bulk-divider"></div>
@@ -5582,6 +5649,22 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
             <span class="tb-column-count" id="tbColRunning">0</span>
           </div>
           <div class="tb-column-cards" id="tbCardsRunning"></div>
+        </div>
+        <div class="tb-column" data-status="blocked">
+          <div class="tb-column-header">
+            <span class="tb-column-dot" style="background:var(--red);"></span>
+            <span>Blocked</span>
+            <span class="tb-column-count" id="tbColBlocked">0</span>
+          </div>
+          <div class="tb-column-cards" id="tbCardsBlocked"></div>
+        </div>
+        <div class="tb-column" data-status="review">
+          <div class="tb-column-header">
+            <span class="tb-column-dot" style="background:var(--purple);"></span>
+            <span>Review</span>
+            <span class="tb-column-count" id="tbColReview">0</span>
+          </div>
+          <div class="tb-column-cards" id="tbCardsReview"></div>
         </div>
         <div class="tb-column" data-status="done">
           <div class="tb-column-header">
@@ -5677,6 +5760,22 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
           <span id="tbDetailAgent" class="tb-detail-meta-value"></span>
         </div>
         <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Mission</span>
+          <span id="tbDetailMissionId" class="tb-detail-meta-value mono"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Origin</span>
+          <span id="tbDetailMissionBrief" class="tb-detail-meta-value"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Owner</span>
+          <span id="tbDetailOwner" class="tb-detail-meta-value"></span>
+        </div>
+        <div class="tb-detail-meta-item">
+          <span class="tb-detail-meta-label">Replay</span>
+          <span id="tbDetailReplay" class="tb-detail-meta-value mono"></span>
+        </div>
+        <div class="tb-detail-meta-item">
           <span class="tb-detail-meta-label">Created</span>
           <span id="tbDetailCreated" class="tb-detail-meta-value mono"></span>
         </div>
@@ -5731,6 +5830,30 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
           <span class="tb-detail-expand-icon">▸</span>
         </summary>
         <div id="tbDetailLog" class="tb-detail-expand-body tb-detail-log-body"></div>
+      </details>
+
+      <details id="tbDetailDepsSection" class="tb-detail-expandable">
+        <summary class="tb-detail-expand-header">
+          <span>🧩 Dependencies</span>
+          <span class="tb-detail-expand-icon">▸</span>
+        </summary>
+        <div id="tbDetailDeps" class="tb-detail-expand-body"></div>
+      </details>
+
+      <details id="tbDetailArtifactsSection" class="tb-detail-expandable">
+        <summary class="tb-detail-expand-header">
+          <span>📦 Artifacts & Links</span>
+          <span class="tb-detail-expand-icon">▸</span>
+        </summary>
+        <div id="tbDetailArtifacts" class="tb-detail-expand-body"></div>
+      </details>
+
+      <details id="tbDetailHistorySection" class="tb-detail-expandable">
+        <summary class="tb-detail-expand-header">
+          <span>🕓 Status History</span>
+          <span class="tb-detail-expand-icon">▸</span>
+        </summary>
+        <div id="tbDetailHistory" class="tb-detail-expand-body"></div>
       </details>
     </div>
 
@@ -9187,15 +9310,23 @@ function escHtml(s) { if (!s) return ''; const d = document.createElement('div')
 // ═══════════════════════════════════════════════════════════════════════════
 
 const TB_TRANSITIONS = {
-  backlog: ['queued', 'done'],
-  queued: ['running', 'backlog', 'done'],
-  running: ['done', 'failed'],
+  backlog: ['queued', 'blocked', 'review', 'done'],
+  queued: ['running', 'blocked', 'backlog', 'done'],
+  running: ['review', 'blocked', 'done', 'failed'],
+  blocked: ['queued', 'running', 'review', 'done'],
+  review: ['running', 'done', 'blocked'],
   done: ['backlog'],
-  failed: ['backlog', 'queued'],
+  failed: ['backlog', 'queued', 'blocked'],
 };
 
 const TB_STATUS_EMOJI = {
-  backlog: '📋', queued: '⏳', running: '⚡', done: '✅', failed: '❌',
+  backlog: '📋',
+  queued: '⏳',
+  running: '⚡',
+  blocked: '⛔',
+  review: '🧪',
+  done: '✅',
+  failed: '❌',
 };
 
 const TB_PRIORITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -9204,7 +9335,7 @@ let tbTasks = [];
 let tbAutoRefreshTimer = null;
 
 // ── Filter state (Issue #219 — SSE subscription filtering) ──────────────────
-let tbActiveFilters = { status: '', agentId: '', priority: '' };
+let tbActiveFilters = { status: '', agentId: '', priority: '', missionId: '', assigneeType: '' };
 let tbKnownAgents = new Set(); // populated from task data
 
 /** Build URL query string from active filters (empty fields omitted). */
@@ -9213,6 +9344,8 @@ function tbFilterQueryString() {
   if (tbActiveFilters.status) parts.push('status=' + encodeURIComponent(tbActiveFilters.status));
   if (tbActiveFilters.agentId) parts.push('agentId=' + encodeURIComponent(tbActiveFilters.agentId));
   if (tbActiveFilters.priority) parts.push('priority=' + encodeURIComponent(tbActiveFilters.priority));
+  if (tbActiveFilters.missionId) parts.push('missionId=' + encodeURIComponent(tbActiveFilters.missionId));
+  if (tbActiveFilters.assigneeType) parts.push('assigneeType=' + encodeURIComponent(tbActiveFilters.assigneeType));
   return parts.length ? '?' + parts.join('&') : '';
 }
 
@@ -9221,6 +9354,8 @@ function tbReadFilterUi() {
   tbActiveFilters.status = (document.getElementById('tbFilterStatus') || {}).value || '';
   tbActiveFilters.agentId = (document.getElementById('tbFilterAgent') || {}).value || '';
   tbActiveFilters.priority = (document.getElementById('tbFilterPriority') || {}).value || '';
+  tbActiveFilters.missionId = (document.getElementById('tbFilterMission') || {}).value || '';
+  tbActiveFilters.assigneeType = (document.getElementById('tbFilterAssigneeType') || {}).value || '';
 }
 
 /** Called when any filter dropdown changes — reconnect SSE with new filter params. */
@@ -9238,9 +9373,13 @@ function tbClearFilters() {
   const statusEl = document.getElementById('tbFilterStatus');
   const agentEl = document.getElementById('tbFilterAgent');
   const priorityEl = document.getElementById('tbFilterPriority');
+  const missionEl = document.getElementById('tbFilterMission');
+  const assigneeEl = document.getElementById('tbFilterAssigneeType');
   if (statusEl) statusEl.value = '';
   if (agentEl) agentEl.value = '';
   if (priorityEl) priorityEl.value = '';
+  if (missionEl) missionEl.value = '';
+  if (assigneeEl) assigneeEl.value = '';
   tbApplyFilters();
 }
 
@@ -9281,6 +9420,8 @@ async function tbRefresh() {
     document.getElementById('tbCountBacklog').textContent = cols.backlog ?? 0;
     document.getElementById('tbCountQueued').textContent = cols.queued ?? 0;
     document.getElementById('tbCountRunning').textContent = cols.running ?? 0;
+    document.getElementById('tbCountBlocked').textContent = cols.blocked ?? 0;
+    document.getElementById('tbCountReview').textContent = cols.review ?? 0;
     document.getElementById('tbCountDone').textContent = cols.done ?? 0;
     document.getElementById('tbCountFailed').textContent = cols.failed ?? 0;
 
@@ -9303,7 +9444,15 @@ async function tbRefresh() {
 }
 
 function tbRenderBoard() {
-  const groups = { backlog: [], queued: [], running: [], done: [], failed: [] };
+  const groups = {
+    backlog: [],
+    queued: [],
+    running: [],
+    blocked: [],
+    review: [],
+    done: [],
+    failed: [],
+  };
   for (const t of tbTasks) {
     if (groups[t.status]) groups[t.status].push(t);
   }
@@ -9349,6 +9498,18 @@ function tbRenderCard(card) {
   const ago = tbTimeAgo(card.createdAt);
   const desc = card.description ? `<div class="tb-card-desc">${tbEsc(card.description)}</div>` : '';
   const agent = card.agentId ? `<span class="tb-badge tb-badge-agent">🤖 ${tbEsc(card.agentId)}</span>` : '';
+  const mission = card.missionId ? `<span class="tb-badge" style="background:rgba(99,102,241,0.15);color:var(--accent);">🎯 ${tbEsc(card.missionId)}</span>` : '';
+  const ownerType = card.assigneeType ? card.assigneeType : (card.agentId ? 'agent' : '');
+  const ownerLabel = card.assigneeId || ownerType;
+  const owner = ownerLabel
+    ? `<span class="tb-badge" style="background:rgba(168,85,247,0.15);color:var(--purple);">👤 ${tbEsc(ownerLabel)}</span>`
+    : '';
+  const deps = Array.isArray(card.dependencies) && card.dependencies.length > 0
+    ? `<span class="tb-badge" style="background:rgba(245,158,11,0.15);color:var(--yellow);">🧩 ${card.dependencies.length}</span>`
+    : '';
+  const artifacts = Array.isArray(card.artifactLinks) && card.artifactLinks.length > 0
+    ? `<span class="tb-badge" style="background:rgba(16,185,129,0.15);color:var(--green);">📦 ${card.artifactLinks.length}</span>`
+    : '';
   const result = card.resultSummary ? `<div style="margin-top:6px;font-size:11px;color:var(--green);"><b>Result:</b> ${tbEsc(card.resultSummary)}</div>` : '';
   const errorMsg = card.error ? `<div style="margin-top:6px;font-size:11px;color:var(--red);"><b>Error:</b> ${tbEsc(card.error)}</div>` : '';
   const tokens = card.tokensUsed ? `<span class="tb-badge" style="background:rgba(168,85,247,0.12);color:var(--purple);">🪙 ${card.tokensUsed.toLocaleString()}</span>` : '';
@@ -9383,6 +9544,10 @@ function tbRenderCard(card) {
     <div class="tb-card-meta">
       <span class="tb-badge ${priClass}">${card.priority}</span>
       ${agent}
+      ${owner}
+      ${mission}
+      ${deps}
+      ${artifacts}
       ${stuckBadge}
       ${tokens}
       ${elapsed}
@@ -9428,16 +9593,40 @@ function tbHideCreateForm() {
   document.getElementById('tbNewDesc').value = '';
   document.getElementById('tbNewPriority').value = 'medium';
   document.getElementById('tbNewAgent').value = '';
+  document.getElementById('tbNewMissionId').value = '';
+  document.getElementById('tbNewMissionBrief').value = '';
+  document.getElementById('tbNewAssigneeType').value = 'agent';
+  document.getElementById('tbNewAssigneeId').value = '';
+  document.getElementById('tbNewDependencies').value = '';
+  document.getElementById('tbNewArtifacts').value = '';
+  document.getElementById('tbNewReplayId').value = '';
+  document.getElementById('tbNewStatus').value = 'queued';
 }
 
 async function tbCreateTask() {
   const title = document.getElementById('tbNewTitle').value.trim();
   if (!title) { document.getElementById('tbNewTitle').focus(); return; }
+  const dependencies = (document.getElementById('tbNewDependencies').value || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  const artifactLinks = (document.getElementById('tbNewArtifacts').value || '')
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean);
   const body = {
     title,
     description: document.getElementById('tbNewDesc').value.trim(),
     priority: document.getElementById('tbNewPriority').value,
     agentId: document.getElementById('tbNewAgent').value.trim() || null,
+    missionId: document.getElementById('tbNewMissionId').value.trim() || null,
+    missionBrief: document.getElementById('tbNewMissionBrief').value.trim() || null,
+    assigneeType: document.getElementById('tbNewAssigneeType').value || 'agent',
+    assigneeId: document.getElementById('tbNewAssigneeId').value.trim() || null,
+    dependencies,
+    artifactLinks,
+    replaySessionId: document.getElementById('tbNewReplayId').value.trim() || null,
+    status: document.getElementById('tbNewStatus').value || 'queued',
   };
   try {
     const res = await fetch('/api/task-board', {
@@ -9677,6 +9866,8 @@ function tbOpenDetail(cardId, event) {
     backlog: 'background:rgba(113,113,122,0.15);color:var(--text-muted);',
     queued: 'background:rgba(59,130,246,0.15);color:var(--blue);',
     running: 'background:rgba(245,158,11,0.15);color:var(--yellow);',
+    blocked: 'background:rgba(239,68,68,0.15);color:var(--red);',
+    review: 'background:rgba(168,85,247,0.15);color:var(--purple);',
     done: 'background:rgba(16,185,129,0.15);color:var(--green);',
     failed: 'background:rgba(239,68,68,0.15);color:var(--red);',
   };
@@ -9700,6 +9891,14 @@ function tbOpenDetail(cardId, event) {
   // Agent
   document.getElementById('tbDetailAgent').textContent = card.agentId || '—';
   document.getElementById('tbDetailAgent').style.color = card.agentId ? 'var(--cyan)' : 'var(--text-muted)';
+  document.getElementById('tbDetailMissionId').textContent = card.missionId || '—';
+  document.getElementById('tbDetailMissionBrief').textContent = card.missionBrief || '—';
+  const ownerType = card.assigneeType || (card.agentId ? 'agent' : null);
+  const ownerId = card.assigneeId || card.agentId || null;
+  document.getElementById('tbDetailOwner').textContent = ownerType
+    ? `${ownerType}${ownerId ? `: ${ownerId}` : ''}`
+    : '—';
+  document.getElementById('tbDetailReplay').textContent = card.replaySessionId || '—';
 
   // Timestamps
   document.getElementById('tbDetailCreated').textContent = card.createdAt ? tbFormatTimestamp(card.createdAt) : '—';
@@ -9764,6 +9963,59 @@ function tbOpenDetail(cardId, event) {
     logSection.style.display = 'none';
   }
 
+  // Dependencies
+  const depsSection = document.getElementById('tbDetailDepsSection');
+  const depsEl = document.getElementById('tbDetailDeps');
+  if (Array.isArray(card.dependencies) && card.dependencies.length > 0) {
+    depsSection.style.display = '';
+    depsEl.innerHTML = card.dependencies
+      .map(dep => `<div class="mono" style="font-size:12px;margin-bottom:4px;">• ${tbEsc(dep)}</div>`)
+      .join('');
+  } else {
+    depsSection.style.display = 'none';
+    depsSection.open = false;
+  }
+
+  // Artifacts / Links
+  const artifactsSection = document.getElementById('tbDetailArtifactsSection');
+  const artifactsEl = document.getElementById('tbDetailArtifacts');
+  if (Array.isArray(card.artifactLinks) && card.artifactLinks.length > 0) {
+    artifactsSection.style.display = '';
+    artifactsEl.innerHTML = card.artifactLinks
+      .map(link => {
+        const safe = tbEsc(link);
+        const isUrl = /^https?:\/\//i.test(link);
+        return isUrl
+          ? `<div style="margin-bottom:4px;"><a href="${safe}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:none;">${safe}</a></div>`
+          : `<div class="mono" style="font-size:12px;margin-bottom:4px;">${safe}</div>`;
+      })
+      .join('');
+  } else {
+    artifactsSection.style.display = 'none';
+    artifactsSection.open = false;
+  }
+
+  // Status history
+  const historySection = document.getElementById('tbDetailHistorySection');
+  const historyEl = document.getElementById('tbDetailHistory');
+  if (Array.isArray(card.statusHistory) && card.statusHistory.length > 0) {
+    historySection.style.display = '';
+    const sortedHistory = [...card.statusHistory]
+      .sort((a, b) => (a.at || 0) - (b.at || 0));
+    historyEl.innerHTML = sortedHistory
+      .map((h) => {
+        const ts = h.at ? tbFormatTimestamp(h.at) : '—';
+        const note = h.note ? ` · ${tbEsc(h.note)}` : '';
+        return `<div class="mono" style="font-size:12px;margin-bottom:4px;">
+          <span style="color:var(--text-muted);">${tbEsc(ts)}</span> · ${tbEsc(h.status)} · ${tbEsc(h.by || 'system')}${note}
+        </div>`;
+      })
+      .join('');
+  } else {
+    historySection.style.display = 'none';
+    historySection.open = false;
+  }
+
   // Transition buttons in footer
   const transContainer = document.getElementById('tbDetailTransitions');
   const transitions = TB_TRANSITIONS[card.status] || [];
@@ -9787,6 +10039,9 @@ function tbCloseDetail() {
   document.getElementById('tbDetailResultSection').open = false;
   document.getElementById('tbDetailErrorSection').open = false;
   document.getElementById('tbDetailLogSection').open = false;
+  document.getElementById('tbDetailDepsSection').open = false;
+  document.getElementById('tbDetailArtifactsSection').open = false;
+  document.getElementById('tbDetailHistorySection').open = false;
 }
 
 /** Transition from within the detail modal. */
@@ -9814,11 +10069,37 @@ function tbFormatTimestamp(ts) {
 /** Build execution log entries from card timestamps. */
 function tbBuildExecutionLog(card) {
   const entries = [];
-  if (card.createdAt) entries.push({ ts: tbFormatTimestamp(card.createdAt), msg: 'Task created' + (card.agentId ? ' — assigned to ' + card.agentId : '') });
+  if (card.createdAt) {
+    entries.push({
+      ts: tbFormatTimestamp(card.createdAt),
+      msg: 'Task created' + (card.agentId ? ' — assigned to ' + card.agentId : ''),
+    });
+  }
+  if (card.missionId) entries.push({ ts: '', msg: `🎯 Mission linked: ${card.missionId}` });
+  if (card.missionBrief) entries.push({ ts: '', msg: `🧭 Origin: ${card.missionBrief}` });
+  if (card.assigneeType || card.assigneeId) {
+    const owner = [card.assigneeType || 'agent', card.assigneeId || card.agentId || ''].filter(Boolean).join(': ');
+    entries.push({ ts: '', msg: `👤 Owner: ${owner}` });
+  }
   if (card.queuedAt) entries.push({ ts: tbFormatTimestamp(card.queuedAt), msg: 'Moved to queue' });
   if (card.startedAt) entries.push({ ts: tbFormatTimestamp(card.startedAt), msg: 'Execution started' });
   if (card.completedAt && card.status === 'done') entries.push({ ts: tbFormatTimestamp(card.completedAt), msg: 'Completed successfully' });
   if (card.completedAt && card.status === 'failed') entries.push({ ts: tbFormatTimestamp(card.completedAt), msg: 'Execution failed' });
+  if (Array.isArray(card.dependencies) && card.dependencies.length > 0) {
+    entries.push({ ts: '', msg: `🧩 Dependencies: ${card.dependencies.join(', ')}` });
+  }
+  if (Array.isArray(card.artifactLinks) && card.artifactLinks.length > 0) {
+    entries.push({ ts: '', msg: `📦 Artifacts: ${card.artifactLinks.length} linked` });
+  }
+  if (card.replaySessionId) entries.push({ ts: '', msg: `🎞 Replay: ${card.replaySessionId}` });
+  if (Array.isArray(card.statusHistory) && card.statusHistory.length > 0) {
+    for (const h of card.statusHistory) {
+      entries.push({
+        ts: h.at ? tbFormatTimestamp(h.at) : '',
+        msg: `↔ Status: ${h.status}${h.note ? ` (${h.note})` : ''}`,
+      });
+    }
+  }
   if (card.runtimeMs != null) entries.push({ ts: '', msg: '⏱ Runtime: ' + tbDuration(card.runtimeMs) });
   if (card.tokensUsed != null) entries.push({ ts: '', msg: '🪙 Tokens used: ' + card.tokensUsed.toLocaleString() });
   if (card.costEstimate != null) entries.push({ ts: '', msg: '💰 Cost: $' + card.costEstimate.toFixed(4) });
@@ -9938,13 +10219,30 @@ function tbUpdateBulkBar() {
 
   // Enable/disable transition buttons based on what's selected
   const selectedCards = tbTasks.filter(t => tbSelectedIds.has(t.id));
-  const statuses = new Set(selectedCards.map(t => t.status));
 
   // Queued button: useful when any selected card can transition to queued
   const canToQueued = selectedCards.some(t =>
     (TB_TRANSITIONS[t.status] || []).includes('queued'));
   const qBtn = document.getElementById('tbBulkToQueued');
   if (qBtn) qBtn.disabled = !canToQueued;
+
+  // Running button
+  const canToRunning = selectedCards.some(t =>
+    (TB_TRANSITIONS[t.status] || []).includes('running'));
+  const rBtn = document.getElementById('tbBulkToRunning');
+  if (rBtn) rBtn.disabled = !canToRunning;
+
+  // Blocked button
+  const canToBlocked = selectedCards.some(t =>
+    (TB_TRANSITIONS[t.status] || []).includes('blocked'));
+  const blBtn = document.getElementById('tbBulkToBlocked');
+  if (blBtn) blBtn.disabled = !canToBlocked;
+
+  // Review button
+  const canToReview = selectedCards.some(t =>
+    (TB_TRANSITIONS[t.status] || []).includes('review'));
+  const rvBtn = document.getElementById('tbBulkToReview');
+  if (rvBtn) rvBtn.disabled = !canToReview;
 
   // Backlog button
   const canToBacklog = selectedCards.some(t =>
@@ -12473,12 +12771,22 @@ function tbApplyEvent(event) {
   );
 
   // Update summary counts inline
-  const cols = { backlog: 0, queued: 0, running: 0, done: 0, failed: 0 };
+  const cols = {
+    backlog: 0,
+    queued: 0,
+    running: 0,
+    blocked: 0,
+    review: 0,
+    done: 0,
+    failed: 0,
+  };
   for (const t of tbTasks) { cols[t.status] = (cols[t.status] || 0) + 1; }
   const el = (id) => document.getElementById(id);
   if (el('tbCountBacklog')) el('tbCountBacklog').textContent = cols.backlog;
   if (el('tbCountQueued')) el('tbCountQueued').textContent = cols.queued;
   if (el('tbCountRunning')) el('tbCountRunning').textContent = cols.running;
+  if (el('tbCountBlocked')) el('tbCountBlocked').textContent = cols.blocked;
+  if (el('tbCountReview')) el('tbCountReview').textContent = cols.review;
   if (el('tbCountDone')) el('tbCountDone').textContent = cols.done;
   if (el('tbCountFailed')) el('tbCountFailed').textContent = cols.failed;
 

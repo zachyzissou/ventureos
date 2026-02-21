@@ -711,10 +711,28 @@ export interface ReplaySessionListResponse {
 // ─── Task Board Domain (Issue #219) ──────────────────────────────────────────
 
 /** Valid task card statuses (Kanban columns). */
-export type TaskStatus = 'backlog' | 'queued' | 'running' | 'done' | 'failed';
+export type TaskStatus =
+  | 'backlog'
+  | 'queued'
+  | 'running'
+  | 'blocked'
+  | 'review'
+  | 'done'
+  | 'failed';
 
 /** Valid task card priorities. */
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low';
+
+/** Assignment owner type for mission-linked task cards. */
+export type TaskAssigneeType = 'human' | 'nexus' | 'agent';
+
+/** Status transition audit entry for task cards. */
+export interface TaskStatusHistoryEntry {
+  status: TaskStatus;
+  at: number;
+  by: string;
+  note: string | null;
+}
 
 /** A single task board card. */
 export interface TaskCard {
@@ -735,6 +753,22 @@ export interface TaskCard {
   costEstimate: number | null;
   /** Runtime in milliseconds (computed on completion, or null). Issue #219 — task detail modal. */
   runtimeMs: number | null;
+  /** Mission identifier used to tie card to mission brief and artifacts. */
+  missionId?: string | null;
+  /** Origin descriptor (usually mission brief title/path). */
+  missionBrief?: string | null;
+  /** Assignment owner dimension: human / nexus / agent. */
+  assigneeType?: TaskAssigneeType;
+  /** Owner identifier (person, nexus, or agent id). */
+  assigneeId?: string | null;
+  /** Upstream task IDs this card depends on. */
+  dependencies?: string[];
+  /** Linked artifacts (docs, commits, output paths, URLs). */
+  artifactLinks?: string[];
+  /** Optional replay session id reference. */
+  replaySessionId?: string | null;
+  /** Status transition audit trail. */
+  statusHistory?: TaskStatusHistoryEntry[];
 }
 
 /** Summary counts per column returned by the summary endpoint. */

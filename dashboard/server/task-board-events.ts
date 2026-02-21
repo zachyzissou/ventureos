@@ -14,7 +14,12 @@
  */
 
 import type { ServerResponse } from 'node:http';
-import type { TaskCard, TaskStatus, TaskPriority } from './types.js';
+import type {
+  TaskCard,
+  TaskStatus,
+  TaskPriority,
+  TaskAssigneeType,
+} from './types.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -36,12 +41,23 @@ export interface SseSubscriptionFilter {
   status?: TaskStatus;
   agentId?: string;
   priority?: TaskPriority;
+  missionId?: string;
+  assigneeType?: TaskAssigneeType;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const VALID_STATUSES: readonly string[] = ['backlog', 'queued', 'running', 'done', 'failed'];
+const VALID_STATUSES: readonly string[] = [
+  'backlog',
+  'queued',
+  'running',
+  'blocked',
+  'review',
+  'done',
+  'failed',
+];
 const VALID_PRIORITIES: readonly string[] = ['critical', 'high', 'medium', 'low'];
+const VALID_ASSIGNEE_TYPES: readonly string[] = ['human', 'nexus', 'agent'];
 
 // ─── Event Bus ───────────────────────────────────────────────────────────────
 
@@ -73,6 +89,8 @@ export function parseSubscriptionFilter(params: {
   status?: string | null;
   agentId?: string | null;
   priority?: string | null;
+  missionId?: string | null;
+  assigneeType?: string | null;
 }): SseSubscriptionFilter {
   const filter: SseSubscriptionFilter = {};
   if (params.status && VALID_STATUSES.includes(params.status)) {
@@ -83,6 +101,12 @@ export function parseSubscriptionFilter(params: {
   }
   if (params.priority && VALID_PRIORITIES.includes(params.priority)) {
     filter.priority = params.priority as TaskPriority;
+  }
+  if (params.missionId && params.missionId.trim()) {
+    filter.missionId = params.missionId.trim();
+  }
+  if (params.assigneeType && VALID_ASSIGNEE_TYPES.includes(params.assigneeType)) {
+    filter.assigneeType = params.assigneeType as TaskAssigneeType;
   }
   return filter;
 }
@@ -95,6 +119,8 @@ export function matchesFilter(card: TaskCard, filter: SseSubscriptionFilter): bo
   if (filter.status && card.status !== filter.status) return false;
   if (filter.agentId && card.agentId !== filter.agentId) return false;
   if (filter.priority && card.priority !== filter.priority) return false;
+  if (filter.missionId && card.missionId !== filter.missionId) return false;
+  if (filter.assigneeType && (card.assigneeType ?? 'agent') !== filter.assigneeType) return false;
   return true;
 }
 
