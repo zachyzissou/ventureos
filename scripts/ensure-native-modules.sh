@@ -26,6 +26,9 @@ if [[ "${1:-}" == "--check" ]]; then
   CHECK_ONLY=true
 fi
 
+LOAD_CHECK_LOG="$(mktemp "${TMPDIR:-/tmp}/ventureos-sqlite-load-check.XXXXXX")"
+trap 'rm -f "$LOAD_CHECK_LOG"' EXIT
+
 # ─── Platform detection ──────────────────────────────────────────────────────
 
 CURRENT_OS="$(uname -s)"   # Darwin, Linux
@@ -38,6 +41,24 @@ case "$CURRENT_OS" in
 esac
 
 echo "🔍 Checking native modules for $CURRENT_OS/$CURRENT_ARCH (expect $EXPECTED_FORMAT)"
+
+# Validate the current Node runtime can actually dlopen and execute the addon.
+# This catches ABI mismatches where binary format/arch look valid but NODE_MODULE_VERSION differs.
+check_sqlite_runtime_load() {
+  node <<'NODE'
+try {
+  const Database = require('better-sqlite3');
+  const db = new Database(':memory:');
+  db.prepare('SELECT 1 AS ok').get();
+  db.close();
+  process.exit(0);
+} catch (err) {
+  const msg = err && err.stack ? err.stack : String(err);
+  console.error(msg);
+  process.exit(1);
+}
+NODE
+}
 
 # ─── Check better-sqlite3 ────────────────────────────────────────────────────
 
@@ -79,6 +100,17 @@ else
   fi
 fi
 
+# Even if format/arch look correct, verify the current Node runtime can load it.
+if ! $NEEDS_REBUILD; then
+  if check_sqlite_runtime_load >"$LOAD_CHECK_LOG" 2>&1; then
+    echo "✅ better-sqlite3: runtime load check passed"
+  else
+    echo "❌ better-sqlite3: runtime load check failed (likely ABI mismatch)"
+    sed 's/^/   /' "$LOAD_CHECK_LOG" || true
+    NEEDS_REBUILD=true
+  fi
+fi
+
 # ─── Rebuild if needed ───────────────────────────────────────────────────────
 
 if $NEEDS_REBUILD; then
@@ -89,15 +121,21 @@ if $NEEDS_REBUILD; then
   fi
 
   echo ""
-  echo "🔧 Rebuilding better-sqlite3 for $CURRENT_OS/$CURRENT_ARCH…"
+  echo "🔧 Rebuilding better-sqlite3 from source for $CURRENT_OS/$CURRENT_ARCH…"
   cd "$REPO_ROOT"
-  npm rebuild better-sqlite3
+  npm rebuild better-sqlite3 --build-from-source
 
   # Verify rebuild succeeded
   if [[ -f "$SQLITE_BINARY" ]]; then
     VERIFY_INFO="$(file "$SQLITE_BINARY" 2>/dev/null || echo "unknown")"
     if echo "$VERIFY_INFO" | grep -q "$EXPECTED_FORMAT"; then
-      echo "✅ Rebuild successful: $VERIFY_INFO"
+      if check_sqlite_runtime_load >"$LOAD_CHECK_LOG" 2>&1; then
+        echo "✅ Rebuild successful: $VERIFY_INFO"
+      else
+        echo "❌ Rebuild produced binary that still fails to load"
+        sed 's/^/   /' "$LOAD_CHECK_LOG" || true
+        exit 1
+      fi
     else
       echo "❌ Rebuild failed — binary still wrong format"
       echo "   Got: $VERIFY_INFO"

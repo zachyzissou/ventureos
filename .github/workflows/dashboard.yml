@@ -10,11 +10,15 @@ on:
       - 'dashboard/**'
       - 'lib/**'
       - 'package.json'
+      - 'scripts/ensure-native-modules.sh'
+      - '.github/workflows/dashboard.yml'
   pull_request:
     paths:
       - 'dashboard/**'
       - 'lib/**'
       - 'package.json'
+      - 'scripts/ensure-native-modules.sh'
+      - '.github/workflows/dashboard.yml'
 
 jobs:
   build-and-test:
@@ -36,6 +40,10 @@ jobs:
 
       - name: Rebuild native modules for current Node runtime
         run: npm rebuild better-sqlite3 --build-from-source
+
+      - name: Verify better-sqlite3 runtime ABI
+        run: |
+          node -e "const Database=require('better-sqlite3');const db=new Database(':memory:');db.prepare('SELECT 1').get();db.close();console.log('better-sqlite3 ABI ok for Node', process.versions.node)"
 
       - name: TypeScript compile
         working-directory: dashboard
