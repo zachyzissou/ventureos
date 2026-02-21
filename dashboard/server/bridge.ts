@@ -9,12 +9,22 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { execSync } from 'node:child_process';
 
 import { handleKpis } from './routes/kpis.js';
 import { handleObservations } from './routes/observations.js';
 import { handleAgentHealth } from './routes/agent-health.js';
+import {
+  normalizeIp,
+  isAllowedIp,
+  readBridgeToken,
+  logBridgeAudit,
+  parseRateLimits,
+  rateLimitGroup,
+  createRateLimiter,
+  authorizeRequest,
+} from './bridge-security.js';
+import { createBridgeTelemetryBuilder, type BridgeLiveEvent, type BridgeTelemetrySnapshot } from './bridge-live-telemetry.js';
 import {
   buildCostData,
   buildUsageWindows,
@@ -110,57 +120,9 @@ function safeReadText(filePath: string, fallback = ''): string {
   }
 }
 
-function normalizeIp(ip: string): string {
-  if (!ip) return ip;
-  return ip.replace(/^::ffff:/, '');
-}
-
-function ipToInt(ip: string): number | null {
-  const parts = ip.split('.').map((p) => parseInt(p, 10));
-  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p) || p < 0 || p > 255)) return null;
-  return ((parts[0] << 24) >>> 0) + (parts[1] << 16) + (parts[2] << 8) + parts[3];
-}
-
-function isAllowedIp(ip: string, cidrs: string[]): boolean {
-  const cleaned = normalizeIp(ip);
-  if (cleaned === '::1') return true;
-
-  for (const cidr of cidrs) {
-    const trimmed = cidr.trim();
-    if (!trimmed) continue;
-    if (trimmed === cleaned) return true;
-
-    // IPv6 allowlist: only direct match for ::1 or ::ffff:127.0.0.1
-    if (trimmed.includes(':')) {
-      if (trimmed === '::1/128' && cleaned === '::1') return true;
-      if (trimmed === '::1' && cleaned === '::1') return true;
-      continue;
-    }
-
-    const [net, maskRaw] = trimmed.split('/');
-    const mask = parseInt(maskRaw ?? '32', 10);
-    const ipInt = ipToInt(cleaned);
-    const netInt = ipToInt(net);
-    if (ipInt === null || netInt === null) continue;
-    const maskBits = mask < 0 ? 0 : mask > 32 ? 32 : mask;
-    const maskInt = maskBits === 0 ? 0 : (0xffffffff << (32 - maskBits)) >>> 0;
-    if ((ipInt & maskInt) === (netInt & maskInt)) return true;
-  }
-
-  return false;
-}
-
-function readToken(): string {
-  if (process.env.BRIDGE_TOKEN) return process.env.BRIDGE_TOKEN.trim();
-  if (fs.existsSync(BRIDGE_TOKEN_FILE)) {
-    return fs.readFileSync(BRIDGE_TOKEN_FILE, 'utf8').trim();
-  }
-  throw new Error('Missing BRIDGE_TOKEN (set env or BRIDGE_TOKEN_FILE)');
-}
-
 const BRIDGE_TOKEN: string = (() => {
   try {
-    return readToken();
+    return readBridgeToken(BRIDGE_TOKEN_FILE, process.env.BRIDGE_TOKEN);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[BRIDGE] FATAL:', msg);
@@ -169,99 +131,8 @@ const BRIDGE_TOKEN: string = (() => {
 })();
 
 const ALLOWLIST: string[] = BRIDGE_ALLOW_CIDRS.split(',').map((c) => c.trim()).filter(Boolean);
-
-function timingSafeEqual(a: string, b: string): boolean {
-  try {
-    const ab = Buffer.from(a);
-    const bb = Buffer.from(b);
-    if (ab.length !== bb.length) return false;
-    return crypto.timingSafeEqual(ab, bb);
-  } catch {
-    return false;
-  }
-}
-
-function authorize(req: http.IncomingMessage): boolean {
-  const auth = (req.headers['authorization'] ?? '').toString();
-  const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
-  if (!token) return false;
-  return timingSafeEqual(token, BRIDGE_TOKEN);
-}
-
-function logAudit(event: string, req: http.IncomingMessage, detail = ''): void {
-  const entry = {
-    ts: new Date().toISOString(),
-    event,
-    ip: normalizeIp(req.socket?.remoteAddress ?? 'unknown'),
-    method: req.method ?? '-',
-    path: req.url ?? '-',
-    detail,
-  };
-  try {
-    fs.mkdirSync(path.dirname(BRIDGE_AUDIT_LOG), { recursive: true });
-    fs.appendFileSync(BRIDGE_AUDIT_LOG, JSON.stringify(entry) + '\n');
-  } catch {
-    // ignore audit failures
-  }
-}
-
-// ─── Rate Limiting ─────────────────────────────────────────────────────────
-
-type RateLimitRule = { max: number; windowMs: number };
-
-function parseWindowMs(raw: string): number {
-  const m = raw.match(/^(\d+)(ms|s|m|h|d)?$/i);
-  if (!m) return 60000;
-  const value = parseInt(m[1] ?? '60', 10);
-  const unit = (m[2] ?? 's').toLowerCase();
-  const mult = unit === 'ms' ? 1 : unit === 'm' ? 60000 : unit === 'h' ? 3600000 : unit === 'd' ? 86400000 : 1000;
-  return value * mult;
-}
-
-function parseRateLimits(spec: string): Record<string, RateLimitRule> {
-  const out: Record<string, RateLimitRule> = {};
-  const parts = spec.split(';').map((p) => p.trim()).filter(Boolean);
-  for (const part of parts) {
-    const [name, rhs] = part.split('=');
-    if (!name || !rhs) continue;
-    const [limitRaw, windowRaw] = rhs.split('/');
-    const max = parseInt(limitRaw ?? '60', 10);
-    const windowMs = parseWindowMs(windowRaw ?? '60s');
-    if (!Number.isNaN(max) && windowMs > 0) out[name.trim()] = { max, windowMs };
-  }
-  if (!out.default) out.default = { max: 60, windowMs: 60000 };
-  return out;
-}
-
 const RATE_LIMITS = parseRateLimits(BRIDGE_RATE_LIMITS);
-const rateState: Map<string, number[]> = new Map();
-
-function rateGroup(pathname: string): string {
-  if (pathname.includes('/live')) return 'sse';
-  if (
-    pathname.includes('/costs') ||
-    pathname.includes('/usage') ||
-    pathname.includes('/session-messages') ||
-    pathname.includes('/lifetime-stats')
-  )
-    return 'expensive';
-  return 'default';
-}
-
-function checkRateLimit(ip: string, group: string): boolean {
-  const rule = RATE_LIMITS[group] ?? RATE_LIMITS.default;
-  const now = Date.now();
-  const key = `${ip}:${group}`;
-  const list = rateState.get(key) ?? [];
-  const fresh = list.filter((t) => now - t < rule.windowMs);
-  if (fresh.length >= rule.max) {
-    rateState.set(key, fresh);
-    return false;
-  }
-  fresh.push(now);
-  rateState.set(key, fresh);
-  return true;
-}
+const checkRateLimit = createRateLimiter(RATE_LIMITS);
 
 // ─── Sessions (filtered) ───────────────────────────────────────────────────
 
@@ -1101,54 +972,6 @@ function getObservationFile(relPath: string): string | null {
   return full;
 }
 
-interface BridgeLiveEvent {
-  timestamp: string;
-  session: string;
-  role: string;
-  content: string;
-}
-
-interface BridgeTelemetrySnapshot {
-  type: 'telemetry';
-  ts: number;
-  system: {
-    cpuUsage: number;
-    memoryPercent: number;
-    memoryUsedGB: string;
-    memoryTotalGB: string;
-    diskPercent: number;
-    loadAvg1m: string;
-    uptime: number;
-  };
-  agents: {
-    total: number;
-    active: number;
-    busyIds: string[];
-  };
-  sessions: {
-    total: number;
-    running: number;
-  };
-  costs: {
-    today: number;
-    week: number;
-  };
-  usage: {
-    opusPct: number;
-    sonnetPct: number;
-    totalCost5h: number;
-    totalCalls5h: number;
-    burnTokensPerMin: number;
-    burnCostPerMin: number;
-  };
-  kpi: {
-    successRate: number | null;
-    p95LatencyS: number | null;
-    sloStatus: string | null;
-    date: string | null;
-  };
-}
-
 function parseLiveMessageContent(content: unknown): string {
   if (typeof content === 'string') return content.slice(0, 150);
   if (!Array.isArray(content)) return '';
@@ -1469,72 +1292,17 @@ function getVentureosKpis(days = 7): {
   };
 }
 
-function buildBridgeTelemetrySnapshot(): BridgeTelemetrySnapshot {
-  const now = Date.now();
-  const stats = buildSystemStats();
-  const sessions = getSessionsJson();
-  const running = sessions.filter(
-    (session) => now - parseNumber(session.updatedAt, 0) < 300_000 && session.aborted !== true,
-  ).length;
-
-  if (!costCache || now - costCacheTime > 60_000) {
-    costCache = buildCostData({ sessDir, cronFile, allowedSessionIds: getAllowedSessionIds() });
-    costCacheTime = now;
-  }
-  if (!usageCache || now - usageCacheTime > 10_000) {
-    usageCache = buildUsageWindows({ sessDir, allowedSessionIds: getAllowedSessionIds() });
-    usageCacheTime = now;
-  }
-
-  const agents = getVentureosAgents();
-  const busyIds = Object.values(agents.agents)
-    .filter((agent) => agent.status === 'working')
-    .map((agent) => agent.agentId);
-  const kpi = getLatestKpiSummary();
-
-  return {
-    type: 'telemetry',
-    ts: now,
-    system: {
-      cpuUsage: stats.cpu?.usage ?? 0,
-      memoryPercent: stats.memory?.percent ?? 0,
-      memoryUsedGB: stats.memory?.usedGB ?? '0.0',
-      memoryTotalGB: stats.memory?.totalGB ?? '0.0',
-      diskPercent: stats.disk?.percent ?? 0,
-      loadAvg1m: stats.loadAvg?.['1m'] ?? '0',
-      uptime: stats.uptime ?? 0,
-    },
-    agents: {
-      total: Object.keys(agents.agents ?? {}).length,
-      active: busyIds.length,
-      busyIds,
-    },
-    sessions: {
-      total: sessions.length,
-      running,
-    },
-    costs: {
-      today: costCache?.today ?? 0,
-      week: costCache?.week ?? 0,
-    },
-    usage: {
-      opusPct: usageCache?.current?.opusPct ?? 0,
-      sonnetPct: usageCache?.current?.sonnetPct ?? 0,
-      totalCost5h: usageCache?.current?.totalCost ?? 0,
-      totalCalls5h: usageCache?.current?.totalCalls ?? 0,
-      burnTokensPerMin: usageCache?.burnRate?.tokensPerMinute ?? 0,
-      burnCostPerMin: usageCache?.burnRate?.costPerMinute ?? 0,
-    },
-    kpi: {
-      successRate: kpi.successRate,
-      p95LatencyS: kpi.p95LatencyS,
-      sloStatus: kpi.sloStatus,
-      date: kpi.date,
-    },
-  };
-}
-
-// ─── Metrics Cache ─────────────────────────────────────────────────────────
+const buildBridgeTelemetrySnapshot = createBridgeTelemetryBuilder({
+  sessDir,
+  cronFile,
+  getAllowedSessionIds,
+  getSessionsJson,
+  getVentureosAgents,
+  getLatestKpiSummary,
+  buildSystemStats,
+  buildCostData,
+  buildUsageWindows,
+});
 
 let costCache: ReturnType<typeof buildCostData> | null = null;
 let costCacheTime: number = 0;
@@ -1567,20 +1335,20 @@ const server = http.createServer(async (req, res) => {
 
   const peerIp = normalizeIp(req.socket?.remoteAddress ?? 'unknown');
   if (!isAllowedIp(peerIp, ALLOWLIST)) {
-    logAudit('deny_ip', req, peerIp);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'deny_ip', req, peerIp);
     sendJson(res, { ok: false, error: 'Forbidden' }, 403);
     return;
   }
 
-  if (!authorize(req)) {
-    logAudit('auth_failed', req);
+  if (!authorizeRequest(req.headers['authorization']?.toString(), BRIDGE_TOKEN)) {
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'auth_failed', req);
     sendJson(res, { ok: false, error: 'Unauthorized' }, 401);
     return;
   }
 
-  const group = rateGroup(pathname);
+  const group = rateLimitGroup(pathname);
   if (!checkRateLimit(peerIp, group)) {
-    logAudit('rate_limited', req, group);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'rate_limited', req, group);
     sendJson(res, { ok: false, error: 'Rate limit exceeded' }, 429);
     return;
   }
@@ -1622,7 +1390,7 @@ const server = http.createServer(async (req, res) => {
 
   // Sessions (filtered)
   if (pathname === '/api/bridge/sessions') {
-    logAudit('sessions_read', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'sessions_read', req);
     sendJson(res, getSessionsJson());
     return;
   }
@@ -1642,7 +1410,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, { ok: false, error: 'Not found' }, 404);
       return;
     }
-    logAudit('session_messages', req, sessionId);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'session_messages', req, sessionId);
     sendJson(res, getSessionMessages(sessionId));
     return;
   }
@@ -1655,7 +1423,7 @@ const server = http.createServer(async (req, res) => {
       usageCache = buildUsageWindows({ sessDir, allowedSessionIds });
       usageCacheTime = now;
     }
-    logAudit('usage_read', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'usage_read', req);
     sendJson(res, usageCache);
     return;
   }
@@ -1666,25 +1434,25 @@ const server = http.createServer(async (req, res) => {
       costCache = buildCostData({ sessDir, cronFile, allowedSessionIds });
       costCacheTime = now;
     }
-    logAudit('costs_read', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'costs_read', req);
     sendJson(res, costCache);
     return;
   }
 
   if (pathname === '/api/bridge/tokens-today') {
-    logAudit('tokens_today', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'tokens_today', req);
     sendJson(res, buildTodayTokens({ sessDir, allowedSessionIds }));
     return;
   }
 
   if (pathname === '/api/bridge/response-time') {
-    logAudit('response_time', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'response_time', req);
     sendJson(res, { avgSeconds: buildAvgResponseTime({ sessDir, allowedSessionIds }) });
     return;
   }
 
   if (pathname === '/api/bridge/system') {
-    logAudit('system_stats', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'system_stats', req);
     const stats = buildSystemStats() as ReturnType<typeof buildSystemStats> & {
       diskHistory?: Array<{ t: number; v: number }>;
     };
@@ -1699,50 +1467,50 @@ const server = http.createServer(async (req, res) => {
       lifetimeStatsCache = buildLifetimeStats({ sessDir, allowedSessionIds });
       lifetimeStatsCacheTime = now;
     }
-    logAudit('lifetime_stats', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'lifetime_stats', req);
     sendJson(res, lifetimeStatsCache);
     return;
   }
 
   if (pathname === '/api/bridge/health-history') {
-    logAudit('health_history', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'health_history', req);
     sendJson(res, readHealthHistory(healthHistoryFile));
     return;
   }
 
   if (pathname === '/api/bridge/ventureos-agents') {
-    logAudit('ventureos_agents', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'ventureos_agents', req);
     sendJson(res, getVentureosAgents());
     return;
   }
 
   if (pathname === '/api/bridge/ventureos-kpis') {
     const days = clampInt(url.searchParams.get('days'), 1, 60, 7);
-    logAudit('ventureos_kpis', req, `days=${days}`);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'ventureos_kpis', req, `days=${days}`);
     sendJson(res, getVentureosKpis(days));
     return;
   }
 
   if (pathname === '/api/bridge/workflow-patterns') {
-    logAudit('workflow_patterns', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'workflow_patterns', req);
     sendJson(res, getWorkflowPatterns());
     return;
   }
 
   if (pathname === '/api/bridge/mission-control') {
-    logAudit('mission_control', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'mission_control', req);
     sendJson(res, getMissionControl());
     return;
   }
 
   if (pathname === '/api/bridge/crons') {
-    logAudit('crons', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'crons', req);
     sendJson(res, getCronJobs());
     return;
   }
 
   if (pathname === '/api/bridge/scheduler-jobs') {
-    logAudit('scheduler_jobs', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'scheduler_jobs', req);
     sendJson(
       res,
       getSchedulerJobs({
@@ -1754,26 +1522,26 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/bridge/git') {
-    logAudit('git', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'git', req);
     sendJson(res, getGitActivity());
     return;
   }
 
   if (pathname === '/api/bridge/services') {
-    logAudit('services', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'services', req);
     sendJson(res, getServicesStatus());
     return;
   }
 
   if (pathname === '/api/bridge/memory') {
-    logAudit('memory', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'memory', req);
     sendJson(res, getMemoryFiles());
     return;
   }
 
   if (pathname === '/api/bridge/observations-index') {
     const observations = getAllObservations();
-    logAudit('observations_index', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'observations_index', req);
     sendJson(res, {
       updatedAt: observations.updatedAt,
       tags: observations.tags,
@@ -1790,7 +1558,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, { ok: false, error: 'Not found' }, 404);
       return;
     }
-    logAudit('observation_file', req, relPath);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'observation_file', req, relPath);
     sendJson(res, {
       ok: true,
       path: relPath,
@@ -1801,7 +1569,7 @@ const server = http.createServer(async (req, res) => {
 
   // SSE live telemetry feed
   if (pathname === '/api/bridge/live-telemetry') {
-    logAudit('live_telemetry', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'live_telemetry', req);
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -1825,7 +1593,7 @@ const server = http.createServer(async (req, res) => {
 
   // SSE live feed
   if (pathname === '/api/bridge/live') {
-    logAudit('live_feed', req);
+    logBridgeAudit(BRIDGE_AUDIT_LOG, 'live_feed', req);
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
