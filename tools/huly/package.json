@@ -17,5 +17,8 @@
     "@hcengineering/tracker": "^0.7.0",
     "dotenv": "^16.4.7",
     "ws": "^8.18.0"
+  },
+  "overrides": {
+    "svelte": "5.51.5"
   }
 }

@@ -429,18 +429,25 @@ describe('SharedContextWatcher — Agent Attribution', () => {
 
     watcher.on('change', (evt: SharedContextEvent) => events.push(evt));
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    try {
+      await waitForEvent(75);
 
-    fs.writeFileSync(
-      path.join(teamDir, 'agent-outputs', 'oracle', 'analysis.md'),
-      'Oracle analysis result',
-    );
-    await waitForEvent(300);
+      fs.writeFileSync(
+        path.join(teamDir, 'agent-outputs', 'oracle', 'analysis.md'),
+        'Oracle analysis result',
+      );
+      await waitForCondition(
+        () => events.some((e) => e.path.includes('oracle')),
+        1500,
+        25,
+      );
 
-    watcher.close();
-
-    const oracleEvent = events.find((e) => e.path.includes('oracle'));
-    expect(oracleEvent).toBeDefined();
-    expect(oracleEvent!.agentId).toBe('oracle');
+      const oracleEvent = events.find((e) => e.path.includes('oracle'));
+      expect(oracleEvent).toBeDefined();
+      expect(oracleEvent!.agentId).toBe('oracle');
+    } finally {
+      watcher.close();
+    }
   });
 
   test('attributes agent from last-sync.json for non-agent-output files', async () => {
@@ -651,22 +658,30 @@ describe('SharedContextWatcher — Debounce Coalescing', () => {
 
     watcher.on('change', (evt: SharedContextEvent) => events.push(evt));
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    try {
+      await waitForEvent(75);
 
-    const filePath = path.join(teamDir, 'priorities.md');
+      const filePath = path.join(teamDir, 'priorities.md');
 
-    // Rapid writes within the debounce window
-    fs.writeFileSync(filePath, 'Version 1');
-    fs.writeFileSync(filePath, 'Version 2');
-    fs.writeFileSync(filePath, 'Version 3 — final');
+      // Rapid writes within the debounce window
+      fs.writeFileSync(filePath, 'Version 1');
+      fs.writeFileSync(filePath, 'Version 2');
+      fs.writeFileSync(filePath, 'Version 3 — final');
 
-    // Wait for debounce to fire
-    await waitForEvent(500);
-    watcher.close();
+      // Wait until at least one coalesced event is observed.
+      await waitForCondition(
+        () => events.some((e) => e.path === 'priorities.md'),
+        1500,
+        25,
+      );
 
-    // Should have coalesced into 1 event (or very few — platform may emit 1-2)
-    const priorityEvents = events.filter((e) => e.path === 'priorities.md');
-    expect(priorityEvents.length).toBeLessThanOrEqual(2); // Coalesced
-    expect(priorityEvents.length).toBeGreaterThanOrEqual(1);
+      // Should have coalesced into 1 event (or very few — platform may emit 1-2)
+      const priorityEvents = events.filter((e) => e.path === 'priorities.md');
+      expect(priorityEvents.length).toBeLessThanOrEqual(2); // Coalesced
+      expect(priorityEvents.length).toBeGreaterThanOrEqual(1);
+    } finally {
+      watcher.close();
+    }
   });
 
   test('separate files are not coalesced', async () => {
