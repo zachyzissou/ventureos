@@ -74,7 +74,8 @@ export class RateLimiter {
 }
 
 export const limiter: RateLimiter = new RateLimiter();
-setInterval(() => limiter.cleanup(), 300000); // Cleanup every 5 minutes
+const cleanupInterval = setInterval(() => limiter.cleanup(), 300000); // Cleanup every 5 minutes
+cleanupInterval.unref();
 
 /**
  * Per-endpoint rate limit configuration.
