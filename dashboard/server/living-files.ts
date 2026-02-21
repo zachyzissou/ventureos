@@ -137,6 +137,13 @@ function nowIso(now: () => Date): string {
   return now().toISOString();
 }
 
+function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
+  const relative = path.relative(rootDir, candidatePath);
+  if (relative === '') return true;
+  if (relative === '..' || relative.startsWith(`..${path.sep}`)) return false;
+  return !path.isAbsolute(relative);
+}
+
 function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
@@ -161,7 +168,7 @@ function normalizeRelativeFilePath(workspaceDir: string, rawPath: string): strin
   if (!cleaned) throw new Error('filePath is required');
   const resolved = path.resolve(workspaceDir, cleaned);
   const root = path.resolve(workspaceDir);
-  if (!resolved.startsWith(root)) throw new Error('filePath must stay inside workspace');
+  if (!isPathInsideRoot(root, resolved)) throw new Error('filePath must stay inside workspace');
   return path.relative(root, resolved).replace(/\\/g, '/');
 }
 
@@ -175,7 +182,8 @@ function evaluateSnapshot(
   }
 
   const absPath = path.resolve(workspaceDir, entry.filePath);
-  if (!absPath.startsWith(path.resolve(workspaceDir)) || !fs.existsSync(absPath)) {
+  const workspaceRoot = path.resolve(workspaceDir);
+  if (!isPathInsideRoot(workspaceRoot, absPath) || !fs.existsSync(absPath)) {
     return {
       status: 'missing',
       ageHours: null,

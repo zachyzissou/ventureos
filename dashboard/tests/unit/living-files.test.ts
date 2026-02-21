@@ -96,4 +96,19 @@ describe('living-files engine', () => {
     expect(result.triggered).toHaveLength(0);
     expect(engine.listTriggers()).toHaveLength(0);
   });
+
+  it('rejects file paths that escape workspace via sibling-prefix traversal', () => {
+    const engine = getLivingFileEngine(dataDir, workspaceDir, { now: fixedNow, checkIntervalMs: 0 });
+    const siblingWorkspace = path.join(testRoot, 'workspace2');
+    fs.mkdirSync(siblingWorkspace, { recursive: true });
+    fs.writeFileSync(path.join(siblingWorkspace, 'secret.txt'), 'sibling');
+
+    expect(() =>
+      engine.registerFile({
+        filePath: '../workspace2/secret.txt',
+        ownerAgentId: 'archivist',
+        expectedUpdateHours: 24,
+      }),
+    ).toThrow('filePath must stay inside workspace');
+  });
 });
