@@ -172,6 +172,7 @@ See **[docs/API.md](docs/API.md)** for the complete API reference covering all e
 | `GET /api/code-factory/harness-gaps` | Track unresolved production regressions awaiting tests |
 | `POST /api/webmcp/discover` | Discover structured WebMCP tools for a website |
 | `POST /api/webmcp/invoke` | Invoke discovered WebMCP tool with typed args + fallback |
+| `POST /api/visual-explainer/render` | Render slash-command explain/visualize output as interactive HTML |
 | `GET /api/live` | SSE real-time feed |
 
 ## Architecture

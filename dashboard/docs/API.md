@@ -20,6 +20,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 - [Self-Improvement Endpoints](#self-improvement-endpoints)
 - [Code Factory Endpoints](#code-factory-endpoints)
 - [WebMCP Endpoints](#webmcp-endpoints)
+- [Visual Explainer Endpoints](#visual-explainer-endpoints)
 - [Schemas](#schemas)
 
 ---
@@ -1155,6 +1156,50 @@ Invokes a structured tool with typed parameters.
 
 ---
 
+## Visual Explainer Endpoints
+
+Slash-command visual rendering with interactive HTML patterns (Issue #226).
+
+### `GET /api/visual-explainer/patterns`
+
+Returns supported pattern identifiers:
+- `table`
+- `flow`
+- `timeline`
+- `hierarchy`
+- `comparison`
+
+### `POST /api/visual-explainer/render`
+
+Renders `/explain` or `/visualize` command output into a Canvas-ready HTML payload.
+
+**Request:**
+```json
+{
+  "command": "/visualize intake > classify > route --pattern=flow",
+  "title": "Routing Overview"
+}
+```
+
+**Response (200):**
+```json
+{
+  "ok": true,
+  "render": {
+    "pattern": "flow",
+    "title": "Routing Overview",
+    "renderTimeMs": 8,
+    "html": "<!doctype html>..."
+  }
+}
+```
+
+The rendered HTML includes:
+- expandable sections (`<details>`)
+- hover tooltips via `data-tip`
+
+---
+
 ## Rate Limiting
 
 Per-IP, per-endpoint sliding window rate limits:
@@ -1169,6 +1214,7 @@ Per-IP, per-endpoint sliding window rate limits:
 | `/api/self-improvement*` | 20 req | 60s |
 | `/api/code-factory*` | 20 req | 60s |
 | `/api/webmcp*` | 30 req | 60s |
+| `/api/visual-explainer*` | 30 req | 60s |
 | `/api/ventureos-agents` | 30 req | 60s |
 | `/api/ventureos-kpis` | 30 req | 60s |
 | `/api/rpg/*` | 20 req | 60s |
