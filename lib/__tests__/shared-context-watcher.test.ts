@@ -675,24 +675,27 @@ describe('SharedContextWatcher — Debounce Coalescing', () => {
 
     watcher.on('change', (evt: SharedContextEvent) => events.push(evt));
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
-    await waitForEvent(75);
+    try {
+      await waitForEvent(75);
 
-    // Write to different files
-    fs.writeFileSync(path.join(teamDir, 'feedback', 'a.md'), 'File A');
-    fs.writeFileSync(path.join(teamDir, 'feedback', 'b.md'), 'File B');
+      // Write to different files
+      fs.writeFileSync(path.join(teamDir, 'feedback', 'a.md'), 'File A');
+      fs.writeFileSync(path.join(teamDir, 'feedback', 'b.md'), 'File B');
 
-    await waitForCondition(
-      () => events.some((e) => e.path.includes('a.md')) && events.some((e) => e.path.includes('b.md')),
-      1500,
-      25,
-    );
-    watcher.close();
+      await waitForCondition(
+        () => events.some((e) => e.path.includes('a.md')) && events.some((e) => e.path.includes('b.md')),
+        1500,
+        25,
+      );
 
-    // Both files should get events
-    const fileA = events.find((e) => e.path.includes('a.md'));
-    const fileB = events.find((e) => e.path.includes('b.md'));
-    expect(fileA).toBeDefined();
-    expect(fileB).toBeDefined();
+      // Both files should get events
+      const fileA = events.find((e) => e.path.includes('a.md'));
+      const fileB = events.find((e) => e.path.includes('b.md'));
+      expect(fileA).toBeDefined();
+      expect(fileB).toBeDefined();
+    } finally {
+      watcher.close();
+    }
   });
 });
 
