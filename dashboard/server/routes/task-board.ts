@@ -1383,6 +1383,9 @@ export function pickupQueuedTasksForAgent(
   input: HeartbeatPickupInput,
   emitEvent?: TaskBoardDeps['emitEvent'],
 ): HeartbeatPickupResult | { error: string } {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return { error: 'invalid request body' };
+  }
   const agentId = String(input.agentId ?? '').trim();
   if (!agentId) return { error: 'agentId is required' };
 
@@ -1394,7 +1397,14 @@ export function pickupQueuedTasksForAgent(
   const tasks = loadTasks(dataDir);
   const byId = new Map(tasks.map((t) => [t.id, t]));
   const allowParallel = input.allowParallel === true;
-  const runningTasks = tasks.filter((t) => t.status === 'running' && (t.agentId === agentId || t.assigneeId === agentId));
+  const runningTasks = tasks.filter(
+    (t) =>
+      t.status === 'running' &&
+      (
+        t.agentId === agentId ||
+        ((t.assigneeType ?? 'agent') === 'agent' && t.assigneeId === agentId)
+      ),
+  );
 
   const skipped: HeartbeatPickupSkipped = {
     nonAgentAssignee: 0,
@@ -1439,6 +1449,12 @@ export function pickupQueuedTasksForAgent(
     for (const card of picked) {
       card.status = 'running';
       card.startedAt = now;
+      card.completedAt = null;
+      card.resultSummary = null;
+      card.tokensUsed = null;
+      card.error = null;
+      card.costEstimate = null;
+      card.runtimeMs = null;
       card.agentId = agentId;
       card.assigneeType = 'agent';
       card.assigneeId = agentId;
@@ -1691,7 +1707,12 @@ export async function handleTaskBoard(
     let body: HeartbeatPickupInput;
     try {
       const raw = await readRequestBody(req, { maxBytes: 4096 });
-      body = (raw.trim() ? JSON.parse(raw) : {}) as HeartbeatPickupInput;
+      const parsed = raw.trim() ? JSON.parse(raw) : {};
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        sendJson(res, { error: 'request body must be a JSON object' }, 400);
+        return true;
+      }
+      body = parsed as HeartbeatPickupInput;
     } catch {
       sendJson(res, { error: 'invalid JSON body' }, 400);
       return true;
@@ -2318,8 +2339,9 @@ export async function handleTaskBoard(
   // - allowed only when status=failed
   // - resets terminal/error fields and re-queues card
   // - appends status history entry for auditability
-  if (url.startsWith('/api/task-board/') && url.endsWith('/retry') && method === 'POST') {
-    const id = url.split('/api/task-board/')[1]?.split('/retry')[0]?.trim();
+  const urlPath = url.split('?')[0] ?? url;
+  if (urlPath.startsWith('/api/task-board/') && urlPath.endsWith('/retry') && method === 'POST') {
+    const id = urlPath.split('/api/task-board/')[1]?.split('/retry')[0]?.trim();
     if (!id) {
       sendJson(res, { error: 'task id is required' }, 400);
       return true;

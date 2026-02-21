@@ -292,6 +292,11 @@ describe('isValidTransition', () => {
 });
 
 describe('pickupQueuedTasksForAgent', () => {
+  it('returns error for non-object input', () => {
+    const result = pickupQueuedTasksForAgent(testDataDir, null as unknown as { agentId: string });
+    expect(result).toEqual({ error: 'invalid request body' });
+  });
+
   it('picks queued tasks in priority order and transitions to running', () => {
     const depDone = makeSampleCard({ id: 'dep-done', status: 'done' });
     const high = makeSampleCard({
@@ -368,6 +373,47 @@ describe('pickupQueuedTasksForAgent', () => {
     if ('error' in allowed) throw new Error(allowed.error);
     expect(allowed.pickedCount).toBe(1);
     expect(allowed.picked[0].id).toBe('queued-1');
+  });
+
+  it('does not treat non-agent running cards as capacity blockers and clears stale terminal fields', () => {
+    const humanRunning = makeSampleCard({
+      id: 'human-running',
+      status: 'running',
+      assigneeType: 'human',
+      assigneeId: 'oracle',
+      agentId: null,
+      startedAt: Date.now() - 5000,
+    });
+    const retriedQueued = makeSampleCard({
+      id: 'retry-q',
+      status: 'queued',
+      priority: 'high',
+      assigneeType: 'agent',
+      assigneeId: 'oracle',
+      agentId: null,
+      completedAt: Date.now() - 1000,
+      resultSummary: 'old terminal summary',
+      tokensUsed: 999,
+      error: 'stale error',
+      costEstimate: 2.5,
+      runtimeMs: 4000,
+    });
+    seedTasks([humanRunning, retriedQueued]);
+
+    const result = pickupQueuedTasksForAgent(testDataDir, { agentId: 'oracle' });
+    if ('error' in result) throw new Error(result.error);
+
+    expect(result.pickedCount).toBe(1);
+    expect(result.picked[0].id).toBe('retry-q');
+
+    const persisted = loadTasks(testDataDir).find((t) => t.id === 'retry-q');
+    expect(persisted?.status).toBe('running');
+    expect(persisted?.completedAt).toBeNull();
+    expect(persisted?.resultSummary).toBeNull();
+    expect(persisted?.tokensUsed).toBeNull();
+    expect(persisted?.error).toBeNull();
+    expect(persisted?.costEstimate).toBeNull();
+    expect(persisted?.runtimeMs).toBeNull();
   });
 });
 
@@ -650,6 +696,17 @@ describe('handleTaskBoard', () => {
       );
       expect(res._statusCode).toBe(400);
       expect(parseJsonBody<{ error: string }>(res).error).toContain('agentId');
+    });
+
+    it('returns 400 when request body is not an object', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/heartbeat/pickup', method: 'POST' }),
+        res,
+        createDeps({ readRequestBody: async () => 'null' }),
+      );
+      expect(res._statusCode).toBe(400);
+      expect(parseJsonBody<{ error: string }>(res).error).toContain('JSON object');
     });
   });
 
@@ -940,6 +997,18 @@ describe('handleTaskBoard', () => {
       );
       expect(res._statusCode).toBe(409);
       expect(parseJsonBody<{ error: string }>(res).error).toContain('failed cards');
+    });
+
+    it('supports retry route with query params', async () => {
+      seedTasks([makeSampleCard({ id: 'failed-q', status: 'failed', error: 'boom' })]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/failed-q/retry?source=ui', method: 'POST' }),
+        res,
+        depsWithBody({}),
+      );
+      expect(res._statusCode).toBe(200);
+      expect(parseJsonBody<{ card: TaskCard }>(res).card.status).toBe('queued');
     });
   });
 
