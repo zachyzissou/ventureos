@@ -8,6 +8,10 @@ const FILE_SIZE_BUDGETS = [
     relativePath: 'lib/workflow-macros.ts',
     maxLines: 1300,
   },
+  {
+    relativePath: 'lib/model-router.ts',
+    maxLines: 750,
+  },
 ] as const;
 
 function lineCount(filePath: string): number {
