@@ -31,6 +31,7 @@
 - **docs/CODE_FACTORY_PIPELINE.md** – risk-tiered CI policy, SHA-discipline, auto-remediation, and harness-gap tracker (#220)
 - **docs/WEBMCP_INTEGRATION.md** – structured website tool discovery/invocation with cache + browser fallback (#225)
 - **docs/VISUAL_EXPLAINER_CANVAS.md** – slash-command visual explainer skill with 5 interactive HTML patterns (#226)
+- **docs/PROPOSAL_MISSION_STEP_LIFECYCLE.md** – proposal approval gate, step execution engine, cross-agent handoffs, and event streaming (#227)
 
 ## VentureOS / Multi-Agent Orchestration
 - **docs/roles/VENTURE_OS.md** – venture studio OS overview (system vs persona)

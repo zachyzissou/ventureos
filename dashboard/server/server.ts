@@ -122,6 +122,7 @@ import { handleSelfImprovement } from './routes/self-improvement.js';
 import { handleCodeFactory } from './routes/code-factory.js';
 import { handleWebMcp } from './routes/webmcp.js';
 import { handleVisualExplainer } from './routes/visual-explainer.js';
+import { handleProposalLifecycle, handleProposalLifecycleUpgrade } from './routes/proposal-lifecycle.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -3227,6 +3228,18 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
 
+  try {
+    if (await handleProposalLifecycle(req, res, {
+      dataDir,
+      sendJson,
+      readRequestBody,
+      isAuthenticated,
+    })) return;
+  } catch {
+    sendJson(res, { ok: false, error: 'Failed to process proposal lifecycle request' }, 500);
+    return;
+  }
+
   // VentureOS API aliases
   if (req.url === '/api/ventureos-mission-control') {
     if (
@@ -4146,6 +4159,17 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 export { server };
 
 server.on('upgrade', (req: IncomingMessage, socket: import('node:net').Socket, head: Buffer) => {
+  if (
+    handleProposalLifecycleUpgrade(req, socket, head, {
+      dataDir,
+      sendJson,
+      readRequestBody,
+      isAuthenticated,
+    })
+  ) {
+    return;
+  }
+
   if (
     handleTacticalMapLiveUpgrade(req, socket, head, {
       openclawDir: OPENCLAW_DIR,

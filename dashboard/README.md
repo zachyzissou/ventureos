@@ -173,6 +173,9 @@ See **[docs/API.md](docs/API.md)** for the complete API reference covering all e
 | `POST /api/webmcp/discover` | Discover structured WebMCP tools for a website |
 | `POST /api/webmcp/invoke` | Invoke discovered WebMCP tool with typed args + fallback |
 | `POST /api/visual-explainer/render` | Render slash-command explain/visualize output as interactive HTML |
+| `POST /api/proposal-lifecycle/proposals` | Submit structured proposal for human review before mission execution |
+| `POST /api/proposal-lifecycle/proposals/:proposalId/review` | Approve/reject/modify proposal and create mission on approval |
+| `GET /api/proposal-lifecycle/summary` | Read proposal queue + active mission progress for Mission Control |
 | `GET /api/live` | SSE real-time feed |
 
 ## Architecture
