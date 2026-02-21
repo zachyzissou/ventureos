@@ -779,6 +779,30 @@ export interface TaskBoardSummary {
   total: number;
 }
 
+/** Reusable stage template used to instantiate mission pipelines on the task board. */
+export interface TaskPipelineStageTemplate {
+  id: string;
+  title: string;
+  description?: string | null;
+  assigneeType?: TaskAssigneeType;
+  assigneeId?: string | null;
+  handoffContract?: string | null;
+  requiresApproval?: boolean;
+}
+
+/** Reusable pipeline template (generic board schema; not domain hardcoded). */
+export interface TaskPipelineTemplate {
+  id: string;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  tags: string[];
+  stages: TaskPipelineStageTemplate[];
+  createdAt: number;
+  updatedAt: number;
+  source: 'system' | 'custom';
+}
+
 /** Dependencies injected into Task Board route handlers. */
 export interface TaskBoardDeps {
   dataDir: string;

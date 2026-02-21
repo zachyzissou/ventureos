@@ -1423,6 +1423,70 @@ body {
   border-color: var(--accent);
 }
 
+.tb-template-panel {
+  padding: 16px;
+}
+
+.tb-template-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tb-template-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+}
+
+.tb-template-meta {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.tb-template-stage-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tb-template-stage-row {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--bg-card);
+  display: grid;
+  grid-template-columns: 1.3fr 130px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.tb-template-stage-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.tb-template-stage-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.tb-template-stage-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+
 .tb-card-transitions {
   display: flex;
   gap: 4px;
@@ -1456,9 +1520,11 @@ body {
 
 @media (max-width: 1200px) {
   .tb-board { grid-template-columns: repeat(3, 1fr); }
+  .tb-template-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
   .tb-board { grid-template-columns: 1fr; }
+  .tb-template-stage-row { grid-template-columns: 1fr; }
 }
 
 /* ─── Task Detail Modal — Issue #219, Phase 5 ──────────────────────── */
@@ -5548,6 +5614,66 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         </div>
       </div>
 
+      <!-- Pipeline templates (Issue #297) -->
+      <div class="card mb-24 tb-template-panel">
+        <div class="tb-template-header">
+          <div>
+            <h3 class="card-title" style="margin-bottom:2px;">Pipeline Templates</h3>
+            <div style="font-size:12px;color:var(--text-muted);">Create a full mission pipeline from reusable stage templates</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="tbLoadPipelineTemplates()" class="tb-btn tb-btn-secondary" style="padding:6px 10px;font-size:12px;">↻ Refresh</button>
+            <button id="tbPipelineDeleteBtn" onclick="tbDeleteSelectedTemplate()" class="tb-btn tb-btn-secondary" style="display:none;padding:6px 10px;font-size:12px;border-color:rgba(239,68,68,0.4);color:var(--red);">🗑 Delete Custom</button>
+          </div>
+        </div>
+
+        <div class="tb-template-grid">
+          <div>
+            <label class="tb-label">Template</label>
+            <select id="tbPipelineTemplate" class="tb-input" onchange="tbOnTemplateChange()">
+              <option value="">Loading templates…</option>
+            </select>
+            <div id="tbPipelineTemplateMeta" class="tb-template-meta"></div>
+          </div>
+          <div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="grid-column:1/-1;">
+                <label class="tb-label">Pipeline Name</label>
+                <input id="tbPipelineName" class="tb-input" placeholder="e.g. Launch Video Sprint" maxlength="160">
+              </div>
+              <div>
+                <label class="tb-label">Mission ID</label>
+                <input id="tbPipelineMissionId" class="tb-input" placeholder="e.g. mc-297" maxlength="120">
+              </div>
+              <div>
+                <label class="tb-label">Mission Origin</label>
+                <input id="tbPipelineMissionBrief" class="tb-input" placeholder="Mission brief / objective" maxlength="300">
+              </div>
+              <div>
+                <label class="tb-label">Default Owner Type</label>
+                <select id="tbPipelineAssigneeType" class="tb-input">
+                  <option value="" selected>Inherit template</option>
+                  <option value="human">Human</option>
+                  <option value="nexus">Nexus</option>
+                  <option value="agent">Agent</option>
+                </select>
+              </div>
+              <div>
+                <label class="tb-label">Default Owner ID</label>
+                <input id="tbPipelineAssigneeId" class="tb-input" placeholder="optional default owner id" maxlength="120">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tbPipelineStageOverrides" class="tb-template-stage-list"></div>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+          <button onclick="tbResetPipelineForm()" class="tb-btn tb-btn-secondary">Reset</button>
+          <button onclick="tbCreatePipelineFromTemplate()" class="tb-btn tb-btn-primary">Create Pipeline</button>
+        </div>
+      </div>
+
       <!-- Task Metrics Dashboard — Issue #219, Phase 7 -->
       <div class="mb-24">
         <div class="tb-metrics-toggle" id="tbMetricsToggle" onclick="tbToggleMetrics()">
@@ -6277,6 +6403,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     }
     if (page === 'taskboard') {
       tbRefresh();
+      tbLoadPipelineTemplates(tbPipelineTemplateId);
     }
     if (page === 'logs') {
       loadLogSources();
@@ -10065,6 +10192,9 @@ let tbAutoRefreshTimer = null;
 // ── Filter state (Issue #219 — SSE subscription filtering) ──────────────────
 let tbActiveFilters = { status: '', agentId: '', priority: '', missionId: '', assigneeType: '' };
 let tbKnownAgents = new Set(); // populated from task data
+let tbPipelineTemplates = [];
+let tbPipelineTemplateId = '';
+let tbPipelineTemplatesLoading = false;
 
 /** Build URL query string from active filters (empty fields omitted). */
 function tbFilterQueryString() {
@@ -10132,6 +10262,261 @@ function tbPopulateAgentFilter(tasks) {
   el.value = current;
 }
 
+function tbFindTemplate(id) {
+  if (!id) return null;
+  return tbPipelineTemplates.find((t) => t.id === id) || null;
+}
+
+function tbTemplateOwnerLabel(stage) {
+  const ownerType = stage?.assigneeType || 'unassigned';
+  const ownerId = stage?.assigneeId || '';
+  return ownerId ? `${ownerType}: ${ownerId}` : ownerType;
+}
+
+function tbReadStageAssignments(template) {
+  const out = {};
+  if (!template || !Array.isArray(template.stages)) return out;
+  for (const stage of template.stages) {
+    const typeEl = document.getElementById(`tbStageAssigneeType-${stage.id}`);
+    const idEl = document.getElementById(`tbStageAssigneeId-${stage.id}`);
+    const assigneeType = typeEl ? (typeEl.value || '').trim() : '';
+    const assigneeId = idEl ? (idEl.value || '').trim() : '';
+    if (!assigneeType && !assigneeId) continue;
+    const entry = {};
+    if (assigneeType) entry.assigneeType = assigneeType;
+    if (assigneeId) entry.assigneeId = assigneeId;
+    out[stage.id] = entry;
+  }
+  return out;
+}
+
+function tbRenderTemplateDetails() {
+  const template = tbFindTemplate(tbPipelineTemplateId);
+  const metaEl = document.getElementById('tbPipelineTemplateMeta');
+  const stagesEl = document.getElementById('tbPipelineStageOverrides');
+  const deleteBtn = document.getElementById('tbPipelineDeleteBtn');
+  const pipelineNameEl = document.getElementById('tbPipelineName');
+
+  if (!metaEl || !stagesEl) return;
+  if (!template) {
+    metaEl.innerHTML = '<span style="color:var(--red);">No template selected.</span>';
+    stagesEl.innerHTML = '<div class="tb-template-stage-empty">Template stages will appear here.</div>';
+    if (deleteBtn) deleteBtn.style.display = 'none';
+    return;
+  }
+
+  if (deleteBtn) deleteBtn.style.display = template.source === 'custom' ? '' : 'none';
+
+  const tags = Array.isArray(template.tags) && template.tags.length > 0
+    ? template.tags.map((t) => `<span class="tb-badge" style="background:rgba(99,102,241,0.12);color:var(--accent);">${tbEsc(t)}</span>`).join(' ')
+    : '<span style="color:var(--text-muted);">No tags</span>';
+  const description = template.description
+    ? `<div style="margin-top:6px;">${tbEsc(template.description)}</div>`
+    : '';
+
+  metaEl.innerHTML = `
+    <div><b>${tbEsc(template.name)}</b> <span style="color:var(--text-muted);">(${tbEsc(template.source)})</span></div>
+    ${description}
+    <div style="margin-top:6px;">${tags}</div>
+    <div style="margin-top:6px;">${template.stages.length} stages · Category: ${tbEsc(template.category || 'general')}</div>
+  `;
+
+  const savedAssignments = tbReadStageAssignments(template);
+  stagesEl.innerHTML = template.stages.map((stage, idx) => {
+    const handoff = stage.handoffContract
+      ? `<div class="tb-template-stage-meta" style="margin-top:4px;">🔁 ${tbEsc(stage.handoffContract)}</div>`
+      : '';
+    const desc = stage.description
+      ? `<div class="tb-template-stage-meta" style="margin-top:4px;">${tbEsc(stage.description)}</div>`
+      : '';
+    const approval = stage.requiresApproval
+      ? '<div class="tb-template-stage-meta" style="margin-top:4px;color:var(--yellow);">Requires approval before completion</div>'
+      : '';
+    return `
+      <div class="tb-template-stage-row">
+        <div>
+          <div class="tb-template-stage-title">${idx + 1}. ${tbEsc(stage.title)}</div>
+          <div class="tb-template-stage-meta">Stage ID: <span class="mono">${tbEsc(stage.id)}</span> · Default owner: ${tbEsc(tbTemplateOwnerLabel(stage))}</div>
+          ${desc}
+          ${handoff}
+          ${approval}
+        </div>
+        <div>
+          <label class="tb-label" style="margin-bottom:4px;font-size:11px;">Owner Type Override</label>
+          <select id="tbStageAssigneeType-${stage.id}" class="tb-input" style="padding:6px 8px;font-size:12px;">
+            <option value="">Inherit</option>
+            <option value="human">Human</option>
+            <option value="nexus">Nexus</option>
+            <option value="agent">Agent</option>
+          </select>
+        </div>
+        <div>
+          <label class="tb-label" style="margin-bottom:4px;font-size:11px;">Owner ID Override</label>
+          <input id="tbStageAssigneeId-${stage.id}" class="tb-input" style="padding:6px 8px;font-size:12px;" maxlength="120" placeholder="optional owner id">
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  for (const stage of template.stages) {
+    const existing = savedAssignments[stage.id] || null;
+    const typeEl = document.getElementById(`tbStageAssigneeType-${stage.id}`);
+    const idEl = document.getElementById(`tbStageAssigneeId-${stage.id}`);
+    if (typeEl && existing?.assigneeType) typeEl.value = existing.assigneeType;
+    if (idEl && existing?.assigneeId) idEl.value = existing.assigneeId;
+  }
+
+  if (pipelineNameEl && !pipelineNameEl.value.trim()) {
+    pipelineNameEl.value = template.name || '';
+  }
+}
+
+function tbOnTemplateChange() {
+  const selectEl = document.getElementById('tbPipelineTemplate');
+  tbPipelineTemplateId = selectEl ? (selectEl.value || '') : '';
+  tbRenderTemplateDetails();
+}
+
+async function tbLoadPipelineTemplates(preferredId) {
+  if (tbPipelineTemplatesLoading) return;
+  const selectEl = document.getElementById('tbPipelineTemplate');
+  const metaEl = document.getElementById('tbPipelineTemplateMeta');
+  const stagesEl = document.getElementById('tbPipelineStageOverrides');
+  if (!selectEl) return;
+
+  tbPipelineTemplatesLoading = true;
+  selectEl.disabled = true;
+  selectEl.innerHTML = '<option value="">Loading templates…</option>';
+  if (metaEl) metaEl.textContent = '';
+  if (stagesEl) stagesEl.innerHTML = '<div class="tb-template-stage-empty">Loading stage templates…</div>';
+
+  try {
+    const res = await fetch('/api/task-board/templates');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const body = await res.json();
+    const templates = Array.isArray(body.templates) ? body.templates : [];
+    tbPipelineTemplates = templates;
+
+    if (templates.length === 0) {
+      tbPipelineTemplateId = '';
+      selectEl.innerHTML = '<option value="">No templates available</option>';
+      if (metaEl) metaEl.innerHTML = '<span style="color:var(--text-muted);">No templates found.</span>';
+      if (stagesEl) stagesEl.innerHTML = '<div class="tb-template-stage-empty">Add or import templates to create pipelines.</div>';
+      return;
+    }
+
+    selectEl.innerHTML = templates
+      .map((tpl) => `<option value="${tbEsc(tpl.id)}">${tbEsc(tpl.name)}${tpl.source === 'custom' ? ' (custom)' : ''}</option>`)
+      .join('');
+
+    const requestedId = preferredId || tbPipelineTemplateId;
+    const requestedExists = templates.some((tpl) => tpl.id === requestedId);
+    tbPipelineTemplateId = requestedExists ? requestedId : templates[0].id;
+    selectEl.value = tbPipelineTemplateId;
+    tbRenderTemplateDetails();
+  } catch (e) {
+    tbPipelineTemplates = [];
+    tbPipelineTemplateId = '';
+    selectEl.innerHTML = '<option value="">Failed to load templates</option>';
+    if (metaEl) metaEl.innerHTML = `<span style="color:var(--red);">Template load failed: ${tbEsc(e.message || 'unknown error')}</span>`;
+    if (stagesEl) stagesEl.innerHTML = '<div class="tb-template-stage-empty">Retry template fetch to continue.</div>';
+  } finally {
+    selectEl.disabled = false;
+    tbPipelineTemplatesLoading = false;
+  }
+}
+
+function tbResetPipelineForm() {
+  const template = tbFindTemplate(tbPipelineTemplateId);
+  const pipelineNameEl = document.getElementById('tbPipelineName');
+  const missionIdEl = document.getElementById('tbPipelineMissionId');
+  const missionBriefEl = document.getElementById('tbPipelineMissionBrief');
+  const assigneeTypeEl = document.getElementById('tbPipelineAssigneeType');
+  const assigneeIdEl = document.getElementById('tbPipelineAssigneeId');
+  if (pipelineNameEl) pipelineNameEl.value = template?.name || '';
+  if (missionIdEl) missionIdEl.value = '';
+  if (missionBriefEl) missionBriefEl.value = '';
+  if (assigneeTypeEl) assigneeTypeEl.value = '';
+  if (assigneeIdEl) assigneeIdEl.value = '';
+  tbRenderTemplateDetails();
+  if (template && Array.isArray(template.stages)) {
+    for (const stage of template.stages) {
+      const typeEl = document.getElementById(`tbStageAssigneeType-${stage.id}`);
+      const idEl = document.getElementById(`tbStageAssigneeId-${stage.id}`);
+      if (typeEl) typeEl.value = '';
+      if (idEl) idEl.value = '';
+    }
+  }
+}
+
+async function tbDeleteSelectedTemplate() {
+  const template = tbFindTemplate(tbPipelineTemplateId);
+  if (!template) {
+    tbShowToast('Select a template first.', 'error');
+    return;
+  }
+  if (template.source !== 'custom') {
+    tbShowToast('System templates cannot be deleted.', 'error');
+    return;
+  }
+  if (!confirm(`Delete custom template "${template.name}"?`)) return;
+
+  try {
+    const res = await fetch('/api/task-board/templates/' + encodeURIComponent(template.id), { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      tbShowToast('Delete failed: ' + (err.error || res.statusText), 'error');
+      return;
+    }
+    tbShowToast('Deleted template: ' + template.name, 'success');
+    await tbLoadPipelineTemplates('');
+  } catch (e) {
+    tbShowToast('Network error: ' + e.message, 'error');
+  }
+}
+
+async function tbCreatePipelineFromTemplate() {
+  const template = tbFindTemplate(tbPipelineTemplateId);
+  if (!template) {
+    tbShowToast('Select a template first.', 'error');
+    return;
+  }
+
+  const pipelineName = (document.getElementById('tbPipelineName') || {}).value?.trim?.() || '';
+  const missionId = (document.getElementById('tbPipelineMissionId') || {}).value?.trim?.() || '';
+  const missionBrief = (document.getElementById('tbPipelineMissionBrief') || {}).value?.trim?.() || '';
+  const assigneeType = (document.getElementById('tbPipelineAssigneeType') || {}).value || '';
+  const assigneeId = (document.getElementById('tbPipelineAssigneeId') || {}).value?.trim?.() || '';
+  const stageAssignments = tbReadStageAssignments(template);
+
+  const body = {
+    templateId: template.id,
+    pipelineName: pipelineName || undefined,
+    missionId: missionId || null,
+    missionBrief: missionBrief || null,
+    assigneeType: assigneeType || null,
+    assigneeId: assigneeId || null,
+    stageAssignments: Object.keys(stageAssignments).length > 0 ? stageAssignments : undefined,
+  };
+
+  try {
+    const res = await fetch('/api/task-board/pipelines/from-template', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      tbShowToast('Pipeline create failed: ' + (payload.error || res.statusText), 'error');
+      return;
+    }
+    tbShowToast(`Pipeline created: ${payload.created || 0} cards`, 'success');
+    await tbRefresh();
+  } catch (e) {
+    tbShowToast('Network error: ' + e.message, 'error');
+  }
+}
+
 async function tbRefresh() {
   try {
     const qs = tbFilterQueryString();
@@ -10155,6 +10540,9 @@ async function tbRefresh() {
 
     // Populate agent filter dropdown from all task data
     tbPopulateAgentFilter(tbTasks);
+    if (tbPipelineTemplates.length === 0 && !tbPipelineTemplatesLoading) {
+      tbLoadPipelineTemplates(tbPipelineTemplateId);
+    }
 
     tbRenderBoard();
 
