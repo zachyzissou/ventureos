@@ -14,6 +14,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 - [Session & Cost Endpoints](#session--cost-endpoints)
 - [System Endpoints](#system-endpoints)
 - [Action Endpoints](#action-endpoints)
+- [Task Board Endpoints](#task-board-endpoints)
 - [Schemas](#schemas)
 
 ---
@@ -656,6 +657,77 @@ Security guardrails:
 **Error response:**
 ```json
 { "ok": false, "error": "Error message", "errorRef": "ERR_20260216_abc123" }
+```
+
+---
+
+## Task Board Endpoints
+
+Mission Control Kanban APIs (Issue #219). Task-board data is file-backed under `dashboard/data/task-board*.json`.
+
+### `POST /api/task-board/heartbeat/pickup`
+
+Heartbeat-driven queue pickup for agent workers.
+
+**Request:**
+```json
+{
+  "agentId": "oracle",
+  "limit": 1,
+  "allowParallel": false
+}
+```
+
+**Routing rules:**
+- Candidate cards must be `status=queued` and `assigneeType=agent`.
+- Assignment must match `agentId` (`assigneeId`/`agentId`) unless unassigned.
+- Priority sort: `critical` → `high` → `medium` → `low`, then oldest queued.
+- Dependency gate: all `dependencies[]` must reference cards currently in `done`.
+- If `allowParallel=false`, pickup is skipped when the agent already has running work.
+
+**Response (200):**
+```json
+{
+  "agentId": "oracle",
+  "pickedCount": 1,
+  "existingRunning": 0,
+  "scannedQueued": 3,
+  "skipped": {
+    "nonAgentAssignee": 0,
+    "assignedToOther": 1,
+    "unmetDependencies": 1
+  },
+  "picked": [
+    { "id": "task-123", "status": "running" }
+  ]
+}
+```
+
+### `POST /api/task-board/:id/retry`
+
+Manual retry endpoint for failed cards.
+
+**Request (optional):**
+```json
+{
+  "note": "retry after dependency fix"
+}
+```
+
+**Behavior:**
+- Only allowed when the current card state is `failed` (otherwise HTTP `409`).
+- Resets terminal fields (`startedAt`, `completedAt`, `resultSummary`, `tokensUsed`, `error`, `costEstimate`, `runtimeMs`).
+- Moves card back to `queued` and appends a `statusHistory` entry with `by=retry`.
+
+**Response (200):**
+```json
+{
+  "card": {
+    "id": "task-123",
+    "status": "queued",
+    "error": null
+  }
+}
 ```
 
 ---
