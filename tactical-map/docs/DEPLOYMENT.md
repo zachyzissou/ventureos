@@ -745,8 +745,20 @@ JSON.stringify(window.__TACTICAL_MAP__.healthStore.get()).length
 npx playwright test --update-snapshots
 
 # Check for non-determinism:
-# - Ensure particles use seeded RNG (they do: Mulberry32)
-# - Ensure no Date.now() in rendering (time comes from ticker)
+# - Ensure deterministic API mocks are enabled in visual E2E tests
+# - Ensure visual reset hook is called before snapshot assertions
+```
+
+Deterministic visual harness requirements (CI):
+1. Use `installDeterministicApiMocks(page)` before `page.goto(...)` in visual specs.
+2. Use `stabilizeForVisualSnapshot(page)` before `toHaveScreenshot(...)`.
+3. Keep snapshot fixtures generated from the same harness path as CI.
+
+Debug helpers (browser console):
+```javascript
+window.__TACTICAL_MAP__.pause()
+window.__TACTICAL_MAP__.resetVisualState()
+window.__TACTICAL_MAP__.snapshot()
 ```
 
 ### Keyboard Shortcuts

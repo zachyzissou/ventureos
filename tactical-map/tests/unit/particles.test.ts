@@ -81,4 +81,15 @@ describe('particles', () => {
     ps.update(20_000);
     expect(ps.count()).toBeGreaterThanOrEqual(PARTICLES.AMBIENT_TARGET);
   });
+
+  it('reset restores deterministic ambient baseline', () => {
+    const ps = createParticleSystem({ seed: 5 });
+    ps.burst('DEPLOY', { x: 0, y: 0 }, 30);
+    ps.update(500);
+    expect(ps.count()).toBeGreaterThan(PARTICLES.AMBIENT_TARGET);
+
+    ps.reset();
+    expect(ps.count()).toBeGreaterThanOrEqual(PARTICLES.AMBIENT_TARGET);
+    expect(ps.count()).toBeLessThanOrEqual(PARTICLES.MAX);
+  });
 });

@@ -103,4 +103,14 @@ describe('khala network layer', () => {
 
     layer.update(16);
   });
+
+  it('reset returns particles to deterministic positions', () => {
+    const layer = createKhalaNetworkLayer();
+    const initialTs = layer.getBonds()[0].particles.map((p) => p.t);
+
+    layer.update(120);
+    layer.reset();
+
+    expect(layer.getBonds()[0].particles.map((p) => p.t)).toEqual(initialTs);
+  });
 });

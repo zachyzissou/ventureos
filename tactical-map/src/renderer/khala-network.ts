@@ -37,6 +37,8 @@ export type KhalaNetworkLayer = {
   setAgentPositions: (pos: Record<AgentId, Point>) => void;
   setBondAffinity: (a: AgentId, b: AgentId, affinity: number) => void;
   update: (elapsedMs: number) => void;
+  /** reset motion state for deterministic screenshots/tests */
+  reset: () => void;
   /** for testing */
   getBonds: () => Bond[];
 };
@@ -260,11 +262,27 @@ export function createKhalaNetworkLayer(): KhalaNetworkLayer {
   // Draw once so the network is visible even if the ticker is paused immediately (e.g. visual tests).
   update(0);
 
+  function reset() {
+    timeS = 0;
+    lineRedrawAccumMs = 0;
+    rebuildBondGeometry();
+    for (const bond of bonds) {
+      const count = Math.max(1, bond.particles.length);
+      for (let i = 0; i < bond.particles.length; i++) {
+        bond.particles[i].t = (i / count) % 1;
+      }
+      bond.alpha = bond.alphaTarget;
+      bond.gfx.alpha = bond.alphaTarget;
+    }
+    update(0);
+  }
+
   return {
     container,
     setAgentPositions,
     setBondAffinity,
     update,
+    reset,
     getBonds: () => bonds
   };
 }
