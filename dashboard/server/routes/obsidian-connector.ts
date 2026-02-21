@@ -8,6 +8,7 @@
  *   GET  /api/obsidian/notes           Index/search markdown notes.
  *   POST /api/obsidian/daily-digest    Upsert daily ops digest note.
  *   POST /api/obsidian/notes/write     Safe markdown write adapter.
+ *   POST /api/obsidian/journals/write  Append strict agent journal snapshot.
  *
  * Safety:
  * - Never writes Obsidian app config internals.
@@ -35,6 +36,11 @@ import {
 const MAX_NOTE_SCAN = 2000;
 const MAX_NOTE_BYTES = 128_000;
 const MAX_WRITE_BYTES = 512_000;
+const MAX_JOURNAL_SUMMARY = 600;
+const MAX_JOURNAL_POINTS = 8;
+const DEFAULT_JOURNAL_FOLDER = 'VentureOS/Missions/Agent Journals';
+const JOURNAL_ROLES = ['nexus', 'oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'echo'] as const;
+type JournalRole = (typeof JOURNAL_ROLES)[number];
 
 interface ObsidianVaultMeta {
   id: string;
@@ -48,6 +54,8 @@ interface ObsidianConnectorConfig {
   vaultId: string | null;
   vaultPath: string | null;
   missionFolder: string;
+  journalFolder: string;
+  journalRoles: Record<JournalRole, boolean>;
   updatedAt: number;
 }
 
@@ -67,6 +75,8 @@ function defaultConnectorConfig(): ObsidianConnectorConfig {
     vaultId: null,
     vaultPath: null,
     missionFolder: DEFAULT_MISSION_FOLDER,
+    journalFolder: DEFAULT_JOURNAL_FOLDER,
+    journalRoles: defaultJournalRoles(),
     updatedAt: Date.now(),
   };
 }
@@ -83,6 +93,51 @@ function sendError(
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+function defaultJournalRoles(): Record<JournalRole, boolean> {
+  return {
+    nexus: false,
+    oracle: false,
+    atlas: false,
+    sentinel: false,
+    verifier: false,
+    archivist: false,
+    synth: false,
+    echo: false,
+  };
+}
+
+function isJournalRole(value: string): value is JournalRole {
+  return (JOURNAL_ROLES as readonly string[]).includes(value);
+}
+
+function parseJournalRoles(raw: unknown): Record<JournalRole, boolean> | null {
+  if (!isObject(raw)) return null;
+  const next = defaultJournalRoles();
+  for (const [k, v] of Object.entries(raw)) {
+    if (!isJournalRole(k)) return null;
+    if (typeof v !== 'boolean') return null;
+    next[k] = v;
+  }
+  return next;
+}
+
+function cleanJournalLine(value: unknown, maxLen = 220): string {
+  if (typeof value !== 'string') return '';
+  return value.replace(/\s+/g, ' ').trim().slice(0, maxLen);
+}
+
+function parseJournalList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  for (const entry of value) {
+    const line = cleanJournalLine(entry);
+    if (!line) continue;
+    out.push(line);
+    if (out.length >= MAX_JOURNAL_POINTS) break;
+  }
+  return out;
 }
 
 function toPosixRelative(root: string, absolutePath: string): string {
@@ -151,12 +206,18 @@ function loadConnectorConfig(dataDir: string): ObsidianConnectorConfig {
       vaultId: typeof parsed.vaultId === 'string' && parsed.vaultId.trim() ? parsed.vaultId.trim() : null,
       vaultPath: typeof parsed.vaultPath === 'string' && parsed.vaultPath.trim() ? path.resolve(parsed.vaultPath) : null,
       missionFolder: typeof parsed.missionFolder === 'string' ? parsed.missionFolder : DEFAULT_MISSION_FOLDER,
+      journalFolder: typeof parsed.journalFolder === 'string' ? parsed.journalFolder : DEFAULT_JOURNAL_FOLDER,
+      journalRoles: defaultJournalRoles(),
       updatedAt: typeof parsed.updatedAt === 'number' && Number.isFinite(parsed.updatedAt)
         ? Math.trunc(parsed.updatedAt)
         : Date.now(),
     };
     const safeMissionFolder = normalizeRelativePath(cfg.missionFolder) || DEFAULT_MISSION_FOLDER;
+    const safeJournalFolder = normalizeRelativePath(cfg.journalFolder) || DEFAULT_JOURNAL_FOLDER;
+    const parsedJournalRoles = parseJournalRoles(parsed.journalRoles);
     cfg.missionFolder = safeMissionFolder;
+    cfg.journalFolder = safeJournalFolder;
+    if (parsedJournalRoles) cfg.journalRoles = parsedJournalRoles;
     return cfg;
   } catch {
     return defaultConnectorConfig();
@@ -291,6 +352,63 @@ function upsertManagedDigestSection(doc: string, id: string, title: string, body
   const trimmed = doc.replace(cleanup, '').trimEnd();
   const block = `${start}\n## ${title}\n${body.trim()}\n${end}`;
   return `${trimmed}\n\n${block}\n`;
+}
+
+function ensureJournalDocSeed(role: JournalRole, day: string): string {
+  return [
+    '---',
+    `journalRole: ${role}`,
+    `updatedAt: ${new Date().toISOString()}`,
+    '---',
+    '',
+    `# Agent Journal — ${role.toUpperCase()} (${day})`,
+    '',
+    '_Strict role snapshot stream (structured updates only)._',
+    '',
+  ].join('\n');
+}
+
+function renderMissionLink(missionFolder: string, missionId: string | null): string {
+  if (!missionId) return '- Mission: _none_';
+  const missionSlug = safeMissionSlug(missionId);
+  const missionPath = normalizeRelativePath(`${missionFolder}/${missionSlug}.md`);
+  if (!missionPath) return `- Mission: ${missionId}`;
+  return `- Mission: [[${missionPath}|${missionId}]]`;
+}
+
+function renderReplayLink(replayId: string | null): string {
+  if (!replayId) return '- Replay: _none_';
+  return `- Replay: [${replayId}](ventureos://replay/${encodeURIComponent(replayId)})`;
+}
+
+function renderJournalSnapshotEntry(input: {
+  role: JournalRole;
+  generatedAtIso: string;
+  status: string;
+  missionId: string | null;
+  replayId: string | null;
+  summary: string;
+  highlights: string[];
+  missionFolder: string;
+}): string {
+  const lines = [
+    `## Snapshot (${input.generatedAtIso})`,
+    '',
+    `- Role: ${input.role}`,
+    `- Status: ${input.status}`,
+    renderMissionLink(input.missionFolder, input.missionId),
+    renderReplayLink(input.replayId),
+    `- Summary: ${input.summary}`,
+  ];
+  if (input.highlights.length > 0) {
+    lines.push('- Highlights:');
+    for (const item of input.highlights) lines.push(`  - ${item}`);
+  } else {
+    lines.push('- Highlights:');
+    lines.push('  - _No highlights provided_');
+  }
+  lines.push('');
+  return lines.join('\n');
 }
 
 function normalizeSectionItems(value: unknown): string[] {
@@ -511,6 +629,16 @@ export async function handleObsidianConnector(
       const normalized = normalizeRelativePath(body.missionFolder);
       if (!normalized) return sendError(deps, res, 400, 'missionFolder must be a safe relative path');
       next.missionFolder = normalized;
+    }
+    if (typeof body.journalFolder === 'string') {
+      const normalized = normalizeRelativePath(body.journalFolder);
+      if (!normalized) return sendError(deps, res, 400, 'journalFolder must be a safe relative path');
+      next.journalFolder = normalized;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'journalRoles')) {
+      const parsedRoles = parseJournalRoles(body.journalRoles);
+      if (!parsedRoles) return sendError(deps, res, 400, 'journalRoles must be an object of known role booleans');
+      next.journalRoles = parsedRoles;
     }
 
     const vaultIdValue = typeof body.vaultId === 'string' ? body.vaultId.trim() : '';
@@ -736,6 +864,84 @@ export async function handleObsidianConnector(
         ciFailures: ciFailures.length,
         milestoneProgress: milestoneProgress.length,
       },
+      updatedAt: Date.now(),
+    });
+    return true;
+  }
+
+  // POST /api/obsidian/journals/write
+  if (method === 'POST' && pathname === '/api/obsidian/journals/write') {
+    const config = loadConnectorConfig(deps.dataDir);
+    const activeVault = resolveActiveVault(config, loadVaults());
+    if (!activeVault) return sendError(deps, res, 400, 'connector is not configured with a valid vault');
+
+    let body: unknown;
+    try {
+      const raw = await deps.readRequestBody(req, { maxBytes: 64_000 });
+      body = JSON.parse(raw);
+    } catch {
+      return sendError(deps, res, 400, 'invalid JSON body');
+    }
+    if (!isObject(body)) return sendError(deps, res, 400, 'body must be an object');
+
+    const roleRaw = cleanJournalLine(body.role, 40).toLowerCase();
+    if (!isJournalRole(roleRaw)) {
+      return sendError(deps, res, 400, `role must be one of: ${JOURNAL_ROLES.join(', ')}`);
+    }
+    if (!config.journalRoles[roleRaw]) {
+      return sendError(deps, res, 403, `journal stream for role '${roleRaw}' is disabled`);
+    }
+
+    const missionId = cleanJournalLine(body.missionId, 140) || null;
+    const replayId = cleanJournalLine(body.replayId ?? body.replaySessionId, 140) || null;
+    if (!missionId && !replayId) {
+      return sendError(deps, res, 400, 'missionId or replayId is required');
+    }
+
+    const summary = cleanJournalLine(body.summary, MAX_JOURNAL_SUMMARY);
+    if (!summary) return sendError(deps, res, 400, 'summary is required');
+
+    const highlights = parseJournalList(body.highlights);
+    const status = cleanJournalLine(body.status, 40).toLowerCase() || 'active';
+    const requestedDate = typeof body.date === 'string' ? body.date : null;
+    const day = requestedDate ? toIsoDay(requestedDate) : todayIsoDay();
+    if (!day) return sendError(deps, res, 400, 'date must be YYYY-MM-DD');
+
+    const relativePath = normalizeRelativePath(`${config.journalFolder}/${roleRaw}/${day}.md`);
+    if (!relativePath) return sendError(deps, res, 400, 'journal path is invalid');
+    const targetPath = resolveInsideVault(activeVault.path, relativePath);
+    if (!targetPath) return sendError(deps, res, 400, 'journal path resolves outside configured vault');
+    if (hasDotObsidianSegment(targetPath)) return sendError(deps, res, 400, 'writes to .obsidian are forbidden');
+
+    const existed = fs.existsSync(targetPath);
+    const generatedAtIso = new Date().toISOString();
+    const entry = renderJournalSnapshotEntry({
+      role: roleRaw,
+      generatedAtIso,
+      status,
+      missionId,
+      replayId,
+      summary,
+      highlights,
+      missionFolder: config.missionFolder,
+    });
+
+    let doc = existed ? fs.readFileSync(targetPath, 'utf8') : ensureJournalDocSeed(roleRaw, day);
+    if (!doc.trim()) doc = ensureJournalDocSeed(roleRaw, day);
+    if (!doc.includes('# Agent Journal')) {
+      doc = `${ensureJournalDocSeed(roleRaw, day)}\n${doc.trim()}\n`;
+    }
+    doc = `${doc.trimEnd()}\n\n${entry}`;
+
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    fs.writeFileSync(targetPath, `${doc.trimEnd()}\n`);
+
+    deps.sendJson(res, {
+      ok: true,
+      path: relativePath,
+      role: roleRaw,
+      created: !existed,
+      links: { missionId, replayId },
       updatedAt: Date.now(),
     });
     return true;

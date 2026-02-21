@@ -80,12 +80,28 @@ describe('handleObsidianConnector', () => {
     await handleObsidianConnector(
       mockRequest({ method: 'PUT', url: '/api/obsidian/config' }),
       okRes,
-      createDeps({ vaultId: 'alpha', missionFolder: 'VentureOS/Missions' }),
+      createDeps({
+        vaultId: 'alpha',
+        missionFolder: 'VentureOS/Missions',
+        journalFolder: 'VentureOS/Missions/Agent Journals',
+        journalRoles: { nexus: true, oracle: true },
+      }),
     );
     expect(okRes._statusCode).toBe(200);
-    const okBody = parseJsonBody<{ config: { vaultId: string; missionFolder: string } }>(okRes);
+    const okBody = parseJsonBody<{
+      config: {
+        vaultId: string;
+        missionFolder: string;
+        journalFolder: string;
+        journalRoles: Record<string, boolean>;
+      };
+    }>(okRes);
     expect(okBody.config.vaultId).toBe('alpha');
     expect(okBody.config.missionFolder).toBe('VentureOS/Missions');
+    expect(okBody.config.journalFolder).toBe('VentureOS/Missions/Agent Journals');
+    expect(okBody.config.journalRoles.nexus).toBe(true);
+    expect(okBody.config.journalRoles.oracle).toBe(true);
+    expect(okBody.config.journalRoles.atlas).toBe(false);
 
     const badRes = mockResponse();
     await handleObsidianConnector(
@@ -292,5 +308,59 @@ describe('handleObsidianConnector', () => {
     expect((note.match(/^## CI Failures$/gm) || []).length).toBe(1);
     expect((note.match(/^## Milestone Progress$/gm) || []).length).toBe(1);
     expect(note).toContain('PR #323 — E2E [failure]');
+  });
+
+  it('writes strict journal snapshots for enabled roles with mission/replay links', async () => {
+    await handleObsidianConnector(
+      mockRequest({ method: 'PUT', url: '/api/obsidian/config' }),
+      mockResponse(),
+      createDeps({
+        vaultId: 'alpha',
+        missionFolder: 'VentureOS/Missions',
+        journalFolder: 'VentureOS/Missions/Agent Journals',
+        journalRoles: { nexus: true },
+      }),
+    );
+
+    const okRes = mockResponse();
+    await handleObsidianConnector(
+      mockRequest({ method: 'POST', url: '/api/obsidian/journals/write' }),
+      okRes,
+      createDeps({
+        role: 'nexus',
+        missionId: 'MC-303',
+        replayId: 'replay-303',
+        summary: 'Validated open PR queue and replay alignment.',
+        highlights: ['PR review blockers triaged', 'CI rerun requested'],
+        status: 'active',
+        date: '2026-02-21',
+      }),
+    );
+    expect(okRes._statusCode).toBe(200);
+    const ok = parseJsonBody<{ path: string; role: string; links: { missionId: string; replayId: string } }>(okRes);
+    expect(ok.path).toBe('VentureOS/Missions/Agent Journals/nexus/2026-02-21.md');
+    expect(ok.role).toBe('nexus');
+    expect(ok.links.missionId).toBe('MC-303');
+    expect(ok.links.replayId).toBe('replay-303');
+
+    const journalPath = path.join(vaultA, 'VentureOS', 'Missions', 'Agent Journals', 'nexus', '2026-02-21.md');
+    const journal = fs.readFileSync(journalPath, 'utf8');
+    expect(journal).toContain('## Snapshot');
+    expect(journal).toContain('- Role: nexus');
+    expect(journal).toContain('[[VentureOS/Missions/mc-303.md|MC-303]]');
+    expect(journal).toContain('(ventureos://replay/replay-303)');
+    expect(journal).toContain('PR review blockers triaged');
+
+    const blockedRes = mockResponse();
+    await handleObsidianConnector(
+      mockRequest({ method: 'POST', url: '/api/obsidian/journals/write' }),
+      blockedRes,
+      createDeps({
+        role: 'atlas',
+        missionId: 'MC-303',
+        summary: 'Should not write because atlas stream is disabled.',
+      }),
+    );
+    expect(blockedRes._statusCode).toBe(403);
   });
 });
