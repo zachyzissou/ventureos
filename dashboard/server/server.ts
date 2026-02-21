@@ -121,6 +121,7 @@ import { handleTokenCompaction } from './routes/token-compaction.js';
 import { handleSelfImprovement } from './routes/self-improvement.js';
 import { handleCodeFactory } from './routes/code-factory.js';
 import { handleWebMcp } from './routes/webmcp.js';
+import { handleVisualExplainer } from './routes/visual-explainer.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -146,6 +147,7 @@ const scrapeScript: string = path.join(WORKSPACE_DIR, 'scripts', 'scrape-claude-
 // Client HTML paths — served from client/ directory
 const htmlPath: string = path.join(import.meta.dirname, '..', 'client', 'index.html');
 const loginHtmlPath: string = path.join(import.meta.dirname, '..', 'client', 'login.html');
+const visualExplainerHtmlPath: string = path.join(import.meta.dirname, '..', 'client', 'visual-explainer.html');
 const clientAssetsDir: string = path.join(import.meta.dirname, '..', 'client', 'assets');
 
 const VENTUREOS_AGENTS: string[] = (
@@ -3218,6 +3220,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
 
+  try {
+    if (await handleVisualExplainer(req, res, { sendJson, readRequestBody })) return;
+  } catch {
+    sendJson(res, { ok: false, error: 'Failed to process visual-explainer request' }, 500);
+    return;
+  }
+
   // VentureOS API aliases
   if (req.url === '/api/ventureos-mission-control') {
     if (
@@ -4110,7 +4119,8 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     }
 
     try {
-      const html: string = fs.readFileSync(htmlPath, 'utf8');
+      const wantsVisualExplainer = req.url === '/visual-explainer' || req.url.startsWith('/visual-explainer?');
+      const html: string = fs.readFileSync(wantsVisualExplainer ? visualExplainerHtmlPath : htmlPath, 'utf8');
       res.writeHead(200, {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-store, no-cache, must-revalidate',

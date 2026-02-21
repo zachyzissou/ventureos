@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VentureOS Visual Explainer</title>
+  <style>
+    :root {
+      --bg: #060c18;
+      --panel: #0f1a2d;
+      --line: #223550;
+      --text: #e5f0ff;
+      --muted: #8ca5c7;
+      --accent: #17d2a2;
+      --accent2: #58a5ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 10%, #16315a, transparent 45%),
+        radial-gradient(circle at 90% 0%, #0f2748, transparent 38%),
+        var(--bg);
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      padding: 18px 20px 10px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(9, 15, 27, 0.85);
+      backdrop-filter: blur(8px);
+    }
+    h1 { margin: 0; font-size: 20px; }
+    .sub { margin-top: 6px; font-size: 13px; color: var(--muted); }
+    main { padding: 16px 20px 22px; display: grid; gap: 12px; }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(16, 26, 45, .95), rgba(11, 18, 32, .95));
+      box-shadow: 0 24px 50px rgba(0,0,0,.25);
+      padding: 14px;
+    }
+    .controls { display: grid; gap: 10px; grid-template-columns: 1fr auto auto; }
+    input, select, button {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0b1322;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    button {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      color: #032031;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .samples { display: flex; gap: 8px; flex-wrap: wrap; }
+    .samples button {
+      background: #112036;
+      color: var(--text);
+      border: 1px solid var(--line);
+      font-weight: 500;
+    }
+    .meta { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    iframe {
+      width: 100%;
+      min-height: 72vh;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #0a1120;
+    }
+    @media (max-width: 860px) {
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Visual Explainer Canvas Skill</h1>
+    <div class="sub">Use `/explain` or `/visualize` commands to generate interactive patterns.</div>
+  </header>
+  <main>
+    <section class="panel">
+      <div class="controls">
+        <input id="commandInput" value="/explain VentureOS roadmap > now > next > risk" />
+        <select id="patternSelect">
+          <option value="">Auto Pattern</option>
+          <option value="table">table</option>
+          <option value="flow">flow</option>
+          <option value="timeline">timeline</option>
+          <option value="hierarchy">hierarchy</option>
+          <option value="comparison">comparison</option>
+        </select>
+        <button id="renderBtn">Render</button>
+      </div>
+      <div class="samples" style="margin-top:10px;">
+        <button data-cmd="/visualize onboarding, activation, retention --pattern=timeline">Timeline</button>
+        <button data-cmd="/visualize baseline, optimized --pattern=comparison">Comparison</button>
+        <button data-cmd="/visualize intake > classify > route > execute --pattern=flow">Flow</button>
+        <button data-cmd="/visualize objective > strategy > tasks --pattern=hierarchy">Hierarchy</button>
+        <button data-cmd="/visualize market, signal, action --pattern=table">Table</button>
+      </div>
+      <div class="meta" id="statusMeta">Ready.</div>
+    </section>
+    <section>
+      <iframe id="canvasFrame" title="Visual Explainer Canvas"></iframe>
+    </section>
+  </main>
+
+  <script>
+    async function authFetch(url, opts = {}) {
+      const headers = Object.assign({}, opts.headers || {});
+      const token = localStorage.getItem('dashboardToken') || '';
+      if (token && !headers['Authorization']) headers['Authorization'] = 'Bearer ' + token;
+      return fetch(url, Object.assign({}, opts, { headers, credentials: 'include' }));
+    }
+
+    async function renderExplainer() {
+      const command = document.getElementById('commandInput').value.trim();
+      const pattern = document.getElementById('patternSelect').value;
+      const frame = document.getElementById('canvasFrame');
+      const status = document.getElementById('statusMeta');
+      if (!command) return;
+      const t0 = performance.now();
+      status.textContent = 'Rendering...';
+      try {
+        const res = await authFetch('/api/visual-explainer/render', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command, pattern: pattern || undefined }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Render failed');
+        frame.srcdoc = data.render.html;
+        const elapsed = Math.round(performance.now() - t0);
+        status.textContent = 'Pattern: ' + data.render.pattern + ' · Rendered in ' + elapsed + 'ms';
+      } catch (err) {
+        status.textContent = 'Render failed: ' + (err && err.message ? err.message : 'unknown error');
+      }
+    }
+
+    document.getElementById('renderBtn').addEventListener('click', renderExplainer);
+    document.getElementById('commandInput').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') renderExplainer();
+    });
+    document.querySelectorAll('.samples button').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.getElementById('commandInput').value = button.getAttribute('data-cmd') || '';
+        renderExplainer();
+      });
+    });
+    renderExplainer();
+  </script>
+</body>
+</html>
+
