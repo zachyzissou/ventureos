@@ -358,7 +358,12 @@ describe('Dashboard HTTP smoke tests', () => {
     const cfgRes = await fetch(`${BASE_URL}/api/obsidian/config`, {
       method: 'PUT',
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vaultId: 'main', missionFolder: 'VentureOS/Missions' }),
+      body: JSON.stringify({
+        vaultId: 'main',
+        missionFolder: 'VentureOS/Missions',
+        journalFolder: 'VentureOS/Missions/Agent Journals',
+        journalRoles: { nexus: true },
+      }),
     });
     expect(cfgRes.status).toBe(200);
 
@@ -392,6 +397,22 @@ describe('Dashboard HTTP smoke tests', () => {
     expect(digestRes.status).toBe(200);
     const digest = await digestRes.json();
     expect(digest.path).toBe('VentureOS/Missions/Daily Ops/2026-02-21.md');
+
+    const journalRes = await fetch(`${BASE_URL}/api/obsidian/journals/write`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        role: 'nexus',
+        missionId: 'MC-303',
+        replayId: 'replay-smoke-303',
+        summary: 'Smoke snapshot for agent journal pipeline.',
+        highlights: ['Linked mission and replay IDs'],
+        date: '2026-02-21',
+      }),
+    });
+    expect(journalRes.status).toBe(200);
+    const journal = await journalRes.json();
+    expect(journal.path).toBe('VentureOS/Missions/Agent Journals/nexus/2026-02-21.md');
 
     const unifiedRes = await fetch(`${BASE_URL}/api/search/unified?q=smoke&limit=20`, {
       headers: authHeaders(),
