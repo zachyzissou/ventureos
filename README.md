@@ -8,7 +8,7 @@ VentureOS is a Protoss-themed RPG system overlay for multi-agent coordination, m
 
 - **Master Plan:** [docs/RPG_SYSTEM.md](docs/RPG_SYSTEM.md) — Full spec, phases, KPIs, formulas
 - **Dashboard:** [dashboard/](dashboard/) — Operational monitoring, KPI tracking, agent health ([API docs](dashboard/docs/API.md))
-- **GitLab Integration:** [docs/GITLAB_PROCESS.md](docs/GITLAB_PROCESS.md) — MR workflow for P0/P1 fixes
+- **Roadmap Tracker:** [#138](https://github.com/zachyzissou/ventureos/issues/138) — Living delivery plan (source of truth)
 - **Phase 5 Tactical Map:** [tactical-map/](tactical-map/) — Real-time 2D StarCraft-style command center
 
 ## Project Structure
@@ -58,6 +58,7 @@ ventureos/
 - ✅ **Phase 5.5:** Mission Tracking — Mission timeline, dependency arrows, completion animations, task queue (#16)
 - ✅ **Phase 5.6:** Health & Diagnostics — Health indicators, alert overlays, metrics dashboard (#18)
 - ✅ **Phase 5.7:** Interactive Controls — Agent detail panel, command palette, mission spawn, budget slider, undo/redo (#19)
+- ✅ **Phase 5.8:** Replay & History — replay engine + session create/delete APIs shipped (#17)
 - ✅ **P0 Remediation:** All security (VULN-002/003, XSS, auth bypass), QA (phantom tests, XSS coverage), and performance (N+1 query) issues resolved (#2–#6, #142–#149)
 - ✅ **Dashboard Merge:** Monorepo consolidation — TypeScript migration, shared libraries, deployment procedures (epic #84)
 - ✅ **Security Hardening:** Auth bypass fix, query-token removal, XSS sanitization, RPG static auth gating, action endpoint defense-in-depth, DoS body-read bounding (#142–#149)
@@ -66,15 +67,15 @@ ventureos/
 
 ### In Progress
 
-- 🔄 **Phase 5.8:** Replay & History — client engine + storage complete; server mutating endpoints pending (read-only live, create/delete sessions return 501) (#17)
-- 🔄 **Live Data:** Conversation wiring + Pylon auto-refresh polling (PR#180 merged, integration ongoing — #181–#184)
-- 🔄 **Hybrid Deployment:** Containerized dashboard + bridge API — architecture designed, Dockerfile ready, not yet running in production (#140)
+- 🔄 **Tracker Hygiene + Docs Accuracy:** status/docs parity and roadmap cleanup (#364)
+- 🔄 **Docs Tooling Improvements:** reduce docs-lint false positives in instructional prose (#365)
+- 🔄 **Server Maintainability:** decompose oversized dashboard server modules (#366)
 
 ### Next Up
 
-- **Phase 4.5:** Deep Progression System — extended levels, skill trees, XP diversification (design complete, implementation not started)
-- **Polish & Sound:** Audio atmosphere, voice lines, onboarding tour, help overlay (not started)
-- **Production Containerization:** Execute hybrid deployment plan with Docker Compose
+- **Roadmap execution from #138:** convert living-plan items into tracked implementation issues/PRs
+- **Phase 4.5:** Deep Progression System — extended levels, skill trees, XP diversification
+- **Polish & Sound:** Audio atmosphere, voice lines, onboarding tour, help overlay
 
 ## Roadmap
 
@@ -99,19 +100,20 @@ Implementation milestones (visible incremental rollout):
 
 | Milestone | Scope | Issue | Status |
 |---|---|---|---|
-| M1 | Contract Foundation | [#284](https://github.com/zachyzissou/ventureos/issues/284) | Open |
-| M2 | Nexus Authority Plane | [#285](https://github.com/zachyzissou/ventureos/issues/285) | Open |
-| M3 | Competition Engine | [#286](https://github.com/zachyzissou/ventureos/issues/286) | Open |
-| M4 | Observability + Replay Authority | [#287](https://github.com/zachyzissou/ventureos/issues/287) | Open |
-| M5 | Deployment Safety | [#288](https://github.com/zachyzissou/ventureos/issues/288) | Open |
-| M6 | Production Readiness Report | [#289](https://github.com/zachyzissou/ventureos/issues/289) | Open |
+| M1 | Contract Foundation | [#284](https://github.com/zachyzissou/ventureos/issues/284) | Closed (2026-02-19) |
+| M2 | Nexus Authority Plane | [#285](https://github.com/zachyzissou/ventureos/issues/285) | Closed (2026-02-21) |
+| M3 | Competition Engine | [#286](https://github.com/zachyzissou/ventureos/issues/286) | Closed (2026-02-20) |
+| M4 | Observability + Replay Authority | [#287](https://github.com/zachyzissou/ventureos/issues/287) | Closed (2026-02-21) |
+| M5 | Deployment Safety | [#288](https://github.com/zachyzissou/ventureos/issues/288) | Closed (2026-02-21) |
+| M6 | Production Readiness Report | [#289](https://github.com/zachyzissou/ventureos/issues/289) | Closed (2026-02-21) |
 
 
 ### Now (active)
 
-- Phase 5.8 server-side replay endpoints — promote 501 stubs to real implementations (#17)
-- Live data integration — wire real conversation ingest + interaction logging (#181–#184)
-- Hybrid deployment execution — Docker Compose + production cutover (#140)
+- Docs/status reconciliation and roadmap archival cleanup (#364)
+- Docs-lint signal quality improvements for instructional content (#365)
+- Dashboard server module decomposition and maintainability cleanup (#366)
+- Living roadmap stewardship in issue #138
 
 ### Next
 
@@ -134,7 +136,6 @@ Now items map to currently open issues; see #138 and linked issues for live stat
 ### Prerequisites
 - Node.js 25+ (for tactical-map)
 - SQLite 3.x (for ventureos-rpg)
-- GitLab access (http://slurpnet:9080)
 
 ### Running the Tactical Map (Dev)
 ```bash
@@ -156,17 +157,17 @@ Tactical map integrates with the VentureOS dashboard on port 8001:
 http://192.168.225.149:8001/map
 ```
 
-## GitLab Workflow
+## GitHub Workflow
 
-All P0 and P1 fixes **MUST** go through GitLab MRs with verification:
+All implementation work is tracked and merged via GitHub issues + PRs:
 
 1. **Issue created** (acceptance criteria + verification steps)
-2. **MR opened** (use `.gitlab/merge_request_templates/Fix.md`)
+2. **PR opened** (link issue, include verification commands)
 3. **Verification** (actual testing, not just code review)
-4. **Merge** (only after verification passes)
-5. **Announce** (only after merge)
+4. **Copilot review addressed** (if comments are generated)
+5. **Merge** (only after checks pass)
 
-See [docs/GITLAB_PROCESS.md](docs/GITLAB_PROCESS.md) for full workflow.
+Legacy GitLab process notes remain in [docs/GITLAB_PROCESS.md](docs/GITLAB_PROCESS.md).
 
 ## Architecture
 
@@ -198,12 +199,12 @@ See [docs/RPG_SYSTEM.md](docs/RPG_SYSTEM.md) for formulas.
 
 ## Contributing
 
-1. Create issue in GitLab (use templates)
+1. Create issue in GitHub (use templates where available)
 2. Create branch (`git checkout -b fix/your-fix-name`)
 3. Make changes + tests
-4. Open MR (fill verification checklist)
-5. Wait for Mission Control verification
-6. Merge after verification passes
+4. Open PR (fill verification checklist in PR body)
+5. Request/handle Copilot review
+6. Merge after checks pass
 
 ## License
 
