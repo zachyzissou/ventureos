@@ -3239,20 +3239,23 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     sendJson(res, getCronJobs());
     return;
   }
-  if (req.url === '/api/scheduler-jobs') {
-    if (
-      await proxyBridgeJson(req, res, bridgeProxyDeps, {
-        targetPath: '/api/bridge/scheduler-jobs',
-        forwardQuery: true,
-      })
-    )
+  if (req.url) {
+    const schedulerUrl = new URL(req.url, 'http://localhost');
+    if (schedulerUrl.pathname === '/api/scheduler-jobs') {
+      if (
+        await proxyBridgeJson(req, res, bridgeProxyDeps, {
+          targetPath: '/api/bridge/scheduler-jobs',
+          forwardQuery: true,
+        })
+      )
+        return;
+      const jobs: SchedulerJobInfo[] = getSchedulerJobs({
+        cronFile,
+        openclawDir: OPENCLAW_DIR,
+      });
+      sendJson(res, jobs);
       return;
-    const jobs: SchedulerJobInfo[] = getSchedulerJobs({
-      cronFile,
-      openclawDir: OPENCLAW_DIR,
-    });
-    sendJson(res, jobs);
-    return;
+    }
   }
   if (req.url === '/api/git') {
     if (

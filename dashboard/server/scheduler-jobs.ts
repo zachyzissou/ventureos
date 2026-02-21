@@ -1,9 +1,11 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 import type { SchedulerJobInfo, SchedulerJobStatus } from './types.js';
+import paths from '../../lib/paths.js';
+
+const { LAUNCH_AGENT_DIRS } = paths as typeof import('../../lib/paths.js');
 
 interface OpenClawCronState {
   lastStatus?: string;
@@ -61,6 +63,8 @@ function defaultRunCommand(command: string, args: string[]): string {
   return execFileSync(command, args, {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'ignore'],
+    timeout: 5000,
+    maxBuffer: 10 * 1024 * 1024,
   });
 }
 
@@ -251,7 +255,7 @@ function readPlistJson(
 
 function getLaunchAgentDirs(override?: string[]): string[] {
   if (override && override.length > 0) return override;
-  return [path.join(os.homedir(), 'Library', 'LaunchAgents'), '/Library/LaunchAgents'];
+  return LAUNCH_AGENT_DIRS;
 }
 
 function collectOpenClawJobs(
