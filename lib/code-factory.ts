@@ -293,15 +293,6 @@ export function collectSimpleReviewFindings(changedFiles: string[], workspaceDir
     let idx = 0;
     const lines = content.split('\n');
     for (const line of lines) {
-      if (line.includes('console.log(')) {
-        findings.push({
-          id: findingId(file, 'console-log', idx++),
-          filePath: file,
-          kind: 'console-log',
-          message: 'Debug console.log statement found',
-          remediable: true,
-        });
-      }
       if (/[ \t]+$/.test(line)) {
         findings.push({
           id: findingId(file, 'trailing-whitespace', idx++),
@@ -479,4 +470,3 @@ export function summarizeHarnessGapSla(records: HarnessGapRecord[], now?: () => 
     overdue,
   };
 }
-
