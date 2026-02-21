@@ -4494,6 +4494,11 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         <h3 class="card-title">Recent Completions (last 24h)</h3>
         <div id="mcRecentCompletions"></div>
       </div>
+
+      <div class="card mb-24">
+        <h3 class="card-title">Calendar & Scheduler</h3>
+        <div id="mcSchedulerJobs"></div>
+      </div>
     </div>
 
     <div class="page" id="ventureos">
@@ -5881,6 +5886,7 @@ let ventureosKpis = null;
 let workflowPatterns = null;
 let ventureosAgents = null;
 let missionControl = null;
+let schedulerJobs = [];
 
 // VentureOS widgets (KPIs + agent health + observations)
 let kpisLatest = null;
@@ -7183,14 +7189,16 @@ function renderBarChart(el, items, opts = {}) {
 
 async function fetchMissionControlNow() {
   try {
-    const [mc, kpis, agents] = await Promise.all([
+    const [mc, kpis, agents, scheduler] = await Promise.all([
       fetchJson('/api/ventureos-mission-control'),
       fetchJson('/api/ventureos-kpis?days=7'),
-      fetchJson('/api/ventureos-agents')
+      fetchJson('/api/ventureos-agents'),
+      fetchJson('/api/scheduler-jobs')
     ]);
     missionControl = mc;
     ventureosKpis = kpis;
     ventureosAgents = agents;
+    schedulerJobs = Array.isArray(scheduler) ? scheduler : [];
     updateDashboard();
   } catch (e) {
     console.error('Mission control fetch error:', e);
@@ -7337,6 +7345,43 @@ function updateMissionControl() {
       </div>`;
     }).join('');
     listEl.innerHTML = items || '<div class="empty-state-text">No recent completions found</div>';
+  }
+
+  const schedulerEl = document.getElementById('mcSchedulerJobs');
+  if (schedulerEl) {
+    const now = Date.now();
+    const rows = (schedulerJobs || []).map((job, idx) => {
+      const failed = job.lastExit === 'failed';
+      const running = job.lastExit === 'running';
+      const statusColor = failed ? 'var(--red)' : running ? 'var(--yellow)' : job.lastExit === 'ok' ? 'var(--green)' : 'var(--text-muted)';
+      const sourceBadgeColor = job.source === 'launchd' ? 'var(--purple)' : 'var(--accent)';
+      const nextText = job.nextRunAt
+        ? (job.nextRunAt >= now
+            ? formatTimeAgo(job.nextRunAt - now, true)
+            : `due ${timeAgo(job.nextRunAt)}`)
+        : (job.nextRunLabel || '--');
+      const lastText = job.lastRunAt ? timeAgo(job.lastRunAt) : '--';
+      const borderColor = failed ? 'var(--red)' : 'var(--border)';
+      const logLink = job.logPath
+        ? `<a href=\"#\" onclick=\"window.openSchedulerLogByIndex(${idx}, event)\" style=\"color:var(--accent);text-decoration:none;\">log</a>`
+        : '--';
+      return `<div style=\"padding:12px;border:1px solid ${borderColor};border-left-width:4px;border-radius:12px;background:var(--bg-tertiary);margin-bottom:10px;\">
+        <div style=\"display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;\">
+          <div style=\"display:flex;align-items:center;gap:8px;min-width:0;flex:1;\">
+            <span style=\"font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">${escapeHtml(job.label)}</span>
+            <span class=\"mono\" style=\"font-size:10px;padding:2px 6px;border-radius:999px;background:rgba(99,102,241,0.14);color:${sourceBadgeColor};\">${job.source === 'launchd' ? 'launchd' : 'openclaw'}</span>
+          </div>
+          <div class=\"mono\" style=\"font-size:11px;color:${statusColor};font-weight:800;\">${escapeHtml(job.lastExitLabel || '--')}</div>
+        </div>
+        <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:8px;font-size:12px;\">
+          <div><div style=\"color:var(--text-muted);font-size:10px;text-transform:uppercase;\">Trigger</div><div title=\"${escapeHtml(job.triggerLabel || '--')}\">${escapeHtml(job.triggerTypes?.join(', ') || '--')}</div></div>
+          <div><div style=\"color:var(--text-muted);font-size:10px;text-transform:uppercase;\">Next Run</div><div title=\"${job.nextRunAt ? new Date(job.nextRunAt).toLocaleString() : ''}\">${escapeHtml(nextText)}</div></div>
+          <div><div style=\"color:var(--text-muted);font-size:10px;text-transform:uppercase;\">Last Run</div><div title=\"${job.lastRunAt ? new Date(job.lastRunAt).toLocaleString() : ''}\">${escapeHtml(lastText)}</div></div>
+          <div><div style=\"color:var(--text-muted);font-size:10px;text-transform:uppercase;\">Log</div><div class=\"mono\" style=\"font-size:11px;\">${logLink}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+    schedulerEl.innerHTML = rows || '<div class="empty-state-text">No scheduler jobs detected</div>';
   }
 }
 
@@ -7816,6 +7861,40 @@ window.runCronJob = async function(id) {
     await authFetch(`/api/cron/${id}/run`, { method: 'POST' });
     sendNotification('Cron Job Started', `Running cron job ${id.substring(0, 8)}...`);
   } catch {}
+};
+
+window.openSchedulerLogByIndex = async function(idx, event) {
+  if (event) event.preventDefault();
+  const job = (schedulerJobs || [])[idx];
+  if (!job || !job.logPath) {
+    showToast('No log path available for this job', 'warning');
+    return;
+  }
+
+  const nav = document.querySelector('.nav-item[data-page="logs"]');
+  if (nav) nav.click();
+
+  try {
+    await loadLogSources();
+  } catch {}
+
+  const sourceHint = (job.logSourceHint || '').toString();
+  let source = (logSources || []).find(s => s.id === sourceHint);
+  if (!source && sourceHint) {
+    source = (logSources || []).find(s => s.id && s.id.includes(sourceHint));
+  }
+  const sourceSelect = document.getElementById('logSource');
+  if (sourceSelect && source) {
+    sourceSelect.value = source.id;
+  }
+
+  const search = document.getElementById('logSearch');
+  if (search && !source) {
+    const parts = (job.logPath || '').split(/[\\/]/);
+    search.value = parts[parts.length - 1] || sourceHint;
+  }
+
+  fetchLogEntries();
 };
 
     document.getElementById('gitActivity').innerHTML = git.map(c => {

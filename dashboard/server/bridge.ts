@@ -25,6 +25,7 @@ import {
   trackDiskHistory,
   readHealthHistory,
 } from './bridge-metrics.js';
+import { getSchedulerJobs } from './scheduler-jobs.js';
 import paths from '../../lib/paths.js';
 
 const {
@@ -1737,6 +1738,18 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/bridge/crons') {
     logAudit('crons', req);
     sendJson(res, getCronJobs());
+    return;
+  }
+
+  if (pathname === '/api/bridge/scheduler-jobs') {
+    logAudit('scheduler_jobs', req);
+    sendJson(
+      res,
+      getSchedulerJobs({
+        cronFile,
+        openclawDir: OPENCLAW_DIR,
+      }),
+    );
     return;
   }
 

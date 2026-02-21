@@ -55,6 +55,16 @@ export const OBSERVATIONS_DIR: string =
 export const LOG_DIR: string =
   process.env.VENTUREOS_LOG_DIR ?? path.join(HOME, 'clawd', 'logs');
 
+/** macOS LaunchAgent directories used for scheduler discovery. */
+export const LAUNCH_AGENT_DIRS: string[] = (
+  process.env.VENTUREOS_LAUNCH_AGENT_DIRS ??
+  process.env.LAUNCH_AGENT_DIRS ??
+  [path.join(HOME, 'Library', 'LaunchAgents'), '/Library/LaunchAgents'].join(path.delimiter)
+)
+  .split(path.delimiter)
+  .map((d) => d.trim())
+  .filter(Boolean);
+
 /** VentureOS RPG root (source/assets). */
 export const RPG_ROOT: string =
   process.env.VENTUREOS_RPG_ROOT ?? path.join(HOME, 'clawd', 'ventureos-rpg');
@@ -81,6 +91,7 @@ export const paths = {
   dashboardDataDir: DASHBOARD_DATA_DIR,
   observationsDir: OBSERVATIONS_DIR,
   logDir: LOG_DIR,
+  launchAgentDirs: LAUNCH_AGENT_DIRS,
   rpgRoot: RPG_ROOT,
   rpgDbPath: RPG_DB_PATH,
   activeWorkPath: ACTIVE_WORK_PATH,
@@ -129,6 +140,7 @@ const defaultPathsExport = {
   DASHBOARD_DATA_DIR,
   OBSERVATIONS_DIR,
   LOG_DIR,
+  LAUNCH_AGENT_DIRS,
   RPG_ROOT,
   RPG_DB_PATH,
   ACTIVE_WORK_PATH,
