@@ -31,6 +31,7 @@
 - **docs/CODE_FACTORY_PIPELINE.md** – risk-tiered CI policy, SHA-discipline, auto-remediation, and harness-gap tracker (#220)
 - **docs/SERVER_DECOMPOSITION_PLAN.md** – stage plan + guardrails for large dashboard server modules (#366)
 - **docs/BRIDGE_DECOMPOSITION_PLAN.md** – stage plan + guardrails for bridge server decomposition (#375)
+- **docs/WORKFLOW_MACROS_DECOMPOSITION_PLAN.md** – stage plan + guardrails for workflow macro module decomposition (#376)
 - **docs/WEBMCP_INTEGRATION.md** – structured website tool discovery/invocation with cache + browser fallback (#225)
 - **docs/VISUAL_EXPLAINER_CANVAS.md** – slash-command visual explainer skill with 5 interactive HTML patterns (#226)
 - **docs/PROPOSAL_MISSION_STEP_LIFECYCLE.md** – proposal approval gate, step execution engine, cross-agent handoffs, and event streaming (#227)
