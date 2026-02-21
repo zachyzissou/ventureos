@@ -5,7 +5,8 @@ from pathlib import Path
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "docs-lint.py"
 SPEC = importlib.util.spec_from_file_location("docs_lint", MODULE_PATH)
-assert SPEC and SPEC.loader
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError(f"Unable to load docs-lint module from {MODULE_PATH}")
 DOCS_LINT = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(DOCS_LINT)
 
