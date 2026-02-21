@@ -25,6 +25,29 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { RateLimitResult, RateLimitConfig } from '../types.js';
 
+const TRUST_PROXY: boolean =
+  ((process.env.DASHBOARD_TRUST_PROXY ?? 'false').toLowerCase() === 'true');
+const TRUSTED_PROXY_IPS: Set<string> = new Set(
+  (process.env.DASHBOARD_TRUSTED_PROXY_IPS ?? '127.0.0.1,::1,::ffff:127.0.0.1')
+    .split(',')
+    .map((ip) => ip.trim())
+    .filter(Boolean),
+);
+
+function normalizeIp(ip: string): string {
+  if (!ip) return ip;
+  return ip.replace(/^::ffff:/, '');
+}
+
+function getPeerIp(req: IncomingMessage): string {
+  return req.socket?.remoteAddress ?? '0.0.0.0';
+}
+
+function isTrustedProxyPeer(ip: string): boolean {
+  const cleaned: string = normalizeIp(ip);
+  return TRUSTED_PROXY_IPS.has(ip) || TRUSTED_PROXY_IPS.has(cleaned);
+}
+
 export class RateLimiter {
   private windows: Map<string, number[]> = new Map();
 
@@ -108,16 +131,24 @@ export const LIMITS: Record<string, RateLimitConfig> = {
 };
 
 /**
- * Extract the client IP from a request, handling proxies.
+ * Extract the client IP using the same trust-proxy policy as auth middleware:
+ * only honor X-Forwarded-For when proxy trust is enabled and the direct peer
+ * is in DASHBOARD_TRUSTED_PROXY_IPS.
  */
 function getClientIP(req: IncomingMessage): string {
-  // Trust X-Forwarded-For on LAN (single-hop reverse proxy at most)
-  const xff: string | undefined = req.headers['x-forwarded-for'] as string | undefined;
-  if (xff) {
+  const peerIp: string = getPeerIp(req);
+  if (!TRUST_PROXY || !isTrustedProxyPeer(peerIp)) {
+    return peerIp;
+  }
+
+  const xffRaw: string | string[] | undefined = req.headers['x-forwarded-for'];
+  const xff: string = Array.isArray(xffRaw) ? xffRaw[0] : (xffRaw ?? '');
+  if (typeof xff === 'string' && xff.trim()) {
     const first: string = xff.split(',')[0].trim();
     if (first) return first;
   }
-  return req.socket?.remoteAddress ?? '0.0.0.0';
+
+  return peerIp;
 }
 
 /**

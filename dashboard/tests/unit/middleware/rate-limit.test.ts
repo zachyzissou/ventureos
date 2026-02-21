@@ -2,11 +2,23 @@
  * Rate limit middleware tests.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mockRequest, mockResponse, parseJsonBody } from '../../helpers.js';
 import { RateLimiter, rateLimit, LIMITS } from '../../../server/middleware/rate-limit.js';
 
+async function importRateLimitWithEnv(env: Record<string, string>): Promise<typeof import('../../../server/middleware/rate-limit.js')> {
+  for (const [key, value] of Object.entries(env)) {
+    vi.stubEnv(key, value);
+  }
+  vi.resetModules();
+  return import('../../../server/middleware/rate-limit.js');
+}
+
 describe('Rate Limit Middleware', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   describe('RateLimiter class', () => {
     let rl: InstanceType<typeof RateLimiter>;
 
@@ -141,6 +153,101 @@ describe('Rate Limit Middleware', () => {
           res,
         ),
       ).toBe(true);
+    });
+
+    it('ignores spoofed X-Forwarded-For by default for keying', () => {
+      const limit = LIMITS['/api/replay']?.limit ?? 10;
+      for (let i = 0; i < limit; i++) {
+        rateLimit(
+          mockRequest({
+            url: '/api/replay',
+            headers: { 'x-forwarded-for': `198.51.100.${i + 1}` },
+            socket: { remoteAddress: '203.0.113.150' },
+          }),
+          mockResponse(),
+        );
+      }
+
+      const res = mockResponse();
+      expect(rateLimit(
+        mockRequest({
+          url: '/api/replay',
+          headers: { 'x-forwarded-for': '198.51.100.250' },
+          socket: { remoteAddress: '203.0.113.150' },
+        }),
+        res,
+      )).toBe(false);
+      expect(res._statusCode).toBe(429);
+    });
+
+    it('uses X-Forwarded-For when trusted proxy conditions are met', async () => {
+      const { rateLimit: trustedRateLimit, LIMITS: trustedLimits } = await importRateLimitWithEnv({
+        DASHBOARD_TRUST_PROXY: 'true',
+        DASHBOARD_TRUSTED_PROXY_IPS: '198.51.100.10',
+      });
+
+      const limit = trustedLimits['/api/replay']?.limit ?? 10;
+      for (let i = 0; i < limit; i++) {
+        trustedRateLimit(
+          mockRequest({
+            url: '/api/replay',
+            headers: { 'x-forwarded-for': '203.0.113.10' },
+            socket: { remoteAddress: '198.51.100.10' },
+          }),
+          mockResponse(),
+        );
+      }
+
+      const sameClientRes = mockResponse();
+      expect(trustedRateLimit(
+        mockRequest({
+          url: '/api/replay',
+          headers: { 'x-forwarded-for': '203.0.113.10' },
+          socket: { remoteAddress: '198.51.100.10' },
+        }),
+        sameClientRes,
+      )).toBe(false);
+      expect(sameClientRes._statusCode).toBe(429);
+
+      const differentClientRes = mockResponse();
+      expect(trustedRateLimit(
+        mockRequest({
+          url: '/api/replay',
+          headers: { 'x-forwarded-for': '203.0.113.11' },
+          socket: { remoteAddress: '198.51.100.10' },
+        }),
+        differentClientRes,
+      )).toBe(true);
+    });
+
+    it('ignores X-Forwarded-For from untrusted peers even when trust proxy is enabled', async () => {
+      const { rateLimit: trustedRateLimit, LIMITS: trustedLimits } = await importRateLimitWithEnv({
+        DASHBOARD_TRUST_PROXY: 'true',
+        DASHBOARD_TRUSTED_PROXY_IPS: '198.51.100.10',
+      });
+
+      const limit = trustedLimits['/api/replay']?.limit ?? 10;
+      for (let i = 0; i < limit; i++) {
+        trustedRateLimit(
+          mockRequest({
+            url: '/api/replay',
+            headers: { 'x-forwarded-for': `203.0.113.${i + 1}` },
+            socket: { remoteAddress: '198.51.100.11' },
+          }),
+          mockResponse(),
+        );
+      }
+
+      const res = mockResponse();
+      expect(trustedRateLimit(
+        mockRequest({
+          url: '/api/replay',
+          headers: { 'x-forwarded-for': '203.0.113.200' },
+          socket: { remoteAddress: '198.51.100.11' },
+        }),
+        res,
+      )).toBe(false);
+      expect(res._statusCode).toBe(429);
     });
   });
 });
