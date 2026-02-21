@@ -29,7 +29,10 @@
     "test:perf:network": "cd tactical-map && PERF=1 npx playwright test tests/performance/network-latency.test.ts",
     "test:a11y": "cd tactical-map && npx playwright test tests/accessibility/",
     "bench": "cd tactical-map && ./scripts/run-benchmarks.sh",
-    "bench:token-compaction": "node -r ts-node/register ./scripts/benchmark-token-compactor.ts"
+    "bench:token-compaction": "node -r ts-node/register ./scripts/benchmark-token-compactor.ts",
+    "ci:code-factory:preflight": "node -r ts-node/register ./scripts/code-factory-preflight.ts",
+    "ci:code-factory:verify-evidence": "node -r ts-node/register ./scripts/code-factory-verify-evidence.ts",
+    "ci:code-factory:auto-remediate": "node -r ts-node/register ./scripts/code-factory-auto-remediate.ts"
   },
   "dependencies": {
     "ajv": "^8.17.1",

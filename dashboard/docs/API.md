@@ -18,6 +18,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 - [Model Routing Security Endpoints](#model-routing-security-endpoints)
 - [Token Compaction Endpoints](#token-compaction-endpoints)
 - [Self-Improvement Endpoints](#self-improvement-endpoints)
+- [Code Factory Endpoints](#code-factory-endpoints)
 - [Schemas](#schemas)
 
 ---
@@ -1049,6 +1050,67 @@ Rejects a recommendation without applying any file changes.
 
 ---
 
+## Code Factory Endpoints
+
+Risk-tiered CI orchestration + harness-gap tracking (Issue #220).
+
+### `GET /api/code-factory/risk-policy`
+
+Returns the active machine-readable risk policy contract loaded from `.github/code-factory/risk-policy.json`.
+
+### `POST /api/code-factory/preflight`
+
+Runs path-based risk analysis for PR changes and returns SHA-bound preflight evidence.
+
+**Request:**
+```json
+{
+  "prNumber": 220,
+  "headSha": "abc123",
+  "changedFiles": ["lib/code-factory.ts", "dashboard/client/index.html"]
+}
+```
+
+**Response (200):**
+```json
+{
+  "ok": true,
+  "analysis": {
+    "riskTier": "high",
+    "requiredChecks": ["lint", "typecheck", "test", "build", "review-agent", "sha-discipline", "auto-remediation", "browser-evidence"],
+    "uiAffecting": true
+  },
+  "evidence": {
+    "pr_number": 220,
+    "head_sha": "abc123",
+    "risk_tier": "high",
+    "review_state": "pending"
+  }
+}
+```
+
+### `GET /api/code-factory/harness-gaps`
+
+Returns open/resolved harness-gap records and SLA summary.
+
+### `POST /api/code-factory/harness-gaps`
+
+Creates a new harness-gap record.
+
+**Request:**
+```json
+{
+  "incidentRef": "INC-2026-02-21-001",
+  "slaDays": 3
+}
+```
+
+### `PATCH /api/code-factory/harness-gaps/:id`
+
+Updates a harness-gap record (for example, marking `testCaseAdded: true`).
+
+---
+
 ## Rate Limiting
 
 Per-IP, per-endpoint sliding window rate limits:
@@ -1061,6 +1123,7 @@ Per-IP, per-endpoint sliding window rate limits:
 | `/api/system` | 60 req | 60s |
 | `/api/token-compaction*` | 30 req | 60s |
 | `/api/self-improvement*` | 20 req | 60s |
+| `/api/code-factory*` | 20 req | 60s |
 | `/api/ventureos-agents` | 30 req | 60s |
 | `/api/ventureos-kpis` | 30 req | 60s |
 | `/api/rpg/*` | 20 req | 60s |

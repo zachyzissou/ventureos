@@ -119,6 +119,7 @@ import { handleObsidianConnector } from './routes/obsidian-connector.js';
 import { handleSharedContext } from './routes/shared-context.js';
 import { handleTokenCompaction } from './routes/token-compaction.js';
 import { handleSelfImprovement } from './routes/self-improvement.js';
+import { handleCodeFactory } from './routes/code-factory.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -3199,6 +3200,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
       return;
   } catch {
     sendJson(res, { ok: false, error: 'Failed to process self-improvement request' }, 500);
+    return;
+  }
+
+  try {
+    if (await handleCodeFactory(req, res, { dataDir, workspaceDir: WORKSPACE_DIR, sendJson, readRequestBody })) return;
+  } catch {
+    sendJson(res, { ok: false, error: 'Failed to process code-factory request' }, 500);
     return;
   }
 
