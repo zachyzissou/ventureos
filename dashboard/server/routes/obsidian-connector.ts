@@ -18,6 +18,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import {
+  isObsidianTemplateKind,
+  renderObsidianStructuredAppend,
+  renderObsidianTemplateNote,
+} from '../obsidian-note-templates.js';
 
 const DEFAULT_MISSION_FOLDER = 'VentureOS/Missions';
 const MAX_NOTE_SCAN = 2000;
@@ -242,6 +247,30 @@ function parseNoteTitle(body: string, fallback: string): string {
   return fallback;
 }
 
+function normalizeSectionItems(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter((item) => !!item)
+      .slice(0, 20);
+  }
+  if (typeof value === 'string' && value.trim()) return [value.trim()];
+  return [];
+}
+
+function extractStructuredSections(body: Record<string, unknown>): {
+  decisions: string[];
+  risks: string[];
+  nextActions: string[];
+} | null {
+  const sectionsSource = isObject(body.sections) ? body.sections : body;
+  const decisions = normalizeSectionItems(sectionsSource.decisions);
+  const risks = normalizeSectionItems(sectionsSource.risks);
+  const nextActions = normalizeSectionItems(sectionsSource.nextActions);
+  if (!decisions.length && !risks.length && !nextActions.length) return null;
+  return { decisions, risks, nextActions };
+}
+
 export async function handleObsidianConnector(
   req: IncomingMessage,
   res: ServerResponse,
@@ -400,8 +429,16 @@ export async function handleObsidianConnector(
     }
     if (!isObject(body)) return sendError(deps, res, 400, 'body must be an object');
 
+    const templateRaw = typeof body.template === 'string' ? body.template.trim().toLowerCase() : '';
+    const template = templateRaw && isObsidianTemplateKind(templateRaw) ? templateRaw : null;
+    if (templateRaw && !template) {
+      return sendError(deps, res, 400, 'template must be one of: mission, pr-review, decision-log, blocker-log');
+    }
+    const structuredSections = extractStructuredSections(body);
     const markdown = typeof body.markdown === 'string' ? body.markdown : '';
-    if (!markdown.trim()) return sendError(deps, res, 400, 'markdown is required');
+    if (!markdown.trim() && !template && !structuredSections) {
+      return sendError(deps, res, 400, 'markdown, template, or structured sections are required');
+    }
 
     let relativePath: string | null = null;
     if (typeof body.relativePath === 'string' && body.relativePath.trim()) {
@@ -426,14 +463,46 @@ export async function handleObsidianConnector(
     fs.mkdirSync(path.dirname(targetPath), { recursive: true });
 
     let content = markdown;
-    if (!exists && typeof body.title === 'string' && body.title.trim()) {
+    const missionIdForTemplate = typeof body.missionId === 'string' && body.missionId.trim()
+      ? body.missionId.trim()
+      : path.basename(safeRelative, '.md');
+    const prNumber = typeof body.prNumber === 'number' && Number.isFinite(body.prNumber)
+      ? Math.trunc(body.prNumber)
+      : null;
+    const status = typeof body.status === 'string' && body.status.trim() ? body.status.trim() : 'open';
+    const owner = typeof body.owner === 'string' && body.owner.trim() ? body.owner.trim() : 'nexus';
+    const title = typeof body.title === 'string' && body.title.trim()
+      ? body.title.trim()
+      : missionIdForTemplate;
+    const updatedAtIso = new Date().toISOString();
+
+    if (!exists && template) {
+      content = renderObsidianTemplateNote(template, {
+        missionId: missionIdForTemplate,
+        prNumber,
+        status,
+        owner,
+        updatedAt: updatedAtIso,
+      }, {
+        title,
+        summary: markdown.trim() || undefined,
+      });
+    } else if (!exists && typeof body.title === 'string' && body.title.trim()) {
       const hasHeading = /^\s*#\s+/m.test(markdown) || /^\s*---\n/.test(markdown);
-      if (!hasHeading) {
-        content = `# ${body.title.trim().slice(0, 180)}\n\n${markdown}`;
-      }
+      if (!hasHeading) content = `# ${body.title.trim().slice(0, 180)}\n\n${markdown}`;
     }
+
+    const structuredAppend = structuredSections
+      ? renderObsidianStructuredAppend(structuredSections, updatedAtIso)
+      : '';
+    if (mode !== 'append' && !content.trim() && structuredAppend) content = structuredAppend;
+    let bytesWritten = Buffer.byteLength(content);
+
     if (mode === 'append' && exists) {
-      fs.appendFileSync(targetPath, `\n\n${content}`);
+      const appendBody = [content.trim(), structuredAppend.trim()].filter(Boolean).join('\n\n');
+      if (!appendBody) return sendError(deps, res, 400, 'append requires markdown or structured sections');
+      fs.appendFileSync(targetPath, `\n\n${appendBody}`);
+      bytesWritten = Buffer.byteLength(appendBody);
     } else {
       fs.writeFileSync(targetPath, content);
     }
@@ -443,7 +512,8 @@ export async function handleObsidianConnector(
       path: safeRelative,
       mode,
       created: !exists,
-      bytes: Buffer.byteLength(content),
+      bytes: bytesWritten,
+      template,
       updatedAt: Date.now(),
     });
     return true;

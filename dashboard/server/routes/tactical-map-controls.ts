@@ -10,8 +10,10 @@
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { renderObsidianTemplateNote } from '../obsidian-note-templates.js';
 
 const AGENT_IDS = ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'echo', 'nexus'] as const;
 type AgentId = (typeof AGENT_IDS)[number];
@@ -38,6 +40,23 @@ type ControlStore = {
   missions: Record<string, PersistedMission>;
   missionOrder: string[];
 };
+
+type ObsidianConnectorConfig = {
+  version: number;
+  vaultId: string | null;
+  vaultPath: string | null;
+  missionFolder: string;
+  updatedAt: number;
+};
+
+type ObsidianMissionNoteResult = {
+  attempted: boolean;
+  created: boolean;
+  path: string | null;
+  reason?: string;
+};
+
+const DEFAULT_MISSION_FOLDER = 'VentureOS/Missions';
 
 export type TacticalMapControlDeps = {
   dataDir: string;
@@ -77,6 +96,119 @@ function createDefaultStore(nowIso: string): ControlStore {
     missions: {},
     missionOrder: [],
   };
+}
+
+function obsidianAppConfigPath(): string {
+  return process.env.OBSIDIAN_CONFIG_PATH
+    ?? path.join(os.homedir(), 'Library', 'Application Support', 'obsidian', 'obsidian.json');
+}
+
+function hasDotObsidianSegment(p: string): boolean {
+  return p.split(/[\\/]+/).some((seg) => seg === '.obsidian');
+}
+
+function normalizeRelativePath(input: string): string | null {
+  const raw = input.replace(/\\/g, '/').trim();
+  if (!raw || raw.startsWith('/')) return null;
+  const normalized = path.posix.normalize(raw).replace(/^\/+/, '');
+  if (!normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../')) return null;
+  if (hasDotObsidianSegment(normalized)) return null;
+  return normalized;
+}
+
+function resolveInsideVault(vaultPath: string, relPath: string): string | null {
+  const resolvedVault = path.resolve(vaultPath);
+  const target = path.resolve(resolvedVault, relPath);
+  if (target !== resolvedVault && !target.startsWith(resolvedVault + path.sep)) return null;
+  if (hasDotObsidianSegment(path.relative(resolvedVault, target))) return null;
+  return target;
+}
+
+function safeMissionSlug(missionId: string): string {
+  const slug = missionId
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return (slug || 'mission').slice(0, 120);
+}
+
+function readObsidianConnectorConfig(dataDir: string): ObsidianConnectorConfig | null {
+  const fp = path.join(dataDir, 'obsidian-connector.json');
+  try {
+    if (!fs.existsSync(fp)) return null;
+    const parsed = JSON.parse(fs.readFileSync(fp, 'utf8')) as Record<string, unknown>;
+    const missionFolderRaw = typeof parsed.missionFolder === 'string'
+      ? parsed.missionFolder
+      : DEFAULT_MISSION_FOLDER;
+    const missionFolder = normalizeRelativePath(missionFolderRaw) || DEFAULT_MISSION_FOLDER;
+    return {
+      version: 1,
+      vaultId: typeof parsed.vaultId === 'string' && parsed.vaultId.trim() ? parsed.vaultId.trim() : null,
+      vaultPath: typeof parsed.vaultPath === 'string' && parsed.vaultPath.trim() ? path.resolve(parsed.vaultPath) : null,
+      missionFolder,
+      updatedAt: typeof parsed.updatedAt === 'number' ? parsed.updatedAt : Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function resolveVaultPath(config: ObsidianConnectorConfig): string | null {
+  if (config.vaultPath && fs.existsSync(config.vaultPath) && !hasDotObsidianSegment(config.vaultPath)) {
+    return path.resolve(config.vaultPath);
+  }
+  if (!config.vaultId) return null;
+  try {
+    const fp = obsidianAppConfigPath();
+    if (!fs.existsSync(fp)) return null;
+    const parsed = JSON.parse(fs.readFileSync(fp, 'utf8')) as Record<string, unknown>;
+    const vaults = parsed.vaults as Record<string, { path?: string }> | undefined;
+    const entry = vaults?.[config.vaultId];
+    if (!entry?.path) return null;
+    const resolved = path.resolve(entry.path);
+    if (!fs.existsSync(resolved) || hasDotObsidianSegment(resolved)) return null;
+    return resolved;
+  } catch {
+    return null;
+  }
+}
+
+function materializeMissionNote(
+  dataDir: string,
+  mission: PersistedMission,
+  nowIso: string,
+): ObsidianMissionNoteResult {
+  try {
+    const connector = readObsidianConnectorConfig(dataDir);
+    if (!connector) return { attempted: false, created: false, path: null, reason: 'connector_not_configured' };
+
+    const vaultPath = resolveVaultPath(connector);
+    if (!vaultPath) return { attempted: true, created: false, path: null, reason: 'vault_unavailable' };
+
+    const missionFolder = normalizeRelativePath(connector.missionFolder) || DEFAULT_MISSION_FOLDER;
+    const relativePath = `${missionFolder}/${safeMissionSlug(mission.missionId)}.md`;
+    const absolutePath = resolveInsideVault(vaultPath, relativePath);
+    if (!absolutePath) return { attempted: true, created: false, path: null, reason: 'unsafe_path' };
+    if (fs.existsSync(absolutePath)) return { attempted: true, created: false, path: relativePath, reason: 'already_exists' };
+
+    const template = renderObsidianTemplateNote('mission', {
+      missionId: mission.missionId,
+      prNumber: null,
+      status: 'open',
+      owner: mission.assignee,
+      updatedAt: nowIso,
+    }, {
+      title: mission.title,
+      summary: mission.description || '_No mission summary provided._',
+    });
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+    fs.writeFileSync(absolutePath, template);
+    return { attempted: true, created: true, path: relativePath };
+  } catch {
+    return { attempted: true, created: false, path: null, reason: 'write_failed' };
+  }
 }
 
 function readStore(storePath: string, nowIso: string): ControlStore {
@@ -234,7 +366,8 @@ export async function handleTacticalMapControls(
       store.updatedAt = nowIso;
       writeStore(storePath, store);
 
-      deps.sendJson(res, { ok: true, missionId, mission }, 200);
+      const obsidianNote = materializeMissionNote(deps.dataDir, mission, nowIso);
+      deps.sendJson(res, { ok: true, missionId, mission, obsidianNote }, 200);
       return true;
     } catch {
       sendBadRequest('Invalid JSON body');
