@@ -15,9 +15,9 @@
 ## Core
 - **README.md** – project overview
 - **docs/roles/REPO_CHARTER.md** – VentureOS charter + scope boundaries
-- **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitLab-first work contract (Issue → Evidence → MR/commit → Verify → Close)
+- **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitHub-first work contract (legacy filename kept for compatibility)
 - **docs/process/LABEL_PROTOCOL.md** – how workflow labels are applied/removed
-- **docs/process/GITLAB_PROJECT_RESOLVER.md** – how Mission Control chooses which GitLab project to create issues in
+- **docs/process/GITLAB_PROJECT_RESOLVER.md** – how Mission Control resolves the target GitHub repository for issues/PRs (legacy filename kept for compatibility)
 - **docs/process/STATUS.md** – current implementation status
 - **docs/process/ROADMAP.md** – phased roadmap
 - **docs/process/PROJECT_PLAN.md** – milestones + success metrics
@@ -68,7 +68,7 @@
 - **docs/roles/foley.md** – audio director
 
 ## Policy Docs (repo copies; to be placed in workspace root)
-- **docs/ops/WORK_TRACKING.md** – GitLab issues/MRs as canonical tracker + evidence standards
+- **docs/WORK_TRACKING.md** – GitHub issues/PRs as canonical tracker + evidence standards
 - **docs/ops/GOALS_CONSTRAINTS.md** – goals, constraints, comms preferences
 - **docs/ops/GUARDRAILS.md** – explicit prohibitions + allowed actions
 - **docs/ops/PROACTIVE_MODE.md** – proactive window + escalation rules
@@ -93,8 +93,10 @@
 - **docs/templates/mission-runner.md** – mission runner workflow template
 - **docs/templates/role-card.md** – role card template
 - **docs/templates/business-unit-registry.json** – business unit registry template
-- **docs/templates/gitlab-issue-template.md** – issue template (Goal/AC/Evidence/Close-out)
-- **docs/templates/gitlab-mr-template.md** – MR template (Issue link/verification)
+- **docs/templates/github-issue-template.md** – issue template (Goal/AC/Evidence/Close-out)
+- **docs/templates/github-pr-template.md** – PR template (Issue link/verification)
+- **docs/templates/gitlab-issue-template.md** – legacy alias pointing to GitHub issue template
+- **docs/templates/gitlab-mr-template.md** – legacy alias pointing to GitHub PR template
 
 ## Implementation Design
 - **docs/process/REQUIREMENTS.md** – detailed functional + non‑functional requirements

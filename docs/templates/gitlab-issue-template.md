@@ -1,38 +1,5 @@
-# GitLab Issue Template — VentureOS (GitLab-First)
+# Legacy Alias: GitHub Issue Template
 
-## Goal
-(Outcome that exists when done)
+This file name is retained for backward compatibility.
 
-## Acceptance Criteria
-- [ ]
-- [ ]
-- [ ]
-
-## Owner / Squad
-- Owner: @
-- Squad: (oracle/atlas/sentinel/verifier/archivist/synth/etc)
-
-## Evidence Plan
-(What you will link/attach when closing)
-- 
-
-## Plan (if risky / ambiguous)
-- 
-
-## Progress Updates
-(Post short updates as comments; keep this description stable.)
-
-## Close-out (when done)
-**Result:**
-
-**Evidence:**
-- 
-
-**MR / Commit:**
-- 
-
-**Verification:**
-- 
-
-**Follow-ups (new issues):**
-- 
+Use `docs/templates/github-issue-template.md` for active GitHub issue tracking.

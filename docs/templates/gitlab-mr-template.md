@@ -1,18 +1,5 @@
-# GitLab MR Template — VentureOS
+# Legacy Alias: GitHub PR Template
 
-## What / Why
+This file name is retained for backward compatibility.
 
-## Linked Issue
-Closes: #
-
-## Changes
-- 
-
-## Verification
-- [ ] Acceptance criteria met
-- [ ] Evidence attached/linked in issue
-- [ ] No secrets in diffs/logs
-- [ ] Rollback plan noted if risky
-
-## Notes / Risks
-
+Use `docs/templates/github-pr-template.md` for active GitHub pull request tracking.
