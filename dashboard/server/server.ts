@@ -113,6 +113,7 @@ import { handleChangelog } from './routes/changelog.js';
 import { handleTaskBoard } from './routes/task-board.js';
 import { emitTaskEvent } from './task-board-events.js';
 import { handleMemoryState } from './routes/memory-state.js';
+import { handleObsidianConnector } from './routes/obsidian-connector.js';
 import { handleSharedContext } from './routes/shared-context.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 
@@ -2972,6 +2973,17 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
       dbPath: process.env.OBSERVATIONS_DB_PATH ?? path.join(dataDir, 'observations.db'),
       defaultAgentId: AGENT_ID,
       sendJson,
+    })) return;
+  } catch {
+    // ignore
+  }
+
+  // Obsidian Vault Connector — Issue #299
+  try {
+    if (await handleObsidianConnector(req, res, {
+      dataDir,
+      sendJson,
+      readRequestBody,
     })) return;
   } catch {
     // ignore

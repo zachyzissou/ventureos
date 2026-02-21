@@ -13,6 +13,7 @@ let tmpRoot: string;
 let server: Server | undefined;
 let authCookie = '';
 let workflowDir = '';
+let obsidianVaultDir = '';
 
 async function waitForServer(url: string, attempts: number = 30): Promise<void> {
   for (let i = 0; i < attempts; i++) {
@@ -48,6 +49,7 @@ beforeAll(async () => {
   fs.mkdirSync(workflowDir, { recursive: true });
 
   const rpgRootDir = path.join(tmpRoot, 'rpg-root');
+  obsidianVaultDir = path.join(tmpRoot, 'obsidian-vault');
 
   fs.mkdirSync(kpiDir, { recursive: true });
   fs.mkdirSync(obsDir, { recursive: true });
@@ -55,6 +57,7 @@ beforeAll(async () => {
   fs.mkdirSync(sessionsDir, { recursive: true });
   fs.mkdirSync(workspaceDir, { recursive: true });
   fs.mkdirSync(rpgRootDir, { recursive: true });
+  fs.mkdirSync(obsidianVaultDir, { recursive: true });
 
   // RPG test fixtures (Issue #145)
   fs.writeFileSync(path.join(rpgRootDir, 'README.md'), '# RPG Test Fixture');
@@ -154,6 +157,13 @@ beforeAll(async () => {
   process.env.VENTUREOS_RPG_ROOT = rpgRootDir;
   process.env.VENTUREOS_AGENTS = 'main,oracle';
   process.env.VENTUREOS_OFFICE_VIEW_ENABLED = '1';
+  process.env.OBSIDIAN_CONFIG_PATH = path.join(tmpRoot, 'obsidian.json');
+
+  fs.writeFileSync(process.env.OBSIDIAN_CONFIG_PATH, JSON.stringify({
+    vaults: {
+      main: { path: obsidianVaultDir, ts: Date.now(), open: true },
+    },
+  }));
 
   const mod = (await import('../../server/server.js')) as { server?: Server; default?: { server?: Server } };
   server = mod.server ?? mod.default?.server;
@@ -344,6 +354,29 @@ describe('Dashboard HTTP smoke tests', () => {
     expect(wfRes.status).toBe(200);
     const wf = await wfRes.json();
     expect(wf.totals?.totalWorkflowRuns).toBeGreaterThanOrEqual(1);
+
+    const cfgRes = await fetch(`${BASE_URL}/api/obsidian/config`, {
+      method: 'PUT',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vaultId: 'main', missionFolder: 'VentureOS/Missions' }),
+    });
+    expect(cfgRes.status).toBe(200);
+
+    const writeRes = await fetch(`${BASE_URL}/api/obsidian/notes/write`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        missionId: 'mc-obs-smoke',
+        title: 'Obsidian Smoke Mission',
+        markdown: 'Connector smoke write',
+      }),
+    });
+    expect(writeRes.status).toBe(200);
+
+    const notesRes = await fetch(`${BASE_URL}/api/obsidian/notes?q=smoke`, { headers: authHeaders() });
+    expect(notesRes.status).toBe(200);
+    const notes = await notesRes.json();
+    expect(notes.total).toBeGreaterThanOrEqual(1);
   });
 
   it('reports system metrics and redirects unauthenticated dashboard access', async () => {
