@@ -22,6 +22,8 @@ export type ParticleSystem = {
   burst: (kind: ParticleKind, origin: Point, count: number) => void;
   /** current active count */
   count: () => number;
+  /** reset particle field to deterministic initial state (used by visual tests) */
+  reset: () => void;
 };
 
 type Particle = {
@@ -69,7 +71,7 @@ function kindConfig(kind: ParticleKind) {
 
 export function createParticleSystem({ seed = 1337 } = {}): ParticleSystem {
   const container = new Container();
-  const rng = mulberry32(seed);
+  let rng = mulberry32(seed);
 
   const active: Particle[] = [];
   const pool: Particle[] = [];
@@ -116,16 +118,34 @@ export function createParticleSystem({ seed = 1337 } = {}): ParticleSystem {
     active.push(p);
   }
 
-  // Initialize ambient particles deterministically.
-  const ambientOrigin = { x: 0, y: 0 };
-  for (let i = 0; i < PARTICLES.AMBIENT_TARGET; i++) {
-    // spread them across a wide area
-    const o = {
-      x: ambientOrigin.x + (rng() - 0.5) * 1400,
-      y: ambientOrigin.y + (rng() - 0.5) * 900
-    };
-    spawn('AMBIENT', o);
+  function seedAmbientParticles() {
+    const ambientOrigin = { x: 0, y: 0 };
+    for (let i = 0; i < PARTICLES.AMBIENT_TARGET; i++) {
+      // spread them across a wide area
+      const o = {
+        x: ambientOrigin.x + (rng() - 0.5) * 1400,
+        y: ambientOrigin.y + (rng() - 0.5) * 900
+      };
+      spawn('AMBIENT', o);
+    }
   }
+
+  function reset() {
+    // Remove all active sprites from the scene so visual snapshots are deterministic.
+    for (const particle of active) {
+      particle.s.removeFromParent();
+    }
+    active.length = 0;
+    pool.length = 0;
+    rateAcc.clear();
+
+    // Re-seed RNG and rebuild ambient field in a deterministic order.
+    rng = mulberry32(seed);
+    seedAmbientParticles();
+  }
+
+  // Initialize ambient particles deterministically.
+  seedAmbientParticles();
 
   function update(elapsedMs: number) {
     for (let i = active.length - 1; i >= 0; i--) {
@@ -187,5 +207,5 @@ export function createParticleSystem({ seed = 1337 } = {}): ParticleSystem {
     return active.length;
   }
 
-  return { container, update, emitRate, burst, count };
+  return { container, update, emitRate, burst, count, reset };
 }

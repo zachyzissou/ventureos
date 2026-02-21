@@ -594,6 +594,12 @@ async function bootstrap() {
     controlClient,
     pause: () => app.ticker.stop(),
     resume: () => app.ticker.start(),
+    resetVisualState: () => {
+      // Deterministic reset for visual regression tests.
+      particles.reset();
+      khala.reset();
+      app.render();
+    },
     setMapState: (next: MapState) => mapStore.set(next),
     setEconomyState: (next: EconomyState) => economyStore.set(next),
     setHealthState: (next: HealthState) => healthStore.set(next),
