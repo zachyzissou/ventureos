@@ -51,6 +51,7 @@ import type {
   CookieMap,
   VentureOSKpiResponse,
   TelemetrySnapshot,
+  SchedulerJobInfo,
 } from './types.js';
 
 // Shared VentureOS libraries (Issue #79)
@@ -112,6 +113,7 @@ import { handleTaskBoard } from './routes/task-board.js';
 import { emitTaskEvent } from './task-board-events.js';
 import { handleMemoryState } from './routes/memory-state.js';
 import { handleSharedContext } from './routes/shared-context.js';
+import { getSchedulerJobs } from './scheduler-jobs.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -3235,6 +3237,21 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     )
       return;
     sendJson(res, getCronJobs());
+    return;
+  }
+  if (req.url === '/api/scheduler-jobs') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/scheduler-jobs',
+        forwardQuery: true,
+      })
+    )
+      return;
+    const jobs: SchedulerJobInfo[] = getSchedulerJobs({
+      cronFile,
+      openclawDir: OPENCLAW_DIR,
+    });
+    sendJson(res, jobs);
     return;
   }
   if (req.url === '/api/git') {

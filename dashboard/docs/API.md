@@ -513,6 +513,20 @@ Returns system resource stats (CPU, memory, disk) with disk history.
 
 Returns all cron jobs with schedule, status, and timing info.
 
+### `GET /api/scheduler-jobs`
+
+Returns unified scheduled jobs for Mission Control:
+- OpenClaw cron jobs (`~/.openclaw/cron/jobs.json`)
+- macOS LaunchAgents (Nexus/OpenClaw/VentureOS automation labels)
+
+Each row includes:
+- `label`
+- `triggerTypes` + `triggerLabel`
+- `nextRunAt` / `nextRunLabel`
+- `lastRunAt`
+- `lastExit` / `lastExitCode`
+- `logPath` (when available)
+
 ### `GET /api/git`
 
 Returns recent git commits (last 7 days) from tracked repositories.
