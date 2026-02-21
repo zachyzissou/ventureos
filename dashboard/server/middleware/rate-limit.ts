@@ -100,6 +100,7 @@ export const LIMITS: Record<string, RateLimitConfig> = {
   '/api/webmcp':              { limit: 30, windowMs: 60000 },
   '/api/visual-explainer':    { limit: 30, windowMs: 60000 },
   '/api/proposal-lifecycle':  { limit: 30, windowMs: 60000 },
+  '/api/living-files':        { limit: 30, windowMs: 60000 },
   '/api/replay':              { limit: 10, windowMs: 60000 },
   '/api/live':                { limit: 10, windowMs: 60000 },
   '/api/conversation':        { limit: 30, windowMs: 60000 },

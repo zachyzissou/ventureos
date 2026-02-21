@@ -176,6 +176,8 @@ See **[docs/API.md](docs/API.md)** for the complete API reference covering all e
 | `POST /api/proposal-lifecycle/proposals` | Submit structured proposal for human review before mission execution |
 | `POST /api/proposal-lifecycle/proposals/:proposalId/review` | Approve/reject/modify proposal and create mission on approval |
 | `GET /api/proposal-lifecycle/summary` | Read proposal queue + active mission progress for Mission Control |
+| `GET /api/living-files/dashboard` | Freshness counts + stale/missing file status for living docs registry |
+| `POST /api/living-files/check-run` | Run staleness detection and auto-trigger responsible owner tasks |
 | `GET /api/live` | SSE real-time feed |
 
 ## Architecture
