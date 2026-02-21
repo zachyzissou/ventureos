@@ -39,6 +39,24 @@ esac
 
 echo "🔍 Checking native modules for $CURRENT_OS/$CURRENT_ARCH (expect $EXPECTED_FORMAT)"
 
+# Validate the current Node runtime can actually dlopen and execute the addon.
+# This catches ABI mismatches where binary format/arch look valid but NODE_MODULE_VERSION differs.
+check_sqlite_runtime_load() {
+  node <<'NODE'
+try {
+  const Database = require('better-sqlite3');
+  const db = new Database(':memory:');
+  db.prepare('SELECT 1 AS ok').get();
+  db.close();
+  process.exit(0);
+} catch (err) {
+  const msg = err && err.stack ? err.stack : String(err);
+  console.error(msg);
+  process.exit(1);
+}
+NODE
+}
+
 # ─── Check better-sqlite3 ────────────────────────────────────────────────────
 
 SQLITE_BINARY="$REPO_ROOT/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
@@ -79,6 +97,18 @@ else
   fi
 fi
 
+# Even if format/arch look correct, verify the current Node runtime can load it.
+if ! $NEEDS_REBUILD; then
+  if check_sqlite_runtime_load >/tmp/ventureos-sqlite-load-check.log 2>&1; then
+    echo "✅ better-sqlite3: runtime load check passed"
+  else
+    echo "❌ better-sqlite3: runtime load check failed (likely ABI mismatch)"
+    sed 's/^/   /' /tmp/ventureos-sqlite-load-check.log || true
+    NEEDS_REBUILD=true
+  fi
+  rm -f /tmp/ventureos-sqlite-load-check.log
+fi
+
 # ─── Rebuild if needed ───────────────────────────────────────────────────────
 
 if $NEEDS_REBUILD; then
@@ -89,20 +119,28 @@ if $NEEDS_REBUILD; then
   fi
 
   echo ""
-  echo "🔧 Rebuilding better-sqlite3 for $CURRENT_OS/$CURRENT_ARCH…"
+  echo "🔧 Rebuilding better-sqlite3 from source for $CURRENT_OS/$CURRENT_ARCH…"
   cd "$REPO_ROOT"
-  npm rebuild better-sqlite3
+  npm rebuild better-sqlite3 --build-from-source
 
   # Verify rebuild succeeded
   if [[ -f "$SQLITE_BINARY" ]]; then
     VERIFY_INFO="$(file "$SQLITE_BINARY" 2>/dev/null || echo "unknown")"
     if echo "$VERIFY_INFO" | grep -q "$EXPECTED_FORMAT"; then
-      echo "✅ Rebuild successful: $VERIFY_INFO"
+      if check_sqlite_runtime_load >/tmp/ventureos-sqlite-load-check.log 2>&1; then
+        echo "✅ Rebuild successful: $VERIFY_INFO"
+      else
+        echo "❌ Rebuild produced binary that still fails to load"
+        sed 's/^/   /' /tmp/ventureos-sqlite-load-check.log || true
+        rm -f /tmp/ventureos-sqlite-load-check.log
+        exit 1
+      fi
     else
       echo "❌ Rebuild failed — binary still wrong format"
       echo "   Got: $VERIFY_INFO"
       exit 1
     fi
+    rm -f /tmp/ventureos-sqlite-load-check.log
   else
     echo "❌ Rebuild failed — binary not found"
     exit 1
