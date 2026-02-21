@@ -731,6 +731,56 @@ Manual retry endpoint for failed cards.
 }
 ```
 
+### `GET /api/task-board/active`
+
+Returns the current `memory/active-tasks.md` snapshot plus stale-task detection.
+
+**Query params:**
+- `staleAfterMs` (optional) — threshold for stale detection (default 30m, max 24h)
+
+**Response (200):**
+```json
+{
+  "snapshot": {
+    "updatedAt": "2026-02-21T09:00:00.000Z",
+    "active": [
+      {
+        "taskId": "task-123",
+        "status": "RUNNING",
+        "assigneeId": "oracle",
+        "startedAt": "2026-02-21T08:45:00.000Z",
+        "updatedAt": "2026-02-21T08:59:00.000Z"
+      }
+    ],
+    "completed": []
+  },
+  "staleAfterMs": 1800000,
+  "staleCount": 0,
+  "stale": []
+}
+```
+
+### `POST /api/task-board/recovery/resume`
+
+Requeues running tasks found in the active-task snapshot. Used for crash/restart recovery.
+
+**Request (optional):**
+```json
+{
+  "agentId": "oracle",
+  "limit": 20
+}
+```
+
+**Response (200):**
+```json
+{
+  "resumedCount": 2,
+  "resumedIds": ["task-123", "task-456"],
+  "consideredRunning": 3
+}
+```
+
 ---
 
 ## Model Routing Security Endpoints

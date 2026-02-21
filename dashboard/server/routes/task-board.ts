@@ -115,6 +115,11 @@ import {
   CARD_EXPORT_MAX_ITEMS,
 } from '../task-card-export.js';
 import type { CardExportFormat } from '../task-card-export.js';
+import {
+  readActiveTaskSnapshot,
+  detectStaleTasks,
+  writeActiveTasksFromCards,
+} from '../active-tasks.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -356,6 +361,16 @@ function saveTasks(dataDir: string, tasks: TaskCard[]): void {
   const dir = path.dirname(fp);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(fp, JSON.stringify({ tasks, updatedAt: Date.now() }, null, 2));
+}
+
+function saveTasksWithActiveTracker(dataDir: string, tasks: TaskCard[]): void {
+  saveTasks(dataDir, tasks);
+  // Keep memory/active-tasks.md in sync with task-board status changes.
+  try {
+    writeActiveTasksFromCards(dataDir, tasks);
+  } catch {
+    // Non-critical — task-board.json remains source of truth.
+  }
 }
 
 // ─── Pipeline Template Store (Issue #297) ───────────────────────────────────
@@ -739,7 +754,7 @@ function instantiatePipelineFromTemplate(
     created.push(card);
   }
 
-  saveTasks(dataDir, tasks);
+  saveTasksWithActiveTracker(dataDir, tasks);
   for (const card of created) emitEvent?.('task:created', card);
 
   return {
@@ -1292,7 +1307,7 @@ export function executeBatch(
     }
 
     // Persist all changes
-    saveTasks(dataDir, tasks);
+    saveTasksWithActiveTracker(dataDir, tasks);
   } else if (action === 'archive') {
     const toRemove: string[] = [];
 
@@ -1321,7 +1336,7 @@ export function executeBatch(
     if (toRemove.length > 0) {
       const removeSet = new Set(toRemove);
       const remaining = tasks.filter((t) => !removeSet.has(t.id));
-      saveTasks(dataDir, remaining);
+      saveTasksWithActiveTracker(dataDir, remaining);
     }
   }
 
@@ -1357,6 +1372,17 @@ export interface HeartbeatPickupResult {
   existingRunning: number;
   scannedQueued: number;
   skipped: HeartbeatPickupSkipped;
+}
+
+interface RecoveryResumeInput {
+  agentId?: string;
+  limit?: number;
+}
+
+export interface RecoveryResumeResult {
+  resumedCount: number;
+  resumedIds: string[];
+  consideredRunning: number;
 }
 
 function canRunByDependency(card: TaskCard, byId: Map<string, TaskCard>): boolean {
@@ -1461,7 +1487,7 @@ export function pickupQueuedTasksForAgent(
       appendStatusHistory(card, 'running', 'heartbeat', 'auto-picked from queue', now);
       emitEvent?.('task:updated', card);
     }
-    saveTasks(dataDir, tasks);
+    saveTasksWithActiveTracker(dataDir, tasks);
   }
 
   return {
@@ -1471,6 +1497,57 @@ export function pickupQueuedTasksForAgent(
     existingRunning: runningTasks.length,
     scannedQueued: candidates.length,
     skipped,
+  };
+}
+
+export function resumeRunningTasksFromSnapshot(
+  dataDir: string,
+  input: RecoveryResumeInput = {},
+  emitEvent?: TaskBoardDeps['emitEvent'],
+): RecoveryResumeResult {
+  const tasks = loadTasks(dataDir);
+  const snapshot = readActiveTaskSnapshot(dataDir);
+  const activeIds = new Set(snapshot.active.map((item) => item.taskId));
+  const agentId = typeof input.agentId === 'string' && input.agentId.trim()
+    ? input.agentId.trim()
+    : null;
+  const rawLimit = Number(input.limit ?? 50);
+  const limit = Number.isFinite(rawLimit)
+    ? Math.max(1, Math.min(Math.trunc(rawLimit), 100))
+    : 50;
+
+  const running = tasks
+    .filter((task) => task.status === 'running')
+    .filter((task) => {
+      if (agentId && task.agentId !== agentId && task.assigneeId !== agentId) return false;
+      if (activeIds.size === 0) return true;
+      return activeIds.has(task.id);
+    })
+    .sort((a, b) => (a.startedAt ?? a.createdAt) - (b.startedAt ?? b.createdAt));
+
+  const resumed = running.slice(0, limit);
+  if (resumed.length === 0) {
+    return {
+      resumedCount: 0,
+      resumedIds: [],
+      consideredRunning: running.length,
+    };
+  }
+
+  const now = Date.now();
+  for (const task of resumed) {
+    task.status = 'queued';
+    task.queuedAt = now;
+    task.startedAt = null;
+    appendStatusHistory(task, 'queued', 'recovery', 'auto-resume after restart', now);
+    emitEvent?.('task:updated', task);
+  }
+  saveTasksWithActiveTracker(dataDir, tasks);
+
+  return {
+    resumedCount: resumed.length,
+    resumedIds: resumed.map((task) => task.id),
+    consideredRunning: running.length,
   };
 }
 
@@ -1723,6 +1800,52 @@ export async function handleTaskBoard(
       sendJson(res, result, 400);
       return true;
     }
+    sendJson(res, result);
+    return true;
+  }
+
+  // ── GET /api/task-board/active — Issue #223 ─────────────────────────────
+  // Read active-task tracker snapshot + stale detection for dashboard display.
+  // Query params:
+  //   ?staleAfterMs=1800000 — stale threshold (default 30m, max 24h)
+  if (url.startsWith('/api/task-board/active') && method === 'GET') {
+    const params = new URL(url, 'http://localhost').searchParams;
+    const staleAfterMs = params.has('staleAfterMs')
+      ? Math.max(1000, Math.min(Number(params.get('staleAfterMs')) || 30 * 60 * 1000, 24 * 60 * 60 * 1000))
+      : 30 * 60 * 1000;
+    const snapshot = readActiveTaskSnapshot(dataDir);
+    const stale = detectStaleTasks(snapshot, { staleAfterMs });
+    sendJson(res, {
+      snapshot,
+      staleAfterMs,
+      staleCount: stale.length,
+      stale,
+    });
+    return true;
+  }
+
+  // ── POST /api/task-board/recovery/resume — Issue #223 ───────────────────
+  // Re-queue running work from active-tasks snapshot after restart.
+  // Optional body:
+  //   { "agentId": "oracle", "limit": 20 }
+  if (url === '/api/task-board/recovery/resume' && method === 'POST') {
+    let body: RecoveryResumeInput = {};
+    try {
+      const raw = await readRequestBody(req, { maxBytes: 4096 });
+      if (raw.trim()) {
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          sendJson(res, { error: 'request body must be a JSON object' }, 400);
+          return true;
+        }
+        body = parsed as RecoveryResumeInput;
+      }
+    } catch {
+      sendJson(res, { error: 'invalid JSON body' }, 400);
+      return true;
+    }
+
+    const result = resumeRunningTasksFromSnapshot(dataDir, body, deps.emitEvent);
     sendJson(res, result);
     return true;
   }
@@ -2328,7 +2451,7 @@ export async function handleTaskBoard(
 
     const tasks = loadTasks(dataDir);
     tasks.push(result.card);
-    saveTasks(dataDir, tasks);
+    saveTasksWithActiveTracker(dataDir, tasks);
     deps.emitEvent?.('task:created', result.card);
     sendJson(res, { card: result.card }, 201);
     return true;
@@ -2387,7 +2510,7 @@ export async function handleTaskBoard(
     appendStatusHistory(card, 'queued', 'retry', retryNote ?? 'manual retry from failed', now);
 
     tasks[idx] = card;
-    saveTasks(dataDir, tasks);
+    saveTasksWithActiveTracker(dataDir, tasks);
     deps.emitEvent?.('task:updated', card);
     sendJson(res, { card });
     return true;
@@ -2496,7 +2619,7 @@ export async function handleTaskBoard(
     }
 
     tasks[idx] = card;
-    saveTasks(dataDir, tasks);
+    saveTasksWithActiveTracker(dataDir, tasks);
     deps.emitEvent?.('task:updated', card);
     sendJson(res, { card });
     return true;
@@ -2517,7 +2640,7 @@ export async function handleTaskBoard(
 
     const deletedCard = tasks[idx];
     tasks.splice(idx, 1);
-    saveTasks(dataDir, tasks);
+    saveTasksWithActiveTracker(dataDir, tasks);
     deps.emitEvent?.('task:deleted', deletedCard);
     sendJson(res, { ok: true });
     return true;
