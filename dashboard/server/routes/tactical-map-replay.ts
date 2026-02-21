@@ -31,6 +31,7 @@ import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ReplayCapturedStore, ReplaySessionListResponse, ReplaySessionMeta } from '../types.js';
 import { auditLog } from '../middleware/audit-log.js';
+import { isPathInsideRoot } from '../path-containment.js';
 
 export interface TacticalMapReplayDeps {
   dataDir: string;
@@ -187,7 +188,7 @@ function sessionFilePath(baseDir: string, sessionId: string): string {
   const sessionsDir = path.join(baseDir, 'replay', 'sessions');
   const resolved = path.resolve(path.join(sessionsDir, `${sessionId}.json`));
   const root = path.resolve(sessionsDir);
-  if (!resolved.startsWith(root)) return '';
+  if (!isPathInsideRoot(root, resolved)) return '';
   return resolved;
 }
 

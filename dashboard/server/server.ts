@@ -92,6 +92,7 @@ import { auditLog } from './middleware/audit-log.js';
 import { authorizeActionRequest } from './middleware/action-guard.js';
 import { withCorrelationId, CORRELATION_HEADER } from './middleware/correlation-id.js';
 import { proxyBridgeJson, proxyBridgeSse } from './bridge-proxy.js';
+import { isPathInsideRoot } from './path-containment.js';
 
 // Structured logging (Issue #195 — Observability)
 import structuredLogger from '../../lib/structured-logger.js';
@@ -255,7 +256,7 @@ function tryServeStatic(
     const root: string = path.resolve(opts.rootDir);
     let fpath: string = path.resolve(path.join(root, rel));
 
-    if (!fpath.startsWith(root)) {
+    if (!isPathInsideRoot(root, fpath)) {
       res.writeHead(403);
       res.end('Forbidden');
       return true;

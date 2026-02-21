@@ -17,6 +17,7 @@ import path from 'node:path';
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { LogsDeps, LogEntry, LogSourceMeta } from '../types.js';
+import { isPathInsideRoot } from '../path-containment.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -274,9 +275,10 @@ function resolveSourcePath(
 
   for (const dir of dirs) {
     if (!dir) continue;
+    const resolvedDir = path.resolve(dir);
     for (const ext of ['.jsonl', '.log', '.txt']) {
       const candidate = path.resolve(path.join(dir, sourceId + ext));
-      if (!candidate.startsWith(path.resolve(dir))) continue;
+      if (!isPathInsideRoot(resolvedDir, candidate)) continue;
       if (fs.existsSync(candidate)) return candidate;
     }
   }

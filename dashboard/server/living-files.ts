@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import type { TaskCard } from './types.js';
+import { isPathInsideRoot } from './path-containment.js';
 
 export type LivingFileStatus = 'fresh' | 'warning' | 'stale' | 'missing' | 'static';
 export type LivingFileTriggerStatus = 'queued' | 'acknowledged' | 'resolved';
@@ -135,18 +136,6 @@ function normalizeExpectedUpdateHours(input: unknown, fallback = 24): number {
 
 function nowIso(now: () => Date): string {
   return now().toISOString();
-}
-
-/**
- * Security-critical containment check for workspace-bound file operations.
- * Uses canonical `path.relative(...)` semantics to prevent traversal,
- * including sibling-prefix escapes that bypass naive string prefix checks.
- */
-function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
-  const relative = path.relative(rootDir, candidatePath);
-  if (relative === '') return true;
-  if (relative === '..' || relative.startsWith(`..${path.sep}`)) return false;
-  return !path.isAbsolute(relative);
 }
 
 function deepClone<T>(value: T): T {
