@@ -111,7 +111,7 @@ describe('ConversationEngine', () => {
     const state = await engine.startConversation({ participants: ['oracle', 'archivist'], currentTurn: 'oracle' });
 
     const payload = {
-      type: 'knowledge_artifact',
+      type: 'artifact',
       format: 'json',
       data: {
         title: 'Test Artifact',
