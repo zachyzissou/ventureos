@@ -183,11 +183,18 @@ function sortSessions(sessions: ReplaySessionMeta[], sortParam: string | null): 
   });
 }
 
+function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
+  const relative = path.relative(rootDir, candidatePath);
+  if (relative === '') return true;
+  if (relative === '..' || relative.startsWith(`..${path.sep}`)) return false;
+  return !path.isAbsolute(relative);
+}
+
 function sessionFilePath(baseDir: string, sessionId: string): string {
   const sessionsDir = path.join(baseDir, 'replay', 'sessions');
   const resolved = path.resolve(path.join(sessionsDir, `${sessionId}.json`));
   const root = path.resolve(sessionsDir);
-  if (!resolved.startsWith(root)) return '';
+  if (!isPathInsideRoot(root, resolved)) return '';
   return resolved;
 }
 

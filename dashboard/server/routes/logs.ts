@@ -56,6 +56,13 @@ function isSafeFilename(name: string): boolean {
   return !/[\/\\]/.test(name) && !name.startsWith('.') && name.length > 0 && name.length < 256;
 }
 
+function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
+  const relative = path.relative(rootDir, candidatePath);
+  if (relative === '') return true;
+  if (relative === '..' || relative.startsWith(`..${path.sep}`)) return false;
+  return !path.isAbsolute(relative);
+}
+
 /** Infer severity from a raw log line or parsed JSON. */
 function inferLevel(line: string, parsed: Record<string, unknown> | null): LogEntry['level'] {
   if (parsed) {
@@ -274,9 +281,10 @@ function resolveSourcePath(
 
   for (const dir of dirs) {
     if (!dir) continue;
+    const resolvedDir = path.resolve(dir);
     for (const ext of ['.jsonl', '.log', '.txt']) {
       const candidate = path.resolve(path.join(dir, sourceId + ext));
-      if (!candidate.startsWith(path.resolve(dir))) continue;
+      if (!isPathInsideRoot(resolvedDir, candidate)) continue;
       if (fs.existsSync(candidate)) return candidate;
     }
   }

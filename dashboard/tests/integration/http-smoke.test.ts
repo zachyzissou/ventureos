@@ -49,6 +49,7 @@ beforeAll(async () => {
   fs.mkdirSync(workflowDir, { recursive: true });
 
   const rpgRootDir = path.join(tmpRoot, 'rpg-root');
+  const rpgSiblingEscapeDir = path.join(tmpRoot, 'rpg-root-secret');
   obsidianVaultDir = path.join(tmpRoot, 'obsidian-vault');
 
   fs.mkdirSync(kpiDir, { recursive: true });
@@ -57,12 +58,14 @@ beforeAll(async () => {
   fs.mkdirSync(sessionsDir, { recursive: true });
   fs.mkdirSync(workspaceDir, { recursive: true });
   fs.mkdirSync(rpgRootDir, { recursive: true });
+  fs.mkdirSync(rpgSiblingEscapeDir, { recursive: true });
   fs.mkdirSync(obsidianVaultDir, { recursive: true });
 
   // RPG test fixtures (Issue #145)
   fs.writeFileSync(path.join(rpgRootDir, 'README.md'), '# RPG Test Fixture');
   fs.mkdirSync(path.join(rpgRootDir, 'api'), { recursive: true });
   fs.writeFileSync(path.join(rpgRootDir, 'api', 'secret.ts'), 'export const SECRET = "leaked";');
+  fs.writeFileSync(path.join(rpgSiblingEscapeDir, 'secret.txt'), 'should-not-be-readable');
 
   const kpiBase = {
     overall: {
@@ -217,6 +220,22 @@ describe('Dashboard HTTP smoke tests', () => {
     expect(res.status).toBe(200);
     const body = await res.text();
     expect(body).toContain('RPG Test Fixture');
+  });
+
+  it('blocks sibling-prefix traversal attempts for /rpg/ static files', async () => {
+    const loginRes = await fetch(`${BASE_URL}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: TOKEN }),
+      redirect: 'manual',
+    });
+    const cookie = loginRes.headers.get('set-cookie')?.split(';')[0] ?? '';
+
+    const res = await fetch(`${BASE_URL}/rpg/%2e%2e%2frpg-root-secret%2fsecret.txt`, {
+      headers: { cookie },
+      redirect: 'manual',
+    });
+    expect(res.status).toBe(403);
   });
 
   it('returns 404 for non-existent /rpg/ files when authenticated (Issue #145)', async () => {

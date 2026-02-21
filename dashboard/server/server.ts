@@ -242,6 +242,13 @@ function contentTypeFor(filePath: string): string {
   return 'application/octet-stream';
 }
 
+function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
+  const relative = path.relative(rootDir, candidatePath);
+  if (relative === '') return true;
+  if (relative === '..' || relative.startsWith(`..${path.sep}`)) return false;
+  return !path.isAbsolute(relative);
+}
+
 function tryServeStatic(
   req: IncomingMessage,
   res: ServerResponse,
@@ -255,7 +262,7 @@ function tryServeStatic(
     const root: string = path.resolve(opts.rootDir);
     let fpath: string = path.resolve(path.join(root, rel));
 
-    if (!fpath.startsWith(root)) {
+    if (!isPathInsideRoot(root, fpath)) {
       res.writeHead(403);
       res.end('Forbidden');
       return true;
