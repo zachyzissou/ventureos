@@ -16,6 +16,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 - [Action Endpoints](#action-endpoints)
 - [Task Board Endpoints](#task-board-endpoints)
 - [Model Routing Security Endpoints](#model-routing-security-endpoints)
+- [Token Compaction Endpoints](#token-compaction-endpoints)
 - [Schemas](#schemas)
 
 ---
@@ -842,6 +843,121 @@ Returns recent prompt-injection detection routing events.
 
 ---
 
+## Token Compaction Endpoints
+
+Deterministic, no-LLM context compression telemetry (Issue #221).
+
+### `POST /api/token-compaction/run`
+
+Runs the 5-layer token-compaction pipeline on an input file set.
+
+**Request:**
+```json
+{
+  "sessionId": "sess-abc",
+  "agentId": "oracle",
+  "files": [
+    {
+      "path": "src/main.ts",
+      "content": "// comment\nexport const x = 1;\n",
+      "priority": 2,
+      "updatedAtMs": 1700000000000
+    }
+  ],
+  "compression": {
+    "level": "standard",
+    "protected_files": ["SOUL.md", "*.key"],
+    "max_processing_ms": 200
+  }
+}
+```
+
+**Response (200):**
+```json
+{
+  "ok": true,
+  "result": {
+    "bundledContext": "F:src/main.ts (p=2,u=2026-02-21T09:00:00.000Z)\nexport const x = 1;",
+    "files": [
+      {
+        "path": "src/main.ts",
+        "protected": false,
+        "layersApplied": [
+          "whitespace-normalization",
+          "comment-stripping",
+          "deduplication",
+          "priority-pruning"
+        ],
+        "originalChars": 31,
+        "compressedChars": 20,
+        "content": "export const x = 1;"
+      }
+    ],
+    "metrics": {
+      "sessionId": "sess-abc",
+      "agentId": "oracle",
+      "level": "standard",
+      "preTokens": 12,
+      "postTokens": 7,
+      "reductionPct": 41.67,
+      "estimatedSavingsUsd": 0.000015,
+      "timedOut": false
+    }
+  }
+}
+```
+
+**Validation errors (400):**
+- missing `files[]`
+- malformed file entries
+- `files.length > 500`
+
+### `GET /api/token-compaction/metrics`
+
+Returns persisted compaction run history with per-session savings summary.
+
+**Query params:**
+- `limit` (optional, `1..500`, default `100`)
+- `sessionId` (optional)
+- `agentId` (optional)
+
+**Response (200):**
+```json
+{
+  "updatedAt": 1700000000000,
+  "total": 2,
+  "metrics": [
+    {
+      "sessionId": "sess-abc",
+      "agentId": "oracle",
+      "level": "standard",
+      "preTokens": 1200,
+      "postTokens": 310,
+      "reductionPct": 74.17,
+      "estimatedSavingsUsd": 0.00267,
+      "timedOut": false
+    }
+  ],
+  "summary": {
+    "preTokens": 1200,
+    "postTokens": 310,
+    "savedTokens": 890,
+    "avgReductionPct": 74.17,
+    "estimatedSavingsUsd": 0.00267,
+    "bySession": {
+      "sess-abc": {
+        "runs": 2,
+        "preTokens": 2200,
+        "postTokens": 620,
+        "savedTokens": 1580
+      }
+    }
+  }
+}
+```
+
+---
+
 ## Rate Limiting
 
 Per-IP, per-endpoint sliding window rate limits:
@@ -852,6 +968,7 @@ Per-IP, per-endpoint sliding window rate limits:
 | `/api/costs` | 60 req | 60s |
 | `/api/usage` | 60 req | 60s |
 | `/api/system` | 60 req | 60s |
+| `/api/token-compaction*` | 30 req | 60s |
 | `/api/ventureos-agents` | 30 req | 60s |
 | `/api/ventureos-kpis` | 30 req | 60s |
 | `/api/rpg/*` | 20 req | 60s |

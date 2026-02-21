@@ -117,6 +117,7 @@ import { handleMemoryState } from './routes/memory-state.js';
 import { handleUnifiedSearch } from './routes/unified-search.js';
 import { handleObsidianConnector } from './routes/obsidian-connector.js';
 import { handleSharedContext } from './routes/shared-context.js';
+import { handleTokenCompaction } from './routes/token-compaction.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -3176,6 +3177,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     } catch {
       sendJson(res, { error: 'Failed to load model-routing security metrics' }, 500);
     }
+    return;
+  }
+
+  try {
+    if (await handleTokenCompaction(req, res, { dataDir, sendJson, readRequestBody })) return;
+  } catch {
+    sendJson(res, { ok: false, error: 'Failed to process token compaction request' }, 500);
     return;
   }
 
