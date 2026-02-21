@@ -14,6 +14,10 @@ const FILE_SIZE_BUDGETS = [
     relativePath: 'server/routes/task-board.ts',
     maxLines: 2500,
   },
+  {
+    relativePath: 'server/bridge.ts',
+    maxLines: 1700,
+  },
 ] as const;
 
 function lineCount(filePath: string): number {
