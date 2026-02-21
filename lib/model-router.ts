@@ -38,6 +38,9 @@ export type TaskComplexity = 'simple' | 'medium' | 'complex';
 /** Time sensitivity levels. */
 export type TimeSensitivity = 'urgent' | 'normal' | 'batch';
 
+/** Security risk levels for threat-aware routing. */
+export type RoutingRiskLevel = 'low' | 'medium' | 'high';
+
 /** Business unit priority for model routing. */
 export type RoutingPriority = 'high' | 'medium' | 'low';
 
@@ -91,6 +94,19 @@ export interface RoutingRequest {
   taskType?: string;
   /** Whether the task is safety-critical (overrides quota restrictions). */
   safetyCritical?: boolean;
+  /** Explicit per-task model override (user-controlled). */
+  forceModel?: string;
+  /** Optional explicit risk level override. */
+  riskLevel?: RoutingRiskLevel;
+  /** Content-source hints used for threat classification. */
+  contentSources?: string[];
+  /** Flag indicating untrusted/external content is present. */
+  containsExternalContent?: boolean;
+  /** Prompt-injection score (0-1) from upstream sanitizer/classifier. */
+  injectionScore?: number;
+  /** Cost-estimation hints for telemetry. */
+  estimatedInputTokens?: number;
+  estimatedOutputTokens?: number;
 }
 
 /** Score breakdown for auditability. */
@@ -126,6 +142,16 @@ export interface RoutingDecision {
   reason: string;
   /** Timestamp of decision. */
   decidedAt: string;
+  /** Security routing metadata (threat-aware tier decisions). */
+  security: RoutingSecurityMetadata;
+}
+
+/** Security details attached to each routing decision. */
+export interface RoutingSecurityMetadata {
+  riskLevel: RoutingRiskLevel;
+  signals: string[];
+  injectionDetected: boolean;
+  forcedByRequest: boolean;
 }
 
 /** Quota state for a provider or global. */
@@ -194,6 +220,33 @@ export interface ModelRouterConfig {
   logger?: ModelRouterLogger;
   /** Deterministic time source (for tests). */
   now?: () => Date;
+  /** Prompt-injection score threshold that triggers detection logging. */
+  injectionAlertThreshold?: number;
+  /** Max entries retained for in-memory routing telemetry history. */
+  routingHistoryLimit?: number;
+}
+
+/** Single injection-detection log event from routing. */
+export interface InjectionDetectionEvent {
+  detectedAt: string;
+  riskLevel: RoutingRiskLevel;
+  modelId: string;
+  injectionScore: number;
+  signals: string[];
+}
+
+/** Dashboard-friendly security routing summary. */
+export interface SecurityRoutingSummary {
+  updatedAt: string;
+  windowSize: number;
+  riskCounts: Record<RoutingRiskLevel, number>;
+  tierCounts: Record<'tier1' | 'tier2' | 'tier3', number>;
+  modelUsage: Record<string, number>;
+  injectionDetections: number;
+  estimatedCostUsd: number;
+  baselineCostUsd: number;
+  estimatedSavingsUsd: number;
+  estimatedSavingsPct: number;
 }
 
 // ============================================================================
@@ -330,6 +383,21 @@ const CAPABILITY_MATCH_BONUS = 10;
 
 /** Maximum performance bonus. */
 const MAX_PERFORMANCE_BONUS = 30;
+
+/** Security routing defaults. */
+const DEFAULT_INJECTION_ALERT_THRESHOLD = 0.6;
+const DEFAULT_ROUTING_HISTORY_LIMIT = 500;
+const DEFAULT_ESTIMATED_INPUT_TOKENS = 1000;
+const DEFAULT_ESTIMATED_OUTPUT_TOKENS = 500;
+const EXTERNAL_CONTENT_SOURCES = new Set([
+  'external',
+  'web',
+  'email',
+  'social',
+  'url',
+  'user_url',
+  'browser',
+]);
 
 // ============================================================================
 // Quota Tracker
@@ -524,6 +592,16 @@ const defaultLogger: ModelRouterLogger = {
   error: (msg, meta) => console.error(`[model-router] ${msg}`, meta ?? ''),
 };
 
+interface RoutingTelemetryEntry {
+  decidedAt: string;
+  riskLevel: RoutingRiskLevel;
+  modelId: string;
+  tier: ModelTier;
+  estimatedCostUsd: number;
+  baselineCostUsd: number;
+  injectionDetected: boolean;
+}
+
 export class ModelRouter {
   private readonly models: ModelDefinition[];
   private readonly overrides: Map<string, BusinessUnitOverride>;
@@ -531,6 +609,10 @@ export class ModelRouter {
   private readonly enforceQuota: boolean;
   private readonly logger: ModelRouterLogger;
   private readonly now: () => Date;
+  private readonly injectionAlertThreshold: number;
+  private readonly routingHistoryLimit: number;
+  private readonly routingTelemetry: RoutingTelemetryEntry[] = [];
+  private readonly injectionEvents: InjectionDetectionEvent[] = [];
 
   readonly quota: QuotaTracker;
   readonly performance: PerformanceTracker;
@@ -541,6 +623,8 @@ export class ModelRouter {
     this.enforceQuota = config.enforceQuota ?? true;
     this.logger = config.logger ?? defaultLogger;
     this.now = config.now ?? (() => new Date());
+    this.injectionAlertThreshold = config.injectionAlertThreshold ?? DEFAULT_INJECTION_ALERT_THRESHOLD;
+    this.routingHistoryLimit = Math.max(10, config.routingHistoryLimit ?? DEFAULT_ROUTING_HISTORY_LIMIT);
     this.quota = new QuotaTracker();
     this.performance = new PerformanceTracker(this.now);
 
@@ -562,6 +646,24 @@ export class ModelRouter {
   selectModel(request: RoutingRequest): RoutingDecision {
     const warnings: string[] = [];
     let quotaDowngraded = false;
+    const security = this.classifySecurityRisk(request);
+    const quotaExempt = request.safetyCritical === true || security.riskLevel === 'high';
+
+    // 0. Explicit per-task forced model (user-controlled override)
+    if (request.forceModel) {
+      const forcedByRequest = this.models.find(m => m.id === request.forceModel);
+      if (forcedByRequest && forcedByRequest.status !== 'unavailable') {
+        return this.buildDecision(forcedByRequest, request, {
+          reason: `Forced by request override`,
+          fallbackUsed: false,
+          fallbackIndex: 0,
+          quotaDowngraded: false,
+          warnings,
+          security: { ...security, forcedByRequest: true },
+        });
+      }
+      warnings.push(`Forced model '${request.forceModel}' not available, falling back to policy routing`);
+    }
 
     // 1. Resolve business unit override
     const override = request.businessUnit
@@ -578,6 +680,7 @@ export class ModelRouter {
           fallbackIndex: 0,
           quotaDowngraded: false,
           warnings: [],
+          security,
         });
       }
       warnings.push(`Forced model '${override.forcedModel}' not available, falling back to scoring`);
@@ -585,10 +688,13 @@ export class ModelRouter {
 
     // 3. Determine effective tier bounds
     let { minTier, maxTier } = this.resolveEffectiveTiers(request, override);
+    // Security-aware tier floors
+    if (security.riskLevel === 'high') minTier = Math.max(minTier, 3) as ModelTier;
+    if (security.riskLevel === 'medium') minTier = Math.max(minTier, 2) as ModelTier;
 
     // 4. Apply quota restrictions
     if (this.enforceQuota) {
-      const quotaResult = this.applyQuotaRestrictions(request, maxTier);
+      const quotaResult = this.applyQuotaRestrictions(request, maxTier, quotaExempt);
       maxTier = quotaResult.maxTier;
       quotaDowngraded = quotaResult.downgraded;
       if (quotaResult.warning) warnings.push(quotaResult.warning);
@@ -596,22 +702,22 @@ export class ModelRouter {
 
     // Ensure minTier ≤ maxTier after quota adjustments
     if (minTier > maxTier) {
-      if (request.safetyCritical) {
+      if (quotaExempt) {
         // Safety-critical tasks are exempt from quota downgrade
         maxTier = minTier;
         quotaDowngraded = false;
-        warnings.push('Safety-critical task: quota restriction overridden');
+        warnings.push('Security/safety critical task: quota restriction overridden');
       } else {
         minTier = maxTier;
       }
     }
 
     // 5. Filter candidate models
-    const candidates = this.filterCandidates(request, minTier, maxTier, override);
+    const candidates = this.filterCandidates(request, minTier, maxTier, override, quotaExempt);
 
     if (candidates.length === 0) {
       // No candidates at all — try fallback chain
-      return this.fallback(request, warnings);
+      return this.fallback(request, warnings, security, quotaExempt);
     }
 
     // 6. Score candidates
@@ -622,11 +728,12 @@ export class ModelRouter {
 
     return this.buildDecision(best.model, request, {
       breakdown: best.breakdown,
-      reason: this.buildReason(request, best.model, quotaDowngraded),
+      reason: this.buildReason(request, best.model, quotaDowngraded, security),
       fallbackUsed: false,
       fallbackIndex: 0,
       quotaDowngraded,
       warnings,
+      security,
     });
   }
 
@@ -731,16 +838,17 @@ export class ModelRouter {
   /** Apply quota restrictions and potentially downgrade maxTier. */
   private applyQuotaRestrictions(
     request: RoutingRequest,
-    currentMaxTier: ModelTier
+    currentMaxTier: ModelTier,
+    quotaExempt: boolean,
   ): { maxTier: ModelTier; downgraded: boolean; warning?: string } {
     // Check global quota first
     const globalUsage = this.quota.getUsagePercent('global');
     if (globalUsage >= this.quotaThreshold) {
-      if (request.safetyCritical) {
+      if (quotaExempt) {
         return {
           maxTier: currentMaxTier,
           downgraded: false,
-          warning: `Quota at ${(globalUsage * 100).toFixed(0)}% but safety-critical task — no downgrade`,
+          warning: `Quota at ${(globalUsage * 100).toFixed(0)}% but security/safety critical task — no downgrade`,
         };
       }
       return {
@@ -770,7 +878,8 @@ export class ModelRouter {
     request: RoutingRequest,
     minTier: ModelTier,
     maxTier: ModelTier,
-    override?: BusinessUnitOverride
+    override?: BusinessUnitOverride,
+    quotaExempt: boolean = false,
   ): ModelDefinition[] {
     return this.models.filter(m => {
       // Must be available
@@ -786,7 +895,7 @@ export class ModelRouter {
       }
 
       // Provider quota exhausted — skip (except safety-critical requests)
-      if (this.enforceQuota && !request.safetyCritical && this.quota.isExhausted(m.provider)) {
+      if (this.enforceQuota && !quotaExempt && this.quota.isExhausted(m.provider)) {
         return false;
       }
 
@@ -890,14 +999,19 @@ export class ModelRouter {
   }
 
   /** Execute fallback chain when no primary candidates are available. */
-  private fallback(request: RoutingRequest, existingWarnings: string[]): RoutingDecision {
+  private fallback(
+    request: RoutingRequest,
+    existingWarnings: string[],
+    security: RoutingSecurityMetadata,
+    quotaExempt: boolean,
+  ): RoutingDecision {
     const warnings = [...existingWarnings];
 
     // Try all models in fallback order (any tier, any provider)
     const allAvailable = this.models
       .filter(m => {
         if (m.status === 'unavailable') return false;
-        if (this.enforceQuota && !request.safetyCritical && this.quota.isExhausted(m.provider)) {
+        if (this.enforceQuota && !quotaExempt && this.quota.isExhausted(m.provider)) {
           return false;
         }
         return true;
@@ -950,6 +1064,7 @@ export class ModelRouter {
         fallbackIndex: -1,
         quotaDowngraded: false,
         warnings,
+        security,
       });
     }
 
@@ -962,6 +1077,7 @@ export class ModelRouter {
       fallbackIndex: 1,
       quotaDowngraded: false,
       warnings,
+      security,
     });
   }
 
@@ -976,6 +1092,7 @@ export class ModelRouter {
       fallbackIndex: number;
       quotaDowngraded: boolean;
       warnings: string[];
+      security?: RoutingSecurityMetadata;
     }
   ): RoutingDecision {
     const breakdown = opts.breakdown ?? {
@@ -1001,6 +1118,12 @@ export class ModelRouter {
       warnings: opts.warnings,
       reason: opts.reason,
       decidedAt: this.now().toISOString(),
+      security: opts.security ?? {
+        riskLevel: 'low',
+        signals: [],
+        injectionDetected: false,
+        forcedByRequest: false,
+      },
     };
 
     this.logger.debug?.('Routing decision', {
@@ -1011,25 +1134,185 @@ export class ModelRouter {
       quotaDowngraded: opts.quotaDowngraded,
       fallbackUsed: opts.fallbackUsed,
       warnings: opts.warnings,
+      riskLevel: decision.security.riskLevel,
+      injectionDetected: decision.security.injectionDetected,
     });
 
+    this.recordTelemetry(request, decision);
+
     return decision;
+  }
+
+  /** Classify routing threat level from request metadata. */
+  private classifySecurityRisk(request: RoutingRequest): RoutingSecurityMetadata {
+    const signals: string[] = [];
+    let riskLevel: RoutingRiskLevel = request.riskLevel ?? 'low';
+
+    const escalateTo = (target: RoutingRiskLevel, signal: string): void => {
+      signals.push(signal);
+      if (target === 'high') {
+        riskLevel = 'high';
+      } else if (target === 'medium' && riskLevel === 'low') {
+        riskLevel = 'medium';
+      }
+    };
+
+    if (request.containsExternalContent) {
+      escalateTo('high', 'containsExternalContent');
+    }
+
+    for (const source of request.contentSources ?? []) {
+      if (EXTERNAL_CONTENT_SOURCES.has(source.toLowerCase())) {
+        escalateTo('high', `contentSource:${source}`);
+      }
+    }
+
+    const injectionScore = typeof request.injectionScore === 'number' ? request.injectionScore : 0;
+    if (injectionScore >= this.injectionAlertThreshold) {
+      escalateTo('high', `injectionScore:${injectionScore.toFixed(2)}`);
+    } else if (injectionScore >= 0.3) {
+      escalateTo('medium', `injectionScoreElevated:${injectionScore.toFixed(2)}`);
+    }
+
+    const taskType = (request.taskType ?? '').toLowerCase();
+    if (taskType.includes('code') || taskType.includes('review') || taskType.includes('generation')) {
+      escalateTo('medium', `taskType:${request.taskType}`);
+    }
+
+    if (request.requiredCapabilities?.some((cap) => ['browser', 'vision'].includes(cap))) {
+      escalateTo('high', 'untrusted-capability');
+    }
+
+    return {
+      riskLevel,
+      signals,
+      injectionDetected: injectionScore >= this.injectionAlertThreshold,
+      forcedByRequest: false,
+    };
+  }
+
+  private estimateCostUsd(
+    model: ModelDefinition,
+    inputTokens: number,
+    outputTokens: number,
+  ): number {
+    return (inputTokens / 1000) * model.costPer1kInput + (outputTokens / 1000) * model.costPer1kOutput;
+  }
+
+  private getBaselineModel(): ModelDefinition {
+    const available = this.models.filter((m) => m.status !== 'unavailable');
+    if (available.length === 0) return this.models[0] ?? DEFAULT_MODELS[0];
+    return [...available].sort(
+      (a, b) => (b.costPer1kInput + b.costPer1kOutput) - (a.costPer1kInput + a.costPer1kOutput),
+    )[0];
+  }
+
+  private recordTelemetry(request: RoutingRequest, decision: RoutingDecision): void {
+    const inputTokens = request.estimatedInputTokens ?? DEFAULT_ESTIMATED_INPUT_TOKENS;
+    const outputTokens = request.estimatedOutputTokens ?? DEFAULT_ESTIMATED_OUTPUT_TOKENS;
+    const baselineModel = this.getBaselineModel();
+
+    const estimatedCostUsd = this.estimateCostUsd(decision.model, inputTokens, outputTokens);
+    const baselineCostUsd = this.estimateCostUsd(baselineModel, inputTokens, outputTokens);
+
+    this.routingTelemetry.push({
+      decidedAt: decision.decidedAt,
+      riskLevel: decision.security.riskLevel,
+      modelId: decision.model.id,
+      tier: decision.tier,
+      estimatedCostUsd,
+      baselineCostUsd,
+      injectionDetected: decision.security.injectionDetected,
+    });
+    if (this.routingTelemetry.length > this.routingHistoryLimit) {
+      this.routingTelemetry.splice(0, this.routingTelemetry.length - this.routingHistoryLimit);
+    }
+
+    if (decision.security.injectionDetected) {
+      const event: InjectionDetectionEvent = {
+        detectedAt: decision.decidedAt,
+        riskLevel: decision.security.riskLevel,
+        modelId: decision.model.id,
+        injectionScore: request.injectionScore ?? 0,
+        signals: [...decision.security.signals],
+      };
+      this.injectionEvents.push(event);
+      if (this.injectionEvents.length > this.routingHistoryLimit) {
+        this.injectionEvents.splice(0, this.injectionEvents.length - this.routingHistoryLimit);
+      }
+      this.logger.warn('Injection detection routed to strong model', event);
+    }
+  }
+
+  /** Return security-routing telemetry for dashboard/API surfaces. */
+  getSecurityRoutingSummary(limit?: number): SecurityRoutingSummary {
+    const effectiveLimit = limit && Number.isFinite(limit)
+      ? Math.max(1, Math.min(Math.trunc(limit), this.routingHistoryLimit))
+      : this.routingHistoryLimit;
+    const slice = this.routingTelemetry.slice(-effectiveLimit);
+    const riskCounts: Record<RoutingRiskLevel, number> = { low: 0, medium: 0, high: 0 };
+    const tierCounts: Record<'tier1' | 'tier2' | 'tier3', number> = { tier1: 0, tier2: 0, tier3: 0 };
+    const modelUsage: Record<string, number> = {};
+    let estimatedCostUsd = 0;
+    let baselineCostUsd = 0;
+    let injectionDetections = 0;
+
+    for (const entry of slice) {
+      riskCounts[entry.riskLevel] += 1;
+      tierCounts[`tier${entry.tier}` as 'tier1' | 'tier2' | 'tier3'] += 1;
+      modelUsage[entry.modelId] = (modelUsage[entry.modelId] ?? 0) + 1;
+      estimatedCostUsd += entry.estimatedCostUsd;
+      baselineCostUsd += entry.baselineCostUsd;
+      if (entry.injectionDetected) injectionDetections += 1;
+    }
+    const estimatedSavingsUsd = baselineCostUsd - estimatedCostUsd;
+    const estimatedSavingsPct = baselineCostUsd > 0
+      ? Number(((estimatedSavingsUsd / baselineCostUsd) * 100).toFixed(2))
+      : 0;
+
+    return {
+      updatedAt: this.now().toISOString(),
+      windowSize: slice.length,
+      riskCounts,
+      tierCounts,
+      modelUsage,
+      injectionDetections,
+      estimatedCostUsd: Number(estimatedCostUsd.toFixed(6)),
+      baselineCostUsd: Number(baselineCostUsd.toFixed(6)),
+      estimatedSavingsUsd: Number(estimatedSavingsUsd.toFixed(6)),
+      estimatedSavingsPct,
+    };
+  }
+
+  /** Return recent injection-detection events. */
+  getInjectionDetections(limit = 100): InjectionDetectionEvent[] {
+    const effectiveLimit = Math.max(1, Math.min(Math.trunc(limit), this.routingHistoryLimit));
+    return this.injectionEvents.slice(-effectiveLimit);
+  }
+
+  clearSecurityTelemetry(): void {
+    this.routingTelemetry.length = 0;
+    this.injectionEvents.length = 0;
   }
 
   /** Build a human-readable reason string. */
   private buildReason(
     request: RoutingRequest,
     model: ModelDefinition,
-    quotaDowngraded: boolean
+    quotaDowngraded: boolean,
+    security: RoutingSecurityMetadata,
   ): string {
     const parts: string[] = [];
     parts.push(`complexity=${request.complexity}`);
     parts.push(`sensitivity=${request.timeSensitivity}`);
     parts.push(`tier=${model.tier}`);
+    parts.push(`risk=${security.riskLevel}`);
 
     if (request.businessUnit) parts.push(`bu=${request.businessUnit}`);
     if (quotaDowngraded) parts.push('quota-downgraded');
     if (request.preferredProvider === model.provider) parts.push('provider-match');
+    if (security.injectionDetected) parts.push('injection-detected');
+    if (security.forcedByRequest) parts.push('request-override');
 
     return parts.join(', ');
   }
@@ -1051,6 +1334,8 @@ export function getDefaultModelRouter(config?: Partial<ModelRouterConfig>): Mode
       enforceQuota: config?.enforceQuota,
       logger: config?.logger,
       now: config?.now,
+      injectionAlertThreshold: config?.injectionAlertThreshold,
+      routingHistoryLimit: config?.routingHistoryLimit,
     });
   }
   return _defaultRouter;

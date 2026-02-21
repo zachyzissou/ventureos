@@ -109,6 +109,7 @@ import { handleTacticalMapReplay } from './routes/tactical-map-replay.js';
 import { handleTacticalMapLive, handleTacticalMapLiveUpgrade } from './routes/tactical-map-live.js';
 import { handleProgressionApi } from './routes/progression.js';
 import { handleProgressionV2Api } from '../../lib/progression-http-v2.js';
+import { getDefaultModelRouter } from '../../lib/model-router.js';
 import { handleChangelog } from './routes/changelog.js';
 import { handleTaskBoard } from './routes/task-board.js';
 import { emitTaskEvent } from './task-board-events.js';
@@ -3130,6 +3131,38 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     const stats: SystemStats & { diskHistory?: Array<{ t: number; v: number }> } = getSystemStats();
     if (stats.disk) stats.diskHistory = trackDiskHistory(stats.disk.percent || 0);
     sendJson(res, stats);
+    return;
+  }
+
+  if (req.url && req.url.startsWith('/api/model-routing/security')) {
+    try {
+      const params = new URL(req.url, 'http://localhost').searchParams;
+      const limit = params.has('limit')
+        ? Math.max(1, Math.min(Number(params.get('limit')) || 100, 1000))
+        : undefined;
+      const router = getDefaultModelRouter();
+
+      if (req.url.startsWith('/api/model-routing/security/injections')) {
+        const events = router.getInjectionDetections(limit ?? 100);
+        sendJson(res, {
+          updatedAt: Date.now(),
+          total: events.length,
+          events,
+        });
+        return;
+      }
+
+      const summary = router.getSecurityRoutingSummary(limit);
+      sendJson(res, {
+        summary,
+        integrations: {
+          source: 'model-router',
+          dashboardReady: true,
+        },
+      });
+    } catch {
+      sendJson(res, { error: 'Failed to load model-routing security metrics' }, 500);
+    }
     return;
   }
 

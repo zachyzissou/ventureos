@@ -225,6 +225,89 @@ describe('ModelRouter', () => {
     });
   });
 
+  // ── Security-Aware Routing (Issue #224) ──────────────────────────
+
+  describe('security-aware routing', () => {
+    it('routes external content to high-risk tier', () => {
+      const router = makeRouter();
+      const decision = router.selectModel(makeRequest({
+        complexity: 'simple',
+        timeSensitivity: 'batch',
+        containsExternalContent: true,
+      }));
+
+      expect(decision.security.riskLevel).toBe('high');
+      expect(decision.tier).toBe(3);
+    });
+
+    it('high-risk routing bypasses quota downgrade', () => {
+      const router = makeRouter();
+      router.quota.setQuota('global', { total: 10000, used: 9500, resetsAt: '2026-03-01' });
+      const decision = router.selectModel(makeRequest({
+        complexity: 'simple',
+        timeSensitivity: 'batch',
+        containsExternalContent: true,
+      }));
+
+      expect(decision.tier).toBe(3);
+      expect(decision.quotaDowngraded).toBe(false);
+    });
+
+    it('supports per-request forced model override', () => {
+      const router = makeRouter();
+      const decision = router.selectModel(makeRequest({
+        complexity: 'complex',
+        timeSensitivity: 'urgent',
+        forceModel: 'gpt-4o-mini',
+      }));
+
+      expect(decision.model.id).toBe('gpt-4o-mini');
+      expect(decision.security.forcedByRequest).toBe(true);
+    });
+
+    it('records injection detections from routing decisions', () => {
+      const router = makeRouter();
+      router.clearSecurityTelemetry();
+      router.selectModel(makeRequest({
+        complexity: 'simple',
+        timeSensitivity: 'normal',
+        injectionScore: 0.91,
+      }));
+
+      const events = router.getInjectionDetections();
+      expect(events.length).toBe(1);
+      expect(events[0].injectionScore).toBeCloseTo(0.91, 2);
+      expect(events[0].riskLevel).toBe('high');
+    });
+
+    it('provides dashboard-ready usage and savings summary', () => {
+      const router = makeRouter();
+      router.clearSecurityTelemetry();
+
+      for (let i = 0; i < 6; i++) {
+        router.selectModel(makeRequest({
+          complexity: 'simple',
+          timeSensitivity: 'batch',
+          contentSources: ['internal'],
+        }));
+      }
+      for (let i = 0; i < 3; i++) {
+        router.selectModel(makeRequest({
+          complexity: 'simple',
+          timeSensitivity: 'normal',
+          contentSources: ['web'],
+        }));
+      }
+
+      const summary = router.getSecurityRoutingSummary();
+      expect(summary.windowSize).toBe(9);
+      expect(summary.riskCounts.low).toBe(6);
+      expect(summary.riskCounts.high).toBe(3);
+      expect(summary.estimatedSavingsUsd).toBeGreaterThan(0);
+      expect(summary.modelUsage).toBeDefined();
+    });
+  });
+
   // ── Provider Preference ───────────────────────────────────────────
 
   describe('provider preference', () => {
@@ -333,7 +416,7 @@ describe('ModelRouter', () => {
       expect(decision.tier).toBeGreaterThanOrEqual(2);
       expect(decision.warnings).toEqual(
         expect.arrayContaining([
-          expect.stringContaining('safety-critical'),
+          expect.stringContaining('security/safety critical'),
         ])
       );
     });

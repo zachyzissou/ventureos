@@ -15,6 +15,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 - [System Endpoints](#system-endpoints)
 - [Action Endpoints](#action-endpoints)
 - [Task Board Endpoints](#task-board-endpoints)
+- [Model Routing Security Endpoints](#model-routing-security-endpoints)
 - [Schemas](#schemas)
 
 ---
@@ -727,6 +728,65 @@ Manual retry endpoint for failed cards.
     "status": "queued",
     "error": null
   }
+}
+```
+
+---
+
+## Model Routing Security Endpoints
+
+Security-aware model routing telemetry (Issue #224).
+
+### `GET /api/model-routing/security`
+
+Returns usage breakdown + estimated savings from in-memory routing telemetry.
+
+**Query params:**
+- `limit` (optional, `1..1000`) — max telemetry entries included in summary window
+
+**Response (200):**
+```json
+{
+  "summary": {
+    "updatedAt": "2026-02-21T09:00:00.000Z",
+    "windowSize": 120,
+    "riskCounts": { "low": 84, "medium": 22, "high": 14 },
+    "tierCounts": { "tier1": 80, "tier2": 26, "tier3": 14 },
+    "modelUsage": { "gpt-4o-mini": 62, "claude-sonnet": 26, "claude-opus": 14 },
+    "injectionDetections": 6,
+    "estimatedCostUsd": 0.9421,
+    "baselineCostUsd": 2.3115,
+    "estimatedSavingsUsd": 1.3694,
+    "estimatedSavingsPct": 59.24
+  },
+  "integrations": {
+    "source": "model-router",
+    "dashboardReady": true
+  }
+}
+```
+
+### `GET /api/model-routing/security/injections`
+
+Returns recent prompt-injection detection routing events.
+
+**Query params:**
+- `limit` (optional, `1..1000`) — max event count
+
+**Response (200):**
+```json
+{
+  "updatedAt": 1700000000000,
+  "total": 2,
+  "events": [
+    {
+      "detectedAt": "2026-02-21T09:00:00.000Z",
+      "riskLevel": "high",
+      "modelId": "claude-opus",
+      "injectionScore": 0.91,
+      "signals": ["containsExternalContent", "injectionScore:0.91"]
+    }
+  ]
 }
 ```
 
