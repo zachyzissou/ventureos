@@ -61,12 +61,47 @@ describe('bridge proxy', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith('http://bridge.local:18790/api/bridge/costs?window=7d', {
       headers: { Authorization: 'Bearer bridge-token-123' },
+      signal: expect.any(AbortSignal),
     });
 
     expect(res._statusCode).toBe(200);
     const body = parseJsonBody<{ ok: boolean; url: string }>(res);
     expect(body.ok).toBe(true);
     expect(body.url).toContain('/api/bridge/costs');
+  });
+
+  it('returns 504 when bridge JSON request times out', async () => {
+    const req = mockRequest({ url: '/api/costs' });
+    const res = mockResponse();
+
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+      return new Promise<Response>((_resolve, reject) => {
+        const signal = init?.signal;
+        if (!signal) {
+          reject(new Error('missing abort signal'));
+          return;
+        }
+        signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+      });
+    });
+
+    const handled = await proxyBridgeJson(
+      req,
+      res,
+      {
+        dataMode: 'bridge',
+        bridgeUrl: 'http://bridge.local:18790',
+        bridgeToken: 'bridge-token-123',
+        fetchImpl: fetchMock,
+        jsonTimeoutMs: 5,
+      },
+      { targetPath: '/api/bridge/costs' },
+    );
+
+    expect(handled).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(res._statusCode).toBe(504);
+    expect(parseJsonBody(res).error).toBe('Bridge timeout');
   });
 
   it('returns false for SSE proxy when not in bridge mode', async () => {
@@ -130,5 +165,39 @@ describe('bridge proxy', () => {
     expect(res._body).toContain('status');
     expect(res._body).toContain('telemetry');
     expect(res._ended).toBe(true);
+  });
+
+  it('returns 504 when SSE bridge connect times out', async () => {
+    const req = mockRequest({ url: '/api/live-telemetry' });
+    const res = mockResponse();
+
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+      return new Promise<Response>((_resolve, reject) => {
+        const signal = init?.signal;
+        if (!signal) {
+          reject(new Error('missing abort signal'));
+          return;
+        }
+        signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+      });
+    });
+
+    const handled = await proxyBridgeSse(
+      req,
+      res,
+      {
+        dataMode: 'bridge',
+        bridgeUrl: 'http://bridge.local:18790',
+        bridgeToken: 'bridge-token-123',
+        fetchImpl: fetchMock,
+        sseConnectTimeoutMs: 5,
+      },
+      { targetPath: '/api/bridge/live-telemetry' },
+    );
+
+    expect(handled).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(res._statusCode).toBe(504);
+    expect(parseJsonBody(res).error).toBe('Bridge timeout');
   });
 });
