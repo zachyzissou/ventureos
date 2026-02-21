@@ -392,6 +392,15 @@ describe('Dashboard HTTP smoke tests', () => {
     expect(digestRes.status).toBe(200);
     const digest = await digestRes.json();
     expect(digest.path).toBe('VentureOS/Missions/Daily Ops/2026-02-21.md');
+
+    const unifiedRes = await fetch(`${BASE_URL}/api/search/unified?q=smoke&limit=20`, {
+      headers: authHeaders(),
+    });
+    expect(unifiedRes.status).toBe(200);
+    const unified = await unifiedRes.json();
+    expect(unified.total).toBeGreaterThanOrEqual(1);
+    expect(Array.isArray(unified.results)).toBe(true);
+    expect(unified.results.some((r: { source?: string }) => r.source === 'obsidian')).toBe(true);
   });
 
   it('reports system metrics and redirects unauthenticated dashboard access', async () => {

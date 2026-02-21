@@ -113,6 +113,7 @@ import { handleChangelog } from './routes/changelog.js';
 import { handleTaskBoard } from './routes/task-board.js';
 import { emitTaskEvent } from './task-board-events.js';
 import { handleMemoryState } from './routes/memory-state.js';
+import { handleUnifiedSearch } from './routes/unified-search.js';
 import { handleObsidianConnector } from './routes/obsidian-connector.js';
 import { handleSharedContext } from './routes/shared-context.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
@@ -2984,6 +2985,17 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
       dataDir,
       sendJson,
       readRequestBody,
+    })) return;
+  } catch {
+    // ignore
+  }
+
+  // Unified Search — Issue #302
+  try {
+    if (await handleUnifiedSearch(req, res, {
+      dataDir,
+      observationsDir: OBSERVATIONS_DIR,
+      sendJson,
     })) return;
   } catch {
     // ignore
