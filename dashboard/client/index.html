@@ -522,6 +522,139 @@ body {
   border-bottom: none;
 }
 
+.team-control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.team-control-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  padding: 12px;
+}
+
+.team-control-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.team-control-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.team-control-sub {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.team-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.team-directory-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  padding: 12px;
+}
+
+.team-directory-card.nexus {
+  border-color: rgba(99, 102, 241, 0.7);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+}
+
+.team-directory-card.human {
+  border-color: rgba(245, 158, 11, 0.65);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
+}
+
+.team-directory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.team-directory-name {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.team-directory-role {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.team-directory-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.team-directory-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.team-directory-key {
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.team-directory-value {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.team-directory-boundary {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1200px) {
+  .team-directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1000px) {
+  .team-control-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .team-directory-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .model-tag {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -4681,7 +4814,33 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
     <div class="page" id="agents">
       <div class="page-header">
         <h1 class="page-title">Agents</h1>
-        <p class="page-subtitle">Per-agent metrics and recent sessions</p>
+        <p class="page-subtitle">Team directory, authority boundaries, and per-agent metrics</p>
+      </div>
+
+      <div class="card mb-24">
+        <h3 class="card-title">Control Plane</h3>
+        <div class="team-control-grid">
+          <div class="team-control-item">
+            <div class="team-control-label">Nexus Status</div>
+            <div class="team-control-value" id="teamNexusStatus">--</div>
+            <div class="team-control-sub" id="teamNexusDetail">Mission-control status unavailable</div>
+          </div>
+          <div class="team-control-item">
+            <div class="team-control-label">Team Mission Load</div>
+            <div class="team-control-value" id="teamMissionLoad">--</div>
+            <div class="team-control-sub" id="teamMissionLoadDetail">No agent data</div>
+          </div>
+          <div class="team-control-item">
+            <div class="team-control-label">Final Arbiter</div>
+            <div class="team-control-value" id="teamFinalArbiter">HUMAN</div>
+            <div class="team-control-sub" id="teamFinalArbiterDetail">Required for strategy, priority conflicts, and irreversible actions</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-24">
+        <h3 class="card-title">Team Directory</h3>
+        <div id="agentDirectoryGrid" class="team-directory-grid"></div>
       </div>
 
       <div class="tab-bar" id="agentTabs"></div>
@@ -7180,12 +7339,79 @@ function updateStatusBar() {
 // ---------------- VentureOS UI + data fetching ----------------
 
 const AGENT_LABELS = {
+  nexus: 'Nexus',
+  echo: 'Echo',
   oracle: 'Oracle',
   atlas: 'Atlas',
   sentinel: 'Sentinel',
   verifier: 'Verifier',
   archivist: 'Archivist',
-  synth: 'Synth'
+  synth: 'Synth',
+  scout: 'Scout',
+  liaison: 'Liaison',
+};
+
+const TEAM_ROLE_PROFILES = {
+  nexus: {
+    role: 'Executor',
+    authorityLevel: 'Control Plane',
+    authorityScope: 'Operational coordination, dependency orchestration, and task routing',
+    boundary: 'Escalates strategic priority conflicts and irreversible calls to the human final arbiter.',
+  },
+  echo: {
+    role: 'Hierarch',
+    authorityLevel: 'Strategic',
+    authorityScope: 'Mission direction, objective shaping, and strategic tradeoff framing',
+    boundary: 'Cannot finalize irreversible actions without human arbiter confirmation.',
+  },
+  oracle: {
+    role: 'Preserver',
+    authorityLevel: 'Research',
+    authorityScope: 'Evidence synthesis, recommendation framing, and source-backed analysis',
+    boundary: 'Provides recommendations only; strategic decisions route through Echo/human.',
+  },
+  atlas: {
+    role: 'Forgewright',
+    authorityLevel: 'Infrastructure',
+    authorityScope: 'Build/runtime systems, deployment plumbing, and operational hardening',
+    boundary: 'Security-critical changes require Sentinel gate and human escalation when high risk.',
+  },
+  sentinel: {
+    role: 'Judicator',
+    authorityLevel: 'Security Gate',
+    authorityScope: 'Security policy enforcement, threat escalation, and risk containment',
+    boundary: 'Can block delivery paths but cannot override human final-arbiter decisions.',
+  },
+  verifier: {
+    role: 'Templar Auditor',
+    authorityLevel: 'Quality Gate',
+    authorityScope: 'Validation, test quality gates, and release confidence checks',
+    boundary: 'Can fail builds/tests but release overrides are human-arbiter controlled.',
+  },
+  archivist: {
+    role: 'Chronicle Keeper',
+    authorityLevel: 'Memory',
+    authorityScope: 'Knowledge retention, runbook curation, and audit memory continuity',
+    boundary: 'Documentation authority only; does not dictate strategy or execution priority.',
+  },
+  synth: {
+    role: 'Artificer',
+    authorityLevel: 'Implementation',
+    authorityScope: 'Code delivery, integration execution, and implementation throughput',
+    boundary: 'Build authority only; strategic/irreversible choices escalate to human arbiter.',
+  },
+  scout: {
+    role: 'Observer',
+    authorityLevel: 'Signal',
+    authorityScope: 'Monitoring, anomaly detection, and proactive environmental scanning',
+    boundary: 'Signals and alerts only; prioritization and execution remain upstream.',
+  },
+  liaison: {
+    role: 'Envoy',
+    authorityLevel: 'Comms',
+    authorityScope: 'External communication formatting and stakeholder-facing summaries',
+    boundary: 'Cannot publish high-impact external messaging without human sign-off.',
+  },
 };
 
 function fmtPct(p, digits = 1) {
@@ -7219,6 +7445,177 @@ function escapeHtml(s) {
     '"': '&quot;',
     "'": '&#39;'
   }[c]));
+}
+
+function teamProfileFor(agentId) {
+  return TEAM_ROLE_PROFILES[agentId] || {
+    role: 'Specialist',
+    authorityLevel: 'Execution',
+    authorityScope: 'Assigned mission execution within delegated scope',
+    boundary: 'Escalate conflicts and irreversible actions to the human final arbiter.',
+  };
+}
+
+function inferCurrentAssignment(agent) {
+  if (!agent) return 'No active assignment';
+  const active = (agent.recentSessions || []).find((s) => !s.aborted && s.label);
+  if (active?.label) return active.label;
+  const recent = (agent.recentCompletions || [])[0];
+  if (recent?.label) return `Recently: ${recent.label}`;
+  return 'No active assignment';
+}
+
+function classifyAgentHealth(agent) {
+  if (!agent) {
+    return {
+      label: 'unknown',
+      chipStyle: 'color:var(--text-muted);background:rgba(113,113,122,0.14);',
+    };
+  }
+
+  const success = (typeof agent.successRate24h === 'number') ? agent.successRate24h : agent.successRate;
+  const ageMs = agent.lastActivityMs ? (Date.now() - agent.lastActivityMs) : Number.POSITIVE_INFINITY;
+  const working = agent.status === 'working';
+
+  if ((typeof success === 'number' && success < 0.6) || ageMs > 24 * 3600 * 1000) {
+    return {
+      label: 'degraded',
+      chipStyle: 'color:var(--red);background:rgba(239,68,68,0.14);',
+    };
+  }
+  if (working || (typeof success === 'number' && success >= 0.85)) {
+    return {
+      label: 'healthy',
+      chipStyle: 'color:var(--green);background:rgba(16,185,129,0.16);',
+    };
+  }
+  return {
+    label: 'watch',
+    chipStyle: 'color:var(--yellow);background:rgba(245,158,11,0.14);',
+  };
+}
+
+function renderTeamDirectoryCard(agentId, agent, opts = {}) {
+  const profile = teamProfileFor(agentId);
+  const label = AGENT_LABELS[agentId] || agentId;
+  const health = classifyAgentHealth(agent);
+  const assignment = opts.assignment || inferCurrentAssignment(agent);
+  const missionLoad = `${agent?.recentSessions24h ?? 0} sessions / 24h`;
+  const statusText = agent?.status === 'working' ? 'working' : 'idle';
+  const cardClass = opts.cardClass ? ` ${opts.cardClass}` : '';
+  return `<article class="team-directory-card${cardClass}">
+    <div class="team-directory-header">
+      <div>
+        <div class="team-directory-name">${escapeHtml(label)}</div>
+        <div class="team-directory-role">${escapeHtml(profile.role)}</div>
+      </div>
+      <span class="team-directory-chip" style="background:rgba(99,102,241,0.15);color:var(--accent);">${escapeHtml(profile.authorityLevel)}</span>
+    </div>
+    <div class="team-directory-row">
+      <span class="team-directory-key">Current Work</span>
+      <span class="team-directory-value">${escapeHtml(assignment)}</span>
+    </div>
+    <div class="team-directory-row">
+      <span class="team-directory-key">Mission Load</span>
+      <span class="team-directory-value">${escapeHtml(missionLoad)}</span>
+    </div>
+    <div class="team-directory-row">
+      <span class="team-directory-key">Health</span>
+      <span class="team-directory-chip" style="${health.chipStyle}">${escapeHtml(health.label)} · ${escapeHtml(statusText)}</span>
+    </div>
+    <div class="team-directory-boundary">
+      <div style="margin-bottom:4px;"><strong>Authority Scope:</strong> ${escapeHtml(profile.authorityScope)}</div>
+      <div><strong>Boundary:</strong> ${escapeHtml(profile.boundary)}</div>
+    </div>
+  </article>`;
+}
+
+function renderHumanFinalArbiterCard() {
+  return `<article class="team-directory-card human">
+    <div class="team-directory-header">
+      <div>
+        <div class="team-directory-name">Human Final Arbiter</div>
+        <div class="team-directory-role">Executive Decision Authority</div>
+      </div>
+      <span class="team-directory-chip" style="background:rgba(245,158,11,0.14);color:var(--yellow);">Final Authority</span>
+    </div>
+    <div class="team-directory-row">
+      <span class="team-directory-key">Current Work</span>
+      <span class="team-directory-value">Priority arbitration + irreversible approvals</span>
+    </div>
+    <div class="team-directory-row">
+      <span class="team-directory-key">Mission Load</span>
+      <span class="team-directory-value">Escalations on demand</span>
+    </div>
+    <div class="team-directory-row">
+      <span class="team-directory-key">Health</span>
+      <span class="team-directory-chip" style="color:var(--yellow);background:rgba(245,158,11,0.14);">authoritative</span>
+    </div>
+    <div class="team-directory-boundary">
+      <div style="margin-bottom:4px;"><strong>Authority Scope:</strong> Strategic direction, conflict resolution, and release/deployment go/no-go.</div>
+      <div><strong>Boundary:</strong> No agent (including Nexus) may override human final-arbiter decisions.</div>
+    </div>
+  </article>`;
+}
+
+function updateTeamDirectoryView() {
+  const gridEl = document.getElementById('agentDirectoryGrid');
+  if (!gridEl) return;
+
+  const agentsMap = ventureosAgents?.agents || {};
+  const agentIds = Object.keys(agentsMap).filter((id) => id !== 'nexus');
+  const totalAgents = agentIds.length;
+  const busyCount = agentIds.filter((id) => agentsMap[id]?.status === 'working').length;
+  const sessions24h = agentIds.reduce((sum, id) => sum + (agentsMap[id]?.recentSessions24h || 0), 0);
+  const mostRecentActivity = agentIds.reduce((max, id) => Math.max(max, agentsMap[id]?.lastActivityMs || 0), 0);
+  const teamOverall = missionControl?.team?.overall || (busyCount > 0 ? 'busy' : 'idle');
+
+  const nexusStatusEl = document.getElementById('teamNexusStatus');
+  const nexusDetailEl = document.getElementById('teamNexusDetail');
+  const loadEl = document.getElementById('teamMissionLoad');
+  const loadDetailEl = document.getElementById('teamMissionLoadDetail');
+
+  if (nexusStatusEl) {
+    nexusStatusEl.textContent = teamOverall === 'busy' ? '🟡 ACTIVE' : '✅ STABLE';
+  }
+  if (nexusDetailEl) {
+    const countTxt = totalAgents > 0 ? `${totalAgents} subordinate agent${totalAgents === 1 ? '' : 's'}` : 'No agent data';
+    nexusDetailEl.textContent = `${countTxt} · last signal ${timeAgo(mostRecentActivity)}`;
+  }
+  if (loadEl) loadEl.textContent = totalAgents > 0 ? `${busyCount}/${totalAgents}` : '--';
+  if (loadDetailEl) {
+    loadDetailEl.textContent = `${sessions24h} sessions in last 24h`;
+  }
+
+  const syntheticNexus = {
+    status: teamOverall === 'busy' ? 'working' : 'idle',
+    recentSessions24h: sessions24h,
+    successRate24h: null,
+    successRate: null,
+    lastActivityMs: mostRecentActivity || Date.now(),
+    recentSessions: [],
+    recentCompletions: [],
+  };
+
+  const sortedIds = agentIds.sort((a, b) => {
+    const aw = agentsMap[a]?.status === 'working' ? 1 : 0;
+    const bw = agentsMap[b]?.status === 'working' ? 1 : 0;
+    if (aw !== bw) return bw - aw;
+    return (AGENT_LABELS[a] || a).localeCompare(AGENT_LABELS[b] || b);
+  });
+
+  const cards = [
+    renderTeamDirectoryCard('nexus', syntheticNexus, {
+      cardClass: 'nexus',
+      assignment: teamOverall === 'busy'
+        ? 'Coordinating active mission execution'
+        : 'Monitoring queue and dependencies',
+    }),
+    ...sortedIds.map((id) => renderTeamDirectoryCard(id, agentsMap[id])),
+    renderHumanFinalArbiterCard(),
+  ];
+
+  gridEl.innerHTML = cards.join('');
 }
 
 async function fetchJson(url) {
@@ -7344,7 +7741,14 @@ async function fetchVentureosNow() {
 
 async function fetchAgentsNow() {
   try {
-    ventureosAgents = await fetchJson('/api/ventureos-agents');
+    const [agents, mc] = await Promise.all([
+      fetchJson('/api/ventureos-agents'),
+      fetchJson('/api/ventureos-mission-control').catch(() => null),
+    ]);
+    ventureosAgents = agents;
+    if (mc && typeof mc === 'object' && !mc.error) {
+      missionControl = mc;
+    }
     updateDashboard();
   } catch (e) {
     console.error('Agents fetch error:', e);
@@ -7600,6 +8004,7 @@ function updateVentureos() {
 }
 
 function updateAgentsView() {
+  updateTeamDirectoryView();
   if (!ventureosAgents?.agents) return;
 
   // Tabs
