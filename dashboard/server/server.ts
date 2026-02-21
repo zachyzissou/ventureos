@@ -111,7 +111,7 @@ import { handleProgressionApi } from './routes/progression.js';
 import { handleProgressionV2Api } from '../../lib/progression-http-v2.js';
 import { getDefaultModelRouter } from '../../lib/model-router.js';
 import { handleChangelog } from './routes/changelog.js';
-import { handleTaskBoard } from './routes/task-board.js';
+import { handleTaskBoard, resumeRunningTasksFromSnapshot } from './routes/task-board.js';
 import { emitTaskEvent } from './task-board-events.js';
 import { handleMemoryState } from './routes/memory-state.js';
 import { handleUnifiedSearch } from './routes/unified-search.js';
@@ -162,6 +162,19 @@ try {
   fs.mkdirSync(dataDir, { recursive: true });
 } catch {
   // may exist
+}
+
+// Crash recovery (Issue #223): re-queue running tasks from active-tasks.md
+// so heartbeat workers can resume after restart without losing work context.
+try {
+  const recovery = resumeRunningTasksFromSnapshot(dataDir, {
+    limit: 50,
+  });
+  if (recovery.resumedCount > 0) {
+    logInfo('dashboard', 'task_recovery', 'Recovered running tasks on startup', { ...recovery });
+  }
+} catch {
+  // Non-critical: dashboard can still start without recovery.
 }
 
 // ─── Utility Functions ───────────────────────────────────────────────────────

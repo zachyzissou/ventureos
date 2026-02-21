@@ -13,10 +13,13 @@ import {
   filterTasks,
   isValidTransition,
   pickupQueuedTasksForAgent,
+  resumeRunningTasksFromSnapshot,
 } from '../../../server/routes/task-board.js';
 import type { TaskBoardDeps, TaskCard, TaskStatus } from '../../../server/types.js';
+import { activeTasksFilePath, readActiveTaskSnapshot } from '../../../server/active-tasks.js';
 
-const testDataDir = path.join('/tmp', 'test-task-board-' + process.pid);
+const testRootDir = path.join('/tmp', 'test-task-board-' + process.pid);
+const testDataDir = path.join(testRootDir, 'data');
 
 function createDeps(overrides: Partial<TaskBoardDeps> = {}): TaskBoardDeps {
   return {
@@ -88,15 +91,13 @@ function makeSampleCard(overrides: Partial<TaskCard> = {}): TaskCard {
 }
 
 beforeEach(() => {
+  fs.rmSync(testRootDir, { recursive: true, force: true });
   fs.mkdirSync(testDataDir, { recursive: true });
-  // Clean
-  const fp = path.join(testDataDir, 'task-board.json');
-  if (fs.existsSync(fp)) fs.unlinkSync(fp);
 });
 
 afterEach(() => {
   try {
-    fs.rmSync(testDataDir, { recursive: true, force: true });
+    fs.rmSync(testRootDir, { recursive: true, force: true });
   } catch {
     // ignore
   }
@@ -417,6 +418,34 @@ describe('pickupQueuedTasksForAgent', () => {
   });
 });
 
+describe('resumeRunningTasksFromSnapshot', () => {
+  it('requeues running tasks from active snapshot for recovery', () => {
+    const run1 = makeSampleCard({
+      id: 'run-1',
+      status: 'running',
+      startedAt: Date.now() - 20000,
+      assigneeId: 'oracle',
+      agentId: 'oracle',
+    });
+    const run2 = makeSampleCard({
+      id: 'run-2',
+      status: 'running',
+      startedAt: Date.now() - 10000,
+      assigneeId: 'atlas',
+      agentId: 'atlas',
+    });
+    seedTasks([run1, run2]);
+
+    const result = resumeRunningTasksFromSnapshot(testDataDir, { agentId: 'oracle' });
+    expect(result.resumedCount).toBe(1);
+    expect(result.resumedIds).toEqual(['run-1']);
+
+    const persisted = loadTasks(testDataDir);
+    expect(persisted.find((t) => t.id === 'run-1')?.status).toBe('queued');
+    expect(persisted.find((t) => t.id === 'run-2')?.status).toBe('running');
+  });
+});
+
 describe('loadTasks', () => {
   it('returns empty array when file does not exist', () => {
     expect(loadTasks('/tmp/nonexistent-xyz-' + Date.now())).toEqual([]);
@@ -707,6 +736,83 @@ describe('handleTaskBoard', () => {
       );
       expect(res._statusCode).toBe(400);
       expect(parseJsonBody<{ error: string }>(res).error).toContain('JSON object');
+    });
+  });
+
+  describe('active task tracker routes (Issue #223)', () => {
+    it('returns active-task snapshot and stale metadata', async () => {
+      seedTasks([
+        makeSampleCard({
+          id: 'run-1',
+          status: 'running',
+          assigneeId: 'oracle',
+          createdAt: Date.now() - 10 * 60 * 1000,
+          startedAt: Date.now() - 10 * 60 * 1000,
+        }),
+      ]);
+      // Trigger a write path so active-tasks.md is synced.
+      const patchRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/run-1', method: 'PATCH' }),
+        patchRes,
+        depsWithBody({ title: 'keep-running' }),
+      );
+      expect(patchRes._statusCode).toBe(200);
+
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/active?staleAfterMs=1000', method: 'GET' }),
+        res,
+        createDeps(),
+      );
+      expect(res._statusCode).toBe(200);
+      const body = parseJsonBody<{ snapshot: { active: TaskCard[] }; staleCount: number }>(res);
+      expect(body.snapshot.active.length).toBeGreaterThanOrEqual(1);
+      expect(body.staleCount).toBeGreaterThanOrEqual(1);
+    });
+
+    it('requeues running tasks via recovery resume endpoint', async () => {
+      seedTasks([
+        makeSampleCard({
+          id: 'run-1',
+          status: 'running',
+          assigneeId: 'oracle',
+          agentId: 'oracle',
+          startedAt: Date.now() - 20000,
+        }),
+      ]);
+      const fp = activeTasksFilePath(testDataDir);
+      fs.mkdirSync(path.dirname(fp), { recursive: true });
+      fs.writeFileSync(
+        fp,
+        [
+          '# Active Tasks',
+          '',
+          `_Last updated: ${new Date().toISOString()}_`,
+          '',
+          '## Active Tasks',
+          `- [RUNNING] Recover me (taskId: run-1, priority: medium, assignee: oracle, started: ${new Date(Date.now() - 20000).toISOString()}, updated: ${new Date().toISOString()})`,
+          '',
+          '## Recently Completed',
+          '- None',
+          '',
+        ].join('\n'),
+      );
+
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/recovery/resume', method: 'POST' }),
+        res,
+        depsWithBody({ agentId: 'oracle' }),
+      );
+      expect(res._statusCode).toBe(200);
+      const body = parseJsonBody<{ resumedCount: number; resumedIds: string[] }>(res);
+      expect(body.resumedCount).toBe(1);
+      expect(body.resumedIds).toEqual(['run-1']);
+      expect(loadTasks(testDataDir).find((t) => t.id === 'run-1')?.status).toBe('queued');
+
+      const snapshot = readActiveTaskSnapshot(testDataDir);
+      expect(snapshot.active.some((entry) => entry.taskId === 'run-1')).toBe(true);
     });
   });
 
