@@ -17,6 +17,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 - [Task Board Endpoints](#task-board-endpoints)
 - [Model Routing Security Endpoints](#model-routing-security-endpoints)
 - [Token Compaction Endpoints](#token-compaction-endpoints)
+- [Self-Improvement Endpoints](#self-improvement-endpoints)
 - [Schemas](#schemas)
 
 ---
@@ -958,6 +959,96 @@ Returns persisted compaction run history with per-session savings summary.
 
 ---
 
+## Self-Improvement Endpoints
+
+Daily self-review digest generation + recommendation approvals (Issue #222).
+
+### `POST /api/self-improvement/generate`
+
+Generates a daily digest with actionable, diffable recommendations for one agent.
+
+**Request (optional):**
+```json
+{
+  "agentId": "oracle",
+  "date": "2026-02-21",
+  "minRecommendations": 3
+}
+```
+
+**Response (200):**
+```json
+{
+  "ok": true,
+  "digestPath": "memory/self-improvement/2026-02-21.md",
+  "digest": {
+    "id": "sid-2026-02-21-oracle-abc123",
+    "agentId": "oracle",
+    "date": "2026-02-21",
+    "approvedCount": 0,
+    "rejectedCount": 0,
+    "pendingCount": 3,
+    "recommendations": [
+      {
+        "id": "sir-123",
+        "type": "workflow_change",
+        "target": "souls/oracle/PRINCIPLES.md",
+        "status": "pending",
+        "diff": "--- a/souls/oracle/PRINCIPLES.md\n+++ b/souls/oracle/PRINCIPLES.md\n@@\n-...\n+..."
+      }
+    ]
+  }
+}
+```
+
+### `GET /api/self-improvement/digests`
+
+Lists stored digest runs.
+
+**Query params:**
+- `agentId` (optional)
+- `limit` (optional, `1..365`, default `30`)
+
+**Response (200):**
+```json
+{
+  "total": 1,
+  "digests": [
+    {
+      "id": "sid-2026-02-21-oracle-abc123",
+      "agentId": "oracle",
+      "date": "2026-02-21",
+      "approvedCount": 1,
+      "rejectedCount": 0,
+      "pendingCount": 2
+    }
+  ]
+}
+```
+
+### `GET /api/self-improvement/digests/:id`
+
+Returns one full digest record by ID.
+
+### `POST /api/self-improvement/recommendations/:id/approve`
+
+Explicitly approves and auto-applies a recommendation.
+
+**Request (optional):**
+```json
+{ "agentId": "oracle" }
+```
+
+### `POST /api/self-improvement/recommendations/:id/reject`
+
+Rejects a recommendation without applying any file changes.
+
+**Security note:**
+- approvals only apply when the target path is inside `souls/<agentId>/` or `memory/self-improvement/`
+- out-of-scope targets are rejected with no file mutation
+
+---
+
 ## Rate Limiting
 
 Per-IP, per-endpoint sliding window rate limits:
@@ -969,6 +1060,7 @@ Per-IP, per-endpoint sliding window rate limits:
 | `/api/usage` | 60 req | 60s |
 | `/api/system` | 60 req | 60s |
 | `/api/token-compaction*` | 30 req | 60s |
+| `/api/self-improvement*` | 20 req | 60s |
 | `/api/ventureos-agents` | 30 req | 60s |
 | `/api/ventureos-kpis` | 30 req | 60s |
 | `/api/rpg/*` | 20 req | 60s |

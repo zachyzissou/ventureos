@@ -118,6 +118,7 @@ import { handleUnifiedSearch } from './routes/unified-search.js';
 import { handleObsidianConnector } from './routes/obsidian-connector.js';
 import { handleSharedContext } from './routes/shared-context.js';
 import { handleTokenCompaction } from './routes/token-compaction.js';
+import { handleSelfImprovement } from './routes/self-improvement.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -3184,6 +3185,20 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     if (await handleTokenCompaction(req, res, { dataDir, sendJson, readRequestBody })) return;
   } catch {
     sendJson(res, { ok: false, error: 'Failed to process token compaction request' }, 500);
+    return;
+  }
+
+  try {
+    if (await handleSelfImprovement(req, res, {
+      dataDir,
+      workspaceDir: WORKSPACE_DIR,
+      defaultAgentId: AGENT_ID,
+      sendJson,
+      readRequestBody,
+    }))
+      return;
+  } catch {
+    sendJson(res, { ok: false, error: 'Failed to process self-improvement request' }, 500);
     return;
   }
 
