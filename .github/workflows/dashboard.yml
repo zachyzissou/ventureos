@@ -10,11 +10,15 @@ on:
       - 'dashboard/**'
       - 'lib/**'
       - 'package.json'
+      - 'scripts/ensure-native-modules.sh'
+      - '.github/workflows/dashboard.yml'
   pull_request:
     paths:
       - 'dashboard/**'
       - 'lib/**'
       - 'package.json'
+      - 'scripts/ensure-native-modules.sh'
+      - '.github/workflows/dashboard.yml'
 
 jobs:
   build-and-test:
