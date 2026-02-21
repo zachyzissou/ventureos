@@ -398,6 +398,131 @@ describe('handleTaskBoard', () => {
     });
   });
 
+  describe('pipeline templates (Issue #297)', () => {
+    it('lists system templates', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/templates', method: 'GET' }),
+        res,
+        createDeps(),
+      );
+      expect(res._statusCode).toBe(200);
+      const body = parseJsonBody<{ templates: Array<{ id: string }>; total: number }>(res);
+      expect(body.total).toBeGreaterThan(0);
+      expect(body.templates.some((t) => t.id === 'content-idea-script-publish')).toBe(true);
+    });
+
+    it('creates and deletes a custom template', async () => {
+      const createRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/templates', method: 'POST' }),
+        createRes,
+        depsWithBody({
+          name: 'My Quick Pipeline',
+          tags: ['ops'],
+          stages: [
+            { title: 'Plan', assigneeType: 'nexus', assigneeId: 'nexus' },
+            { title: 'Execute', assigneeType: 'agent', assigneeId: 'synth' },
+          ],
+        }),
+      );
+      expect(createRes._statusCode).toBe(201);
+      const created = parseJsonBody<{ template: { id: string } }>(createRes);
+      expect(created.template.id).toBe('my-quick-pipeline');
+
+      const listRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/templates', method: 'GET' }),
+        listRes,
+        createDeps(),
+      );
+      const listBody = parseJsonBody<{ templates: Array<{ id: string }> }>(listRes);
+      expect(listBody.templates.some((t) => t.id === created.template.id)).toBe(true);
+
+      const deleteRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: `/api/task-board/templates/${created.template.id}`, method: 'DELETE' }),
+        deleteRes,
+        createDeps(),
+      );
+      expect(deleteRes._statusCode).toBe(200);
+      expect(parseJsonBody(deleteRes).ok).toBe(true);
+    });
+
+    it('prevents overwriting or deleting system templates', async () => {
+      const overwriteRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/templates', method: 'POST' }),
+        overwriteRes,
+        depsWithBody({
+          id: 'content-idea-script-publish',
+          name: 'Override attempt',
+          stages: [
+            { title: 'Plan' },
+            { title: 'Execute' },
+          ],
+        }),
+      );
+      expect(overwriteRes._statusCode).toBe(409);
+      expect(parseJsonBody<{ error: string }>(overwriteRes).error).toContain('cannot overwrite system template');
+
+      const deleteRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/templates/content-idea-script-publish', method: 'DELETE' }),
+        deleteRes,
+        createDeps(),
+      );
+      expect(deleteRes._statusCode).toBe(409);
+      expect(parseJsonBody<{ error: string }>(deleteRes).error).toContain('system templates cannot be deleted');
+    });
+
+    it('instantiates a pipeline from template with dependency chain and audit note', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/pipelines/from-template', method: 'POST' }),
+        res,
+        depsWithBody({
+          templateId: 'content-idea-script-publish',
+          pipelineName: 'Launch Video',
+          missionId: 'mc-297',
+          missionBrief: 'Creator launch',
+          assigneeType: 'nexus',
+          assigneeId: 'nexus',
+          stageAssignments: {
+            script: { assigneeType: 'agent', assigneeId: 'synth' },
+          },
+        }),
+      );
+      expect(res._statusCode).toBe(201);
+      const body = parseJsonBody<{ created: number; cards: TaskCard[] }>(res);
+      expect(body.created).toBeGreaterThanOrEqual(2);
+      expect(body.cards[0].status).toBe('queued');
+      expect(body.cards[1].dependencies?.[0]).toBe(body.cards[0].id);
+      expect(body.cards[0].statusHistory?.[0]?.note).toContain('pipeline:');
+      expect(body.cards.some((c) => c.assigneeType === 'agent' && c.assigneeId === 'synth')).toBe(true);
+
+      const persisted = loadTasks(testDataDir);
+      expect(persisted.length).toBe(body.created);
+      expect(persisted[0].missionId).toBe('mc-297');
+    });
+
+    it('rejects invalid stage assignment overrides during instantiation', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/pipelines/from-template', method: 'POST' }),
+        res,
+        depsWithBody({
+          templateId: 'content-idea-script-publish',
+          stageAssignments: {
+            script: { assigneeType: 'super-agent' },
+          },
+        }),
+      );
+      expect(res._statusCode).toBe(400);
+      expect(parseJsonBody<{ error: string }>(res).error).toContain('invalid assigneeType for stage script');
+    });
+  });
+
   describe('GET /api/task-board/summary', () => {
     it('returns summary with column counts', async () => {
       seedTasks([
