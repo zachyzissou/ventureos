@@ -19,6 +19,7 @@ Complete reference for all OpenClaw Dashboard HTTP endpoints.
 - [Token Compaction Endpoints](#token-compaction-endpoints)
 - [Self-Improvement Endpoints](#self-improvement-endpoints)
 - [Code Factory Endpoints](#code-factory-endpoints)
+- [WebMCP Endpoints](#webmcp-endpoints)
 - [Schemas](#schemas)
 
 ---
@@ -1111,6 +1112,49 @@ Updates a harness-gap record (for example, marking `testCaseAdded: true`).
 
 ---
 
+## WebMCP Endpoints
+
+Structured website-tool integration with cache + browser fallback (Issue #225).
+
+### `GET /api/webmcp/sites`
+
+Returns default site profiles and current WebMCP telemetry.
+
+### `GET /api/webmcp/metrics`
+
+Returns discovery/invocation/fallback counters.
+
+### `POST /api/webmcp/discover`
+
+Discovers tools from a WebMCP-compatible site manifest.
+
+**Request:**
+```json
+{
+  "siteUrl": "https://example-site.com",
+  "forceRefresh": false
+}
+```
+
+### `POST /api/webmcp/invoke`
+
+Invokes a structured tool with typed parameters.
+
+**Request:**
+```json
+{
+  "siteUrl": "https://example-site.com",
+  "toolName": "search_catalog",
+  "args": { "query": "ventureos" }
+}
+```
+
+**Response behaviors:**
+- `source: "webmcp"` when tool invocation succeeds over WebMCP
+- `source: "fallback"` when discovery/invoke is unavailable and browser automation fallback is used
+
+---
+
 ## Rate Limiting
 
 Per-IP, per-endpoint sliding window rate limits:
@@ -1124,6 +1168,7 @@ Per-IP, per-endpoint sliding window rate limits:
 | `/api/token-compaction*` | 30 req | 60s |
 | `/api/self-improvement*` | 20 req | 60s |
 | `/api/code-factory*` | 20 req | 60s |
+| `/api/webmcp*` | 30 req | 60s |
 | `/api/ventureos-agents` | 30 req | 60s |
 | `/api/ventureos-kpis` | 30 req | 60s |
 | `/api/rpg/*` | 20 req | 60s |

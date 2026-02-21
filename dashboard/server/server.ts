@@ -120,6 +120,7 @@ import { handleSharedContext } from './routes/shared-context.js';
 import { handleTokenCompaction } from './routes/token-compaction.js';
 import { handleSelfImprovement } from './routes/self-improvement.js';
 import { handleCodeFactory } from './routes/code-factory.js';
+import { handleWebMcp } from './routes/webmcp.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -3207,6 +3208,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     if (await handleCodeFactory(req, res, { dataDir, workspaceDir: WORKSPACE_DIR, sendJson, readRequestBody })) return;
   } catch {
     sendJson(res, { ok: false, error: 'Failed to process code-factory request' }, 500);
+    return;
+  }
+
+  try {
+    if (await handleWebMcp(req, res, { sendJson, readRequestBody })) return;
+  } catch {
+    sendJson(res, { ok: false, error: 'Failed to process WebMCP request' }, 500);
     return;
   }
 

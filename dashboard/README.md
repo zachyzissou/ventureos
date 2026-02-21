@@ -170,6 +170,8 @@ See **[docs/API.md](docs/API.md)** for the complete API reference covering all e
 | `GET /api/self-improvement/digests` | List historical digest runs and recommendation status |
 | `POST /api/code-factory/preflight` | Compute PR risk tier and required checks from path policy |
 | `GET /api/code-factory/harness-gaps` | Track unresolved production regressions awaiting tests |
+| `POST /api/webmcp/discover` | Discover structured WebMCP tools for a website |
+| `POST /api/webmcp/invoke` | Invoke discovered WebMCP tool with typed args + fallback |
 | `GET /api/live` | SSE real-time feed |
 
 ## Architecture
