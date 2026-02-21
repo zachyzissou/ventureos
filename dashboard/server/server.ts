@@ -38,6 +38,7 @@ import type {
   VentureOSAgentSummary,
   VentureOSAgentsResponse,
   MissionControlResponse,
+  VentureOSFeatureFlagsResponse,
   WorkflowPatternsResponse,
   WorkflowRun,
   WorkflowEvent,
@@ -194,6 +195,14 @@ function clampInt(n: string | number | null, lo: number, hi: number, dflt: numbe
   const v: number = parseInt(String(n));
   if (Number.isNaN(v)) return dflt;
   return Math.max(lo, Math.min(hi, v));
+}
+
+function readEnvFlag(name: string, fallback = false): boolean {
+  const raw = (process.env[name] ?? '').trim().toLowerCase();
+  if (!raw) return fallback;
+  if (raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on') return true;
+  if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') return false;
+  return fallback;
 }
 
 function contentTypeFor(filePath: string): string {
@@ -3110,6 +3119,17 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     )
       return;
     sendJson(res, getMissionControl());
+    return;
+  }
+  if (
+    (req.url && req.url.startsWith('/api/ventureos-feature-flags')) ||
+    (req.url && req.url.startsWith('/api/feature-flags'))
+  ) {
+    const flags: VentureOSFeatureFlagsResponse = {
+      updatedAt: Date.now(),
+      officeViewEnabled: readEnvFlag('VENTUREOS_OFFICE_VIEW_ENABLED', false),
+    };
+    sendJson(res, flags);
     return;
   }
   if (req.url === '/api/ventureos-workflow-patterns') {

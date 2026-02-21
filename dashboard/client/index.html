@@ -637,8 +637,104 @@ body {
   line-height: 1.5;
 }
 
+.mc-office-floor {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(99, 102, 241, 0.14), transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.12), transparent 40%),
+    linear-gradient(140deg, rgba(12, 18, 29, 0.96), rgba(20, 26, 42, 0.96));
+}
+
+.mc-office-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mc-office-seat {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.mc-office-seat.busy {
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
+}
+
+.mc-office-seat.blocked {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+}
+
+.mc-office-seat.idle {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.mc-office-seat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mc-office-seat-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.mc-office-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.mc-office-chip.busy {
+  background: rgba(245, 158, 11, 0.16);
+  color: var(--yellow);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.mc-office-chip.blocked {
+  background: rgba(239, 68, 68, 0.16);
+  color: var(--red);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.mc-office-chip.idle {
+  background: rgba(16, 185, 129, 0.16);
+  color: var(--green);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.mc-office-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.mc-office-task {
+  margin-top: 8px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.28);
+  padding-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-height: 34px;
+}
+
 @media (max-width: 1200px) {
   .team-directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mc-office-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -651,6 +747,9 @@ body {
 
 @media (max-width: 760px) {
   .team-directory-grid {
+    grid-template-columns: 1fr;
+  }
+  .mc-office-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -4689,6 +4788,25 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         <div id="mcTeamGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
       </div>
 
+      <div class="card mb-24" id="mcOfficeViewCard" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+          <div>
+            <h3 class="card-title" style="margin-bottom:2px;">Office View (Read-only Beta)</h3>
+            <div style="font-size:12px;color:var(--text-muted);">Visual team presence sourced from mission + task-board state feeds.</div>
+          </div>
+          <div class="mono" style="font-size:11px;color:var(--text-muted);" id="mcOfficeUpdated">--</div>
+        </div>
+        <div class="mc-office-floor">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <span class="mc-office-chip busy">busy</span>
+            <span class="mc-office-chip blocked">blocked</span>
+            <span class="mc-office-chip idle">idle</span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">Controls disabled in Office View (observational only)</span>
+          </div>
+          <div id="mcOfficeGrid" class="mc-office-grid"></div>
+        </div>
+      </div>
+
       <div class="card mb-24">
         <h3 class="card-title">Recent Completions (last 24h)</h3>
         <div id="mcRecentCompletions"></div>
@@ -6349,6 +6467,8 @@ let workflowPatterns = null;
 let ventureosAgents = null;
 let missionControl = null;
 let schedulerJobs = [];
+let ventureFeatureFlags = { officeViewEnabled: false, updatedAt: 0 };
+let missionOfficeTasks = [];
 
 // VentureOS widgets (KPIs + agent health + observations)
 let kpisLatest = null;
@@ -7807,6 +7927,150 @@ async function fetchJson(url) {
   return await r.json();
 }
 
+const MC_OFFICE_ACTIVE_STATUSES = new Set(['running', 'review', 'blocked', 'queued', 'backlog']);
+const MC_OFFICE_STATUS_RANK = {
+  running: 0,
+  review: 1,
+  blocked: 2,
+  queued: 3,
+  backlog: 4,
+  done: 9,
+  failed: 9,
+};
+const MC_OFFICE_PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
+
+function mcReadBooleanQueryFlag(name) {
+  try {
+    const v = (new URLSearchParams(window.location.search).get(name) || '').trim().toLowerCase();
+    if (!v) return null;
+    if (v === '1' || v === 'true' || v === 'yes' || v === 'on') return true;
+    if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function mcOfficeViewEnabled() {
+  const queryOverride = mcReadBooleanQueryFlag('officeView');
+  if (queryOverride != null) return queryOverride;
+  return !!ventureFeatureFlags.officeViewEnabled;
+}
+
+function mcOfficeSeatStatusClass(seatStatus) {
+  if (seatStatus === 'blocked') return 'blocked';
+  if (seatStatus === 'busy') return 'busy';
+  return 'idle';
+}
+
+function mcOfficeTaskComparator(a, b) {
+  const ar = MC_OFFICE_STATUS_RANK[a.status] ?? 99;
+  const br = MC_OFFICE_STATUS_RANK[b.status] ?? 99;
+  if (ar !== br) return ar - br;
+  const ap = MC_OFFICE_PRIORITY_RANK[a.priority] ?? 99;
+  const bp = MC_OFFICE_PRIORITY_RANK[b.priority] ?? 99;
+  if (ap !== bp) return ap - bp;
+  return (b.createdAt || 0) - (a.createdAt || 0);
+}
+
+function mcOfficePickTask(tasks, predicate) {
+  const matches = (tasks || [])
+    .filter((t) => t && predicate(t) && MC_OFFICE_ACTIVE_STATUSES.has(t.status))
+    .sort(mcOfficeTaskComparator);
+  return matches[0] || null;
+}
+
+function mcOfficeResolveSeatTask(tasks, seatType, seatId) {
+  return mcOfficePickTask(tasks, (t) => {
+    const ownerType = t.assigneeType || (t.agentId ? 'agent' : '');
+    const ownerId = t.assigneeId || t.agentId || null;
+    if (seatType === 'agent') {
+      return ownerType === 'agent' && ownerId === seatId;
+    }
+    if (seatType === 'nexus') return ownerType === 'nexus';
+    if (seatType === 'human') return ownerType === 'human';
+    return false;
+  });
+}
+
+function updateMissionOfficeView() {
+  const cardEl = document.getElementById('mcOfficeViewCard');
+  const gridEl = document.getElementById('mcOfficeGrid');
+  const updatedEl = document.getElementById('mcOfficeUpdated');
+  if (!cardEl || !gridEl || !updatedEl) return;
+
+  if (!mcOfficeViewEnabled()) {
+    cardEl.style.display = 'none';
+    return;
+  }
+
+  cardEl.style.display = '';
+  const teamAgents = Array.isArray(missionControl?.team?.agents) ? missionControl.team.agents : [];
+  const agentsById = new Map(teamAgents.map((a) => [a.agentId, a]));
+  const knownFromMission = teamAgents.map((a) => a.agentId).filter(Boolean);
+  const knownFromDirectory = Array.isArray(ventureosAgents?.agentIds) ? ventureosAgents.agentIds : [];
+  const knownFromTasks = (missionOfficeTasks || [])
+    .map((t) => (t.assigneeType === 'agent' ? (t.assigneeId || t.agentId || null) : null))
+    .filter(Boolean);
+
+  const allAgentIds = [...new Set([...knownFromMission, ...knownFromDirectory, ...knownFromTasks])];
+  const knownOrder = Object.keys(AGENT_LABELS);
+  allAgentIds.sort((a, b) => {
+    const ai = knownOrder.indexOf(a);
+    const bi = knownOrder.indexOf(b);
+    if (ai !== -1 && bi !== -1 && ai !== bi) return ai - bi;
+    if (ai !== -1 && bi === -1) return -1;
+    if (ai === -1 && bi !== -1) return 1;
+    return a.localeCompare(b);
+  });
+
+  const coreAgents = allAgentIds.filter((id) => id !== 'nexus');
+  const seats = [];
+  seats.push({ type: 'nexus', id: 'nexus', label: AGENT_LABELS.nexus || 'Nexus' });
+  for (const id of coreAgents) {
+    seats.push({ type: 'agent', id, label: AGENT_LABELS[id] || id });
+  }
+  seats.push({ type: 'human', id: 'human', label: 'Human Final Arbiter' });
+
+  let divergenceCount = 0;
+  const seatHtml = seats.map((seat) => {
+    const task = mcOfficeResolveSeatTask(missionOfficeTasks, seat.type, seat.id);
+    const teamInfo = seat.type === 'agent' || seat.type === 'nexus' ? agentsById.get(seat.id) : null;
+    const hasBlockedTask = task?.status === 'blocked';
+    const isBusy = !!task || teamInfo?.status === 'working';
+    const status = hasBlockedTask ? 'blocked' : (isBusy ? 'busy' : 'idle');
+    const statusClass = mcOfficeSeatStatusClass(status);
+    const lane = task?.status || (teamInfo?.status === 'working' ? 'running' : 'idle');
+    const mission = task?.missionId || '—';
+    const taskText = task?.title || (status === 'idle' ? 'No active mission task in feed' : 'Active mission signal detected');
+    const lastActivityMs = teamInfo?.lastActivityMs || task?.createdAt || null;
+    const source = task ? 'task-board' : 'mission-control';
+    const mismatch = !!teamInfo && ((teamInfo.status === 'working') !== !!task);
+    if (mismatch) divergenceCount++;
+    const mismatchText = mismatch
+      ? '<div class="mc-office-meta" style="margin-top:6px;color:var(--yellow);">Signal mismatch: team status and task feed disagree.</div>'
+      : '';
+    return `<article class="mc-office-seat ${statusClass}">
+      <div class="mc-office-seat-header">
+        <div class="mc-office-seat-name">${escapeHtml(seat.label)}</div>
+        <span class="mc-office-chip ${statusClass}">${escapeHtml(status)}</span>
+      </div>
+      <div class="mc-office-meta">
+        <div>Lane: <span class="mono">${escapeHtml(lane)}</span></div>
+        <div>Mission: <span class="mono">${escapeHtml(mission)}</span></div>
+        <div>Last activity: ${lastActivityMs ? escapeHtml(timeAgo(lastActivityMs)) : '--'}</div>
+      </div>
+      <div class="mc-office-task">${escapeHtml(taskText)}</div>
+      <div class="mc-office-meta" style="margin-top:6px;">Source: ${escapeHtml(source)}</div>
+      ${mismatchText}
+    </article>`;
+  });
+
+  gridEl.innerHTML = seatHtml.join('');
+  const updated = new Date().toLocaleTimeString();
+  updatedEl.textContent = `updated ${updated} · ${missionOfficeTasks.length} active feed cards · divergence ${divergenceCount}`;
+}
+
 function renderSvgLineChart(el, labels, series, opts = {}) {
   if (!el) return;
   if (!labels || labels.length === 0) {
@@ -7893,16 +8157,32 @@ function renderBarChart(el, items, opts = {}) {
 
 async function fetchMissionControlNow() {
   try {
-    const [mc, kpis, agents, scheduler] = await Promise.all([
+    const [mc, kpis, agents, scheduler, flags] = await Promise.all([
       fetchJson('/api/ventureos-mission-control'),
       fetchJson('/api/ventureos-kpis?days=7'),
       fetchJson('/api/ventureos-agents'),
-      fetchJson('/api/scheduler-jobs')
+      fetchJson('/api/scheduler-jobs'),
+      fetchJson('/api/ventureos-feature-flags').catch(() => null),
     ]);
     missionControl = mc;
     ventureosKpis = kpis;
     ventureosAgents = agents;
     schedulerJobs = Array.isArray(scheduler) ? scheduler : [];
+    if (flags && typeof flags === 'object') {
+      ventureFeatureFlags = {
+        officeViewEnabled: !!flags.officeViewEnabled,
+        updatedAt: flags.updatedAt || Date.now(),
+      };
+    }
+
+    if (mcOfficeViewEnabled()) {
+      const taskBoard = await fetchJson('/api/task-board').catch(() => ({ tasks: [] }));
+      missionOfficeTasks = Array.isArray(taskBoard?.tasks)
+        ? taskBoard.tasks.filter((t) => MC_OFFICE_ACTIVE_STATUSES.has(t.status))
+        : [];
+    } else {
+      missionOfficeTasks = [];
+    }
     updateDashboard();
   } catch (e) {
     console.error('Mission control fetch error:', e);
@@ -8360,6 +8640,8 @@ function updateMissionControl() {
     }).join('');
     schedulerEl.innerHTML = rows || '<div class="empty-state-text">No scheduler jobs detected</div>';
   }
+
+  updateMissionOfficeView();
 }
 
 function updateVentureos() {

@@ -153,6 +153,7 @@ beforeAll(async () => {
   process.env.RPG_DB_PATH = path.join(tmpRoot, 'rpg.sqlite');
   process.env.VENTUREOS_RPG_ROOT = rpgRootDir;
   process.env.VENTUREOS_AGENTS = 'main,oracle';
+  process.env.VENTUREOS_OFFICE_VIEW_ENABLED = '1';
 
   const mod = (await import('../../server/server.js')) as { server?: Server; default?: { server?: Server } };
   server = mod.server ?? mod.default?.server;
@@ -333,6 +334,11 @@ describe('Dashboard HTTP smoke tests', () => {
     const mission = await missionRes.json();
     expect(mission.activeWorkMd).toContain('smoke');
     expect(mission.team?.agents?.length).toBeGreaterThan(0);
+
+    const flagsRes = await fetch(`${BASE_URL}/api/ventureos-feature-flags`, { headers: authHeaders() });
+    expect(flagsRes.status).toBe(200);
+    const flags = await flagsRes.json();
+    expect(flags.officeViewEnabled).toBe(true);
 
     const wfRes = await fetch(`${BASE_URL}/api/workflow-patterns`, { headers: authHeaders() });
     expect(wfRes.status).toBe(200);
