@@ -151,4 +151,49 @@ describe('living-files routes', () => {
     expect(resolveBody.trigger.status).toBe('resolved');
     expect(resolveBody.trigger.resolutionNote).toContain('Handled');
   });
+
+  it('rejects registration paths that escape workspace via sibling-prefix traversal', async () => {
+    const siblingWorkspace = path.join(testRoot, 'workspace2');
+    fs.mkdirSync(siblingWorkspace, { recursive: true });
+    fs.writeFileSync(path.join(siblingWorkspace, 'secret.txt'), 'sibling');
+
+    const createReq = mockRequest({ method: 'POST', url: '/api/living-files/files' });
+    const createRes = mockResponse();
+    const handled = await handleLivingFiles(createReq, createRes, {
+      dataDir,
+      workspaceDir,
+      sendJson: sendJson as any,
+      readRequestBody: async () => JSON.stringify({
+        filePath: '../workspace2/secret.txt',
+        ownerAgentId: 'archivist',
+        expectedUpdateHours: 24,
+      }),
+    });
+    expect(handled).toBe(true);
+    expect(createRes._statusCode).toBe(400);
+    const body = parseJsonBody<{ ok: boolean; error: string }>(createRes);
+    expect(body.ok).toBe(false);
+    expect(body.error).toContain('filePath must stay inside workspace');
+  });
+
+  it('rejects registration paths that escape workspace via absolute path', async () => {
+    const absoluteOutside = path.join(path.parse(workspaceDir).root, 'ventureos-outside', 'secret.txt');
+    const createReq = mockRequest({ method: 'POST', url: '/api/living-files/files' });
+    const createRes = mockResponse();
+    const handled = await handleLivingFiles(createReq, createRes, {
+      dataDir,
+      workspaceDir,
+      sendJson: sendJson as any,
+      readRequestBody: async () => JSON.stringify({
+        filePath: absoluteOutside,
+        ownerAgentId: 'archivist',
+        expectedUpdateHours: 24,
+      }),
+    });
+    expect(handled).toBe(true);
+    expect(createRes._statusCode).toBe(400);
+    const body = parseJsonBody<{ ok: boolean; error: string }>(createRes);
+    expect(body.ok).toBe(false);
+    expect(body.error).toContain('filePath must stay inside workspace');
+  });
 });

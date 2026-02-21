@@ -137,6 +137,18 @@ function nowIso(now: () => Date): string {
   return now().toISOString();
 }
 
+/**
+ * Security-critical containment check for workspace-bound file operations.
+ * Uses canonical `path.relative(...)` semantics to prevent traversal,
+ * including sibling-prefix escapes that bypass naive string prefix checks.
+ */
+function isPathInsideRoot(rootDir: string, candidatePath: string): boolean {
+  const relative = path.relative(rootDir, candidatePath);
+  if (relative === '') return true;
+  if (relative === '..' || relative.startsWith(`..${path.sep}`)) return false;
+  return !path.isAbsolute(relative);
+}
+
 function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
@@ -157,11 +169,15 @@ function safeReadStore(storePath: string): LivingFileStore {
 }
 
 function normalizeRelativeFilePath(workspaceDir: string, rawPath: string): string {
-  const cleaned = sanitizeText(rawPath).replace(/\\/g, '/').replace(/^\/+/, '');
+  const normalizedInput = sanitizeText(rawPath).replace(/\\/g, '/');
+  if (path.posix.isAbsolute(normalizedInput) || /^[A-Za-z]:\//.test(normalizedInput)) {
+    throw new Error('filePath must stay inside workspace');
+  }
+  const cleaned = normalizedInput.replace(/^\/+/, '');
   if (!cleaned) throw new Error('filePath is required');
   const resolved = path.resolve(workspaceDir, cleaned);
   const root = path.resolve(workspaceDir);
-  if (!resolved.startsWith(root)) throw new Error('filePath must stay inside workspace');
+  if (!isPathInsideRoot(root, resolved)) throw new Error('filePath must stay inside workspace');
   return path.relative(root, resolved).replace(/\\/g, '/');
 }
 
@@ -175,7 +191,8 @@ function evaluateSnapshot(
   }
 
   const absPath = path.resolve(workspaceDir, entry.filePath);
-  if (!absPath.startsWith(path.resolve(workspaceDir)) || !fs.existsSync(absPath)) {
+  const workspaceRoot = path.resolve(workspaceDir);
+  if (!isPathInsideRoot(workspaceRoot, absPath) || !fs.existsSync(absPath)) {
     return {
       status: 'missing',
       ageHours: null,
