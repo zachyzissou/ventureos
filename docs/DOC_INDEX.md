@@ -28,6 +28,7 @@
 - **docs/CRASH_RECOVERY_ACTIVE_TASKS.md** – active-tasks.md tracker, stale detection, and restart recovery flow (#223)
 - **docs/TOKEN_COMPACTION.md** – deterministic 5-layer token compression pipeline, metrics, and benchmark harness (#221)
 - **docs/SELF_IMPROVEMENT_DIGEST.md** – daily self-review digest flow, recommendation approvals, and scope guardrails (#222)
+- **docs/CODE_FACTORY_PIPELINE.md** – risk-tiered CI policy, SHA-discipline, auto-remediation, and harness-gap tracker (#220)
 
 ## VentureOS / Multi-Agent Orchestration
 - **docs/roles/VENTURE_OS.md** – venture studio OS overview (system vs persona)

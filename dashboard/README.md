@@ -168,6 +168,8 @@ See **[docs/API.md](docs/API.md)** for the complete API reference covering all e
 | `GET /api/token-compaction/metrics` | Per-session token/cost savings history |
 | `POST /api/self-improvement/generate` | Generate daily self-review digest with recommendations |
 | `GET /api/self-improvement/digests` | List historical digest runs and recommendation status |
+| `POST /api/code-factory/preflight` | Compute PR risk tier and required checks from path policy |
+| `GET /api/code-factory/harness-gaps` | Track unresolved production regressions awaiting tests |
 | `GET /api/live` | SSE real-time feed |
 
 ## Architecture

@@ -1,0 +1,39 @@
+{
+  "version": "2026-02-21",
+  "risk_tier_rules": [
+    { "pattern": ".github/workflows/**", "tier": "high" },
+    { "pattern": "dashboard/server/**", "tier": "high" },
+    { "pattern": "lib/**", "tier": "high" },
+    { "pattern": "scripts/**", "tier": "high" },
+    { "pattern": "package.json", "tier": "high" },
+    { "pattern": "package-lock.json", "tier": "high" },
+    { "pattern": "docker-compose.yml", "tier": "high" },
+    { "pattern": "dashboard/client/**", "tier": "medium" },
+    { "pattern": "tactical-map/**", "tier": "medium" },
+    { "pattern": "docs/**", "tier": "medium" },
+    { "pattern": "souls/**", "tier": "medium" },
+    { "pattern": "memory/**", "tier": "medium" },
+    { "pattern": "**", "tier": "low" }
+  ],
+  "required_checks": {
+    "low": ["lint", "typecheck"],
+    "medium": ["lint", "typecheck", "test", "build", "review-agent", "sha-discipline"],
+    "high": ["lint", "typecheck", "test", "build", "review-agent", "sha-discipline", "auto-remediation", "browser-evidence"]
+  },
+  "merge_policy": {
+    "auto_merge_low_risk": true,
+    "human_approval_high_risk": true
+  },
+  "browser_evidence_patterns": [
+    "dashboard/client/**",
+    "tactical-map/**",
+    "**/*.html",
+    "**/*.css",
+    "**/*.tsx",
+    "**/*.jsx"
+  ],
+  "harness_gap_policy": {
+    "sla_days": 3
+  }
+}
+
