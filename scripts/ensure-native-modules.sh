@@ -26,6 +26,9 @@ if [[ "${1:-}" == "--check" ]]; then
   CHECK_ONLY=true
 fi
 
+LOAD_CHECK_LOG="$(mktemp "${TMPDIR:-/tmp}/ventureos-sqlite-load-check.XXXXXX")"
+trap 'rm -f "$LOAD_CHECK_LOG"' EXIT
+
 # ─── Platform detection ──────────────────────────────────────────────────────
 
 CURRENT_OS="$(uname -s)"   # Darwin, Linux
@@ -99,14 +102,13 @@ fi
 
 # Even if format/arch look correct, verify the current Node runtime can load it.
 if ! $NEEDS_REBUILD; then
-  if check_sqlite_runtime_load >/tmp/ventureos-sqlite-load-check.log 2>&1; then
+  if check_sqlite_runtime_load >"$LOAD_CHECK_LOG" 2>&1; then
     echo "✅ better-sqlite3: runtime load check passed"
   else
     echo "❌ better-sqlite3: runtime load check failed (likely ABI mismatch)"
-    sed 's/^/   /' /tmp/ventureos-sqlite-load-check.log || true
+    sed 's/^/   /' "$LOAD_CHECK_LOG" || true
     NEEDS_REBUILD=true
   fi
-  rm -f /tmp/ventureos-sqlite-load-check.log
 fi
 
 # ─── Rebuild if needed ───────────────────────────────────────────────────────
@@ -127,12 +129,11 @@ if $NEEDS_REBUILD; then
   if [[ -f "$SQLITE_BINARY" ]]; then
     VERIFY_INFO="$(file "$SQLITE_BINARY" 2>/dev/null || echo "unknown")"
     if echo "$VERIFY_INFO" | grep -q "$EXPECTED_FORMAT"; then
-      if check_sqlite_runtime_load >/tmp/ventureos-sqlite-load-check.log 2>&1; then
+      if check_sqlite_runtime_load >"$LOAD_CHECK_LOG" 2>&1; then
         echo "✅ Rebuild successful: $VERIFY_INFO"
       else
         echo "❌ Rebuild produced binary that still fails to load"
-        sed 's/^/   /' /tmp/ventureos-sqlite-load-check.log || true
-        rm -f /tmp/ventureos-sqlite-load-check.log
+        sed 's/^/   /' "$LOAD_CHECK_LOG" || true
         exit 1
       fi
     else
@@ -140,7 +141,6 @@ if $NEEDS_REBUILD; then
       echo "   Got: $VERIFY_INFO"
       exit 1
     fi
-    rm -f /tmp/ventureos-sqlite-load-check.log
   else
     echo "❌ Rebuild failed — binary not found"
     exit 1
