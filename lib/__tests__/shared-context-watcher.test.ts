@@ -99,6 +99,19 @@ function waitForEvent(ms: number = 400): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitForCondition(
+  predicate: () => boolean,
+  timeoutMs: number = 1000,
+  intervalMs: number = 25,
+): Promise<void> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (predicate()) return;
+    await waitForEvent(intervalMs);
+  }
+  throw new Error(`Timed out waiting for condition after ${timeoutMs}ms`);
+}
+
 // ─── Audit Store Tests ──────────────────────────────────────────────────────
 
 describe('SharedContextAuditStore — Schema & CRUD', () => {
@@ -662,19 +675,27 @@ describe('SharedContextWatcher — Debounce Coalescing', () => {
 
     watcher.on('change', (evt: SharedContextEvent) => events.push(evt));
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    try {
+      await waitForEvent(75);
 
-    // Write to different files
-    fs.writeFileSync(path.join(teamDir, 'feedback', 'a.md'), 'File A');
-    fs.writeFileSync(path.join(teamDir, 'feedback', 'b.md'), 'File B');
+      // Write to different files
+      fs.writeFileSync(path.join(teamDir, 'feedback', 'a.md'), 'File A');
+      fs.writeFileSync(path.join(teamDir, 'feedback', 'b.md'), 'File B');
 
-    await waitForEvent(300);
-    watcher.close();
+      await waitForCondition(
+        () => events.some((e) => e.path.includes('a.md')) && events.some((e) => e.path.includes('b.md')),
+        1500,
+        25,
+      );
 
-    // Both files should get events
-    const fileA = events.find((e) => e.path.includes('a.md'));
-    const fileB = events.find((e) => e.path.includes('b.md'));
-    expect(fileA).toBeDefined();
-    expect(fileB).toBeDefined();
+      // Both files should get events
+      const fileA = events.find((e) => e.path.includes('a.md'));
+      const fileB = events.find((e) => e.path.includes('b.md'));
+      expect(fileA).toBeDefined();
+      expect(fileB).toBeDefined();
+    } finally {
+      watcher.close();
+    }
   });
 });
 

@@ -166,8 +166,12 @@ describe('WebMcpClient', () => {
   });
 
   it('falls back to browser automation when WebMCP is unavailable', async () => {
+    const offlineFetch: typeof fetch = async () => {
+      throw new Error('network_unavailable_in_test');
+    };
+
     const client = new WebMcpClient({
-      adapters: [new HttpManifestWebMcpAdapter()],
+      adapters: [new HttpManifestWebMcpAdapter({ fetchFn: offlineFetch })],
       fallbackInvoker: async (input) => ({
         strategy: 'browser-automation-fallback',
         reason: input.reason,
@@ -217,4 +221,3 @@ describe('WebMcpClient', () => {
     await Promise.all(sites.map((site) => site.close()));
   });
 });
-
