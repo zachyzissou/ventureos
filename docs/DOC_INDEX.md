@@ -23,6 +23,7 @@
 - **docs/process/PROJECT_PLAN.md** – milestones + success metrics
 - **docs/process/FEATURE_BACKLOG.md** – backlog by workstream
 - **docs/NEXUS_2_0_M4_OBSERVABILITY.md** – M4 replay authority surfaces (explain + control-health)
+- **docs/NEXUS_2_0_M6_PRODUCTION_READINESS_2026-02-21.md** – M6 readiness decision and evidence matrix
 
 ## VentureOS / Multi-Agent Orchestration
 - **docs/roles/VENTURE_OS.md** – venture studio OS overview (system vs persona)
