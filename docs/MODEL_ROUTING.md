@@ -4,7 +4,7 @@
 
 ## Overview
 
-The Model Router (`lib/model-router.ts`) provides intelligent model selection based on multi-factor scoring. It enables dynamic routing for model selection by considering task complexity, quota, business unit priority, time sensitivity, and historical performance.
+The Model Router (`lib/model-router.ts`) provides intelligent model selection based on multi-factor scoring. It enables dynamic routing for model selection by considering task complexity, quota, business unit priority, time sensitivity, historical performance, and security risk signals (Issue #224).
 
 ## Architecture
 
@@ -79,6 +79,35 @@ Uses historical data (exponential moving average):
 
 ### 7. Capability Match Score
 - +10 points per matched required capability
+
+## Security-Aware Routing (Issue #224)
+
+Security routing adds a threat dimension on top of complexity routing.
+
+- **High risk** (`risk=high`) is enforced for untrusted/external content (`containsExternalContent`, external `contentSources`, or high `injectionScore`).
+- **Medium risk** is applied for elevated injection signals and code-generation/review task types.
+- **Low risk** remains for internal/safe tasks.
+
+### Security Tier Floors
+
+| Risk | Tier Floor | Quota Behavior |
+|------|------------|----------------|
+| `high` | Tier 3 | Quota downgrade is bypassed (security-critical) |
+| `medium` | Tier 2 | Standard quota policy applies |
+| `low` | Tier 1+ | Standard quota policy applies |
+
+### Request-Level Override
+
+Per-task user override is supported with `forceModel`. When provided and available, the router uses that model directly and marks the decision with `security.forcedByRequest=true`.
+
+### Injection Detection Telemetry
+
+When `injectionScore` meets the configured threshold (default `0.6`), the router records a detection event and exposes it via:
+
+- `router.getInjectionDetections(limit?)`
+- `router.getSecurityRoutingSummary(limit?)`
+
+The summary includes risk/tier counts, model usage, and estimated savings versus a premium-baseline model.
 
 ## Quota Management
 
