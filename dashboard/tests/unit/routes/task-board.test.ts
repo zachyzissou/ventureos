@@ -12,6 +12,7 @@ import {
   buildSummary,
   filterTasks,
   isValidTransition,
+  pickupQueuedTasksForAgent,
 } from '../../../server/routes/task-board.js';
 import type { TaskBoardDeps, TaskCard, TaskStatus } from '../../../server/types.js';
 
@@ -290,6 +291,132 @@ describe('isValidTransition', () => {
   });
 });
 
+describe('pickupQueuedTasksForAgent', () => {
+  it('returns error for non-object input', () => {
+    const result = pickupQueuedTasksForAgent(testDataDir, null as unknown as { agentId: string });
+    expect(result).toEqual({ error: 'invalid request body' });
+  });
+
+  it('picks queued tasks in priority order and transitions to running', () => {
+    const depDone = makeSampleCard({ id: 'dep-done', status: 'done' });
+    const high = makeSampleCard({
+      id: 'high',
+      status: 'queued',
+      priority: 'high',
+      assigneeType: 'agent',
+      assigneeId: 'oracle',
+      agentId: null,
+      dependencies: ['dep-done'],
+      queuedAt: Date.now() - 2000,
+    });
+    const critical = makeSampleCard({
+      id: 'critical',
+      status: 'queued',
+      priority: 'critical',
+      assigneeType: 'agent',
+      assigneeId: 'oracle',
+      agentId: null,
+      queuedAt: Date.now() - 1000,
+    });
+    const blockedByDependency = makeSampleCard({
+      id: 'blocked',
+      status: 'queued',
+      priority: 'critical',
+      assigneeType: 'agent',
+      assigneeId: 'oracle',
+      agentId: null,
+      dependencies: ['missing-dep'],
+    });
+    seedTasks([depDone, high, critical, blockedByDependency]);
+
+    const result = pickupQueuedTasksForAgent(testDataDir, {
+      agentId: 'oracle',
+      limit: 2,
+    });
+    if ('error' in result) throw new Error(result.error);
+
+    expect(result.pickedCount).toBe(2);
+    expect(result.picked.map((t) => t.id)).toEqual(['critical', 'high']);
+    expect(result.skipped.unmetDependencies).toBe(1);
+
+    const persisted = loadTasks(testDataDir);
+    const pickedCritical = persisted.find((t) => t.id === 'critical');
+    expect(pickedCritical?.status).toBe('running');
+    expect(pickedCritical?.agentId).toBe('oracle');
+  });
+
+  it('does not auto-pick when agent already has running work unless allowParallel=true', () => {
+    const running = makeSampleCard({
+      id: 'running-1',
+      status: 'running',
+      assigneeType: 'agent',
+      assigneeId: 'oracle',
+      agentId: 'oracle',
+      startedAt: Date.now() - 2000,
+    });
+    const queued = makeSampleCard({
+      id: 'queued-1',
+      status: 'queued',
+      priority: 'critical',
+      assigneeType: 'agent',
+      assigneeId: 'oracle',
+      agentId: null,
+    });
+    seedTasks([running, queued]);
+
+    const blocked = pickupQueuedTasksForAgent(testDataDir, { agentId: 'oracle' });
+    if ('error' in blocked) throw new Error(blocked.error);
+    expect(blocked.pickedCount).toBe(0);
+    expect(blocked.existingRunning).toBe(1);
+
+    const allowed = pickupQueuedTasksForAgent(testDataDir, { agentId: 'oracle', allowParallel: true });
+    if ('error' in allowed) throw new Error(allowed.error);
+    expect(allowed.pickedCount).toBe(1);
+    expect(allowed.picked[0].id).toBe('queued-1');
+  });
+
+  it('does not treat non-agent running cards as capacity blockers and clears stale terminal fields', () => {
+    const humanRunning = makeSampleCard({
+      id: 'human-running',
+      status: 'running',
+      assigneeType: 'human',
+      assigneeId: 'oracle',
+      agentId: null,
+      startedAt: Date.now() - 5000,
+    });
+    const retriedQueued = makeSampleCard({
+      id: 'retry-q',
+      status: 'queued',
+      priority: 'high',
+      assigneeType: 'agent',
+      assigneeId: 'oracle',
+      agentId: null,
+      completedAt: Date.now() - 1000,
+      resultSummary: 'old terminal summary',
+      tokensUsed: 999,
+      error: 'stale error',
+      costEstimate: 2.5,
+      runtimeMs: 4000,
+    });
+    seedTasks([humanRunning, retriedQueued]);
+
+    const result = pickupQueuedTasksForAgent(testDataDir, { agentId: 'oracle' });
+    if ('error' in result) throw new Error(result.error);
+
+    expect(result.pickedCount).toBe(1);
+    expect(result.picked[0].id).toBe('retry-q');
+
+    const persisted = loadTasks(testDataDir).find((t) => t.id === 'retry-q');
+    expect(persisted?.status).toBe('running');
+    expect(persisted?.completedAt).toBeNull();
+    expect(persisted?.resultSummary).toBeNull();
+    expect(persisted?.tokensUsed).toBeNull();
+    expect(persisted?.error).toBeNull();
+    expect(persisted?.costEstimate).toBeNull();
+    expect(persisted?.runtimeMs).toBeNull();
+  });
+});
+
 describe('loadTasks', () => {
   it('returns empty array when file does not exist', () => {
     expect(loadTasks('/tmp/nonexistent-xyz-' + Date.now())).toEqual([]);
@@ -520,6 +647,66 @@ describe('handleTaskBoard', () => {
       );
       expect(res._statusCode).toBe(400);
       expect(parseJsonBody<{ error: string }>(res).error).toContain('invalid assigneeType for stage script');
+    });
+  });
+
+  describe('POST /api/task-board/heartbeat/pickup', () => {
+    it('auto-picks queued cards for the agent in priority order', async () => {
+      seedTasks([
+        makeSampleCard({
+          id: 'q-low',
+          status: 'queued',
+          priority: 'low',
+          assigneeType: 'agent',
+          assigneeId: 'oracle',
+          agentId: null,
+        }),
+        makeSampleCard({
+          id: 'q-critical',
+          status: 'queued',
+          priority: 'critical',
+          assigneeType: 'agent',
+          assigneeId: 'oracle',
+          agentId: null,
+        }),
+      ]);
+
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/heartbeat/pickup', method: 'POST' }),
+        res,
+        depsWithBody({ agentId: 'oracle', limit: 1 }),
+      );
+      expect(res._statusCode).toBe(200);
+      const body = parseJsonBody<{ pickedCount: number; picked: TaskCard[] }>(res);
+      expect(body.pickedCount).toBe(1);
+      expect(body.picked[0].id).toBe('q-critical');
+
+      const persisted = loadTasks(testDataDir);
+      expect(persisted.find((t) => t.id === 'q-critical')?.status).toBe('running');
+      expect(persisted.find((t) => t.id === 'q-low')?.status).toBe('queued');
+    });
+
+    it('returns 400 when agentId is missing', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/heartbeat/pickup', method: 'POST' }),
+        res,
+        depsWithBody({ limit: 1 }),
+      );
+      expect(res._statusCode).toBe(400);
+      expect(parseJsonBody<{ error: string }>(res).error).toContain('agentId');
+    });
+
+    it('returns 400 when request body is not an object', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/heartbeat/pickup', method: 'POST' }),
+        res,
+        createDeps({ readRequestBody: async () => 'null' }),
+      );
+      expect(res._statusCode).toBe(400);
+      expect(parseJsonBody<{ error: string }>(res).error).toContain('JSON object');
     });
   });
 
@@ -763,6 +950,65 @@ describe('handleTaskBoard', () => {
       expect(card.status).toBe('running');
       expect(card.statusHistory?.at(-1)?.status).toBe('running');
       expect(card.statusHistory?.at(-1)?.note).toBe('picked up');
+    });
+  });
+
+  describe('POST /api/task-board/:id/retry', () => {
+    it('requeues failed card and clears terminal fields', async () => {
+      seedTasks([
+        makeSampleCard({
+          id: 'failed-1',
+          status: 'failed',
+          startedAt: Date.now() - 5000,
+          completedAt: Date.now() - 1000,
+          error: 'Boom',
+          runtimeMs: 4000,
+          tokensUsed: 123,
+          resultSummary: 'bad run',
+        }),
+      ]);
+
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/failed-1/retry', method: 'POST' }),
+        res,
+        depsWithBody({ note: 'retry after fix' }),
+      );
+
+      expect(res._statusCode).toBe(200);
+      const card = parseJsonBody<{ card: TaskCard }>(res).card;
+      expect(card.status).toBe('queued');
+      expect(card.error).toBeNull();
+      expect(card.startedAt).toBeNull();
+      expect(card.completedAt).toBeNull();
+      expect(card.runtimeMs).toBeNull();
+      expect(card.tokensUsed).toBeNull();
+      expect(card.statusHistory?.at(-1)?.by).toBe('retry');
+      expect(card.statusHistory?.at(-1)?.note).toContain('retry after fix');
+    });
+
+    it('rejects retry for non-failed cards', async () => {
+      seedTasks([makeSampleCard({ id: 'done-1', status: 'done' })]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/done-1/retry', method: 'POST' }),
+        res,
+        depsWithBody({}),
+      );
+      expect(res._statusCode).toBe(409);
+      expect(parseJsonBody<{ error: string }>(res).error).toContain('failed cards');
+    });
+
+    it('supports retry route with query params', async () => {
+      seedTasks([makeSampleCard({ id: 'failed-q', status: 'failed', error: 'boom' })]);
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board/failed-q/retry?source=ui', method: 'POST' }),
+        res,
+        depsWithBody({}),
+      );
+      expect(res._statusCode).toBe(200);
+      expect(parseJsonBody<{ card: TaskCard }>(res).card.status).toBe('queued');
     });
   });
 

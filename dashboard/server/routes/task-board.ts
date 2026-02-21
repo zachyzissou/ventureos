@@ -132,6 +132,12 @@ const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'nexus', 'agent'];
 const TEMPLATE_ID_RE = /^[a-z0-9][a-z0-9-_]{1,63}$/;
 const STAGE_ID_RE = /^[a-z0-9][a-z0-9-_]{1,63}$/;
 const TEMPLATE_TAG_RE = /^#?[a-z0-9][a-z0-9:_-]{0,31}$/i;
+const PRIORITY_SCORE: Record<TaskPriority, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
 
 const SYSTEM_TEMPLATE_EPOCH = 1_700_000_000_000;
 const SYSTEM_PIPELINE_TEMPLATES: TaskPipelineTemplate[] = [
@@ -1328,6 +1334,146 @@ export function executeBatch(
   };
 }
 
+// ─── Heartbeat Auto-Pickup (Issue #219) ─────────────────────────────────────
+
+const HEARTBEAT_PICKUP_MAX = 10;
+
+interface HeartbeatPickupInput {
+  agentId?: string;
+  limit?: number;
+  allowParallel?: boolean;
+}
+
+interface HeartbeatPickupSkipped {
+  nonAgentAssignee: number;
+  assignedToOther: number;
+  unmetDependencies: number;
+}
+
+export interface HeartbeatPickupResult {
+  agentId: string;
+  picked: TaskCard[];
+  pickedCount: number;
+  existingRunning: number;
+  scannedQueued: number;
+  skipped: HeartbeatPickupSkipped;
+}
+
+function canRunByDependency(card: TaskCard, byId: Map<string, TaskCard>): boolean {
+  if (!Array.isArray(card.dependencies) || card.dependencies.length === 0) return true;
+  for (const depId of card.dependencies) {
+    const dep = byId.get(depId);
+    if (!dep || dep.status !== 'done') return false;
+  }
+  return true;
+}
+
+function compareQueuedPriority(a: TaskCard, b: TaskCard): number {
+  const pa = PRIORITY_SCORE[a.priority] ?? PRIORITY_SCORE.medium;
+  const pb = PRIORITY_SCORE[b.priority] ?? PRIORITY_SCORE.medium;
+  if (pa !== pb) return pa - pb;
+  const qa = a.queuedAt ?? a.createdAt;
+  const qb = b.queuedAt ?? b.createdAt;
+  if (qa !== qb) return qa - qb;
+  return a.createdAt - b.createdAt;
+}
+
+export function pickupQueuedTasksForAgent(
+  dataDir: string,
+  input: HeartbeatPickupInput,
+  emitEvent?: TaskBoardDeps['emitEvent'],
+): HeartbeatPickupResult | { error: string } {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return { error: 'invalid request body' };
+  }
+  const agentId = String(input.agentId ?? '').trim();
+  if (!agentId) return { error: 'agentId is required' };
+
+  const rawLimit = Number(input.limit ?? 1);
+  const limit = Number.isFinite(rawLimit)
+    ? Math.max(1, Math.min(Math.trunc(rawLimit), HEARTBEAT_PICKUP_MAX))
+    : 1;
+
+  const tasks = loadTasks(dataDir);
+  const byId = new Map(tasks.map((t) => [t.id, t]));
+  const allowParallel = input.allowParallel === true;
+  const runningTasks = tasks.filter(
+    (t) =>
+      t.status === 'running' &&
+      (
+        t.agentId === agentId ||
+        ((t.assigneeType ?? 'agent') === 'agent' && t.assigneeId === agentId)
+      ),
+  );
+
+  const skipped: HeartbeatPickupSkipped = {
+    nonAgentAssignee: 0,
+    assignedToOther: 0,
+    unmetDependencies: 0,
+  };
+
+  if (!allowParallel && runningTasks.length > 0) {
+    return {
+      agentId,
+      picked: [],
+      pickedCount: 0,
+      existingRunning: runningTasks.length,
+      scannedQueued: 0,
+      skipped,
+    };
+  }
+
+  const candidates = tasks.filter((t) => t.status === 'queued');
+  const available = candidates
+    .filter((card) => {
+      const assigneeType = card.assigneeType ?? 'agent';
+      if (assigneeType !== 'agent') {
+        skipped.nonAgentAssignee++;
+        return false;
+      }
+      if ((card.assigneeId && card.assigneeId !== agentId) || (card.agentId && card.agentId !== agentId)) {
+        skipped.assignedToOther++;
+        return false;
+      }
+      if (!canRunByDependency(card, byId)) {
+        skipped.unmetDependencies++;
+        return false;
+      }
+      return true;
+    })
+    .sort(compareQueuedPriority);
+
+  const picked = available.slice(0, limit);
+  if (picked.length > 0) {
+    const now = Date.now();
+    for (const card of picked) {
+      card.status = 'running';
+      card.startedAt = now;
+      card.completedAt = null;
+      card.resultSummary = null;
+      card.tokensUsed = null;
+      card.error = null;
+      card.costEstimate = null;
+      card.runtimeMs = null;
+      card.agentId = agentId;
+      card.assigneeType = 'agent';
+      card.assigneeId = agentId;
+      appendStatusHistory(card, 'running', 'heartbeat', 'auto-picked from queue', now);
+      emitEvent?.('task:updated', card);
+    }
+    saveTasks(dataDir, tasks);
+  }
+
+  return {
+    agentId,
+    picked,
+    pickedCount: picked.length,
+    existingRunning: runningTasks.length,
+    scannedQueued: candidates.length,
+    skipped,
+  };
+}
+
 // ─── Route handler ───────────────────────────────────────────────────────────
 
 export async function handleTaskBoard(
@@ -1548,6 +1694,36 @@ export async function handleTaskBoard(
     const result = executeBatch(dataDir, body, deps.emitEvent);
     const status = result.error ? 400 : 200;
     sendJson(res, result, status);
+    return true;
+  }
+
+  // ── POST /api/task-board/heartbeat/pickup — Issue #219 ──────────────────
+  // Heartbeat-driven queue pickup:
+  // - Picks queued tasks assigned to an agent (or unassigned agent tasks)
+  // - Orders by priority (critical→low), then queuedAt/createdAt
+  // - Blocks on unmet dependencies (all deps must be done)
+  // - By default, skips pickup when agent already has running work
+  if (url === '/api/task-board/heartbeat/pickup' && method === 'POST') {
+    let body: HeartbeatPickupInput;
+    try {
+      const raw = await readRequestBody(req, { maxBytes: 4096 });
+      const parsed = raw.trim() ? JSON.parse(raw) : {};
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        sendJson(res, { error: 'request body must be a JSON object' }, 400);
+        return true;
+      }
+      body = parsed as HeartbeatPickupInput;
+    } catch {
+      sendJson(res, { error: 'invalid JSON body' }, 400);
+      return true;
+    }
+
+    const result = pickupQueuedTasksForAgent(dataDir, body, deps.emitEvent);
+    if ('error' in result) {
+      sendJson(res, result, 400);
+      return true;
+    }
+    sendJson(res, result);
     return true;
   }
 
@@ -2155,6 +2331,65 @@ export async function handleTaskBoard(
     saveTasks(dataDir, tasks);
     deps.emitEvent?.('task:created', result.card);
     sendJson(res, { card: result.card }, 201);
+    return true;
+  }
+
+  // ── POST /api/task-board/:id/retry — Issue #219 ─────────────────────────
+  // Explicit retry path for failed cards:
+  // - allowed only when status=failed
+  // - resets terminal/error fields and re-queues card
+  // - appends status history entry for auditability
+  const urlPath = url.split('?')[0] ?? url;
+  if (urlPath.startsWith('/api/task-board/') && urlPath.endsWith('/retry') && method === 'POST') {
+    const id = urlPath.split('/api/task-board/')[1]?.split('/retry')[0]?.trim();
+    if (!id) {
+      sendJson(res, { error: 'task id is required' }, 400);
+      return true;
+    }
+
+    let retryNote: string | null = null;
+    try {
+      const raw = await readRequestBody(req, { maxBytes: 2048 });
+      if (raw.trim()) {
+        const body = JSON.parse(raw) as { note?: unknown };
+        if (typeof body.note === 'string' && body.note.trim()) {
+          retryNote = body.note.trim().slice(0, 200);
+        }
+      }
+    } catch {
+      sendJson(res, { error: 'invalid JSON body' }, 400);
+      return true;
+    }
+
+    const tasks = loadTasks(dataDir);
+    const idx = tasks.findIndex((t) => t.id === id);
+    if (idx === -1) {
+      sendJson(res, { error: 'not found' }, 404);
+      return true;
+    }
+
+    const card = { ...tasks[idx] };
+    if (card.status !== 'failed') {
+      sendJson(res, { error: `retry only allowed for failed cards (current: ${card.status})` }, 409);
+      return true;
+    }
+
+    const now = Date.now();
+    card.status = 'queued';
+    card.queuedAt = now;
+    card.startedAt = null;
+    card.completedAt = null;
+    card.resultSummary = null;
+    card.tokensUsed = null;
+    card.error = null;
+    card.costEstimate = null;
+    card.runtimeMs = null;
+    appendStatusHistory(card, 'queued', 'retry', retryNote ?? 'manual retry from failed', now);
+
+    tasks[idx] = card;
+    saveTasks(dataDir, tasks);
+    deps.emitEvent?.('task:updated', card);
+    sendJson(res, { card });
     return true;
   }
 
