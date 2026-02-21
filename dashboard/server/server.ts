@@ -89,7 +89,7 @@ import { rateLimit } from './middleware/rate-limit.js';
 import { auditLog } from './middleware/audit-log.js';
 import { authorizeActionRequest } from './middleware/action-guard.js';
 import { withCorrelationId, CORRELATION_HEADER } from './middleware/correlation-id.js';
-import { proxyBridgeJson } from './bridge-proxy.js';
+import { proxyBridgeJson, proxyBridgeSse } from './bridge-proxy.js';
 
 // Structured logging (Issue #195 — Observability)
 import structuredLogger from '../../lib/structured-logger.js';
@@ -104,6 +104,7 @@ import { handleConversationApi } from './routes/conversation.js';
 import { handleTacticalMapControls } from './routes/tactical-map-controls.js';
 import { handleLogs } from './routes/logs.js';
 import { handleTacticalMapReplay } from './routes/tactical-map-replay.js';
+import { handleTacticalMapLive, handleTacticalMapLiveUpgrade } from './routes/tactical-map-live.js';
 import { handleProgressionApi } from './routes/progression.js';
 import { handleProgressionV2Api } from '../../lib/progression-http-v2.js';
 import { handleChangelog } from './routes/changelog.js';
@@ -2824,24 +2825,59 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 
   // VentureOS APIs
   if (req.url && req.url.startsWith('/api/ventureos-kpis')) {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/ventureos-kpis',
+        forwardQuery: true,
+      })
+    )
+      return;
     const params = new URL(req.url, 'http://localhost').searchParams;
     const days: number = clampInt(params.get('days'), 1, 60, 7);
     sendJson(res, getVentureosKpis(days));
     return;
   }
   if (req.url === '/api/ventureos-agents') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/ventureos-agents',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getVentureosAgents());
     return;
   }
   if (req.url === '/api/workflow-patterns') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/workflow-patterns',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getWorkflowPatterns());
     return;
   }
   if (req.url === '/api/mission-control') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/mission-control',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getMissionControl());
     return;
   }
   if (req.url === '/api/observations-index') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/observations-index',
+        forwardQuery: true,
+      })
+    )
+      return;
     const obs = getAllObservations();
     sendJson(res, {
       updatedAt: obs.updatedAt,
@@ -2852,6 +2888,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
   if (req.url && req.url.startsWith('/api/observations?')) {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/observations',
+        forwardQuery: true,
+      })
+    )
+      return;
     const params = new URL(req.url, 'http://localhost').searchParams;
     const q: string = params.get('q') ?? '';
     const tag: string = params.get('tag') ?? '';
@@ -2869,6 +2912,27 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
       }),
     );
     return;
+  }
+  if (req.url && req.url.startsWith('/api/observations/')) {
+    const targetPath = req.url.split('?')[0].replace('/api/observations', '/api/bridge/observations');
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath,
+        forwardQuery: true,
+      })
+    )
+      return;
+  }
+
+  if (req.url && req.url.startsWith('/api/kpis/')) {
+    const targetPath = req.url.split('?')[0].replace('/api/kpis', '/api/bridge/kpis');
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath,
+        forwardQuery: true,
+      })
+    )
+      return;
   }
 
   // Modular route handlers
@@ -2921,10 +2985,34 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
 
   try {
+    if (
+      req.url &&
+      req.url.startsWith('/api/agent-health') &&
+      (await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/agent-health',
+        forwardQuery: true,
+      }))
+    )
+      return;
     if (handleAgentHealth(req, res, { OPENCLAW_DIR, WORKSPACE_DIR, sendJson })) return;
   } catch {
     // ignore
   }
+  try {
+    if (
+      handleTacticalMapLive(req, res, {
+        openclawDir: OPENCLAW_DIR,
+        dataDir,
+        sendJson,
+        isAuthenticated,
+        primaryAgentId: AGENT_ID,
+      })
+    )
+      return;
+  } catch {
+    // ignore
+  }
+
   try {
     if (
       await handleTacticalMapControls(req, res, {
@@ -2954,6 +3042,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
 
   if (req.url === '/api/sessions') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/sessions',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getSessionsJson());
     return;
   }
@@ -3005,10 +3100,24 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 
   // VentureOS API aliases
   if (req.url === '/api/ventureos-mission-control') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/mission-control',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getMissionControl());
     return;
   }
   if (req.url === '/api/ventureos-workflow-patterns') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/workflow-patterns',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getWorkflowPatterns());
     return;
   }
@@ -3027,6 +3136,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
   if (req.url && req.url.startsWith('/api/ventureos-observation?')) {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/observation',
+        forwardQuery: true,
+      })
+    )
+      return;
     try {
       const params = new URL(req.url, 'http://localhost').searchParams;
       const rel: string = params.get('path') ?? '';
@@ -3044,6 +3160,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
 
   if (req.url && req.url.startsWith('/api/session-messages?')) {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/session-messages',
+        forwardQuery: true,
+      })
+    )
+      return;
     const params = new URL(req.url, 'http://localhost').searchParams;
     const rawId: string = params.get('id') ?? '';
     const sessionId: string = rawId.replace(/[^a-zA-Z0-9\-_:.]/g, '');
@@ -3104,18 +3227,46 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
   if (req.url === '/api/crons') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/crons',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getCronJobs());
     return;
   }
   if (req.url === '/api/git') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/git',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getGitActivity());
     return;
   }
   if (req.url === '/api/services') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/services',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getServicesStatus());
     return;
   }
   if (req.url === '/api/memory') {
+    if (
+      await proxyBridgeJson(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/memory',
+        forwardQuery: true,
+      })
+    )
+      return;
     sendJson(res, getMemoryFiles());
     return;
   }
@@ -3559,6 +3710,14 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 
   // ── Live Telemetry SSE (Issue #live-data-v1) ──────────────────────────────
   if (req.url === '/api/live-telemetry') {
+    if (
+      await proxyBridgeSse(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/live-telemetry',
+        forwardQuery: true,
+      })
+    )
+      return;
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -3669,6 +3828,14 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
 
   if (req.url === '/api/live') {
+    if (
+      await proxyBridgeSse(req, res, bridgeProxyDeps, {
+        targetPath: '/api/bridge/live',
+        forwardQuery: true,
+      })
+    )
+      return;
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -3818,6 +3985,26 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 });
 
 export { server };
+
+server.on('upgrade', (req: IncomingMessage, socket: import('node:net').Socket, head: Buffer) => {
+  if (
+    handleTacticalMapLiveUpgrade(req, socket, head, {
+      openclawDir: OPENCLAW_DIR,
+      dataDir,
+      sendJson,
+      isAuthenticated,
+      primaryAgentId: AGENT_ID,
+    })
+  ) {
+    return;
+  }
+
+  try {
+    socket.destroy();
+  } catch {
+    // ignore
+  }
+});
 
 // ─── Startup Diagnostics ─────────────────────────────────────────────────────
 
