@@ -33,6 +33,11 @@ export const SHARED_CONTEXT_DIR: string =
   process.env.VENTUREOS_SHARED_CONTEXT_DIR ??
   path.join(HOME, 'clawd', 'shared-context');
 
+/** Obsidian desktop app config path (vault registry). */
+export const OBSIDIAN_APP_CONFIG_PATH: string =
+  process.env.OBSIDIAN_APP_CONFIG_PATH ??
+  path.join(HOME, 'Library', 'Application Support', 'obsidian', 'obsidian.json');
+
 // ─── Data Directories ────────────────────────────────────────────────────────
 
 /** KPI JSON files directory. */
@@ -87,6 +92,7 @@ export const paths = {
   ventureosRoot: VENTUREOS_ROOT,
   openclawDir: OPENCLAW_DIR,
   sharedContextDir: SHARED_CONTEXT_DIR,
+  obsidianAppConfigPath: OBSIDIAN_APP_CONFIG_PATH,
   kpiDir: KPI_DIR,
   dashboardDataDir: DASHBOARD_DATA_DIR,
   observationsDir: OBSERVATIONS_DIR,
@@ -136,6 +142,7 @@ const defaultPathsExport = {
   VENTUREOS_ROOT,
   OPENCLAW_DIR,
   SHARED_CONTEXT_DIR,
+  OBSIDIAN_APP_CONFIG_PATH,
   KPI_DIR,
   DASHBOARD_DATA_DIR,
   OBSERVATIONS_DIR,

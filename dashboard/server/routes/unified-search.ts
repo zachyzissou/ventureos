@@ -2,6 +2,8 @@
  * Unified Search — Issue #302
  *
  * GET /api/search/unified?q=<query>&limit=50&offset=0&sources=memory,replay,obsidian
+ * - limit default: 50, max: 200
+ * - offset default: 0, max: 100000
  *
  * Returns mixed-source search results across:
  * - Replay artifacts (session metadata + event payload snippets)
@@ -10,9 +12,15 @@
  */
 
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import {
+  DEFAULT_OBSIDIAN_MISSION_FOLDER,
+  hasDotObsidianSegment,
+  normalizeRelativePath,
+  obsidianAppConfigPath,
+  resolveInsideVault,
+} from './obsidian-path-utils.js';
 
 const MAX_NOTE_SCAN = 1500;
 const MAX_READ_BYTES = 128_000;
@@ -44,34 +52,6 @@ function isObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
 }
 
-function hasDotObsidianSegment(p: string): boolean {
-  return p.split(/[\\/]+/).some((seg) => seg === '.obsidian');
-}
-
-function normalizeRelativePath(input: string): string | null {
-  const raw = input.replace(/\\/g, '/').trim();
-  if (!raw) return null;
-  if (raw.startsWith('/')) return null;
-  const normalized = path.posix.normalize(raw).replace(/^\/+/, '');
-  if (!normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../')) {
-    return null;
-  }
-  if (hasDotObsidianSegment(normalized)) return null;
-  return normalized;
-}
-
-function resolveInside(basePath: string, relPath: string): string | null {
-  const root = path.resolve(basePath);
-  const target = path.resolve(root, relPath);
-  if (target !== root && !target.startsWith(root + path.sep)) return null;
-  return target;
-}
-
-function obsidianAppConfigPath(): string {
-  return process.env.OBSIDIAN_CONFIG_PATH
-    ?? path.join(os.homedir(), 'Library', 'Application Support', 'obsidian', 'obsidian.json');
-}
-
 function readObsidianVaultPath(dataDir: string): { vaultPath: string; missionFolder: string } | null {
   const fp = path.join(dataDir, 'obsidian-connector.json');
   try {
@@ -99,7 +79,7 @@ function readObsidianVaultPath(dataDir: string): { vaultPath: string; missionFol
       : null;
     return {
       vaultPath,
-      missionFolder: missionFolder || 'VentureOS/Missions',
+      missionFolder: missionFolder || DEFAULT_OBSIDIAN_MISSION_FOLDER,
     };
   } catch {
     return null;
@@ -109,10 +89,12 @@ function readObsidianVaultPath(dataDir: string): { vaultPath: string; missionFol
 function collectFiles(rootDir: string, exts: string[], maxFiles = MAX_NOTE_SCAN): string[] {
   const out: string[] = [];
   if (!fs.existsSync(rootDir)) return out;
+  const resolvedRoot = path.resolve(rootDir);
   const allowed = new Set(exts.map((x) => x.toLowerCase()));
-  const stack = [rootDir];
+  const stack = [resolvedRoot];
   while (stack.length > 0 && out.length < maxFiles) {
     const dir = stack.pop() as string;
+    if (dir !== resolvedRoot && !dir.startsWith(resolvedRoot + path.sep)) continue;
     let entries: fs.Dirent[];
     try {
       entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -122,14 +104,17 @@ function collectFiles(rootDir: string, exts: string[], maxFiles = MAX_NOTE_SCAN)
     for (const entry of entries) {
       if (entry.name.startsWith('.')) continue;
       const full = path.join(dir, entry.name);
+      const resolved = path.resolve(full);
+      if (resolved !== resolvedRoot && !resolved.startsWith(resolvedRoot + path.sep)) continue;
+      if (entry.isSymbolicLink()) continue;
       if (entry.isDirectory()) {
-        stack.push(full);
+        stack.push(resolved);
         continue;
       }
       if (!entry.isFile()) continue;
       const ext = path.extname(entry.name).toLowerCase();
       if (!allowed.has(ext)) continue;
-      out.push(full);
+      out.push(resolved);
       if (out.length >= maxFiles) break;
     }
   }
@@ -231,7 +216,7 @@ function searchObsidian(dataDir: string, q: string): UnifiedSearchResult[] {
   const out: UnifiedSearchResult[] = [];
   const cfg = readObsidianVaultPath(dataDir);
   if (!cfg) return out;
-  const targetDir = resolveInside(cfg.vaultPath, cfg.missionFolder);
+  const targetDir = resolveInsideVault(cfg.vaultPath, cfg.missionFolder);
   if (!targetDir || !fs.existsSync(targetDir)) return out;
 
   const files = collectFiles(targetDir, ['.md'], MAX_NOTE_SCAN);
@@ -279,8 +264,18 @@ export async function handleUnifiedSearch(
     return true;
   }
 
-  const limit = Math.max(1, Math.min(Number(url.searchParams.get('limit')) || DEFAULT_LIMIT, 200));
-  const offset = Math.max(0, Math.min(Number(url.searchParams.get('offset')) || 0, 100_000));
+  const rawLimit = url.searchParams.get('limit');
+  const parsedLimit = rawLimit !== null ? parseInt(rawLimit, 10) : NaN;
+  const limit = Math.max(
+    1,
+    Math.min(Number.isNaN(parsedLimit) ? DEFAULT_LIMIT : parsedLimit, 200),
+  );
+  const rawOffset = url.searchParams.get('offset');
+  const parsedOffset = rawOffset !== null ? parseInt(rawOffset, 10) : NaN;
+  const offset = Math.max(
+    0,
+    Math.min(Number.isNaN(parsedOffset) ? 0 : parsedOffset, 100_000),
+  );
   const sourceParam = (url.searchParams.get('sources') || '').trim().toLowerCase();
   const requested = sourceParam
     ? new Set(
@@ -303,11 +298,12 @@ export async function handleUnifiedSearch(
 
   const total = all.length;
   const results = all.slice(offset, offset + limit);
-  const counts = {
-    memory: all.filter((r) => r.source === 'memory').length,
-    replay: all.filter((r) => r.source === 'replay').length,
-    obsidian: all.filter((r) => r.source === 'obsidian').length,
-  };
+  const counts = { memory: 0, replay: 0, obsidian: 0 };
+  for (const r of all) {
+    if (r.source === 'memory') counts.memory++;
+    else if (r.source === 'replay') counts.replay++;
+    else counts.obsidian++;
+  }
 
   deps.sendJson(res, {
     ok: true,

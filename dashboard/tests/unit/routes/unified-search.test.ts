@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
-import os from 'node:os';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { ServerResponse } from 'node:http';
 
@@ -25,7 +25,7 @@ function createDeps() {
 }
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unified-search-test-'));
+  tmpDir = fs.mkdtempSync(path.join(tmpdir(), 'unified-search-test-'));
   dataDir = path.join(tmpDir, 'data');
   observationsDir = path.join(tmpDir, 'observations');
   vaultDir = path.join(tmpDir, 'vault');
