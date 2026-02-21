@@ -50,16 +50,40 @@ expect_fail() {
 write_good
 expect_pass "baseline safe config"
 
+write_good
+cat > "$hybrid" <<'EOF'
+POSTGRES_PASSWORD=change-me
+DASHBOARD_API_TOKEN=test-dashboard-token
+BRIDGE_URL=http://host.docker.internal:18790
+BRIDGE_TOKEN=test-bridge-token
+DASHBOARD_ALLOW_LAN_BYPASS=false
+DASHBOARD_ENABLE_ACTIONS=false
+EOF
+expect_fail "placeholder marker blocked"
+
+write_good
 cat >> "$hybrid" <<'EOF'
 DASHBOARD_ALLOW_LAN_BYPASS=true
 EOF
 expect_fail "lan bypass blocked"
 
 write_good
+cat >> "$hybrid" <<'EOF'
+DASHBOARD_ENABLE_ACTIONS=true
+EOF
+expect_fail "dashboard actions blocked"
+
+write_good
 cat >> "$bridge" <<'EOF'
 BRIDGE_ALLOW_CIDRS=0.0.0.0/0
 EOF
 expect_fail "world-open CIDR blocked"
+
+write_good
+cat > "$bridge" <<'EOF'
+BRIDGE_TOKEN=test-bridge-token
+EOF
+expect_fail "missing bridge cidrs blocked"
 
 write_good
 cat > "$bridge" <<'EOF'
@@ -75,5 +99,28 @@ BRIDGE_TOKEN=different-token
 BRIDGE_ALLOW_CIDRS=127.0.0.1/32
 EOF
 expect_fail "bridge token mismatch blocked"
+
+write_good
+cat >> "$hybrid" <<'EOF'
+DASHBOARD_API_TOKENS=token1,token2
+EOF
+expect_fail "multi-token variables blocked"
+
+write_good
+cat >> "$hybrid" <<'EOF'
+DASHBOARD_TRUST_PROXY=true
+EOF
+expect_pass "trust proxy warning allowed"
+
+write_good
+cat > "$hybrid" <<'EOF'
+POSTGRES_PASSWORD=test-pass
+DASHBOARD_API_TOKEN=test-dashboard-token
+BRIDGE_URL=http://[::1]:18790
+BRIDGE_TOKEN=test-bridge-token
+DASHBOARD_ALLOW_LAN_BYPASS=false
+DASHBOARD_ENABLE_ACTIONS=false
+EOF
+expect_pass "ipv6 localhost bridge url allowed"
 
 echo "All deployment safety lint tests passed"

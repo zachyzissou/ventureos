@@ -101,6 +101,7 @@ jobs:
           cat > config/bridge.env <<'BENVEOF'
           BRIDGE_PORT=18790
           BRIDGE_TOKEN=ci-test-bridge-token-not-real
+          BRIDGE_ALLOW_CIDRS=127.0.0.1/32
           BENVEOF
 
           chmod +x scripts/deploy.sh
@@ -109,6 +110,13 @@ jobs:
           ./scripts/preflight-routing.sh --dry-run
           echo ""
           echo "✅ Preflight dry-run passed"
+
+      - name: Deployment safety lint tests
+        run: |
+          chmod +x scripts/tests/test-deployment-safety.sh
+          ./scripts/tests/test-deployment-safety.sh
+          echo ""
+          echo "✅ Deployment safety tests passed"
 
       - name: Deploy script help output
         run: |

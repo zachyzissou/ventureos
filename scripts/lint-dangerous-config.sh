@@ -141,14 +141,16 @@ if is_true "$trust_proxy"; then
   warn "DASHBOARD_TRUST_PROXY=true requires explicit trusted reverse proxy boundaries"
 fi
 
-if [[ "$bridge_allow_cidrs" == *"0.0.0.0/0"* || "$bridge_allow_cidrs" == *"::/0"* ]]; then
+if [[ -z "$bridge_allow_cidrs" ]]; then
+  fail "BRIDGE_ALLOW_CIDRS must be set with at least one CIDR"
+elif [[ "$bridge_allow_cidrs" == *"0.0.0.0/0"* || "$bridge_allow_cidrs" == *"::/0"* ]]; then
   fail "BRIDGE_ALLOW_CIDRS must not include world-open CIDRs (0.0.0.0/0 or ::/0)"
 else
   info "bridge CIDR allowlist is not world-open"
 fi
 
 if [[ -n "$hybrid_bridge_url" ]]; then
-  if [[ "$hybrid_bridge_url" =~ ^https?://(host\.docker\.internal|localhost|127\.0\.0\.1)(:[0-9]+)?(/.*)?$ ]]; then
+  if [[ "$hybrid_bridge_url" =~ ^https?://(host\.docker\.internal|localhost|127\.0\.0\.1|\[::1\])(:[0-9]+)?(/.*)?$ ]]; then
     info "BRIDGE_URL is local-safe ($hybrid_bridge_url)"
   else
     warn "BRIDGE_URL points to non-local host ($hybrid_bridge_url); verify this is intentional"
