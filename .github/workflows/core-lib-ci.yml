@@ -41,6 +41,10 @@ jobs:
       - name: Rebuild native modules for runner architecture
         run: npm rebuild better-sqlite3 --build-from-source
 
+      - name: Verify better-sqlite3 runtime ABI
+        run: |
+          node -e "const Database=require('better-sqlite3');const db=new Database(':memory:');db.prepare('SELECT 1').get();db.close();console.log('better-sqlite3 ABI ok for Node', process.versions.node)"
+
       - name: TypeScript compile (core)
         run: npx tsc -p tsconfig.json --noEmit
 
