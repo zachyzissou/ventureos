@@ -548,6 +548,12 @@ export interface MissionControlResponse {
   }>;
 }
 
+/** Feature flags for VentureOS UI surfaces. */
+export interface VentureOSFeatureFlagsResponse {
+  updatedAt: number;
+  officeViewEnabled: boolean;
+}
+
 // ─── Workflow Patterns Domain ────────────────────────────────────────────────
 
 export interface WorkflowPatternsResponse {
