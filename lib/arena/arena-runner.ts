@@ -1,6 +1,7 @@
 import { judgeSubmissions, type JudgeResult } from './judge';
 import type { CandidateSubmission, JudgeRubric } from './scorecard';
 import type { MissionRecord } from '../mission-state-machine';
+import { arbitrateRecommendation } from '../nexus-arbiter';
 
 export type ArenaActor = { id: string; type: 'human' | 'nexus' | 'agent' };
 
@@ -104,8 +105,14 @@ export function runArena(input: ArenaRunInput): ArenaRunResult {
     };
   }
 
-  const authorized = input.actor.type === 'human' || input.actor.type === 'nexus';
-  if (!authorized) {
+  const arbitration = arbitrateRecommendation({
+    missionId: input.mission.missionId,
+    actor: input.actor,
+    recommendationId: judged.winner.candidateId,
+    accept: true,
+  });
+
+  if (!arbitration.accepted) {
     timeline.push({
       type: 'arbitration.rejected',
       ts: ts + 2,
@@ -113,13 +120,15 @@ export function runArena(input: ArenaRunInput): ArenaRunResult {
       actorId: input.actor.id,
       actorType: input.actor.type,
       details: {
-        reason: 'actor_not_authorized',
+        code: arbitration.code,
+        reason: arbitration.message,
+        overrideAvailable: arbitration.overrideAvailable,
       },
     });
     return {
       judged,
       accepted: false,
-      acceptanceReason: 'Competition acceptance requires nexus or human authority',
+      acceptanceReason: arbitration.message,
       timeline,
     };
   }
@@ -130,11 +139,12 @@ export function runArena(input: ArenaRunInput): ArenaRunResult {
     missionId: input.mission.missionId,
     actorId: input.actor.id,
     actorType: input.actor.type,
-    details: {
-      acceptedBy: input.actor.id,
-      acceptedByType: input.actor.type,
-    },
-  });
+      details: {
+        acceptedBy: input.actor.id,
+        acceptedByType: input.actor.type,
+        code: arbitration.code,
+      },
+    });
 
   return {
     judged,
