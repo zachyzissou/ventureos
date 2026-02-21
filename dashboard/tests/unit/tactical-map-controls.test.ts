@@ -61,6 +61,60 @@ describe('tactical-map-controls route', () => {
     expect(listBody.missions[0].priority).toBe('high');
   });
 
+  it('materializes a mission template note when Obsidian connector is configured', async () => {
+    const dataDir = path.join(baseTmp, 'spawn-obsidian');
+    const vaultDir = path.join(baseTmp, 'obsidian-vault');
+    const obsidianConfigPath = path.join(baseTmp, 'obsidian.json');
+    fs.mkdirSync(vaultDir, { recursive: true });
+    fs.mkdirSync(dataDir, { recursive: true });
+    fs.writeFileSync(obsidianConfigPath, JSON.stringify({
+      vaults: {
+        main: { path: vaultDir, ts: Date.now(), open: true },
+      },
+    }));
+    fs.writeFileSync(path.join(dataDir, 'obsidian-connector.json'), JSON.stringify({
+      version: 1,
+      vaultId: 'main',
+      vaultPath: null,
+      missionFolder: 'VentureOS/Missions',
+      updatedAt: Date.now(),
+    }));
+
+    const previousObsidianConfig = process.env.OBSIDIAN_CONFIG_PATH;
+    process.env.OBSIDIAN_CONFIG_PATH = obsidianConfigPath;
+    try {
+      const spawnReq = mockRequest({ method: 'POST', url: '/api/tactical-map/missions/spawn' }) as any;
+      spawnReq._rawBody = JSON.stringify({
+        title: 'Launch Review',
+        description: 'Coordinate release readiness checks',
+        assignee: 'oracle',
+        priority: 'high',
+      });
+
+      const spawned = await runRoute(spawnReq, dataDir);
+      const spawnBody = parseJsonBody<{
+        missionId: string;
+        obsidianNote: { attempted: boolean; created: boolean; path: string | null };
+      }>(spawned.res);
+      expect(spawnBody.obsidianNote.attempted).toBe(true);
+      expect(spawnBody.obsidianNote.created).toBe(true);
+      expect(spawnBody.obsidianNote.path).toContain('VentureOS/Missions/');
+
+      const notePath = path.join(vaultDir, spawnBody.obsidianNote.path as string);
+      expect(fs.existsSync(notePath)).toBe(true);
+      const note = fs.readFileSync(notePath, 'utf8');
+      expect(note).toContain(`missionId: ${spawnBody.missionId}`);
+      expect(note).toContain('owner: oracle');
+      expect(note).toContain('# Mission: Launch Review');
+      expect(note).toContain('## Decisions');
+      expect(note).toContain('## Risks');
+      expect(note).toContain('## Next Actions');
+    } finally {
+      if (previousObsidianConfig == null) delete process.env.OBSIDIAN_CONFIG_PATH;
+      else process.env.OBSIDIAN_CONFIG_PATH = previousObsidianConfig;
+    }
+  });
+
   it('updates mission priority with persistence', async () => {
     const dataDir = path.join(baseTmp, 'priority');
 

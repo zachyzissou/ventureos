@@ -192,5 +192,60 @@ describe('handleObsidianConnector', () => {
     expect(body.notes[0].missionId).toBe('mc-001');
     expect(body.notes[0].title).toContain('Launch Video');
   });
-});
 
+  it('creates template-based notes and appends structured updates', async () => {
+    await handleObsidianConnector(
+      mockRequest({ method: 'PUT', url: '/api/obsidian/config' }),
+      mockResponse(),
+      createDeps({ vaultId: 'alpha', missionFolder: 'VentureOS/Missions' }),
+    );
+
+    const createRes = mockResponse();
+    await handleObsidianConnector(
+      mockRequest({ method: 'POST', url: '/api/obsidian/notes/write' }),
+      createRes,
+      createDeps({
+        missionId: 'MC-300',
+        title: 'Mission Template',
+        template: 'mission',
+        status: 'active',
+        owner: 'oracle',
+      }),
+    );
+    expect(createRes._statusCode).toBe(200);
+
+    const notePath = path.join(vaultA, 'VentureOS', 'Missions', 'mc-300.md');
+    const created = fs.readFileSync(notePath, 'utf8');
+    expect(created).toContain('missionId: MC-300');
+    expect(created).toContain('prNumber: null');
+    expect(created).toContain('status: active');
+    expect(created).toContain('owner: oracle');
+    expect(created).toContain('## Decisions');
+    expect(created).toContain('## Risks');
+    expect(created).toContain('## Next Actions');
+
+    const appendRes = mockResponse();
+    await handleObsidianConnector(
+      mockRequest({ method: 'POST', url: '/api/obsidian/notes/write' }),
+      appendRes,
+      createDeps({
+        missionId: 'MC-300',
+        mode: 'append',
+        sections: {
+          decisions: ['Ship template adapter'],
+          risks: ['Need stronger source ranking'],
+          nextActions: ['Wire unified search'],
+        },
+      }),
+    );
+    expect(appendRes._statusCode).toBe(200);
+
+    const appended = fs.readFileSync(notePath, 'utf8');
+    expect(appended).toContain('### Decisions');
+    expect(appended).toContain('Ship template adapter');
+    expect(appended).toContain('### Risks');
+    expect(appended).toContain('Need stronger source ranking');
+    expect(appended).toContain('### Next Actions');
+    expect(appended).toContain('Wire unified search');
+  });
+});
