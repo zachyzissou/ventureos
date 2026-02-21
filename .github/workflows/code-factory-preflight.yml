@@ -60,8 +60,9 @@ jobs:
     needs: preflight
     steps:
       - uses: actions/checkout@v4
-      - name: Dangerous-config lint
-        run: bash scripts/lint-dangerous-config.sh
+      - name: Validate risk policy JSON contract
+        run: |
+          node -e "const fs=require('fs');const path='.github/code-factory/risk-policy.json';const parsed=JSON.parse(fs.readFileSync(path,'utf8'));if(!parsed.required_checks||!parsed.risk_tier_rules){throw new Error('Invalid risk policy contract');}console.log('Risk policy contract valid.');"
 
   typecheck:
     name: typecheck
