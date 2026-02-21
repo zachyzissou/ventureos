@@ -1,19 +1,19 @@
-# Work Tracking (GitLab = Source of Truth)
+# Work Tracking (GitHub = Source of Truth)
 
 This repository is the **canonical tracker + implementation repo** for VentureOS (built on OpenClaw).
 
 ## Source of Truth
-- **GitLab Issues** in this repo are the source of truth for:
+- **GitHub Issues** in this repo are the source of truth for:
   - scope, acceptance criteria, and priority
-  - progress state (Todo / Doing / Blocked / Done)
+  - progress state (open / in progress / blocked / done)
   - decisions + tradeoffs
   - verification evidence
-- **GitLab Merge Requests** are the source of truth for the actual code/doc change.
+- **GitHub Pull Requests** are the source of truth for code and doc changes.
 
-## Rules (Non‑Negotiable)
+## Rules (Non-Negotiable)
 1. **No non-trivial work without an issue.**
-   - If it takes **>10 minutes**, touches infra, changes behavior, or adds a new workflow → create/link an issue.
-2. **Every MR must link an issue** and include verification evidence.
+   - If it takes **>10 minutes**, touches infra, changes behavior, or adds a new workflow -> create/link an issue.
+2. **Every PR must link an issue** and include verification evidence.
 3. **Definitions beat vibes.** Every issue needs:
    - Why / context
    - Definition of Done
@@ -23,17 +23,16 @@ This repository is the **canonical tracker + implementation repo** for VentureOS
 ## Local Agent Memory (secondary)
 The agent maintains local work logs under `~/clawd/memory/work-items/` for continuity across sessions.
 
-**Policy:** Local work items are helpful, but they must link back to the GitLab Issue URL (GitLab is canonical).
+**Policy:** Local work items are helpful, but they must link back to the GitHub issue URL (GitHub is canonical).
 
 ## Suggested Labels
-- `type::bug`, `type::feature`, `type::docs`, `type::ops`
-- `prio::p0`, `prio::p1`, `prio::p2`, `prio::p3`
-- `area::ventureos`, `area::quality`, `area::workflow`, `area::model-orchestration`
-- `bu::<name>` (optional, business‑unit scoped)
+- `bug`, `enhancement`, `documentation`, `security`
+- `P0`, `P1`, `P2` (priority)
+- `architecture`, `backend`, `dashboard`, `qa`
 
 ## Templates
-- Issues: `.gitlab/issue_templates/`
-- Merge requests: `.gitlab/merge_request_templates/`
+- Issue template: `docs/templates/github-issue-template.md`
+- PR template: `docs/templates/github-pr-template.md`
 
 ## Note: Huly
 We attempted a Huly-based tracker workflow, but Huly Desktop on this machine is not exposing a local server for automated import. If/when a self-hosted Huly backend is available, we can revisit.
