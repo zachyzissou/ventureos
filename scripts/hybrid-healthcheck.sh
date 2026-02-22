@@ -9,6 +9,9 @@
 # Usage:
 #   ./scripts/hybrid-healthcheck.sh           # Full health check
 #   ./scripts/hybrid-healthcheck.sh --json    # JSON output for scripting
+# Notes:
+#   - Prefers VentureOS Bridge API health on :18790.
+#   - Falls back to OpenClaw gateway health on :18789 when available.
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
@@ -48,10 +51,25 @@ check() {
 # Load tokens
 DASHBOARD_API_TOKEN=""
 BRIDGE_TOKEN=""
+BRIDGE_URL=""
 if [ -f "$ENV_FILE" ]; then
   DASHBOARD_API_TOKEN=$(grep '^DASHBOARD_API_TOKEN=' "$ENV_FILE" | cut -d'=' -f2- || true)
   BRIDGE_TOKEN=$(grep '^BRIDGE_TOKEN=' "$ENV_FILE" | cut -d'=' -f2- || true)
+  BRIDGE_URL=$(grep '^BRIDGE_URL=' "$ENV_FILE" | cut -d'=' -f2- || true)
 fi
+
+if [ -n "$BRIDGE_URL" ]; then
+  BRIDGE_BASE_URL="${BRIDGE_URL%/}"
+else
+  BRIDGE_BASE_URL="http://localhost:18790"
+fi
+# Healthcheck runs on host; convert Docker host alias to host-local loopback.
+BRIDGE_BASE_URL="${BRIDGE_BASE_URL/host.docker.internal/localhost}"
+
+http_code() {
+  local url="$1"
+  curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000"
+}
 
 $JSON_OUTPUT || echo ""
 $JSON_OUTPUT || echo "── VentureOS Hybrid Health Check ──"
@@ -82,12 +100,43 @@ if [ -f "$COMPOSE_FILE" ]; then
   fi
 fi
 
-# 3. Bridge API health (host)
-BRIDGE_HEALTH=$(curl -sf http://localhost:18790/health 2>/dev/null || echo "")
-if echo "$BRIDGE_HEALTH" | grep -q '"ok"'; then
-  check "Bridge API" "pass"
+# 3. Bridge API or OpenClaw gateway health (host)
+BRIDGE_MODE=""
+BRIDGE_ACTIVE_BASE=""
+BRIDGE_DETAIL=""
+BRIDGE_CANDIDATES=()
+BRIDGE_CANDIDATES+=("$BRIDGE_BASE_URL")
+for fallback in "http://localhost:18790" "http://localhost:18789"; do
+  if [ "$fallback" != "$BRIDGE_BASE_URL" ]; then
+    BRIDGE_CANDIDATES+=("$fallback")
+  fi
+done
+
+for base in "${BRIDGE_CANDIDATES[@]}"; do
+  health_url="${base}/health"
+  body=$(curl -s "$health_url" 2>/dev/null || true)
+  code=$(http_code "$health_url")
+  if [ "$code" != "200" ]; then
+    continue
+  fi
+  if echo "$body" | grep -q '"ok"'; then
+    BRIDGE_MODE="bridge"
+    BRIDGE_ACTIVE_BASE="$base"
+    BRIDGE_DETAIL="bridge mode (${base})"
+    break
+  fi
+  if echo "$body" | grep -qi '<openclaw-app>'; then
+    BRIDGE_MODE="gateway"
+    BRIDGE_ACTIVE_BASE="$base"
+    BRIDGE_DETAIL="gateway mode (${base})"
+    break
+  fi
+done
+
+if [ -n "$BRIDGE_MODE" ]; then
+  check "Bridge API" "pass" "$BRIDGE_DETAIL"
 else
-  check "Bridge API" "fail" "Not responding"
+  check "Bridge API" "fail" "Not responding on $BRIDGE_BASE_URL, :18790, or :18789"
 fi
 
 # 4. Dashboard /api/config
@@ -106,13 +155,19 @@ fi
 
 # 5. Bridge authenticated endpoint
 if [ -n "$BRIDGE_TOKEN" ]; then
-  BRIDGE_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
-    -H "Authorization: Bearer $BRIDGE_TOKEN" \
-    http://localhost:18790/api/bridge/config 2>/dev/null || echo "000")
-  if [ "$BRIDGE_CODE" = "200" ]; then
-    check "Bridge Auth" "pass" "HTTP $BRIDGE_CODE"
+  if [ "$BRIDGE_MODE" = "bridge" ] && [ -n "$BRIDGE_ACTIVE_BASE" ]; then
+    BRIDGE_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+      -H "Authorization: Bearer $BRIDGE_TOKEN" \
+      "$BRIDGE_ACTIVE_BASE/api/bridge/config" 2>/dev/null || echo "000")
+    if [ "$BRIDGE_CODE" = "200" ]; then
+      check "Bridge Auth" "pass" "HTTP $BRIDGE_CODE"
+    else
+      check "Bridge Auth" "fail" "HTTP $BRIDGE_CODE"
+    fi
+  elif [ "$BRIDGE_MODE" = "gateway" ]; then
+    check "Bridge Auth" "warn" "Gateway mode detected; skipping bridge auth probe"
   else
-    check "Bridge Auth" "fail" "HTTP $BRIDGE_CODE"
+    check "Bridge Auth" "fail" "Bridge endpoint unavailable for auth probe"
   fi
 fi
 
@@ -124,13 +179,21 @@ else
 fi
 
 # 7. Port checks
-for port in 8001 5433 18790; do
+for port in 8001 5433; do
   if lsof -i ":$port" -sTCP:LISTEN >/dev/null 2>&1; then
     check "Port $port" "pass" "listening"
   else
     check "Port $port" "fail" "not listening"
   fi
 done
+
+if lsof -i ":18790" -sTCP:LISTEN >/dev/null 2>&1; then
+  check "Bridge/Gateway Port" "pass" "18790 listening"
+elif lsof -i ":18789" -sTCP:LISTEN >/dev/null 2>&1; then
+  check "Bridge/Gateway Port" "pass" "18789 listening"
+else
+  check "Bridge/Gateway Port" "fail" "neither 18790 nor 18789 is listening"
+fi
 
 # ── Output ───────────────────────────────────────────────────────────────────
 

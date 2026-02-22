@@ -123,17 +123,20 @@ Checks:
 - Docker Desktop running
 - Postgres container healthy
 - Dashboard container healthy
-- Bridge API responding
+- Bridge endpoint responding (Bridge API on `:18790` or OpenClaw gateway on `:18789`)
 - Dashboard API responding (authenticated)
-- Bridge auth working
+- Bridge auth working (Bridge API mode) or explicitly skipped in gateway mode
 - Postgres accepting connections
-- All ports (8001, 5433, 18790) listening
+- Required ports listening (`8001`, `5433`, and bridge/gateway on `18790` or `18789`)
 
 ### Manual Health Checks
 
 ```bash
 # Bridge health (unauthenticated)
 curl -sf http://localhost:18790/health | jq .
+
+# If using OpenClaw gateway mode instead of Bridge API
+curl -sf http://localhost:18789/health >/dev/null
 
 # Dashboard health (unauthenticated — Issue #191)
 curl -sf http://localhost:8001/api/health | jq .

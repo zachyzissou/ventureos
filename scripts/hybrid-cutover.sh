@@ -61,8 +61,8 @@ info "Docker Desktop is running"
 [ -f "$COMPOSE_FILE" ] || fail "docker-compose.yml not found at $COMPOSE_FILE"
 info "docker-compose.yml found"
 
-# Validate compose file
-docker compose -f "$COMPOSE_FILE" config --quiet 2>/dev/null || fail "docker-compose.yml is invalid"
+# Validate compose file with the hybrid env file loaded
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" config --quiet 2>/dev/null || fail "docker-compose.yml is invalid"
 info "docker-compose.yml is valid"
 
 # Environment file exists?

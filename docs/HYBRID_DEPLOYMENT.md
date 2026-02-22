@@ -289,10 +289,14 @@ Run after bring-up or when troubleshooting:
 curl -sf http://localhost:18790/health | jq .ok
 # → true
 
+# Alternative: OpenClaw gateway health (host)
+curl -sf http://localhost:18789/health >/dev/null
+
 # Bridge API authenticated endpoint (host)
 curl -sf -H "Authorization: Bearer $BRIDGE_TOKEN" \
   http://localhost:18790/api/bridge/config | jq .name
 # → "OpenClaw Bridge API"
+# (Gateway mode does not expose the Bridge auth endpoint; healthcheck reports this as skipped/warn.)
 
 # Dashboard health (container → host)
 curl -sf -H "Authorization: Bearer $DASHBOARD_API_TOKEN" \
