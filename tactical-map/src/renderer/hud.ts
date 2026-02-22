@@ -62,6 +62,13 @@ export function createHud(): Hud {
   const tickerBg = new Graphics();
   tickerContainer.addChild(tickerBg);
 
+  // Keep ticker text constrained to the strip bounds.
+  const tickerViewport = new Container();
+  tickerContainer.addChild(tickerViewport);
+  const tickerMask = new Graphics();
+  tickerContainer.addChild(tickerMask);
+  tickerViewport.mask = tickerMask;
+
   const tickerText = new Text({
     text: 'Loading KPIs…',
     style: {
@@ -71,7 +78,7 @@ export function createHud(): Hud {
     }
   });
   tickerText.anchor.set(0, 0.5);
-  tickerContainer.addChild(tickerText);
+  tickerViewport.addChild(tickerText);
 
   let width = 1920;
   let height = 1080;
@@ -101,6 +108,8 @@ export function createHud(): Hud {
     tickerContainer.position.set(width - pad - tickerW, 0);
     tickerBg.clear();
     tickerBg.rect(0, 0, tickerW, barH).fill({ color: 0x000000, alpha: 0.66 });
+    tickerMask.clear();
+    tickerMask.rect(0, 0, tickerW, barH).fill({ color: 0xffffff, alpha: 1 });
 
     tickerText.position.set(12, barH / 2);
     scrollX = tickerW; // reset scroll
