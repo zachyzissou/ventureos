@@ -176,7 +176,7 @@ Current next steps (as of February 22, 2026):
 2. `npm run openclaw:local-ready:cron`
 3. Confirm Mission Control shows the latest `/api/openclaw-local-readiness` snapshot.
 4. If bridge checks should pass, set `BRIDGE_TOKEN_FILE` and rerun `npm run openclaw:local-smoke -- --profile bridge`.
-5. Track rollout follow-ups in issues `#431` and `#432`.
+5. Ensure dashboard container has report artifact access via `OPENCLAW_LOCAL_READINESS_REPORT_DIR` + bind mount in `docker-compose.yml`.
 
 ### Production Dashboard
 Tactical map integrates with the VentureOS dashboard on port 8001:

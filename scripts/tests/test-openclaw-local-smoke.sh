@@ -47,6 +47,36 @@ TOKEN_FILE="$TMP_DIR/token.txt"
 echo "test-token" > "$TOKEN_FILE"
 BRIDGE_TOKEN_FILE="$TMP_DIR/bridge-token.txt"
 echo "bridge-token" > "$BRIDGE_TOKEN_FILE"
+FAKE_OPENCLAW_BIN_DIR="$TMP_DIR/fake-openclaw-bin"
+mkdir -p "$FAKE_OPENCLAW_BIN_DIR"
+
+cat > "$FAKE_OPENCLAW_BIN_DIR/openclaw" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${1:-}" == "gateway" && "${2:-}" == "status" ]]; then
+  mode="${OPENCLAW_FAKE_STATUS_MODE:-healthy}"
+  if [[ "$mode" == "healthy" ]]; then
+    cat <<'OUT'
+Service: LaunchAgent (not loaded)
+RPC probe: ok
+Listening: 127.0.0.1:18789
+OUT
+    exit 0
+  fi
+
+  cat <<'OUT'
+Service: LaunchAgent (not loaded)
+Runtime: unknown
+Service unit not found.
+OUT
+  exit 0
+fi
+
+echo "unsupported fake openclaw invocation: $*" >&2
+exit 1
+SH
+chmod +x "$FAKE_OPENCLAW_BIN_DIR/openclaw"
 
 cat > "$TMP_DIR/mock-dashboard.py" <<'PY'
 import json
@@ -408,4 +438,58 @@ assert summary.get("status") == "pass", summary
 checks = {c["id"]: c for c in payload.get("checks", [])}
 assert checks["dashboard-services"]["status"] == "pass", checks["dashboard-services"]
 print("OPENCLAW_LOCAL_SMOKE_RETRY_429_OK")
+PY
+
+REPORT_DIR_OPENCLAW_HEALTHY="$TMP_DIR/reports-openclaw-healthy"
+env PATH="$FAKE_OPENCLAW_BIN_DIR:$PATH" OPENCLAW_FAKE_STATUS_MODE=healthy bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_OPENCLAW_HEALTHY" \
+  --profile quick \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-openclaw-healthy.out
+
+python3 - "$REPORT_DIR_OPENCLAW_HEALTHY" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing openclaw healthy json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("status") == "pass", summary
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["openclaw-gateway-status"]["status"] == "pass", checks["openclaw-gateway-status"]
+print("OPENCLAW_LOCAL_SMOKE_GATEWAY_SIGNAL_HEALTHY_OK")
+PY
+
+REPORT_DIR_OPENCLAW_UNHEALTHY="$TMP_DIR/reports-openclaw-unhealthy"
+set +e
+env PATH="$FAKE_OPENCLAW_BIN_DIR:$PATH" OPENCLAW_FAKE_STATUS_MODE=unhealthy bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_OPENCLAW_UNHEALTHY" \
+  --profile quick \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-openclaw-unhealthy.out
+UNHEALTHY_RC=$?
+set -e
+
+if [[ "$UNHEALTHY_RC" -ne 2 ]]; then
+  echo "Expected unhealthy gateway smoke run to exit 2, got $UNHEALTHY_RC" >&2
+  exit 1
+fi
+
+python3 - "$REPORT_DIR_OPENCLAW_UNHEALTHY" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing openclaw unhealthy json report"
+payload = json.loads(json_reports[-1].read_text())
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["openclaw-gateway-status"]["status"] == "fail", checks["openclaw-gateway-status"]
+print("OPENCLAW_LOCAL_SMOKE_GATEWAY_SIGNAL_UNHEALTHY_OK")
 PY

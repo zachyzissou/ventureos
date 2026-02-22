@@ -135,7 +135,10 @@ import { handleWebMcp } from './routes/webmcp.js';
 import { handleVisualExplainer } from './routes/visual-explainer.js';
 import { handleProposalLifecycle, handleProposalLifecycleUpgrade } from './routes/proposal-lifecycle.js';
 import { handleLivingFiles } from './routes/living-files.js';
-import { handleOpenclawLocalReadiness } from './routes/openclaw-local-readiness.js';
+import {
+  handleOpenclawLocalReadiness,
+  resolveOpenclawLocalReadinessReportDir,
+} from './routes/openclaw-local-readiness.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 import {
   buildAvgResponseTime,
@@ -180,6 +183,10 @@ const heartbeatPath: string = path.join(WORKSPACE_DIR, 'HEARTBEAT.md');
 const healthHistoryFile: string = path.join(dataDir, 'health-history.json');
 const claudeUsageFile: string = path.join(dataDir, 'claude-usage.json');
 const scrapeScript: string = path.join(WORKSPACE_DIR, 'scripts', 'scrape-claude-usage.sh');
+const OPENCLAW_LOCAL_READINESS_REPORT_DIR: string = resolveOpenclawLocalReadinessReportDir(
+  VENTUREOS_ROOT,
+  process.env,
+);
 
 // Client HTML paths — served from client/ directory
 const htmlPath: string = path.join(import.meta.dirname, '..', 'client', 'index.html');
@@ -1943,7 +1950,7 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   // Local OpenClaw readiness summary (Mission Control card)
   try {
     if (handleOpenclawLocalReadiness(req, res, {
-      reportDir: path.join(VENTUREOS_ROOT, 'runtime', 'reports', 'openclaw-local-smoke'),
+      reportDir: OPENCLAW_LOCAL_READINESS_REPORT_DIR,
       sendJson,
     })) return;
   } catch {
