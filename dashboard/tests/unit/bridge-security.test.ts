@@ -63,11 +63,14 @@ describe('bridge-security', () => {
     expect(rateLimitGroup('/api/bridge/live')).toBe('sse');
 
     const limiter = createRateLimiter(limits);
-    expect(limiter('127.0.0.1', 'default')).toBe(true);
-    expect(limiter('127.0.0.1', 'default')).toBe(true);
-    expect(limiter('127.0.0.1', 'default')).toBe(false);
+    expect(limiter('127.0.0.1', 'default').allowed).toBe(true);
+    expect(limiter('127.0.0.1', 'default').allowed).toBe(true);
+    const blocked = limiter('127.0.0.1', 'default');
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.remaining).toBe(0);
+    expect(blocked.resetMs).toBeGreaterThan(0);
 
     vi.advanceTimersByTime(1001);
-    expect(limiter('127.0.0.1', 'default')).toBe(true);
+    expect(limiter('127.0.0.1', 'default').allowed).toBe(true);
   });
 });

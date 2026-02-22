@@ -10,7 +10,7 @@ REPORT_DIR="${SMOKE_REPORT_DIR:-$REPO_ROOT/runtime/reports/openclaw-local-smoke}
 HTTP_TIMEOUT_SEC="${SMOKE_HTTP_TIMEOUT_SEC:-5}"
 HTTP_RETRY_MAX="${SMOKE_HTTP_RETRY_MAX:-2}"
 HTTP_RETRY_BASE_SEC="${SMOKE_HTTP_RETRY_BASE_SEC:-1}"
-HTTP_RETRY_MAX_DELAY_SEC="${SMOKE_HTTP_RETRY_MAX_DELAY_SEC:-15}"
+HTTP_RETRY_MAX_DELAY_SEC="${SMOKE_HTTP_RETRY_MAX_DELAY_SEC:-60}"
 PROFILE="full"
 SKIP_OPENCLAW_CLI=0
 SKIP_MAP=0
@@ -53,7 +53,7 @@ Env overrides:
   SMOKE_HTTP_RETRY_BASE_SEC
                           Base delay in seconds for retry backoff (default: 1)
   SMOKE_HTTP_RETRY_MAX_DELAY_SEC
-                          Maximum retry delay in seconds (default: 15)
+                          Maximum retry delay in seconds (default: 60)
 EOF_USAGE
 }
 

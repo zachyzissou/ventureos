@@ -5,6 +5,12 @@ import crypto from 'node:crypto';
 import { readBridgeTokenOrThrow } from '../../lib/bridge-token-resolver.js';
 
 export type RateLimitRule = { max: number; windowMs: number };
+export type RateLimitResult = {
+  allowed: boolean;
+  limit: number;
+  remaining: number;
+  resetMs: number;
+};
 
 export function normalizeIp(ip: string): string {
   if (!ip) return ip;
@@ -130,9 +136,11 @@ export function rateLimitGroup(pathname: string): string {
   return 'default';
 }
 
-export function createRateLimiter(rateLimits: Record<string, RateLimitRule>): (ip: string, group: string) => boolean {
+export function createRateLimiter(
+  rateLimits: Record<string, RateLimitRule>,
+): (ip: string, group: string) => RateLimitResult {
   const state: Map<string, number[]> = new Map();
-  return (ip: string, group: string): boolean => {
+  return (ip: string, group: string): RateLimitResult => {
     const rule = rateLimits[group] ?? rateLimits.default;
     const now = Date.now();
     const key = `${ip}:${group}`;
@@ -140,10 +148,24 @@ export function createRateLimiter(rateLimits: Record<string, RateLimitRule>): (i
     const fresh = list.filter((t) => now - t < rule.windowMs);
     if (fresh.length >= rule.max) {
       state.set(key, fresh);
-      return false;
+      const oldest = fresh[0] ?? now;
+      const resetMs = Math.max(0, rule.windowMs - (now - oldest));
+      return {
+        allowed: false,
+        limit: rule.max,
+        remaining: 0,
+        resetMs,
+      };
     }
     fresh.push(now);
     state.set(key, fresh);
-    return true;
+    const oldest = fresh[0] ?? now;
+    const resetMs = Math.max(0, rule.windowMs - (now - oldest));
+    return {
+      allowed: true,
+      limit: rule.max,
+      remaining: Math.max(0, rule.max - fresh.length),
+      resetMs,
+    };
   };
 }
