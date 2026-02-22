@@ -257,7 +257,7 @@ bash scripts/refresh-local-integration-ready.sh \
 
 **Behavior:**
 - Runs `scripts/openclaw-local-smoke.sh` (unless `--skip-smoke` is set).
-- Enforces strict latest JSON/MD timestamp pairing.
+- Enforces strict latest JSON/MD/SVG timestamp pairing.
 - Validates required smoke JSON schema before rendering readiness markdown.
 - Supports `--history-limit <n>` to control trend rows in the output.
 - Rewrites readiness summary markdown with:

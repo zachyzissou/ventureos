@@ -260,6 +260,9 @@ JSON
 cat > "$BAD_DIR/openclaw-local-smoke-20990101T010101Z.md" <<'MD'
 # bad
 MD
+cat > "$BAD_DIR/openclaw-local-smoke-20990101T010101Z.svg" <<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"></svg>
+SVG
 set +e
 bash "$REFRESH_SCRIPT" --skip-smoke --report-dir "$BAD_DIR" --output-doc "$OUT_DOC" >/tmp/refresh-local-schema.out 2>&1
 rc=$?
@@ -275,3 +278,24 @@ if ! has_pattern "schema" /tmp/refresh-local-schema.out; then
 fi
 
 echo "REFRESH_LOCAL_INTEGRATION_READY_SCHEMA_CHECK_OK"
+
+# SVG completeness check: latest paired JSON/MD without SVG must fail.
+BAD_SVG_DIR="$TMP_DIR/reports-no-svg"
+mkdir -p "$BAD_SVG_DIR"
+cp "$(ls -1 "$REPORT_DIR"/openclaw-local-smoke-*.json | tail -n 1)" "$BAD_SVG_DIR/openclaw-local-smoke-20990101T020202Z.json"
+cp "$(ls -1 "$REPORT_DIR"/openclaw-local-smoke-*.md | tail -n 1)" "$BAD_SVG_DIR/openclaw-local-smoke-20990101T020202Z.md"
+set +e
+bash "$REFRESH_SCRIPT" --skip-smoke --report-dir "$BAD_SVG_DIR" --output-doc "$OUT_DOC" >/tmp/refresh-local-svg.out 2>&1
+rc=$?
+set -e
+if [[ "$rc" -eq 0 ]]; then
+  echo "expected missing svg failure" >&2
+  exit 1
+fi
+if ! has_pattern "SVG" /tmp/refresh-local-svg.out; then
+  echo "expected svg error message" >&2
+  cat /tmp/refresh-local-svg.out >&2
+  exit 1
+fi
+
+echo "REFRESH_LOCAL_INTEGRATION_READY_SVG_CHECK_OK"
