@@ -5,15 +5,19 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SMOKE_SCRIPT="$ROOT/scripts/openclaw-local-smoke.sh"
 TMP_DIR="$(mktemp -d)"
 SERVER_PID=""
+BRIDGE_SERVER_PID=""
 
 cleanup() {
   if [[ -n "$SERVER_PID" ]]; then
     kill "$SERVER_PID" 2>/dev/null || true
     wait "$SERVER_PID" 2>/dev/null || true
   fi
+  if [[ -n "$BRIDGE_SERVER_PID" ]]; then
+    kill "$BRIDGE_SERVER_PID" 2>/dev/null || true
+    wait "$BRIDGE_SERVER_PID" 2>/dev/null || true
+  fi
   rm -rf "$TMP_DIR"
 }
-
 trap cleanup EXIT
 
 PORT="$(python3 - <<'PY'
@@ -25,8 +29,19 @@ s.close()
 PY
 )"
 
+BRIDGE_PORT="$(python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(('127.0.0.1', 0))
+print(s.getsockname()[1])
+s.close()
+PY
+)"
+
 TOKEN_FILE="$TMP_DIR/token.txt"
 echo "test-token" > "$TOKEN_FILE"
+BRIDGE_TOKEN_FILE="$TMP_DIR/bridge-token.txt"
+echo "bridge-token" > "$BRIDGE_TOKEN_FILE"
 
 cat > "$TMP_DIR/mock-dashboard.py" <<'PY'
 import json
@@ -106,42 +121,224 @@ class Handler(BaseHTTPRequestHandler):
 HTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
 PY
 
+cat > "$TMP_DIR/mock-bridge.py" <<'PY'
+import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import sys
+
+PORT = int(sys.argv[1])
+TOKEN = "Bearer bridge-token"
+
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass
+
+    def do_GET(self):
+        if self.path != "/api/bridge/scheduler-jobs":
+            self.send_response(404)
+            self.end_headers()
+            return
+        if self.headers.get("Authorization", "") != TOKEN:
+            body = json.dumps({"ok": False, "error": "unauthorized"}).encode("utf-8")
+            self.send_response(401)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        body = json.dumps([]).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+HTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+PY
+
 python3 "$TMP_DIR/mock-dashboard.py" "$PORT" >/dev/null 2>&1 &
 SERVER_PID=$!
+python3 "$TMP_DIR/mock-bridge.py" "$BRIDGE_PORT" >/dev/null 2>&1 &
+BRIDGE_SERVER_PID=$!
 sleep 0.3
 
-REPORT_DIR="$TMP_DIR/reports"
+REPORT_DIR_BASELINE="$TMP_DIR/reports-baseline"
 bash "$SMOKE_SCRIPT" \
   --dashboard-url "http://127.0.0.1:$PORT" \
   --token-file "$TOKEN_FILE" \
-  --report-dir "$REPORT_DIR" \
+  --report-dir "$REPORT_DIR_BASELINE" \
+  --profile full \
   --skip-openclaw-cli \
   --skip-bridge \
   --timeout-sec 3 >/tmp/openclaw-local-smoke-test.out
 
-python3 - <<PY
+python3 - "$REPORT_DIR_BASELINE" <<'PY'
 import json
 from pathlib import Path
+import sys
 
-report_dir = Path("$REPORT_DIR")
+report_dir = Path(sys.argv[1])
 json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
-md_reports = sorted(report_dir.glob("openclaw-local-smoke-*.md"))
+svg_reports = sorted(report_dir.glob("openclaw-local-smoke-*.svg"))
 assert json_reports, "missing json report"
-assert md_reports, "missing markdown report"
+assert svg_reports, "missing svg report"
 
 payload = json.loads(json_reports[-1].read_text())
 summary = payload.get("summary", {})
 assert summary.get("status") == "pass", summary
-assert summary.get("requiredFailures") == 0, summary
-ids = {c["id"] for c in payload.get("checks", [])}
-for need in (
-    "dashboard-health",
-    "dashboard-config-auth",
-    "dashboard-services",
-    "dashboard-scheduler-jobs",
-    "dashboard-agent-health",
-    "dashboard-live-telemetry-sse",
-):
-    assert need in ids, f"missing check id: {need}"
-print("OPENCLAW_LOCAL_SMOKE_TEST_OK")
+assert summary.get("verdict") == "go", summary
+assert isinstance(summary.get("readinessScore"), int), summary
+assert summary.get("confidence") in {"high", "medium", "low"}, summary
+assert summary.get("profile") == "full", summary
+
+check = next(c for c in payload.get("checks", []) if c["id"] == "dashboard-services")
+for key in ("group", "severity", "likelyCause", "nextCommand"):
+    assert key in check, check
+print("OPENCLAW_LOCAL_SMOKE_BASELINE_OK")
+PY
+
+REPORT_DIR_QUICK="$TMP_DIR/reports-quick"
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_QUICK" \
+  --profile quick \
+  --skip-openclaw-cli \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-quick.out
+
+python3 - "$REPORT_DIR_QUICK" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing quick json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("profile") == "quick", summary
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["dashboard-map-route"]["status"] == "skipped", checks["dashboard-map-route"]
+assert checks["bridge-scheduler-jobs"]["status"] == "skipped", checks["bridge-scheduler-jobs"]
+print("OPENCLAW_LOCAL_SMOKE_QUICK_PROFILE_OK")
+PY
+
+REPORT_DIR_BRIDGE="$TMP_DIR/reports-bridge"
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_BRIDGE" \
+  --profile bridge \
+  --bridge-url "http://127.0.0.1:$BRIDGE_PORT" \
+  --bridge-token-file "$BRIDGE_TOKEN_FILE" \
+  --skip-openclaw-cli \
+  --skip-map \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-bridge.out
+
+python3 - "$REPORT_DIR_BRIDGE" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing bridge json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("profile") == "bridge", summary
+assert summary.get("verdict") == "go", summary
+checks = {c["id"]: c for c in payload.get("checks", [])}
+bridge = checks.get("bridge-scheduler-jobs")
+assert bridge is not None, "missing bridge check"
+assert bridge.get("status") == "pass", bridge
+assert bridge.get("severity") == "critical-optional", bridge
+print("OPENCLAW_LOCAL_SMOKE_BRIDGE_PROFILE_OK")
+PY
+
+REPORT_DIR_FULL_BRIDGE="$TMP_DIR/reports-full-bridge"
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_FULL_BRIDGE" \
+  --profile full \
+  --bridge-url "http://127.0.0.1:$BRIDGE_PORT" \
+  --bridge-token-file "$BRIDGE_TOKEN_FILE" \
+  --skip-openclaw-cli \
+  --skip-map \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-full-bridge.out
+
+python3 - "$REPORT_DIR_FULL_BRIDGE" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing full profile json report"
+payload = json.loads(json_reports[-1].read_text())
+checks = {c["id"]: c for c in payload.get("checks", [])}
+bridge = checks.get("bridge-scheduler-jobs")
+assert bridge is not None, "missing bridge check"
+assert bridge.get("severity") == "warn", bridge
+print("OPENCLAW_LOCAL_SMOKE_FULL_PROFILE_BRIDGE_SEVERITY_OK")
+PY
+
+REPORT_DIR_PROFILE_OVERRIDE="$TMP_DIR/reports-profile-override"
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_PROFILE_OVERRIDE" \
+  --profile quick \
+  --profile full \
+  --bridge-url "http://127.0.0.1:$BRIDGE_PORT" \
+  --bridge-token-file "$BRIDGE_TOKEN_FILE" \
+  --skip-openclaw-cli \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-profile-override.out
+
+python3 - "$REPORT_DIR_PROFILE_OVERRIDE" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing profile-override json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("profile") == "full", summary
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["dashboard-map-route"]["status"] == "pass", checks["dashboard-map-route"]
+bridge = checks.get("bridge-scheduler-jobs")
+assert bridge is not None, "missing bridge check"
+assert bridge.get("status") == "pass", bridge
+assert bridge.get("severity") == "warn", bridge
+print("OPENCLAW_LOCAL_SMOKE_PROFILE_OVERRIDE_OK")
+PY
+
+REPORT_DIR_SKIP_OVERRIDE="$TMP_DIR/reports-skip-override"
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_SKIP_OVERRIDE" \
+  --skip-map \
+  --profile full \
+  --bridge-url "http://127.0.0.1:$BRIDGE_PORT" \
+  --bridge-token-file "$BRIDGE_TOKEN_FILE" \
+  --skip-openclaw-cli \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-skip-override.out
+
+python3 - "$REPORT_DIR_SKIP_OVERRIDE" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing skip-override json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("profile") == "full", summary
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["dashboard-map-route"]["status"] == "skipped", checks["dashboard-map-route"]
+print("OPENCLAW_LOCAL_SMOKE_SKIP_OVERRIDE_OK")
 PY

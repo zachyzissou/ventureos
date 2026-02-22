@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { readBridgeTokenOrThrow } from '../../lib/bridge-token-resolver.js';
 
 export type RateLimitRule = { max: number; windowMs: number };
 
@@ -64,9 +65,11 @@ export function authorizeRequest(authorizationHeader: string | undefined, bridge
 }
 
 export function readBridgeToken(tokenFile: string, envToken: string | undefined): string {
-  if (envToken) return envToken.trim();
-  if (fs.existsSync(tokenFile)) return fs.readFileSync(tokenFile, 'utf8').trim();
-  throw new Error('Missing BRIDGE_TOKEN (set env or BRIDGE_TOKEN_FILE)');
+  return readBridgeTokenOrThrow({
+    explicitToken: envToken,
+    envTokenFile: process.env.BRIDGE_TOKEN_FILE,
+    defaultTokenFile: tokenFile,
+  }).token;
 }
 
 export function logBridgeAudit(

@@ -6,6 +6,8 @@ on:
     paths:
       - 'lib/**'
       - 'scripts/**'
+      - 'docs/**'
+      - 'README.md'
       - 'jest.config.cjs'
       - 'tsconfig.json'
       - 'package.json'
@@ -15,6 +17,8 @@ on:
     paths:
       - 'lib/**'
       - 'scripts/**'
+      - 'docs/**'
+      - 'README.md'
       - 'jest.config.cjs'
       - 'tsconfig.json'
       - 'package.json'
@@ -54,3 +58,9 @@ jobs:
           npx jest lib/__tests__/conversation-http.test.ts --runInBand --forceExit
           npx jest lib/__tests__/kpi-registry.test.ts --runInBand --forceExit
           npx jest lib/__tests__/shared-context-watcher.test.ts --runInBand --forceExit
+          npx jest lib/__tests__/bridge-token-resolver.test.ts --runInBand --forceExit
+
+      - name: Run OpenClaw local readiness mock regressions
+        run: |
+          npm run test:openclaw:local-smoke
+          npm run test:openclaw:local-ready

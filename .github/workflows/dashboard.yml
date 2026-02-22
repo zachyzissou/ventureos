@@ -52,6 +52,7 @@ jobs:
           # Mark dist/lib/ and dist/scripts/ as CommonJS — these dirs contain
           # CJS output but land under dashboard/ ("type": "module"). Fix #199.
           mkdir -p dist/lib dist/scripts
+          cp ../lib/bridge-token-resolver.js dist/lib/bridge-token-resolver.js
           echo '{ "type": "commonjs" }' > dist/lib/package.json
           echo '{ "type": "commonjs" }' > dist/scripts/package.json
 

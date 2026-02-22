@@ -224,10 +224,50 @@ bash scripts/openclaw-local-smoke.sh \
   - auth-protected `/api/config`, `/api/services`, `/api/scheduler-jobs`, `/api/agent-health`
   - `/api/live-telemetry` SSE handshake
 - Optionally checks `/map/` and direct bridge scheduler endpoint.
-- Emits timestamped JSON + markdown reports to `runtime/reports/openclaw-local-smoke/`.
+- Supports profiles:
+  - `quick`: required checks + SSE only
+  - `full`: default full check set
+  - `bridge`: full check set with bridge severity escalated to `critical-optional`
+- Direct bridge auth precedence:
+  - `--bridge-token-file`
+  - `BRIDGE_TOKEN`
+  - `BRIDGE_TOKEN_FILE`
+  - default OpenClaw token file (`$OPENCLAW_DIR/bridge/bridge-token`)
+- Emits timestamped JSON + markdown + SVG reports to `runtime/reports/openclaw-local-smoke/`.
+- JSON summary includes `verdict`, `readinessScore`, `confidence`; each check includes `group`, `severity`, `likelyCause`, and `nextCommand`.
 - Exits with code `2` when any required check fails.
 
 **Regression test:**
 ```bash
 bash scripts/tests/test-openclaw-local-smoke.sh
+```
+
+---
+
+## 14) refresh-local-integration-ready.sh
+**Purpose:** Run local OpenClaw smoke and regenerate `docs/LOCAL_INTEGRATION_READY.md` from the newest artifact.
+
+**Usage:**
+```bash
+bash scripts/refresh-local-integration-ready.sh \
+  --dashboard-url http://127.0.0.1:8001 \
+  --token-file dashboard/data/.api-token \
+  --report-dir runtime/reports/openclaw-local-smoke
+```
+
+**Behavior:**
+- Runs `scripts/openclaw-local-smoke.sh` (unless `--skip-smoke` is set).
+- Enforces strict latest JSON/MD timestamp pairing.
+- Validates required smoke JSON schema before rendering readiness markdown.
+- Supports `--history-limit <n>` to control trend rows in the output.
+- Rewrites readiness summary markdown with:
+  - mission control card (`GO/HOLD/BLOCKED`, score, confidence)
+  - top blockers and next commands
+  - trend table from the latest N paired runs
+  - latest artifact references (JSON/MD/SVG)
+- Preserves smoke exit status when smoke is executed.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-refresh-local-integration-ready.sh
 ```
