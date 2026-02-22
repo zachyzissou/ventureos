@@ -135,6 +135,7 @@ import { handleWebMcp } from './routes/webmcp.js';
 import { handleVisualExplainer } from './routes/visual-explainer.js';
 import { handleProposalLifecycle, handleProposalLifecycleUpgrade } from './routes/proposal-lifecycle.js';
 import { handleLivingFiles } from './routes/living-files.js';
+import { handleOpenclawLocalReadiness } from './routes/openclaw-local-readiness.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 import {
   buildAvgResponseTime,
@@ -1934,6 +1935,16 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
       dataDir,
       sendJson,
       readRequestBody,
+    })) return;
+  } catch {
+    // ignore
+  }
+
+  // Local OpenClaw readiness summary (Mission Control card)
+  try {
+    if (handleOpenclawLocalReadiness(req, res, {
+      reportDir: path.join(VENTUREOS_ROOT, 'runtime', 'reports', 'openclaw-local-smoke'),
+      sendJson,
     })) return;
   } catch {
     // ignore

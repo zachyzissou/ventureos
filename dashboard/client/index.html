@@ -4829,6 +4829,11 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
       </div>
 
       <div class="card mb-24">
+        <h3 class="card-title">OpenClaw Local Readiness</h3>
+        <div id="mcOpenclawReadiness"></div>
+      </div>
+
+      <div class="card mb-24">
         <h3 class="card-title">Calendar & Scheduler</h3>
         <div id="mcSchedulerJobs"></div>
       </div>
@@ -6485,6 +6490,7 @@ let missionControl = null;
 let proposalLifecycleSummary = null;
 let livingFilesSummary = null;
 let schedulerJobs = [];
+let openclawLocalReadiness = null;
 let ventureFeatureFlags = { officeViewEnabled: false, updatedAt: 0 };
 let missionOfficeTasks = [];
 
@@ -8175,7 +8181,7 @@ function renderBarChart(el, items, opts = {}) {
 
 async function fetchMissionControlNow() {
   try {
-    const [mc, kpis, agents, scheduler, flags, lifecycle, living] = await Promise.all([
+    const [mc, kpis, agents, scheduler, flags, lifecycle, living, readiness] = await Promise.all([
       fetchJson('/api/ventureos-mission-control'),
       fetchJson('/api/ventureos-kpis?days=7'),
       fetchJson('/api/ventureos-agents'),
@@ -8183,11 +8189,13 @@ async function fetchMissionControlNow() {
       fetchJson('/api/ventureos-feature-flags').catch(() => null),
       fetchJson('/api/proposal-lifecycle/summary').catch(() => null),
       fetchJson('/api/living-files/dashboard').catch(() => null),
+      fetchJson('/api/openclaw-local-readiness').catch(() => null),
     ]);
     missionControl = mc;
     ventureosKpis = kpis;
     ventureosAgents = agents;
     schedulerJobs = Array.isArray(scheduler) ? scheduler : [];
+    openclawLocalReadiness = readiness;
     proposalLifecycleSummary = lifecycle?.summary || null;
     livingFilesSummary = living?.summary || null;
     if (flags && typeof flags === 'object') {
@@ -8732,6 +8740,79 @@ function updateMissionControl() {
     }).join('');
 
     livingEl.innerHTML = countRow + (rows || '<div class="empty-state-text">No living files registered</div>');
+  }
+
+  const readinessEl = document.getElementById('mcOpenclawReadiness');
+  if (readinessEl) {
+    const readiness = openclawLocalReadiness;
+    if (!readiness) {
+      readinessEl.innerHTML = '<div class="empty-state-text">Loading readiness snapshot...</div>';
+    } else if (!readiness.ok) {
+      readinessEl.innerHTML = '<div class="empty-state-text">Readiness snapshot unavailable</div>';
+    } else if (!readiness.available || !readiness.latest) {
+      readinessEl.innerHTML = '<div class="empty-state-text">No local readiness artifacts found yet</div>';
+    } else {
+      const latest = readiness.latest || {};
+      const summary = latest.summary || {};
+      const verdictRaw = (summary.verdict || 'blocked').toString().toLowerCase();
+      const verdictColor = verdictRaw === 'go'
+        ? 'var(--green)'
+        : verdictRaw === 'hold'
+          ? 'var(--yellow)'
+          : 'var(--red)';
+      const verdictLabel = verdictRaw.toUpperCase();
+      const score = Number.isFinite(summary.readinessScore) ? summary.readinessScore : '--';
+      const confidence = (summary.confidence || 'low').toString().toUpperCase();
+      const blockers = Array.isArray(latest.blockers) ? latest.blockers.slice(0, 3) : [];
+      const groups = Array.isArray(latest.checksByGroup) ? latest.checksByGroup : [];
+      const blockerHtml = blockers.map((b) => {
+        const owner = b.owner || 'Unassigned';
+        return `<div style="padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg-primary);margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+            <div style="font-weight:700;">${escapeHtml(b.id || 'check')}</div>
+            <span class="mono" style="font-size:10px;color:var(--text-muted);">${escapeHtml(owner)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${escapeHtml(b.likelyCause || b.detail || 'Failure detected')}</div>
+          <div class="mono" style="font-size:11px;color:var(--accent);margin-top:4px;">next: ${escapeHtml(b.nextCommand || 'n/a')}</div>
+        </div>`;
+      }).join('');
+      const groupHtml = groups.map((group) => {
+        const fail = Number(group.fail || 0);
+        const pass = Number(group.pass || 0);
+        const total = Number(group.total || 0);
+        const skipped = Number(group.skipped || 0);
+        return `<div style="display:grid;grid-template-columns:120px 1fr 1fr 1fr;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
+          <div class="mono" style="color:var(--text-secondary);">${escapeHtml(group.id || 'group')}</div>
+          <div style="color:var(--green);">${pass}/${total} pass</div>
+          <div style="color:${fail > 0 ? 'var(--red)' : 'var(--text-muted)'};">${fail} fail</div>
+          <div style="color:var(--text-muted);">${skipped} skipped</div>
+        </div>`;
+      }).join('');
+
+      readinessEl.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="tb-badge" style="background:rgba(99,102,241,0.16);color:${verdictColor};font-weight:800;">${escapeHtml(verdictLabel)}</span>
+            <span class="tb-badge" style="background:rgba(99,102,241,0.16);color:var(--accent);">score ${escapeHtml(score)}</span>
+            <span class="tb-badge" style="background:rgba(148,163,184,0.16);color:var(--text-secondary);">confidence ${escapeHtml(confidence)}</span>
+          </div>
+          <div class="mono" style="font-size:11px;color:var(--text-muted);">${escapeHtml(latest.timestamp || '--')}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+          profile ${escapeHtml(summary.profile || '--')} · required failures ${escapeHtml(summary.requiredFailures || 0)} · warnings ${escapeHtml(summary.warnings || 0)}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Top Blockers</div>
+            ${blockerHtml || '<div class="empty-state-text">No blockers</div>'}
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Check Groups</div>
+            ${groupHtml || '<div class="empty-state-text">No checks available</div>'}
+          </div>
+        </div>
+      `;
+    }
   }
 
   const schedulerEl = document.getElementById('mcSchedulerJobs');

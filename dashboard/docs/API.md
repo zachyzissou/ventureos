@@ -536,6 +536,17 @@ Each row includes:
 - `lastExit` / `lastExitCode`
 - `logPath` (when available)
 
+### `GET /api/openclaw-local-readiness`
+
+Returns the latest local smoke-readiness artifact summary used by Mission Control.
+
+Response highlights:
+- `available`: `false` when no smoke artifacts exist yet
+- `latest.summary`: verdict (`go|hold|blocked`), readiness score, confidence, and counts
+- `latest.blockers`: top 3 failed checks with likely cause + next command
+- `latest.checksByGroup`: pass/fail/skipped rollup by check group
+- `latest.artifacts`: latest JSON/MD/SVG artifact names (no absolute paths)
+
 ### `GET /api/git`
 
 Returns recent git commits (last 7 days) from tracked repositories.
