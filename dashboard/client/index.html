@@ -4493,6 +4493,9 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
             Data freshness unknown
           </span>
         </div>
+        <div id="overviewStaleBanner" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(239,68,68,0.45);background:rgba(239,68,68,0.12);color:var(--red);font-size:12px;font-weight:600;">
+          Freshness alert: stale dashboard sources detected.
+        </div>
       </div>
 
       <div class="grid mb-24" style="grid-template-columns: repeat(3, 1fr);">
@@ -6459,6 +6462,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
 <script type="module" src="/rpg/components/index.js"></script>
 <script src="/assets/feed-search-highlight.js"></script>
+<script src="/assets/overview-freshness.js"></script>
 <script>
 // Authenticated fetch helper (Phase 5.1 security + P0-5 429 handling)
 // Uses an HttpOnly cookie set via /api/login. Token is never exposed to JS.
@@ -6522,6 +6526,11 @@ let recentObs = null;
 let kpisLatestError = null;
 let agentHealthError = null;
 let recentObsError = null;
+let overviewFreshnessConfigLoaded = false;
+let overviewFreshnessConfigLoading = false;
+let overviewFreshnessLastSummaryState = null;
+const OVERVIEW_FRESHNESS_EVENT_COOLDOWN_MS = 60 * 1000;
+let overviewFreshnessLastEventAt = 0;
 
 let selectedAgentId = 'oracle';
 
@@ -6556,6 +6565,81 @@ function describeFetchFailure(res, payload, fallback = 'unavailable') {
 
 function isApiErrorPayload(payload) {
   return !!(payload && typeof payload === 'object' && (payload.error || payload.ok === false));
+}
+
+function normalizeThresholdMs(raw, fallback) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return fallback;
+  return Math.round(n);
+}
+
+function applyOverviewFreshnessThresholdConfig(config) {
+  const cfg = config && typeof config === 'object'
+    ? config.overviewFreshnessThresholdsMs
+    : null;
+  if (!cfg || typeof cfg !== 'object') return;
+
+  const next = {
+    kpi: {
+      freshMs: normalizeThresholdMs(cfg.kpi?.freshMs, overviewFreshnessThresholds.kpi.freshMs),
+      staleMs: normalizeThresholdMs(cfg.kpi?.staleMs, overviewFreshnessThresholds.kpi.staleMs),
+    },
+    agentHealth: {
+      freshMs: normalizeThresholdMs(cfg.agentHealth?.freshMs, overviewFreshnessThresholds.agentHealth.freshMs),
+      staleMs: normalizeThresholdMs(cfg.agentHealth?.staleMs, overviewFreshnessThresholds.agentHealth.staleMs),
+    },
+    observations: {
+      freshMs: normalizeThresholdMs(cfg.observations?.freshMs, overviewFreshnessThresholds.observations.freshMs),
+      staleMs: normalizeThresholdMs(cfg.observations?.staleMs, overviewFreshnessThresholds.observations.staleMs),
+    },
+  };
+
+  if (next.kpi.staleMs <= next.kpi.freshMs) next.kpi.staleMs = next.kpi.freshMs + 1;
+  if (next.agentHealth.staleMs <= next.agentHealth.freshMs) next.agentHealth.staleMs = next.agentHealth.freshMs + 1;
+  if (next.observations.staleMs <= next.observations.freshMs) next.observations.staleMs = next.observations.freshMs + 1;
+  overviewFreshnessThresholds = next;
+}
+
+async function loadOverviewFreshnessConfigOnce() {
+  if (overviewFreshnessConfigLoaded || overviewFreshnessConfigLoading) return;
+  overviewFreshnessConfigLoading = true;
+  try {
+    const cfg = await fetchJson('/api/config');
+    applyOverviewFreshnessThresholdConfig(cfg);
+    overviewFreshnessConfigLoaded = true;
+  } catch {
+    // Leave defaults in place
+  } finally {
+    overviewFreshnessConfigLoading = false;
+  }
+}
+
+function emitOverviewFreshnessEvent(summary, states) {
+  const now = Date.now();
+  const state = summary?.state || 'unknown';
+  if (state === overviewFreshnessLastSummaryState && now - overviewFreshnessLastEventAt < OVERVIEW_FRESHNESS_EVENT_COOLDOWN_MS) {
+    return;
+  }
+  const prevState = overviewFreshnessLastSummaryState;
+  overviewFreshnessLastSummaryState = state;
+  overviewFreshnessLastEventAt = now;
+
+  if (state !== 'stale' && prevState !== 'stale') return;
+
+  const payload = {
+    state,
+    stale: summary?.stale || 0,
+    aging: summary?.aging || 0,
+    unavailable: summary?.unavailable || 0,
+    total: Array.isArray(states) ? states.length : 0,
+    source: 'overview-widget',
+    emittedAt: now,
+  };
+  authFetch('/api/overview-freshness-event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
 }
 
 // Observations
@@ -6620,6 +6704,7 @@ document.querySelectorAll('.view-all-link').forEach(link => {
 });
 
 async function fetchData() {
+  void loadOverviewFreshnessConfigOnce();
   try {
     // Fast path: load sessions, costs, system first
     const [sessRes, costsRes, sysRes] = await Promise.all([
@@ -7060,7 +7145,7 @@ function updateVentureWidgets() {
   const kpiSourceMs = kpiMtimeMs > 0
     ? kpiMtimeMs
     : (parseDateOnlyMs(latest?.date) || parseDateOnlyMs((kpisLatest?.file || '').replace(/\.json$/, '')));
-  const kpiFreshness = setFreshnessBadge(kpiFreshnessEl, kpiSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.kpi);
+  const kpiFreshness = setFreshnessBadge(kpiFreshnessEl, kpiSourceMs, overviewFreshnessThresholds.kpi);
   if (kpiFreshness) freshnessStates.push(kpiFreshness);
 
   const sr = latest?.overall?.success_rate;
@@ -7106,7 +7191,7 @@ function updateVentureWidgets() {
   const healthSourceMs = (typeof agentHealth?.lastActiveMs === 'number' && agentHealth.lastActiveMs > 0)
     ? agentHealth.lastActiveMs
     : 0;
-  const healthFreshness = setFreshnessBadge(healthFreshnessEl, healthSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.agentHealth);
+  const healthFreshness = setFreshnessBadge(healthFreshnessEl, healthSourceMs, overviewFreshnessThresholds.agentHealth);
   if (healthFreshness) freshnessStates.push(healthFreshness);
   if (healthEl) {
     if (!agentHealth?.agents) {
@@ -7138,7 +7223,7 @@ function updateVentureWidgets() {
   if (obsErrEl) obsErrEl.textContent = recentObsError ? recentObsError : '';
   const obsItems = Array.isArray(recentObs?.items) ? recentObs.items : [];
   const obsSourceMs = obsItems.reduce((max, item) => Math.max(max, Number(item?.mtimeMs) || 0), 0);
-  const obsFreshness = setFreshnessBadge(obsFreshnessEl, obsSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.observations);
+  const obsFreshness = setFreshnessBadge(obsFreshnessEl, obsSourceMs, overviewFreshnessThresholds.observations);
   if (obsFreshness) freshnessStates.push(obsFreshness);
   if (obsEl) {
     const items = obsItems.length ? obsItems : (recentObs?.items || null);
@@ -8023,7 +8108,7 @@ function timeAgo(ms) {
   return Math.round(age / 86400000) + 'd ago';
 }
 
-const OVERVIEW_FRESHNESS_THRESHOLDS = {
+let overviewFreshnessThresholds = {
   kpi: { freshMs: 36 * 60 * 60 * 1000, staleMs: 96 * 60 * 60 * 1000 },
   agentHealth: { freshMs: 15 * 60 * 1000, staleMs: 2 * 60 * 60 * 1000 },
   observations: { freshMs: 6 * 60 * 60 * 1000, staleMs: 24 * 60 * 60 * 1000 },
@@ -8036,18 +8121,29 @@ function parseDateOnlyMs(raw) {
   return Number.isFinite(ms) ? ms : 0;
 }
 
-function formatAgeCompact(ageMs) {
-  const age = Math.max(0, ageMs || 0);
-  if (age < 60000) return `${Math.max(1, Math.round(age / 1000))}s`;
-  if (age < 3600000) return `${Math.round(age / 60000)}m`;
-  if (age < 86400000) return `${Math.round(age / 3600000)}h`;
-  return `${Math.round(age / 86400000)}d`;
+function getOverviewFreshnessUtils() {
+  const utils = window.OverviewFreshnessUtils;
+  return utils && typeof utils === 'object' ? utils : null;
 }
 
 function setFreshnessBadge(el, sourceMs, thresholds) {
   if (!el) return;
-  const ts = Number(sourceMs) || 0;
-  if (ts <= 0) {
+  const utils = getOverviewFreshnessUtils();
+  const result = utils
+    ? utils.classifyFreshnessState(sourceMs, thresholds, Date.now())
+    : (() => {
+        const ts = Number(sourceMs) || 0;
+        if (ts <= 0) return { state: 'no-data', ageMs: null, sourceMs: 0 };
+        const ageMs = Math.max(0, Date.now() - ts);
+        if (ageMs > thresholds.staleMs) return { state: 'stale', ageMs, sourceMs: ts };
+        if (ageMs > thresholds.freshMs) return { state: 'aging', ageMs, sourceMs: ts };
+        return { state: 'fresh', ageMs, sourceMs: ts };
+      })();
+  const state = result.state;
+  const ts = result.sourceMs || 0;
+  const ageMs = result.ageMs;
+
+  if (state === 'no-data') {
     el.textContent = 'No data';
     el.style.background = 'rgba(113,113,122,0.16)';
     el.style.color = 'var(--text-muted)';
@@ -8055,24 +8151,30 @@ function setFreshnessBadge(el, sourceMs, thresholds) {
     return { state: 'no-data', ageMs: null, sourceMs: 0 };
   }
 
-  const ageMs = Math.max(0, Date.now() - ts);
+  const ageLabel = utils
+    ? utils.formatFreshnessAge(ageMs)
+    : (() => {
+        const age = Math.max(0, Number(ageMs) || 0);
+        if (age < 60000) return `${Math.max(1, Math.round(age / 1000))}s`;
+        if (age < 3600000) return `${Math.round(age / 60000)}m`;
+        if (age < 86400000) return `${Math.round(age / 3600000)}h`;
+        return `${Math.round(age / 86400000)}d`;
+      })();
+
   let label = 'Fresh';
   let bg = 'rgba(16,185,129,0.16)';
   let color = 'var(--green)';
-  let state = 'fresh';
-  if (ageMs > thresholds.staleMs) {
+  if (state === 'stale') {
     label = 'Stale';
     bg = 'rgba(239,68,68,0.16)';
     color = 'var(--red)';
-    state = 'stale';
-  } else if (ageMs > thresholds.freshMs) {
+  } else if (state === 'aging') {
     label = 'Aging';
     bg = 'rgba(245,158,11,0.16)';
     color = 'var(--yellow)';
-    state = 'aging';
   }
 
-  el.textContent = `${label} · ${formatAgeCompact(ageMs)} old`;
+  el.textContent = `${label} · ${ageLabel} old`;
   el.style.background = bg;
   el.style.color = color;
   el.title = `Source timestamp: ${new Date(ts).toLocaleString()}`;
@@ -8082,34 +8184,57 @@ function setFreshnessBadge(el, sourceMs, thresholds) {
 function updateOverviewFreshnessSummary(states) {
   const el = document.getElementById('overviewFreshnessSummary');
   if (!el) return;
+  const banner = document.getElementById('overviewStaleBanner');
+  const prevState = overviewFreshnessLastSummaryState;
 
-  const valid = Array.isArray(states) ? states : [];
-  const stale = valid.filter((s) => s?.state === 'stale').length;
-  const aging = valid.filter((s) => s?.state === 'aging').length;
-  const noData = valid.filter((s) => s?.state === 'no-data').length;
+  const utils = getOverviewFreshnessUtils();
+  const summary = utils
+    ? utils.summarizeFreshnessStates(Array.isArray(states) ? states : [])
+    : (() => {
+        const rows = Array.isArray(states) ? states : [];
+        const stale = rows.filter((s) => s?.state === 'stale').length;
+        const aging = rows.filter((s) => s?.state === 'aging').length;
+        const unavailable = rows.filter((s) => s?.state === 'no-data').length;
+        if (stale > 0) return { state: 'stale', stale, aging, unavailable };
+        if (aging > 0) return { state: 'aging', stale, aging, unavailable };
+        if (unavailable > 0) return { state: 'unavailable', stale, aging, unavailable };
+        return { state: 'fresh', stale, aging, unavailable };
+      })();
 
-  if (stale > 0) {
-    el.textContent = `Data freshness: ${stale} stale`;
+  if (summary.state === 'stale') {
+    el.textContent = `Data freshness: ${summary.stale} stale`;
     el.style.background = 'rgba(239,68,68,0.16)';
     el.style.color = 'var(--red)';
-    return;
-  }
-  if (aging > 0) {
-    el.textContent = `Data freshness: ${aging} aging`;
+  } else if (summary.state === 'aging') {
+    el.textContent = `Data freshness: ${summary.aging} aging`;
     el.style.background = 'rgba(245,158,11,0.16)';
     el.style.color = 'var(--yellow)';
-    return;
-  }
-  if (noData > 0) {
-    el.textContent = `Data freshness: ${noData} unavailable`;
+  } else if (summary.state === 'unavailable') {
+    el.textContent = `Data freshness: ${summary.unavailable} unavailable`;
     el.style.background = 'rgba(113,113,122,0.16)';
     el.style.color = 'var(--text-muted)';
-    return;
+  } else {
+    el.textContent = 'Data freshness: all fresh';
+    el.style.background = 'rgba(16,185,129,0.16)';
+    el.style.color = 'var(--green)';
   }
 
-  el.textContent = 'Data freshness: all fresh';
-  el.style.background = 'rgba(16,185,129,0.16)';
-  el.style.color = 'var(--green)';
+  if (banner) {
+    if (summary.state === 'stale') {
+      banner.style.display = 'block';
+      banner.textContent = `Freshness alert: ${summary.stale} source${summary.stale === 1 ? '' : 's'} stale. Verify bridge/runtime feeds before trusting overview decisions.`;
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  if (summary.state === 'stale' && prevState !== 'stale' && typeof showToast === 'function') {
+    showToast('Overview freshness is stale. Verify live sources.', 'warning', 6000);
+  } else if (prevState === 'stale' && summary.state !== 'stale' && typeof showToast === 'function') {
+    showToast('Overview freshness recovered from stale state.', 'success', 4500);
+  }
+
+  emitOverviewFreshnessEvent(summary, states);
 }
 
 function escapeHtml(s) {
