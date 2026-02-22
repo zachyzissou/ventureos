@@ -10,6 +10,7 @@ import type {
   TaskPipelineTemplate,
   TaskStatus,
 } from '../types.js';
+import { sanitizeStringList } from './task-board-utils.js';
 
 const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'nexus', 'agent'];
 const TEMPLATE_ID_RE = /^[a-z0-9][a-z0-9-_]{1,63}$/;
@@ -122,22 +123,6 @@ function compactSlug(raw: string, fallback: string): string {
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '');
   return s || fallback;
-}
-
-function sanitizeStringList(
-  value: unknown,
-  opts: { maxItems: number; maxLen: number },
-): string[] {
-  if (!Array.isArray(value)) return [];
-  const out: string[] = [];
-  for (const item of value) {
-    if (typeof item !== 'string') continue;
-    const s = item.trim();
-    if (!s) continue;
-    out.push(s.slice(0, opts.maxLen));
-    if (out.length >= opts.maxItems) break;
-  }
-  return out;
 }
 
 function normalizeTag(tag: string): string | null {
@@ -421,8 +406,12 @@ export function instantiatePipelineFromTemplate(
     return { ok: false, error: 'assigneeId must be ≤ 120 chars' };
   }
 
-  const stageAssignments = (options.input.stageAssignments && typeof options.input.stageAssignments === 'object')
-    ? options.input.stageAssignments
+  const stageAssignments = (
+    options.input.stageAssignments &&
+    typeof options.input.stageAssignments === 'object' &&
+    !Array.isArray(options.input.stageAssignments)
+  )
+    ? options.input.stageAssignments as Record<string, unknown>
     : {};
 
   const tasks = options.loadTasks();
@@ -433,7 +422,10 @@ export function instantiatePipelineFromTemplate(
 
   for (let i = 0; i < template.stages.length; i++) {
     const stage = template.stages[i];
-    const overrideRaw = stageAssignments[stage.id];
+    let overrideRaw: unknown = null;
+    if (Object.prototype.hasOwnProperty.call(stageAssignments, stage.id)) {
+      overrideRaw = stageAssignments[stage.id];
+    }
     if (overrideRaw != null && (typeof overrideRaw !== 'object' || Array.isArray(overrideRaw))) {
       return { ok: false, error: `stageAssignments.${stage.id} must be an object` };
     }

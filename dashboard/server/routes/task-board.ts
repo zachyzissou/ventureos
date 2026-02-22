@@ -63,6 +63,7 @@ import {
   computeMetrics,
   computeStuckTasks,
 } from './task-board-metrics.js';
+import { sanitizeStringList } from './task-board-utils.js';
 export {
   DEFAULT_STUCK_TIMEOUT_MS,
   computeMetrics,
@@ -178,22 +179,6 @@ const TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
 
 function taskFilePath(dataDir: string): string {
   return path.join(dataDir, 'task-board.json');
-}
-
-function sanitizeStringList(
-  value: unknown,
-  opts: { maxItems: number; maxLen: number },
-): string[] {
-  if (!Array.isArray(value)) return [];
-  const out: string[] = [];
-  for (const item of value) {
-    if (typeof item !== 'string') continue;
-    const s = item.trim();
-    if (!s) continue;
-    out.push(s.slice(0, opts.maxLen));
-    if (out.length >= opts.maxItems) break;
-  }
-  return out;
 }
 
 function normalizeStatusHistory(card: TaskCard): TaskStatusHistoryEntry[] {
