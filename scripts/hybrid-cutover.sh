@@ -89,6 +89,17 @@ if [ -n "$BRIDGE_TOKEN_HYBRID" ] && [ -n "$BRIDGE_TOKEN_HOST" ]; then
   info "BRIDGE_TOKEN matches across env files"
 fi
 
+# Prevent host+container dashboard split-brain by removing stray host server.
+HOST_DASH_PIDS="$(pgrep -f 'node.*dashboard/dist/dashboard/server/server\.js' || true)"
+if [ -n "$HOST_DASH_PIDS" ]; then
+  warn "Stopping host dashboard process(es) to avoid dual 8001 listeners: $HOST_DASH_PIDS"
+  for pid in $HOST_DASH_PIDS; do
+    kill "$pid" 2>/dev/null || true
+  done
+  sleep 1
+  info "Host dashboard listener cleanup complete"
+fi
+
 # Port availability
 for port in 8001 5433 18790; do
   if lsof -i ":$port" -sTCP:LISTEN >/dev/null 2>&1; then
@@ -97,6 +108,11 @@ for port in 8001 5433 18790; do
     info "Port $port is available"
   fi
 done
+
+DASHBOARD_LISTENER_COUNT=$(lsof -nP -iTCP:8001 -sTCP:LISTEN 2>/dev/null | awk 'NR>1 { print $2 }' | sort -u | wc -l | tr -d ' ')
+if [ "${DASHBOARD_LISTENER_COUNT:-0}" -gt 1 ]; then
+  fail "Port 8001 has multiple listeners; stop host dashboard process and retry"
+fi
 
 if $DRY_RUN; then
   echo ""

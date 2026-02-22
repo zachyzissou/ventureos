@@ -119,6 +119,8 @@ npm run dashboard:dev
 ./scripts/hybrid-healthcheck.sh --json   # JSON for scripting
 ```
 
+`./scripts/hybrid-cutover.sh` also performs host dashboard cleanup so Docker remains the single source on port `8001`.
+
 Checks:
 - Docker Desktop running
 - Postgres container healthy
@@ -128,6 +130,7 @@ Checks:
 - Bridge auth working (Bridge API mode) or explicitly skipped in gateway mode
 - Postgres accepting connections
 - Required ports listening (`8001`, `5433`, and bridge/gateway on `18790` or `18789`)
+- Single dashboard listener on `:8001` (prevents host+container split-brain)
 
 ### Manual Health Checks
 

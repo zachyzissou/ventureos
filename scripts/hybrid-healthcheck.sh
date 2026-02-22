@@ -195,6 +195,13 @@ else
   check "Bridge/Gateway Port" "fail" "neither 18790 nor 18789 is listening"
 fi
 
+DASHBOARD_LISTENER_COUNT=$(lsof -nP -iTCP:8001 -sTCP:LISTEN 2>/dev/null | awk 'NR>1 { print $2 }' | sort -u | wc -l | tr -d ' ')
+if [ "${DASHBOARD_LISTENER_COUNT:-0}" -gt 1 ]; then
+  check "Dashboard Listener Uniqueness" "fail" "multiple listeners on :8001"
+else
+  check "Dashboard Listener Uniqueness" "pass"
+fi
+
 # ── Output ───────────────────────────────────────────────────────────────────
 
 $JSON_OUTPUT || echo ""

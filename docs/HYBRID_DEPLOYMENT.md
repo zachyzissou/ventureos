@@ -498,7 +498,7 @@ Before escalating, verify:
 - [ ] Bridge API process is alive and healthy
 - [ ] Both containers show "healthy" in `docker compose ps`
 - [ ] Tokens match between `.env.hybrid` and `config/bridge.env`
-- [ ] No port conflicts (`lsof -i :8001 :5433 :18790`)
+- [ ] No port conflicts (`lsof -i :8001 :5433 :18790`) and exactly one listener on `:8001`
 - [ ] Audit log checked for auth failures or rate limits
 - [ ] Container logs reviewed for errors
 
@@ -564,6 +564,8 @@ Before cutting over from host-only to hybrid, run both in parallel:
 DASHBOARD_PORT=8001 docker compose -f docker-compose.hybrid.yml \
   --env-file .env.hybrid up -d dashboard
 ```
+
+`scripts/hybrid-cutover.sh` now enforces single-listener behavior on `:8001` and stops stray host dashboard processes before container bring-up to avoid split-brain UI/API responses.
 
 ### 10.3  Rollback
 
