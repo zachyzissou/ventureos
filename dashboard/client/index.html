@@ -4533,7 +4533,10 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         <div class="card">
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;">
             <h3 class="card-title" style="margin-bottom:0;">KPIs</h3>
-            <div style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="kpiLatestDate">--</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="kpiFreshnessBadge" style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(113,113,122,0.16);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">No data</span>
+              <div style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" id="kpiLatestDate">--</div>
+            </div>
           </div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
             <div>
@@ -4552,12 +4555,18 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
         <div style="display:flex;flex-direction:column;gap:16px;">
           <div class="card">
-            <h3 class="card-title">Agent Health</h3>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <h3 class="card-title" style="margin-bottom:0;">Agent Health</h3>
+              <span id="agentHealthFreshnessBadge" style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(113,113,122,0.16);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">No data</span>
+            </div>
             <div id="agentHealthSummary"></div>
             <div id="agentHealthError" style="margin-top:10px;font-size:12px;color:var(--text-muted);"></div>
           </div>
           <div class="card">
-            <h3 class="card-title">Recent Observations</h3>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <h3 class="card-title" style="margin-bottom:0;">Recent Observations</h3>
+              <span id="obsFreshnessBadge" style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(113,113,122,0.16);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">No data</span>
+            </div>
             <div id="obsRecentList" style="display:flex;flex-direction:column;gap:10px;"></div>
             <div id="obsRecentError" style="margin-top:10px;font-size:12px;color:var(--text-muted);"></div>
           </div>
@@ -7029,15 +7038,20 @@ function updateVentureWidgets() {
   const chartEl = document.getElementById('kpiSuccessChart');
   const tableEl = document.getElementById('kpiHistoryTable');
   const kpiErrEl = document.getElementById('kpiWidgetError');
+  const kpiFreshnessEl = document.getElementById('kpiFreshnessBadge');
   const healthEl = document.getElementById('agentHealthSummary');
   const healthErrEl = document.getElementById('agentHealthError');
+  const healthFreshnessEl = document.getElementById('agentHealthFreshnessBadge');
   const obsEl = document.getElementById('obsRecentList');
   const obsErrEl = document.getElementById('obsRecentError');
+  const obsFreshnessEl = document.getElementById('obsFreshnessBadge');
 
   if (kpiErrEl) kpiErrEl.textContent = kpisLatestError ? kpisLatestError : '';
 
   const latest = kpisLatest?.latest || null;
   if (dateEl) dateEl.textContent = latest?.date || kpisLatest?.file || '--';
+  const kpiSourceMs = parseDateOnlyMs(latest?.date) || parseDateOnlyMs((kpisLatest?.file || '').replace(/\.json$/, ''));
+  setFreshnessBadge(kpiFreshnessEl, kpiSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.kpi);
 
   const sr = latest?.overall?.success_rate;
   if (srEl) srEl.textContent = (typeof sr === 'number') ? fmtPct(sr, 1) : '--';
@@ -7079,6 +7093,10 @@ function updateVentureWidgets() {
   }
 
   if (healthErrEl) healthErrEl.textContent = agentHealthError ? agentHealthError : '';
+  const healthSourceMs = (typeof agentHealth?.lastActiveMs === 'number' && agentHealth.lastActiveMs > 0)
+    ? agentHealth.lastActiveMs
+    : 0;
+  setFreshnessBadge(healthFreshnessEl, healthSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.agentHealth);
   if (healthEl) {
     if (!agentHealth?.agents) {
       healthEl.innerHTML = '<div class="empty-state-text">Loading…</div>';
@@ -7107,8 +7125,11 @@ function updateVentureWidgets() {
   }
 
   if (obsErrEl) obsErrEl.textContent = recentObsError ? recentObsError : '';
+  const obsItems = Array.isArray(recentObs?.items) ? recentObs.items : [];
+  const obsSourceMs = obsItems.reduce((max, item) => Math.max(max, Number(item?.mtimeMs) || 0), 0);
+  setFreshnessBadge(obsFreshnessEl, obsSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.observations);
   if (obsEl) {
-    const items = recentObs?.items || null;
+    const items = obsItems.length ? obsItems : (recentObs?.items || null);
     if (!items) {
       obsEl.innerHTML = '<div class="empty-state-text">Loading…</div>';
     } else if (!items.length) {
@@ -7986,6 +8007,58 @@ function timeAgo(ms) {
   if (age < 3600000) return Math.round(age / 60000) + 'm ago';
   if (age < 86400000) return Math.round(age / 3600000) + 'h ago';
   return Math.round(age / 86400000) + 'd ago';
+}
+
+const OVERVIEW_FRESHNESS_THRESHOLDS = {
+  kpi: { freshMs: 36 * 60 * 60 * 1000, staleMs: 96 * 60 * 60 * 1000 },
+  agentHealth: { freshMs: 15 * 60 * 1000, staleMs: 2 * 60 * 60 * 1000 },
+  observations: { freshMs: 6 * 60 * 60 * 1000, staleMs: 24 * 60 * 60 * 1000 },
+};
+
+function parseDateOnlyMs(raw) {
+  const s = (raw || '').toString().trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return 0;
+  const ms = new Date(`${s}T00:00:00`).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function formatAgeCompact(ageMs) {
+  const age = Math.max(0, ageMs || 0);
+  if (age < 60000) return `${Math.max(1, Math.round(age / 1000))}s`;
+  if (age < 3600000) return `${Math.round(age / 60000)}m`;
+  if (age < 86400000) return `${Math.round(age / 3600000)}h`;
+  return `${Math.round(age / 86400000)}d`;
+}
+
+function setFreshnessBadge(el, sourceMs, thresholds) {
+  if (!el) return;
+  const ts = Number(sourceMs) || 0;
+  if (ts <= 0) {
+    el.textContent = 'No data';
+    el.style.background = 'rgba(113,113,122,0.16)';
+    el.style.color = 'var(--text-muted)';
+    el.title = 'No source timestamp available';
+    return;
+  }
+
+  const ageMs = Math.max(0, Date.now() - ts);
+  let label = 'Fresh';
+  let bg = 'rgba(16,185,129,0.16)';
+  let color = 'var(--green)';
+  if (ageMs > thresholds.staleMs) {
+    label = 'Stale';
+    bg = 'rgba(239,68,68,0.16)';
+    color = 'var(--red)';
+  } else if (ageMs > thresholds.freshMs) {
+    label = 'Aging';
+    bg = 'rgba(245,158,11,0.16)';
+    color = 'var(--yellow)';
+  }
+
+  el.textContent = `${label} · ${formatAgeCompact(ageMs)} old`;
+  el.style.background = bg;
+  el.style.color = color;
+  el.title = `Source timestamp: ${new Date(ts).toLocaleString()}`;
 }
 
 function escapeHtml(s) {
