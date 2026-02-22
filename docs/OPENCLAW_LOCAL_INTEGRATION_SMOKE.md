@@ -34,6 +34,14 @@ Cron-safe wrapper for unattended cadence:
 bash scripts/openclaw-local-ready-cron.sh
 ```
 
+Bridge-mode prerequisite (when `DASHBOARD_DATA_MODE=bridge`):
+```bash
+REPO_ROOT="/absolute/path/to/ventureos"
+launchctl remove com.ventureos.bridge 2>/dev/null || true
+launchctl submit -l com.ventureos.bridge -- /bin/zsh -lc "cd \"$REPO_ROOT\" && set -a && source config/bridge.env && set +a && exec node dashboard/dist/dashboard/server/bridge.js >> runtime/logs/bridge.log 2>&1"
+curl -sS http://127.0.0.1:18790/health | jq .
+```
+
 Common options:
 ```bash
 bash scripts/openclaw-local-smoke.sh \
@@ -55,6 +63,9 @@ Profiles:
 - `DASHBOARD_TOKEN_FILE`: default token file path
 - `SMOKE_REPORT_DIR`: output directory for smoke reports
 - `SMOKE_HTTP_TIMEOUT_SEC`: per-request timeout
+- `SMOKE_HTTP_RETRY_MAX`: retry count for transient HTTP failures (default: `2`)
+- `SMOKE_HTTP_RETRY_BASE_SEC`: base retry delay in seconds (default: `1`)
+- `SMOKE_HTTP_RETRY_MAX_DELAY_SEC`: maximum retry delay in seconds (default: `15`)
 - `BRIDGE_URL`: optional direct bridge URL (`http://127.0.0.1:18790` default)
 - `BRIDGE_TOKEN`: auth token for direct bridge check
 - `BRIDGE_TOKEN_FILE`: optional token file for direct bridge check
@@ -75,6 +86,7 @@ The JSON report includes machine-readable check metadata and readiness summary f
 - `summary.readinessScore`: `0..100`
 - `summary.confidence`: `high|medium|low`
 - Per-check metadata: `group`, `severity`, `likelyCause`, `nextCommand`
+- If a check fails with HTTP `429`, smoke classifies it as rate-limit pressure and emits a `sleep 60 && bash scripts/openclaw-local-smoke.sh --profile <profile>` next-command hint.
 
 `scripts/refresh-local-integration-ready.sh` now enforces strict latest JSON/MD/SVG timestamp pairing and schema validation before regenerating `docs/LOCAL_INTEGRATION_READY.md`.
 Use `--prune-keep <n>` if you want refresh to keep only the newest `n` timestamp groups of smoke artifacts after regeneration.
