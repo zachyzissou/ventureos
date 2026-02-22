@@ -16,7 +16,7 @@ STATE_FILE="$STATE_DIR/routing-healthcheck.json"
 
 # Shared sender allowlist: workspace copy first, then shared canonical path(s).
 DEFAULT_WEBHOOK_SEND_WORKSPACE="$WORKSPACE_ROOT/scripts/discord-webhook-send.mjs"
-DEFAULT_WEBHOOK_SEND_SHARED="/Users/zachgonser/clawd/scripts/discord-webhook-send.mjs"
+DEFAULT_WEBHOOK_SEND_SHARED="$HOME/clawd/scripts/discord-webhook-send.mjs"
 WEBHOOK_SEND="${DISCORD_WEBHOOK_SEND:-}"
 if [[ -z "$WEBHOOK_SEND" ]]; then
   if [[ -f "$DEFAULT_WEBHOOK_SEND_WORKSPACE" ]]; then
@@ -29,8 +29,8 @@ fi
 DEFAULT_SHARED_ALLOWLIST=(
   "$DEFAULT_WEBHOOK_SEND_WORKSPACE"
   "$DEFAULT_WEBHOOK_SEND_SHARED"
-  "/Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/retry.sh"
-  "/Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/with-timeout.sh"
+  "$HOME/clawd/projects/openclaw-upgrade/scripts/retry.sh"
+  "$HOME/clawd/projects/openclaw-upgrade/scripts/with-timeout.sh"
 )
 
 IFS=':' read -r -a EXTRA_SHARED_ALLOWLIST <<< "${SHARED_SCRIPT_ALLOWLIST:-}"
