@@ -6475,6 +6475,12 @@ let sessions = [];
 let costs = {};
 let usage = {};
 let systemStats = {};
+let coreDataHealth = {
+  sessions: { ok: false, error: 'not loaded', updatedAt: 0 },
+  costs: { ok: false, error: 'not loaded', updatedAt: 0 },
+  usage: { ok: false, error: 'not loaded', updatedAt: 0 },
+  system: { ok: false, error: 'not loaded', updatedAt: 0 },
+};
 let feedPaused = true;
 let liveEventSource = null;
 let sortBy = 'updated';
@@ -6504,6 +6510,39 @@ let agentHealthError = null;
 let recentObsError = null;
 
 let selectedAgentId = 'oracle';
+
+function setCoreDataHealth(key, ok, error = '') {
+  coreDataHealth[key] = {
+    ok: !!ok,
+    error: ok ? '' : (error || 'unavailable'),
+    updatedAt: Date.now(),
+  };
+}
+
+function coreDataOk(key) {
+  return !!(coreDataHealth[key] && coreDataHealth[key].ok);
+}
+
+function setUnavailableText(id, value = '--') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = value;
+}
+
+function describeFetchFailure(res, payload, fallback = 'unavailable') {
+  if (payload && typeof payload === 'object') {
+    if (payload.error) return String(payload.error);
+    if (payload.ok === false) return String(payload.message || fallback);
+  }
+  if (res && typeof res.status === 'number' && res.status > 0) {
+    return `HTTP ${res.status}`;
+  }
+  return fallback;
+}
+
+function isApiErrorPayload(payload) {
+  return !!(payload && typeof payload === 'object' && (payload.error || payload.ok === false));
+}
 
 // Observations
 let observationsIndex = null;
@@ -6576,11 +6615,34 @@ async function fetchData() {
     ]);
     
     const sessData = await sessRes.json();
-    sessions = Array.isArray(sessData) ? sessData : (console.warn('[FETCH] sessions response not an array:', sessData), sessions || []);
+    if (sessRes.ok && Array.isArray(sessData)) {
+      sessions = sessData;
+      setCoreDataHealth('sessions', true);
+    } else {
+      console.warn('[FETCH] sessions response invalid:', sessData);
+      sessions = [];
+      setCoreDataHealth('sessions', false, describeFetchFailure(sessRes, sessData, 'sessions unavailable'));
+    }
+
     const costsData = await costsRes.json();
-    costs = (costsData && typeof costsData === 'object' && !costsData.error) ? costsData : (console.warn('[FETCH] costs response invalid:', costsData), costs || {});
+    if (costsRes.ok && costsData && typeof costsData === 'object' && !costsData.error && costsData.ok !== false) {
+      costs = costsData;
+      setCoreDataHealth('costs', true);
+    } else {
+      console.warn('[FETCH] costs response invalid:', costsData);
+      costs = {};
+      setCoreDataHealth('costs', false, describeFetchFailure(costsRes, costsData, 'costs unavailable'));
+    }
+
     const sysData = await sysRes.json();
-    systemStats = (sysData && typeof sysData === 'object' && !sysData.error) ? sysData : (console.warn('[FETCH] system response invalid:', sysData), systemStats || {});
+    if (sysRes.ok && sysData && typeof sysData === 'object' && !sysData.error && sysData.ok !== false) {
+      systemStats = sysData;
+      setCoreDataHealth('system', true);
+    } else {
+      console.warn('[FETCH] system response invalid:', sysData);
+      systemStats = {};
+      setCoreDataHealth('system', false, describeFetchFailure(sysRes, sysData, 'system unavailable'));
+    }
     
     updateDashboard();
 
@@ -6618,12 +6680,32 @@ async function fetchData() {
     }).catch(() => {});
 
     // Then load usage async (slower endpoint)
-    authFetch('/api/usage').then(r => r.json()).then(u => {
-      usage = u;
+    authFetch('/api/usage').then(async (r) => {
+      const u = await r.json();
+      if (r.ok && u && typeof u === 'object' && !u.error && u.ok !== false) {
+        usage = u;
+        setCoreDataHealth('usage', true);
+      } else {
+        usage = {};
+        setCoreDataHealth('usage', false, describeFetchFailure(r, u, 'usage unavailable'));
+      }
       try { updateDashboard(); } catch {}
-    }).catch(() => {});
+    }).catch((err) => {
+      usage = {};
+      setCoreDataHealth('usage', false, err?.message || 'usage unavailable');
+      try { updateDashboard(); } catch {}
+    });
   } catch (err) {
     console.error('Fetch error:', err);
+    sessions = [];
+    costs = {};
+    usage = {};
+    systemStats = {};
+    setCoreDataHealth('sessions', false, err?.message || 'sessions unavailable');
+    setCoreDataHealth('costs', false, err?.message || 'costs unavailable');
+    setCoreDataHealth('usage', false, err?.message || 'usage unavailable');
+    setCoreDataHealth('system', false, err?.message || 'system unavailable');
+    try { updateDashboard(); } catch {}
   }
 }
 
@@ -6686,51 +6768,73 @@ function updateDashboard() {
 function updateOverview() {
   // P0-5 safety: ensure sessions is always an array before filtering
   if (!Array.isArray(sessions)) { sessions = []; }
-  const running = sessions.filter(s => {
-    const age = Date.now() - s.updatedAt;
-    return age < 300000 && !s.aborted;
-  }).length;
-  
-  animateValue(document.getElementById('runningAgents'), running);
-  document.getElementById('totalSessions').textContent = sessions.length;
-  document.getElementById('activeSessions').textContent = running;
-  
-  const todayEl = document.getElementById('todaySpend');
-  todayEl.dataset.format = 'currency';
-  animateValue(todayEl, costs.today || 0);
-  
-  const opusLimitsKey = Object.keys(usage.fiveHour?.perModel || {}).find(k => k.includes('opus')) || '';
-  // Overview usage card: 5h session only
-  try {
-    const cuRes = _cachedClaudeUsage;
-    const cu = cuRes;
-    let sPct = 0;
-    if (cu.session) {
-      sPct = cu.session.percent;
-    } else {
-      const opusDataOv = opusLimitsKey ? usage.fiveHour.perModel[opusLimitsKey] : { output: 0 };
-      const opusLimit = usage.estimatedLimits?.opus || 88000;
-      sPct = Math.min(Math.round((opusDataOv.output / opusLimit) * 100), 100);
-    }
-    const sEl = document.getElementById('ovSessionPct');
-    if (sEl) { sEl.dataset.format = 'percent'; animateValue(sEl, sPct); }
+  if (coreDataOk('sessions')) {
+    const running = sessions.filter(s => {
+      const age = Date.now() - s.updatedAt;
+      return age < 300000 && !s.aborted;
+    }).length;
+    animateValue(document.getElementById('runningAgents'), running);
+    document.getElementById('totalSessions').textContent = sessions.length;
+    document.getElementById('activeSessions').textContent = running;
+  } else {
+    setUnavailableText('runningAgents');
+    setUnavailableText('totalSessions');
+    setUnavailableText('activeSessions');
+  }
+
+  if (coreDataOk('costs')) {
+    const todayEl = document.getElementById('todaySpend');
+    todayEl.dataset.format = 'currency';
+    animateValue(todayEl, costs.today || 0);
+  } else {
+    setUnavailableText('todaySpend');
+  }
+
+  if (coreDataOk('usage')) {
+    const opusLimitsKey = Object.keys(usage.fiveHour?.perModel || {}).find(k => k.includes('opus')) || '';
+    // Overview usage card: 5h session only
+    try {
+      const cuRes = _cachedClaudeUsage;
+      const cu = cuRes;
+      let sPct = 0;
+      if (cu?.session) {
+        sPct = cu.session.percent;
+      } else {
+        const opusDataOv = opusLimitsKey ? usage.fiveHour.perModel[opusLimitsKey] : { output: 0 };
+        const opusLimit = usage.estimatedLimits?.opus || 88000;
+        sPct = Math.min(Math.round((opusDataOv.output / opusLimit) * 100), 100);
+      }
+      const sEl = document.getElementById('ovSessionPct');
+      if (sEl) { sEl.dataset.format = 'percent'; animateValue(sEl, sPct); }
+      const sBar = document.getElementById('overviewSessionBar');
+      if (sBar) { sBar.style.width = sPct + '%'; sBar.style.background = sPct < 50 ? 'var(--green)' : sPct < 80 ? 'var(--yellow)' : 'var(--red)'; }
+      const warnIcon = document.getElementById('overviewUsageWarn');
+      if (warnIcon) warnIcon.style.display = sPct > 70 ? 'inline' : 'none';
+
+      // Notification for high usage
+      if (sPct >= 80 && !window._usageNotified) {
+        sendNotification('High Usage Warning', `5h session usage at ${sPct}%`);
+        window._usageNotified = true;
+      } else if (sPct < 70) {
+        window._usageNotified = false;
+      }
+      const label = document.getElementById('overviewUsageLabel');
+      if (label) label.textContent = '5h Session';
+    } catch {}
+  } else {
+    setUnavailableText('ovSessionPct');
     const sBar = document.getElementById('overviewSessionBar');
-    if (sBar) { sBar.style.width = sPct + '%'; sBar.style.background = sPct < 50 ? 'var(--green)' : sPct < 80 ? 'var(--yellow)' : 'var(--red)'; }
-    const warnIcon = document.getElementById('overviewUsageWarn');
-    if (warnIcon) warnIcon.style.display = sPct > 70 ? 'inline' : 'none';
-    
-    // Notification for high usage
-    if (sPct >= 80 && !window._usageNotified) {
-      sendNotification('High Usage Warning', `5h session usage at ${sPct}%`);
-      window._usageNotified = true;
-    } else if (sPct < 70) {
-      window._usageNotified = false;
+    if (sBar) {
+      sBar.style.width = '0%';
+      sBar.style.background = 'var(--bg-tertiary)';
     }
+    const warnIcon = document.getElementById('overviewUsageWarn');
+    if (warnIcon) warnIcon.style.display = 'none';
     const label = document.getElementById('overviewUsageLabel');
-    if (label) label.textContent = '5h Session';
-  } catch {}
-  
-  if (systemStats.cpu) {
+    if (label) label.textContent = 'Usage unavailable';
+  }
+
+  if (coreDataOk('system') && systemStats.cpu) {
     const cpuPct = systemStats.cpu.usage || 0;
     document.getElementById('systemCpu').textContent = cpuPct + '%';
     updateRadialGauge('cpuCircle', cpuPct);
@@ -6778,6 +6882,17 @@ function updateOverview() {
     document.getElementById('systemCrashes').style.color = crashes > 0 ? 'var(--red)' : 'var(--green)';
     document.getElementById('systemCrashesToday').textContent = crashesToday;
     document.getElementById('systemCrashesToday').style.color = crashesToday > 0 ? 'var(--red)' : 'var(--green)';
+  } else {
+    setUnavailableText('systemCpu');
+    setUnavailableText('systemRam');
+    setUnavailableText('systemRamDetail');
+    setUnavailableText('systemTemp');
+    setUnavailableText('systemUptime');
+    setUnavailableText('systemLoad', 'Load: --');
+    setUnavailableText('systemDisk');
+    setUnavailableText('systemDiskDetail');
+    setUnavailableText('systemCrashes');
+    setUnavailableText('systemCrashesToday');
   }
   
   const seen = new Set();
@@ -7369,6 +7484,43 @@ function formatMs(ms) {
 }
 
 function updateLimits() {
+  if (!coreDataOk('usage')) {
+    setUnavailableText('opusUsageLimits');
+    const opusBar = document.getElementById('opusProgressBar');
+    if (opusBar) {
+      opusBar.style.width = '0%';
+      opusBar.style.background = 'var(--bg-tertiary)';
+      opusBar.style.animation = 'none';
+    }
+    setUnavailableText('opusProgressPct');
+    setUnavailableText('opusTokenLabel', 'Unavailable');
+
+    const sonnetBar = document.getElementById('sonnetProgressBar');
+    if (sonnetBar) {
+      sonnetBar.style.width = '0%';
+      sonnetBar.style.background = 'var(--bg-tertiary)';
+    }
+    setUnavailableText('sonnetProgressPct');
+    setUnavailableText('sonnetTokenLabel', 'Unavailable');
+
+    setUnavailableText('totalCalls');
+    setUnavailableText('windowCost');
+    setUnavailableText('burnRateDisplay');
+    setUnavailableText('costPerMinValue', '$--');
+    setUnavailableText('timeToLimitValue', 'Unavailable');
+    setUnavailableText('timeToLimitSub', 'Usage endpoint unavailable');
+    const ttlCard = document.getElementById('timeToLimitCard');
+    if (ttlCard) ttlCard.style.boxShadow = 'none';
+
+    setUnavailableText('windowResetValue', 'Unavailable');
+    setUnavailableText('windowResetSub', '');
+    const breakdown = document.getElementById('windowBreakdown');
+    if (breakdown) breakdown.innerHTML = '<div class="empty-state-text">Usage unavailable</div>';
+    const recentCalls = document.getElementById('recentCalls');
+    if (recentCalls) recentCalls.innerHTML = '<div class="empty-state-text">Usage unavailable</div>';
+    return;
+  }
+
   const limits = usage.estimatedLimits || { opus: 88000, sonnet: 220000 };
   const models = usage.fiveHour?.perModel || {};
 
@@ -7539,6 +7691,22 @@ function updateLimits() {
 }
 
 function updateCosts() {
+  if (!coreDataOk('costs')) {
+    setUnavailableText('costToday');
+    setUnavailableText('costWeek');
+    setUnavailableText('costTotal');
+    setUnavailableText('costAvg');
+    const chartEl = document.getElementById('costTrendChart');
+    if (chartEl) chartEl.innerHTML = '<div class="empty-state-text">Cost data unavailable</div>';
+    const byModelEl = document.getElementById('costByModel');
+    if (byModelEl) byModelEl.innerHTML = '<div class="empty-state-text">Cost data unavailable</div>';
+    const topSessionsEl = document.getElementById('topSessions');
+    if (topSessionsEl) topSessionsEl.innerHTML = '<div class="empty-state-text">Cost data unavailable</div>';
+    const donutEl = document.getElementById('modelUsageDonut');
+    if (donutEl) donutEl.innerHTML = '<div class="empty-state-text">Cost data unavailable</div>';
+    return;
+  }
+
   const todayEl = document.getElementById('costToday');
   todayEl.dataset.format = 'currency';
   animateValue(todayEl, costs.today || 0);
@@ -7640,27 +7808,51 @@ function updateCosts() {
 }
 
 function updateStatusBar() {
-  if (systemStats.uptime) {
+  const unavailableKeys = Object.entries(coreDataHealth)
+    .filter(([, state]) => !state.ok)
+    .map(([key]) => key);
+
+  const statusVersion = document.getElementById('statusVersion');
+  if (statusVersion) {
+    if (unavailableKeys.length > 0) {
+      statusVersion.textContent = 'OpenClaw · DEGRADED';
+      statusVersion.style.color = 'var(--yellow)';
+      statusVersion.title = `Unavailable: ${unavailableKeys.join(', ')}`;
+    } else {
+      statusVersion.textContent = 'OpenClaw';
+      statusVersion.style.color = '';
+      statusVersion.title = '';
+    }
+  }
+
+  if (coreDataOk('system') && systemStats.uptime) {
     const uptime = systemStats.uptime;
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
     const uptimeStr = days > 0 ? `${days}d ${hours}h` : hours > 0 ? `${hours}h` : `${Math.floor(uptime / 60)}m`;
     document.getElementById('statusUptime').textContent = uptimeStr;
+  } else {
+    setUnavailableText('statusUptime');
   }
   
-  const mainSession = sessions.find(s => s.key.includes('main:main'));
-  if (mainSession) {
-    document.getElementById('statusModel').textContent = mainSession.model.split('/').pop();
-  }
-  
-  if (sessions.length > 0) {
-    const latest = sessions.reduce((a, b) => a.updatedAt > b.updatedAt ? a : b);
-    const age = Date.now() - latest.updatedAt;
-    const ago = age < 60000 ? 'just now' :
-                age < 3600000 ? Math.round(age / 60000) + 'm ago' :
-                age < 86400000 ? Math.round(age / 3600000) + 'h ago' :
-                Math.round(age / 86400000) + 'd ago';
-    document.getElementById('statusLastActivity').textContent = ago;
+  if (coreDataOk('sessions')) {
+    const mainSession = sessions.find(s => s.key.includes('main:main'));
+    document.getElementById('statusModel').textContent = mainSession ? mainSession.model.split('/').pop() : '--';
+
+    if (sessions.length > 0) {
+      const latest = sessions.reduce((a, b) => a.updatedAt > b.updatedAt ? a : b);
+      const age = Date.now() - latest.updatedAt;
+      const ago = age < 60000 ? 'just now' :
+                  age < 3600000 ? Math.round(age / 60000) + 'm ago' :
+                  age < 86400000 ? Math.round(age / 3600000) + 'h ago' :
+                  Math.round(age / 86400000) + 'd ago';
+      document.getElementById('statusLastActivity').textContent = ago;
+    } else {
+      document.getElementById('statusLastActivity').textContent = '--';
+    }
+  } else {
+    setUnavailableText('statusModel');
+    setUnavailableText('statusLastActivity');
   }
 }
 
@@ -8191,6 +8383,9 @@ async function fetchMissionControlNow() {
       fetchJson('/api/living-files/dashboard').catch(() => null),
       fetchJson('/api/openclaw-local-readiness').catch(() => null),
     ]);
+    if (isApiErrorPayload(mc) || isApiErrorPayload(kpis) || isApiErrorPayload(agents)) {
+      throw new Error('Mission control upstream unavailable');
+    }
     missionControl = mc;
     ventureosKpis = kpis;
     ventureosAgents = agents;
@@ -8216,6 +8411,15 @@ async function fetchMissionControlNow() {
     updateDashboard();
   } catch (e) {
     console.error('Mission control fetch error:', e);
+    missionControl = null;
+    ventureosKpis = null;
+    ventureosAgents = null;
+    schedulerJobs = [];
+    openclawLocalReadiness = null;
+    proposalLifecycleSummary = null;
+    livingFilesSummary = null;
+    missionOfficeTasks = [];
+    updateDashboard();
   }
 }
 
@@ -8225,11 +8429,17 @@ async function fetchVentureosNow() {
       fetchJson('/api/ventureos-kpis?days=7'),
       fetchJson('/api/ventureos-workflow-patterns')
     ]);
+    if (isApiErrorPayload(kpis) || isApiErrorPayload(wf)) {
+      throw new Error('VentureOS metrics unavailable');
+    }
     ventureosKpis = kpis;
     workflowPatterns = wf;
     updateDashboard();
   } catch (e) {
     console.error('VentureOS fetch error:', e);
+    ventureosKpis = null;
+    workflowPatterns = null;
+    updateDashboard();
   }
 }
 
@@ -8241,8 +8451,11 @@ async function fetchAgentsNow() {
       fetchJson('/api/proposal-lifecycle/summary').catch(() => null),
       fetchJson('/api/living-files/dashboard').catch(() => null),
     ]);
+    if (isApiErrorPayload(agents)) {
+      throw new Error('Agent metrics unavailable');
+    }
     ventureosAgents = agents;
-    if (mc && typeof mc === 'object' && !mc.error) {
+    if (mc && typeof mc === 'object' && !isApiErrorPayload(mc)) {
       missionControl = mc;
     }
     if (lifecycle && lifecycle.summary) {
@@ -8254,6 +8467,11 @@ async function fetchAgentsNow() {
     updateDashboard();
   } catch (e) {
     console.error('Agents fetch error:', e);
+    ventureosAgents = null;
+    missionControl = null;
+    proposalLifecycleSummary = null;
+    livingFilesSummary = null;
+    updateDashboard();
   }
 }
 
@@ -8577,7 +8795,29 @@ function toggleObsTag(tag) {
 }
 
 function updateMissionControl() {
-  if (!missionControl) return;
+  if (!missionControl || isApiErrorPayload(missionControl)) {
+    setUnavailableText('mcActiveWork', 'Mission control unavailable');
+    setUnavailableText('mcPriorities', 'Mission control unavailable');
+    setUnavailableText('mcTeamStatus');
+    setUnavailableText('mcTeamSubtitle', 'Mission control unavailable');
+    setUnavailableText('mcBusyAgents');
+    const unavailableHtml = '<div class="empty-state-text">Mission control data unavailable</div>';
+    const ids = [
+      'mcTeamGrid',
+      'mcRecentCompletions',
+      'mcProposalQueue',
+      'mcLifecycleMissions',
+      'mcLivingFiles',
+      'mcOpenclawReadiness',
+      'mcSchedulerJobs',
+    ];
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = unavailableHtml;
+    });
+    updateMissionOfficeView();
+    return;
+  }
   const activeEl = document.getElementById('mcActiveWork');
   const prioEl = document.getElementById('mcPriorities');
   if (activeEl) activeEl.textContent = missionControl.activeWorkMd || '';
@@ -8856,7 +9096,29 @@ function updateMissionControl() {
 }
 
 function updateVentureos() {
-  if (!ventureosKpis) return;
+  if (!ventureosKpis || isApiErrorPayload(ventureosKpis)) {
+    setUnavailableText('vkSuccessRate');
+    setUnavailableText('vkSuccessBaseline', 'VentureOS metrics unavailable');
+    setUnavailableText('vkP95Latency');
+    setUnavailableText('vkLatencyBaseline', 'VentureOS metrics unavailable');
+    setUnavailableText('vkSloStatus');
+    setUnavailableText('vkSloSubtitle', 'VentureOS metrics unavailable');
+    setUnavailableText('vkBackupAge');
+    setUnavailableText('vkBackupSubtitle', 'VentureOS metrics unavailable');
+    const unavailableHtml = '<div class="empty-state-text">VentureOS metrics unavailable</div>';
+    const successChart = document.getElementById('vkSuccessChart');
+    if (successChart) successChart.innerHTML = unavailableHtml;
+    const latencyChart = document.getElementById('vkLatencyChart');
+    if (latencyChart) latencyChart.innerHTML = unavailableHtml;
+    setUnavailableText('wfTotalRuns');
+    setUnavailableText('wfSuccessRate');
+    setUnavailableText('wfVerifyCycles');
+    setUnavailableText('wfRetries');
+    setUnavailableText('wfUpdatedAt', 'VentureOS metrics unavailable');
+    const workflowChart = document.getElementById('workflowDailyChart');
+    if (workflowChart) workflowChart.innerHTML = unavailableHtml;
+    return;
+  }
   const latest = ventureosKpis.latest;
   if (latest) {
     const srEl = document.getElementById('vkSuccessRate');
@@ -8921,7 +9183,7 @@ function updateVentureos() {
     { yFormatter: v => fmtSeconds(v), subtitle: 'seconds' }
   );
 
-  if (workflowPatterns) {
+  if (workflowPatterns && !isApiErrorPayload(workflowPatterns)) {
     const t = workflowPatterns.totals || {};
     const totalEl = document.getElementById('wfTotalRuns');
     const srEl = document.getElementById('wfSuccessRate');
@@ -8943,12 +9205,38 @@ function updateVentureos() {
       color: 'linear-gradient(180deg, rgba(99,102,241,0.9), rgba(168,85,247,0.7))'
     }));
     renderBarChart(document.getElementById('workflowDailyChart'), bars, { height: 100 });
+  } else {
+    setUnavailableText('wfTotalRuns');
+    setUnavailableText('wfSuccessRate');
+    setUnavailableText('wfVerifyCycles');
+    setUnavailableText('wfRetries');
+    setUnavailableText('wfUpdatedAt', 'Workflow metrics unavailable');
+    const workflowChart = document.getElementById('workflowDailyChart');
+    if (workflowChart) workflowChart.innerHTML = '<div class="empty-state-text">Workflow metrics unavailable</div>';
   }
 }
 
 function updateAgentsView() {
   updateTeamDirectoryView();
-  if (!ventureosAgents?.agents) return;
+  if (!ventureosAgents?.agents || isApiErrorPayload(ventureosAgents)) {
+    const tabsEl = document.getElementById('agentTabs');
+    if (tabsEl) {
+      tabsEl.innerHTML = '<div class="empty-state-text">Agent metrics unavailable</div>';
+      tabsEl.dataset.ready = '';
+    }
+    setUnavailableText('agSessions24h');
+    setUnavailableText('agStatus', 'Agent metrics unavailable');
+    setUnavailableText('agSuccessRate');
+    setUnavailableText('agSuccessSubtitle', 'Agent metrics unavailable');
+    setUnavailableText('agAvgLatency');
+    setUnavailableText('agLastActivity');
+    const unavailableHtml = '<div class="empty-state-text">Agent metrics unavailable</div>';
+    const rsEl = document.getElementById('agRecentSessions');
+    if (rsEl) rsEl.innerHTML = unavailableHtml;
+    const rcEl = document.getElementById('agRecentCompletions');
+    if (rcEl) rcEl.innerHTML = unavailableHtml;
+    return;
+  }
 
   // Tabs
   const tabsEl = document.getElementById('agentTabs');
