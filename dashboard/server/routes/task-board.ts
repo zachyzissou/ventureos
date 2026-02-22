@@ -64,6 +64,19 @@ import {
   computeStuckTasks,
 } from './task-board-metrics.js';
 import { sanitizeStringList } from './task-board-utils.js';
+import {
+  executeBatchOperation,
+  pickupQueuedTasksForAgentOperation,
+  resumeRunningTasksFromSnapshotOperation,
+} from './task-board-operations.js';
+import type {
+  BatchInput,
+  BatchResult,
+  HeartbeatPickupInput,
+  HeartbeatPickupResult,
+  RecoveryResumeInput,
+  RecoveryResumeResult,
+} from './task-board-operations.js';
 export {
   DEFAULT_STUCK_TIMEOUT_MS,
   computeMetrics,
@@ -73,6 +86,11 @@ export type {
   StuckTask,
   TaskBoardMetrics,
 } from './task-board-metrics.js';
+export type {
+  BatchResult,
+  HeartbeatPickupResult,
+  RecoveryResumeResult,
+} from './task-board-operations.js';
 import {
   isSystemPipelineTemplateId,
   instantiatePipelineFromTemplate,
@@ -157,12 +175,6 @@ const VALID_STATUSES: TaskStatus[] = [
 ];
 const VALID_PRIORITIES: TaskPriority[] = ['critical', 'high', 'medium', 'low'];
 const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'nexus', 'agent'];
-const PRIORITY_SCORE: Record<TaskPriority, number> = {
-  critical: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
-};
 
 /** Allowed state transitions (from → to[]). */
 const TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
@@ -448,247 +460,26 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
   return { ok: true, card };
 }
 
-// ─── Batch operations (Issue #219 — Bulk Operations Panel) ───────────────────
-
-/** Maximum cards per batch request to prevent unbounded operations. */
-const MAX_BATCH_SIZE = 50;
-
-/** Statuses that are eligible for the archive (delete) action. */
-const ARCHIVABLE_STATUSES: TaskStatus[] = ['done', 'failed'];
-
-interface BatchInput {
-  action?: string;
-  ids?: string[];
-  status?: string;
-}
-
-interface BatchItemResult {
-  id: string;
-  ok: boolean;
-  error?: string;
-}
-
-export interface BatchResult {
-  action: string;
-  total: number;
-  succeeded: number;
-  failed: number;
-  results: BatchItemResult[];
-  error?: string;
-}
+// ─── Batch/heartbeat/recovery operations (Issue #219) ───────────────────────
 
 /**
  * Execute a batch operation (transition or archive) on multiple cards.
- * All mutations are applied atomically — either the file is written with
- * all successful changes, or rolled back on unexpected errors.
- *
- * For transitions: each card is validated individually against the state
- * machine. Failed transitions are reported per-card but do not block
- * successful ones (partial success model).
- *
- * For archive: only done/failed cards can be archived. Others are skipped
- * with per-card error.
+ * All mutations are persisted via task-board + active-task tracker synchronization.
  */
 export function executeBatch(
   dataDir: string,
   input: BatchInput,
   emitEvent?: TaskBoardDeps['emitEvent'],
 ): BatchResult {
-  const action = input.action ?? '';
-
-  if (!['transition', 'archive'].includes(action)) {
-    return {
-      action,
-      total: 0,
-      succeeded: 0,
-      failed: 0,
-      results: [],
-      error: `invalid action: ${action}. Must be "transition" or "archive".`,
-    };
-  }
-
-  const ids = input.ids;
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return {
-      action,
-      total: 0,
-      succeeded: 0,
-      failed: 0,
-      results: [],
-      error: 'ids must be a non-empty array',
-    };
-  }
-
-  if (ids.length > MAX_BATCH_SIZE) {
-    return {
-      action,
-      total: ids.length,
-      succeeded: 0,
-      failed: ids.length,
-      results: [],
-      error: `batch size ${ids.length} exceeds maximum of ${MAX_BATCH_SIZE}`,
-    };
-  }
-
-  // De-duplicate ids
-  const uniqueIds = [...new Set(ids)];
-
-  const tasks = loadTasks(dataDir);
-  const taskMap = new Map(tasks.map((t) => [t.id, t]));
-  const results: BatchItemResult[] = [];
-  let succeeded = 0;
-  let failed = 0;
-
-  if (action === 'transition') {
-    const targetStatus = input.status as TaskStatus;
-    if (!targetStatus || !VALID_STATUSES.includes(targetStatus)) {
-      return {
-        action,
-        total: uniqueIds.length,
-        succeeded: 0,
-        failed: uniqueIds.length,
-        results: [],
-        error: `invalid target status: ${input.status}`,
-      };
-    }
-
-    for (const id of uniqueIds) {
-      const card = taskMap.get(id);
-      if (!card) {
-        results.push({ id, ok: false, error: 'not found' });
-        failed++;
-        continue;
-      }
-      if (card.status === targetStatus) {
-        // Already at target — count as success (idempotent)
-        results.push({ id, ok: true });
-        succeeded++;
-        continue;
-      }
-      if (!isValidTransition(card.status, targetStatus)) {
-        results.push({
-          id,
-          ok: false,
-          error: `invalid transition: ${card.status} → ${targetStatus}`,
-        });
-        failed++;
-        continue;
-      }
-
-      // Apply transition
-      card.status = targetStatus;
-      const now = Date.now();
-      if (targetStatus === 'queued') card.queuedAt = now;
-      if (targetStatus === 'running') card.startedAt = now;
-      if (targetStatus === 'done' || targetStatus === 'failed') {
-        card.completedAt = now;
-        if (card.startedAt && card.runtimeMs == null) {
-          card.runtimeMs = now - card.startedAt;
-        }
-      }
-      appendStatusHistory(card, targetStatus, 'batch', null, now);
-
-      results.push({ id, ok: true });
-      succeeded++;
-      emitEvent?.('task:updated', card);
-    }
-
-    // Persist all changes
-    saveTasksWithActiveTracker(dataDir, tasks);
-  } else if (action === 'archive') {
-    const toRemove: string[] = [];
-
-    for (const id of uniqueIds) {
-      const card = taskMap.get(id);
-      if (!card) {
-        results.push({ id, ok: false, error: 'not found' });
-        failed++;
-        continue;
-      }
-      if (!ARCHIVABLE_STATUSES.includes(card.status)) {
-        results.push({
-          id,
-          ok: false,
-          error: `cannot archive card in status "${card.status}" — only done/failed cards can be archived`,
-        });
-        failed++;
-        continue;
-      }
-      toRemove.push(id);
-      results.push({ id, ok: true });
-      succeeded++;
-      emitEvent?.('task:deleted', card);
-    }
-
-    if (toRemove.length > 0) {
-      const removeSet = new Set(toRemove);
-      const remaining = tasks.filter((t) => !removeSet.has(t.id));
-      saveTasksWithActiveTracker(dataDir, remaining);
-    }
-  }
-
-  return {
-    action,
-    total: uniqueIds.length,
-    succeeded,
-    failed,
-    results,
-  };
-}
-
-// ─── Heartbeat Auto-Pickup (Issue #219) ─────────────────────────────────────
-
-const HEARTBEAT_PICKUP_MAX = 10;
-
-interface HeartbeatPickupInput {
-  agentId?: string;
-  limit?: number;
-  allowParallel?: boolean;
-}
-
-interface HeartbeatPickupSkipped {
-  nonAgentAssignee: number;
-  assignedToOther: number;
-  unmetDependencies: number;
-}
-
-export interface HeartbeatPickupResult {
-  agentId: string;
-  picked: TaskCard[];
-  pickedCount: number;
-  existingRunning: number;
-  scannedQueued: number;
-  skipped: HeartbeatPickupSkipped;
-}
-
-interface RecoveryResumeInput {
-  agentId?: string;
-  limit?: number;
-}
-
-export interface RecoveryResumeResult {
-  resumedCount: number;
-  resumedIds: string[];
-  consideredRunning: number;
-}
-
-function canRunByDependency(card: TaskCard, byId: Map<string, TaskCard>): boolean {
-  if (!Array.isArray(card.dependencies) || card.dependencies.length === 0) return true;
-  for (const depId of card.dependencies) {
-    const dep = byId.get(depId);
-    if (!dep || dep.status !== 'done') return false;
-  }
-  return true;
-}
-
-function compareQueuedPriority(a: TaskCard, b: TaskCard): number {
-  const pa = PRIORITY_SCORE[a.priority] ?? PRIORITY_SCORE.medium;
-  const pb = PRIORITY_SCORE[b.priority] ?? PRIORITY_SCORE.medium;
-  if (pa !== pb) return pa - pb;
-  const qa = a.queuedAt ?? a.createdAt;
-  const qb = b.queuedAt ?? b.createdAt;
-  if (qa !== qb) return qa - qb;
-  return a.createdAt - b.createdAt;
+  return executeBatchOperation({
+    input,
+    emitEvent,
+    loadTasks: () => loadTasks(dataDir),
+    saveTasks: (tasks) => saveTasksWithActiveTracker(dataDir, tasks),
+    appendStatusHistory,
+    isValidTransition,
+    validStatuses: VALID_STATUSES,
+  });
 }
 
 export function pickupQueuedTasksForAgent(
@@ -696,95 +487,13 @@ export function pickupQueuedTasksForAgent(
   input: HeartbeatPickupInput,
   emitEvent?: TaskBoardDeps['emitEvent'],
 ): HeartbeatPickupResult | { error: string } {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return { error: 'invalid request body' };
-  }
-  const agentId = String(input.agentId ?? '').trim();
-  if (!agentId) return { error: 'agentId is required' };
-
-  const rawLimit = Number(input.limit ?? 1);
-  const limit = Number.isFinite(rawLimit)
-    ? Math.max(1, Math.min(Math.trunc(rawLimit), HEARTBEAT_PICKUP_MAX))
-    : 1;
-
-  const tasks = loadTasks(dataDir);
-  const byId = new Map(tasks.map((t) => [t.id, t]));
-  const allowParallel = input.allowParallel === true;
-  const runningTasks = tasks.filter(
-    (t) =>
-      t.status === 'running' &&
-      (
-        t.agentId === agentId ||
-        ((t.assigneeType ?? 'agent') === 'agent' && t.assigneeId === agentId)
-      ),
-  );
-
-  const skipped: HeartbeatPickupSkipped = {
-    nonAgentAssignee: 0,
-    assignedToOther: 0,
-    unmetDependencies: 0,
-  };
-
-  if (!allowParallel && runningTasks.length > 0) {
-    return {
-      agentId,
-      picked: [],
-      pickedCount: 0,
-      existingRunning: runningTasks.length,
-      scannedQueued: 0,
-      skipped,
-    };
-  }
-
-  const candidates = tasks.filter((t) => t.status === 'queued');
-  const available = candidates
-    .filter((card) => {
-      const assigneeType = card.assigneeType ?? 'agent';
-      if (assigneeType !== 'agent') {
-        skipped.nonAgentAssignee++;
-        return false;
-      }
-      if ((card.assigneeId && card.assigneeId !== agentId) || (card.agentId && card.agentId !== agentId)) {
-        skipped.assignedToOther++;
-        return false;
-      }
-      if (!canRunByDependency(card, byId)) {
-        skipped.unmetDependencies++;
-        return false;
-      }
-      return true;
-    })
-    .sort(compareQueuedPriority);
-
-  const picked = available.slice(0, limit);
-  if (picked.length > 0) {
-    const now = Date.now();
-    for (const card of picked) {
-      card.status = 'running';
-      card.startedAt = now;
-      card.completedAt = null;
-      card.resultSummary = null;
-      card.tokensUsed = null;
-      card.error = null;
-      card.costEstimate = null;
-      card.runtimeMs = null;
-      card.agentId = agentId;
-      card.assigneeType = 'agent';
-      card.assigneeId = agentId;
-      appendStatusHistory(card, 'running', 'heartbeat', 'auto-picked from queue', now);
-      emitEvent?.('task:updated', card);
-    }
-    saveTasksWithActiveTracker(dataDir, tasks);
-  }
-
-  return {
-    agentId,
-    picked,
-    pickedCount: picked.length,
-    existingRunning: runningTasks.length,
-    scannedQueued: candidates.length,
-    skipped,
-  };
+  return pickupQueuedTasksForAgentOperation({
+    input,
+    emitEvent,
+    loadTasks: () => loadTasks(dataDir),
+    saveTasks: (tasks) => saveTasksWithActiveTracker(dataDir, tasks),
+    appendStatusHistory,
+  });
 }
 
 export function resumeRunningTasksFromSnapshot(
@@ -792,50 +501,14 @@ export function resumeRunningTasksFromSnapshot(
   input: RecoveryResumeInput = {},
   emitEvent?: TaskBoardDeps['emitEvent'],
 ): RecoveryResumeResult {
-  const tasks = loadTasks(dataDir);
-  const snapshot = readActiveTaskSnapshot(dataDir);
-  const activeIds = new Set(snapshot.active.map((item) => item.taskId));
-  const agentId = typeof input.agentId === 'string' && input.agentId.trim()
-    ? input.agentId.trim()
-    : null;
-  const rawLimit = Number(input.limit ?? 50);
-  const limit = Number.isFinite(rawLimit)
-    ? Math.max(1, Math.min(Math.trunc(rawLimit), 100))
-    : 50;
-
-  const running = tasks
-    .filter((task) => task.status === 'running')
-    .filter((task) => {
-      if (agentId && task.agentId !== agentId && task.assigneeId !== agentId) return false;
-      if (activeIds.size === 0) return true;
-      return activeIds.has(task.id);
-    })
-    .sort((a, b) => (a.startedAt ?? a.createdAt) - (b.startedAt ?? b.createdAt));
-
-  const resumed = running.slice(0, limit);
-  if (resumed.length === 0) {
-    return {
-      resumedCount: 0,
-      resumedIds: [],
-      consideredRunning: running.length,
-    };
-  }
-
-  const now = Date.now();
-  for (const task of resumed) {
-    task.status = 'queued';
-    task.queuedAt = now;
-    task.startedAt = null;
-    appendStatusHistory(task, 'queued', 'recovery', 'auto-resume after restart', now);
-    emitEvent?.('task:updated', task);
-  }
-  saveTasksWithActiveTracker(dataDir, tasks);
-
-  return {
-    resumedCount: resumed.length,
-    resumedIds: resumed.map((task) => task.id),
-    consideredRunning: running.length,
-  };
+  return resumeRunningTasksFromSnapshotOperation({
+    input,
+    emitEvent,
+    loadTasks: () => loadTasks(dataDir),
+    saveTasks: (tasks) => saveTasksWithActiveTracker(dataDir, tasks),
+    readActiveTaskSnapshot: () => readActiveTaskSnapshot(dataDir),
+    appendStatusHistory,
+  });
 }
 
 // ─── Route handler ───────────────────────────────────────────────────────────
@@ -1046,11 +719,8 @@ export async function handleTaskBoard(
     return true;
   }
 
-  // ── POST /api/task-board/batch — Issue #219, Phase 6 (Bulk Operations) ────
-  // Batch operations on multiple cards. Bounded to MAX_BATCH_SIZE per request.
-  // Supports: { action: "transition", ids: [...], status: "done" }
-  //           { action: "archive",    ids: [...] }
-  // Returns per-card results with success/failure breakdown.
+  // ── POST /api/task-board/batch — Issue #219, Phase 6 ──────────────────────
+  // Batch transition/archive operations with per-card result reporting.
   if (url === '/api/task-board/batch' && method === 'POST') {
     let body: BatchInput;
     try {
@@ -1067,12 +737,8 @@ export async function handleTaskBoard(
     return true;
   }
 
-  // ── POST /api/task-board/heartbeat/pickup — Issue #219 ──────────────────
-  // Heartbeat-driven queue pickup:
-  // - Picks queued tasks assigned to an agent (or unassigned agent tasks)
-  // - Orders by priority (critical→low), then queuedAt/createdAt
-  // - Blocks on unmet dependencies (all deps must be done)
-  // - By default, skips pickup when agent already has running work
+  // ── POST /api/task-board/heartbeat/pickup — Issue #219 ────────────────────
+  // Heartbeat-driven queue pickup for an agent with dependency gating.
   if (url === '/api/task-board/heartbeat/pickup' && method === 'POST') {
     let body: HeartbeatPickupInput;
     try {
