@@ -10,6 +10,7 @@
 ## Dashboard
 - **[dashboard/README.md](../dashboard/README.md)** – Quick start, build commands, deployment, configuration, migration guide
 - **[dashboard/docs/API.md](../dashboard/docs/API.md)** – Complete API reference (all endpoints, schemas, auth, rate limiting)
+- **[dashboard/docs/OVERVIEW_FRESHNESS_RUNBOOK.md](../dashboard/docs/OVERVIEW_FRESHNESS_RUNBOOK.md)** – Freshness thresholds, timeline/dedupe tuning, and operator troubleshooting
 - **[docs/DASHBOARD.md](DASHBOARD.md)** – VentureOS integration guide (data flow, caching, security, architecture)
 
 ## Core

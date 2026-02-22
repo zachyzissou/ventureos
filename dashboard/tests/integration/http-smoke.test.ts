@@ -167,6 +167,8 @@ beforeAll(async () => {
   process.env.DASHBOARD_OVERVIEW_FRESHNESS_AGENT_HEALTH_STALE_MS = '300000';
   process.env.DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_FRESH_MS = '900000';
   process.env.DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_STALE_MS = '3600000';
+  process.env.DASHBOARD_OVERVIEW_FRESHNESS_TIMELINE_LIMIT = '6';
+  process.env.DASHBOARD_OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS = '60000';
 
   fs.writeFileSync(process.env.OBSIDIAN_CONFIG_PATH, JSON.stringify({
     vaults: {
@@ -487,35 +489,74 @@ describe('Dashboard HTTP smoke tests', () => {
     expect(body.overviewFreshnessThresholdsMs?.kpi).toEqual({ freshMs: 60000, staleMs: 180000 });
     expect(body.overviewFreshnessThresholdsMs?.agentHealth).toEqual({ freshMs: 45000, staleMs: 300000 });
     expect(body.overviewFreshnessThresholdsMs?.observations).toEqual({ freshMs: 900000, staleMs: 3600000 });
+    expect(body.overviewFreshnessTimelineLimit).toBe(6);
+    expect(body.overviewFreshnessEventDedupeWindowMs).toBe(60000);
   });
 
-  it('accepts freshness events and persists them in workspace data', async () => {
+  it('accepts freshness events, suppresses duplicates, and serves timeline history', async () => {
+    const payload = {
+      state: 'stale',
+      stale: 1,
+      aging: 0,
+      unavailable: 0,
+      total: 3,
+      source: 'overview-widget',
+      emittedAt: Date.now() - 5000,
+    };
     const eventRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
       method: 'POST',
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        state: 'stale',
-        stale: 1,
-        aging: 0,
-        unavailable: 0,
-        total: 3,
-        source: 'overview-widget',
-        emittedAt: Date.now() - 5000,
-      }),
+      body: JSON.stringify(payload),
     });
     expect(eventRes.status).toBe(200);
     const eventBody = await eventRes.json();
     expect(eventBody.ok).toBe(true);
     expect(eventBody.state).toBe('stale');
+    expect(eventBody.accepted).toBe(true);
 
     const eventFile = path.join(tmpRoot, 'workspace', 'data', 'overview-freshness-events.jsonl');
     expect(fs.existsSync(eventFile)).toBe(true);
-    const lines = fs.readFileSync(eventFile, 'utf8').trim().split('\n');
-    expect(lines.length).toBeGreaterThanOrEqual(1);
-    const latest = JSON.parse(lines[lines.length - 1]) as { state: string; stale: number; source: string };
-    expect(latest.state).toBe('stale');
-    expect(latest.stale).toBe(1);
-    expect(latest.source).toBe('overview-widget');
+    const linesAfterFirst = fs.readFileSync(eventFile, 'utf8').trim().split('\n');
+    expect(linesAfterFirst.length).toBeGreaterThanOrEqual(1);
+
+    const duplicateRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    expect(duplicateRes.status).toBe(200);
+    const duplicateBody = await duplicateRes.json();
+    expect(duplicateBody.ok).toBe(true);
+    expect(duplicateBody.accepted).toBe(false);
+
+    const linesAfterDuplicate = fs.readFileSync(eventFile, 'utf8').trim().split('\n');
+    expect(linesAfterDuplicate.length).toBe(linesAfterFirst.length);
+
+    const freshRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...payload,
+        state: 'fresh',
+        stale: 0,
+      }),
+    });
+    expect(freshRes.status).toBe(200);
+    const freshBody = await freshRes.json();
+    expect(freshBody.ok).toBe(true);
+    expect(freshBody.accepted).toBe(true);
+
+    const historyRes = await fetch(`${BASE_URL}/api/overview-freshness-events?limit=6`, {
+      headers: authHeaders(),
+    });
+    expect(historyRes.status).toBe(200);
+    const historyBody = await historyRes.json();
+    expect(historyBody.ok).toBe(true);
+    expect(historyBody.limit).toBe(6);
+    expect(Array.isArray(historyBody.events)).toBe(true);
+    expect(historyBody.events.length).toBeGreaterThanOrEqual(2);
+    expect(historyBody.events[0]?.state).toBe('fresh');
+    expect(historyBody.events[1]?.state).toBe('stale');
 
     const badRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
       method: 'POST',

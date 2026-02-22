@@ -4496,6 +4496,15 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         <div id="overviewStaleBanner" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(239,68,68,0.45);background:rgba(239,68,68,0.12);color:var(--red);font-size:12px;font-weight:600;">
           Freshness alert: stale dashboard sources detected.
         </div>
+        <div id="overviewFreshnessTimelineCard" style="margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+            <div style="font-size:12px;font-weight:700;color:var(--text-secondary);">Freshness Event Timeline</div>
+            <div id="overviewFreshnessTimelineMeta" style="font-size:11px;color:var(--text-muted);">Recent transitions</div>
+          </div>
+          <div id="overviewFreshnessTimeline" style="display:flex;flex-direction:column;gap:6px;">
+            <div class="empty-state-text">Loading freshness timeline…</div>
+          </div>
+        </div>
       </div>
 
       <div class="grid mb-24" style="grid-template-columns: repeat(3, 1fr);">
@@ -6531,6 +6540,10 @@ let overviewFreshnessConfigLoading = false;
 let overviewFreshnessLastSummaryState = null;
 const OVERVIEW_FRESHNESS_EVENT_COOLDOWN_MS = 60 * 1000;
 let overviewFreshnessLastEventAt = 0;
+let overviewFreshnessTimelineLimit = 8;
+let overviewFreshnessEventDedupeWindowMs = 30 * 1000;
+let overviewFreshnessEvents = [];
+let overviewFreshnessEventsError = null;
 
 let selectedAgentId = 'oracle';
 
@@ -6573,6 +6586,14 @@ function normalizeThresholdMs(raw, fallback) {
   return Math.round(n);
 }
 
+function normalizeIntInRange(raw, fallback, min, max) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  if (n < min) return min;
+  if (n > max) return max;
+  return Math.round(n);
+}
+
 function applyOverviewFreshnessThresholdConfig(config) {
   const cfg = config && typeof config === 'object'
     ? config.overviewFreshnessThresholdsMs
@@ -6598,6 +6619,22 @@ function applyOverviewFreshnessThresholdConfig(config) {
   if (next.agentHealth.staleMs <= next.agentHealth.freshMs) next.agentHealth.staleMs = next.agentHealth.freshMs + 1;
   if (next.observations.staleMs <= next.observations.freshMs) next.observations.staleMs = next.observations.freshMs + 1;
   overviewFreshnessThresholds = next;
+
+  overviewFreshnessTimelineLimit = normalizeIntInRange(
+    config?.overviewFreshnessTimelineLimit,
+    overviewFreshnessTimelineLimit,
+    1,
+    40,
+  );
+  overviewFreshnessEventDedupeWindowMs = normalizeIntInRange(
+    config?.overviewFreshnessEventDedupeWindowMs,
+    overviewFreshnessEventDedupeWindowMs,
+    0,
+    10 * 60 * 1000,
+  );
+  if (Array.isArray(overviewFreshnessEvents) && overviewFreshnessEvents.length > overviewFreshnessTimelineLimit) {
+    overviewFreshnessEvents = overviewFreshnessEvents.slice(0, overviewFreshnessTimelineLimit);
+  }
 }
 
 async function loadOverviewFreshnessConfigOnce() {
@@ -6639,7 +6676,38 @@ function emitOverviewFreshnessEvent(summary, states) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+  }).then(async (res) => {
+    if (!res || !res.ok) return;
+    try {
+      const body = await res.json();
+      if (body && body.accepted === false) return;
+      await refreshOverviewFreshnessTimeline();
+    } catch {
+      // no-op
+    }
   }).catch(() => {});
+}
+
+async function refreshOverviewFreshnessTimeline() {
+  try {
+    const payload = await fetchJson(`/api/overview-freshness-events?limit=${encodeURIComponent(overviewFreshnessTimelineLimit)}`);
+    if (payload && Array.isArray(payload.events)) {
+      overviewFreshnessEvents = payload.events;
+      overviewFreshnessEventsError = null;
+      if (typeof payload.dedupeWindowMs === 'number' && Number.isFinite(payload.dedupeWindowMs)) {
+        overviewFreshnessEventDedupeWindowMs = Math.max(0, Math.round(payload.dedupeWindowMs));
+      }
+      updateOverviewFreshnessTimeline(overviewFreshnessEvents, null);
+      return;
+    }
+    overviewFreshnessEvents = [];
+    overviewFreshnessEventsError = 'freshness timeline unavailable';
+    updateOverviewFreshnessTimeline(overviewFreshnessEvents, overviewFreshnessEventsError);
+  } catch {
+    overviewFreshnessEvents = [];
+    overviewFreshnessEventsError = 'freshness timeline unavailable';
+    updateOverviewFreshnessTimeline(overviewFreshnessEvents, overviewFreshnessEventsError);
+  }
 }
 
 // Observations
@@ -6765,7 +6833,8 @@ async function fetchData() {
       fetchJson('/api/kpis/latest'),
       fetchJson('/api/kpis/history?days=7'),
       fetchJson('/api/agent-health'),
-      fetchJson('/api/observations/recent?hours=24')
+      fetchJson('/api/observations/recent?hours=24'),
+      fetchJson(`/api/overview-freshness-events?limit=${encodeURIComponent(overviewFreshnessTimelineLimit)}`),
     ]).then(res => {
       const r0 = res[0];
       if (r0?.status === 'fulfilled' && !isApiErrorPayload(r0.value)) {
@@ -6806,6 +6875,20 @@ async function fetchData() {
           ? `Observations fetch failed: ${r3.reason.message}`
           : 'Observations fetch failed';
       }
+
+      const r4 = res[4];
+      if (r4?.status === 'fulfilled' && Array.isArray(r4.value?.events)) {
+        overviewFreshnessEvents = r4.value.events;
+        overviewFreshnessEventsError = null;
+        if (typeof r4.value?.dedupeWindowMs === 'number' && Number.isFinite(r4.value.dedupeWindowMs)) {
+          overviewFreshnessEventDedupeWindowMs = Math.max(0, Math.round(r4.value.dedupeWindowMs));
+        }
+      } else {
+        overviewFreshnessEvents = [];
+        overviewFreshnessEventsError = (r4?.status === 'rejected' && r4.reason?.message)
+          ? `Freshness timeline fetch failed: ${r4.reason.message}`
+          : 'Freshness timeline fetch failed';
+      }
       try { updateDashboard(); } catch {}
     }).catch(() => {});
 
@@ -6831,6 +6914,8 @@ async function fetchData() {
     costs = {};
     usage = {};
     systemStats = {};
+    overviewFreshnessEvents = [];
+    overviewFreshnessEventsError = err?.message || 'freshness timeline unavailable';
     setCoreDataHealth('sessions', false, err?.message || 'sessions unavailable');
     setCoreDataHealth('costs', false, err?.message || 'costs unavailable');
     setCoreDataHealth('usage', false, err?.message || 'usage unavailable');
@@ -7248,6 +7333,7 @@ function updateVentureWidgets() {
   }
 
   updateOverviewFreshnessSummary(freshnessStates);
+  updateOverviewFreshnessTimeline(overviewFreshnessEvents, overviewFreshnessEventsError);
 }
 
 let sessionFilter = 'all';
@@ -8235,6 +8321,64 @@ function updateOverviewFreshnessSummary(states) {
   }
 
   emitOverviewFreshnessEvent(summary, states);
+}
+
+function freshnessStateVisuals(state) {
+  if (state === 'stale') {
+    return { label: 'STALE', bg: 'rgba(239,68,68,0.16)', color: 'var(--red)' };
+  }
+  if (state === 'aging') {
+    return { label: 'AGING', bg: 'rgba(245,158,11,0.16)', color: 'var(--yellow)' };
+  }
+  if (state === 'unavailable' || state === 'no-data') {
+    return { label: 'UNAVAILABLE', bg: 'rgba(113,113,122,0.16)', color: 'var(--text-muted)' };
+  }
+  return { label: 'FRESH', bg: 'rgba(16,185,129,0.16)', color: 'var(--green)' };
+}
+
+function updateOverviewFreshnessTimeline(events, error) {
+  const listEl = document.getElementById('overviewFreshnessTimeline');
+  const metaEl = document.getElementById('overviewFreshnessTimelineMeta');
+  if (!listEl) return;
+
+  const rows = Array.isArray(events) ? events : [];
+  if (metaEl) {
+    const windowSecs = Math.max(0, Math.round((overviewFreshnessEventDedupeWindowMs || 0) / 1000));
+    metaEl.textContent = `Last ${overviewFreshnessTimelineLimit} events · dedupe ${windowSecs}s`;
+  }
+
+  if (error) {
+    listEl.innerHTML = `<div class="empty-state-text">${escapeHtml(error)}</div>`;
+    return;
+  }
+
+  if (!rows.length) {
+    listEl.innerHTML = '<div class="empty-state-text">No freshness transitions recorded yet.</div>';
+    return;
+  }
+
+  listEl.innerHTML = rows.map((event) => {
+    const ts = Number(event?.receivedAt) || Number(event?.emittedAt) || 0;
+    const when = ts > 0 ? timeAgo(ts) : '--';
+    const title = ts > 0 ? new Date(ts).toLocaleString() : 'Unknown event time';
+    const state = freshnessStateVisuals((event?.state || '').toString().toLowerCase());
+    const stale = Math.max(0, Number(event?.stale) || 0);
+    const aging = Math.max(0, Number(event?.aging) || 0);
+    const unavailable = Math.max(0, Number(event?.unavailable) || 0);
+    const total = Math.max(0, Number(event?.total) || 0);
+    const source = (event?.source || 'overview-widget').toString();
+
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 8px;border-radius:8px;background:var(--bg-secondary);border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:999px;background:${state.bg};color:${state.color};letter-spacing:0.04em;">${state.label}</span>
+        <div style="font-size:11px;color:var(--text-secondary);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(source)}">${escapeHtml(source)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text-muted);flex-shrink:0;" title="${escapeHtml(title)}">
+        <span class="mono">${stale}S/${aging}A/${unavailable}U/${total}T</span>
+        <span>${escapeHtml(when)}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function escapeHtml(s) {

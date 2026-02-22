@@ -141,8 +141,12 @@ import {
 } from './routes/openclaw-local-readiness.js';
 import {
   appendOverviewFreshnessEvent,
+  evaluateOverviewFreshnessEventForPersistence,
   parseOverviewFreshnessEvent,
+  readOverviewFreshnessEvents,
+  resolveOverviewFreshnessEventDedupeWindowMs,
   resolveOverviewFreshnessThresholds,
+  resolveOverviewFreshnessTimelineLimit,
 } from './overview-freshness.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 import {
@@ -193,6 +197,9 @@ const OPENCLAW_LOCAL_READINESS_REPORT_DIR: string = resolveOpenclawLocalReadines
   process.env,
 );
 const OVERVIEW_FRESHNESS_THRESHOLDS_MS = resolveOverviewFreshnessThresholds(process.env);
+const OVERVIEW_FRESHNESS_TIMELINE_LIMIT = resolveOverviewFreshnessTimelineLimit(process.env);
+const OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS = resolveOverviewFreshnessEventDedupeWindowMs(process.env);
+const overviewFreshnessEventDedupeState = new Map<string, number>();
 
 // Client HTML paths — served from client/ directory
 const htmlPath: string = path.join(import.meta.dirname, '..', 'client', 'index.html');
@@ -2421,6 +2428,8 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
       name: 'OpenClaw Dashboard',
       version: '1.0.0',
       overviewFreshnessThresholdsMs: OVERVIEW_FRESHNESS_THRESHOLDS_MS,
+      overviewFreshnessTimelineLimit: OVERVIEW_FRESHNESS_TIMELINE_LIMIT,
+      overviewFreshnessEventDedupeWindowMs: OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS,
       ventureos: {
         VENTUREOS_ROOT,
         SHARED_CONTEXT,
@@ -2441,6 +2450,27 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     });
     return;
   }
+  if (req.url && req.url.startsWith('/api/overview-freshness-events') && req.method === 'GET') {
+    try {
+      const params = new URL(req.url, 'http://localhost').searchParams;
+      const limit = clampInt(
+        params.get('limit') ?? String(OVERVIEW_FRESHNESS_TIMELINE_LIMIT),
+        1,
+        40,
+        OVERVIEW_FRESHNESS_TIMELINE_LIMIT,
+      );
+      const events = readOverviewFreshnessEvents(dataDir, { limit });
+      sendJson(res, {
+        ok: true,
+        limit,
+        events,
+        dedupeWindowMs: OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS,
+      });
+    } catch {
+      sendJson(res, { ok: false, error: 'Invalid freshness events query' }, 400);
+    }
+    return;
+  }
   if (req.url === '/api/overview-freshness-event' && req.method === 'POST') {
     try {
       const raw = await readRequestBody(req, { maxBytes: 32 * 1024 });
@@ -2451,27 +2481,52 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
         return;
       }
 
-      appendOverviewFreshnessEvent(dataDir, event);
-      if (event.state === 'stale') {
-        logWarn('dashboard', 'overview_freshness_stale', 'Overview freshness stale state reported', {
-          stale: event.stale,
-          aging: event.aging,
-          unavailable: event.unavailable,
-          total: event.total,
-          source: event.source,
-        });
+      const dedupe = evaluateOverviewFreshnessEventForPersistence(
+        event,
+        OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS,
+        overviewFreshnessEventDedupeState,
+        event.receivedAt || Date.now(),
+      );
+      if (dedupe.accepted) {
+        appendOverviewFreshnessEvent(dataDir, event);
+        if (event.state === 'stale') {
+          logWarn('dashboard', 'overview_freshness_stale', 'Overview freshness stale state reported', {
+            stale: event.stale,
+            aging: event.aging,
+            unavailable: event.unavailable,
+            total: event.total,
+            source: event.source,
+          });
+        } else {
+          logInfo('dashboard', 'overview_freshness_update', 'Overview freshness non-stale update reported', {
+            state: event.state,
+            stale: event.stale,
+            aging: event.aging,
+            unavailable: event.unavailable,
+            total: event.total,
+            source: event.source,
+          });
+        }
       } else {
-        logInfo('dashboard', 'overview_freshness_update', 'Overview freshness non-stale update reported', {
+        logInfo('dashboard', 'overview_freshness_duplicate_suppressed', 'Suppressed duplicate overview freshness event', {
           state: event.state,
           stale: event.stale,
           aging: event.aging,
           unavailable: event.unavailable,
           total: event.total,
           source: event.source,
+          dedupeWindowMs: OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS,
         });
       }
 
-      sendJson(res, { ok: true, state: event.state, recordedAt: event.receivedAt });
+      sendJson(res, {
+        ok: true,
+        state: event.state,
+        recordedAt: event.receivedAt,
+        accepted: dedupe.accepted,
+        dedupeWindowMs: OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS,
+        duplicateOfReceivedAt: dedupe.duplicateOfReceivedAt,
+      });
     } catch {
       sendJson(res, { ok: false, error: 'Invalid freshness event payload' }, 400);
     }
