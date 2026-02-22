@@ -282,3 +282,63 @@ assert bridge is not None, "missing bridge check"
 assert bridge.get("severity") == "warn", bridge
 print("OPENCLAW_LOCAL_SMOKE_FULL_PROFILE_BRIDGE_SEVERITY_OK")
 PY
+
+REPORT_DIR_PROFILE_OVERRIDE="$TMP_DIR/reports-profile-override"
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_PROFILE_OVERRIDE" \
+  --profile quick \
+  --profile full \
+  --bridge-url "http://127.0.0.1:$BRIDGE_PORT" \
+  --bridge-token-file "$BRIDGE_TOKEN_FILE" \
+  --skip-openclaw-cli \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-profile-override.out
+
+python3 - "$REPORT_DIR_PROFILE_OVERRIDE" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing profile-override json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("profile") == "full", summary
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["dashboard-map-route"]["status"] == "pass", checks["dashboard-map-route"]
+bridge = checks.get("bridge-scheduler-jobs")
+assert bridge is not None, "missing bridge check"
+assert bridge.get("status") == "pass", bridge
+assert bridge.get("severity") == "warn", bridge
+print("OPENCLAW_LOCAL_SMOKE_PROFILE_OVERRIDE_OK")
+PY
+
+REPORT_DIR_SKIP_OVERRIDE="$TMP_DIR/reports-skip-override"
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_SKIP_OVERRIDE" \
+  --skip-map \
+  --profile full \
+  --bridge-url "http://127.0.0.1:$BRIDGE_PORT" \
+  --bridge-token-file "$BRIDGE_TOKEN_FILE" \
+  --skip-openclaw-cli \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-skip-override.out
+
+python3 - "$REPORT_DIR_SKIP_OVERRIDE" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing skip-override json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("profile") == "full", summary
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["dashboard-map-route"]["status"] == "skipped", checks["dashboard-map-route"]
+print("OPENCLAW_LOCAL_SMOKE_SKIP_OVERRIDE_OK")
+PY

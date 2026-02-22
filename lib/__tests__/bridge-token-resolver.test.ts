@@ -88,9 +88,17 @@ describe('bridge-token-resolver', () => {
       expect(empty.errorCode).toBe('INVALID_BRIDGE_TOKEN_FILE');
     }
 
-    const missing = resolveBridgeToken({
+    const missingDefault = resolveBridgeToken({
       defaultTokenFile: path.join(tmp, 'missing-token'),
     });
+    expect(missingDefault).toEqual({
+      ok: false,
+      source: 'default-token-file',
+      errorCode: 'INVALID_BRIDGE_TOKEN_FILE',
+      errorMessage: 'bridge token file not found',
+    });
+
+    const missing = resolveBridgeToken({});
     expect(missing).toEqual({
       ok: false,
       source: 'default-token-file',
@@ -109,7 +117,8 @@ describe('bridge-token-resolver', () => {
     expect(ok.source).toBe('default-token-file');
 
     expect(() => readBridgeTokenOrThrow({ defaultTokenFile: path.join(tmp, 'missing') })).toThrow(
-      'Missing BRIDGE_TOKEN',
+      'bridge token file not found',
     );
+    expect(() => readBridgeTokenOrThrow({})).toThrow('Missing BRIDGE_TOKEN');
   });
 });

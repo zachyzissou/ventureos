@@ -12,6 +12,8 @@ PROFILE="full"
 SKIP_OPENCLAW_CLI=0
 SKIP_MAP=0
 SKIP_BRIDGE=0
+CLI_SKIP_MAP=0
+CLI_SKIP_BRIDGE=0
 BRIDGE_URL_CLI=""
 CLI_BRIDGE_TOKEN_FILE=""
 BRIDGE_CHECK_SEVERITY="warn"
@@ -58,10 +60,13 @@ apply_profile() {
       ;;
     full)
       PROFILE="full"
+      SKIP_MAP=0
+      SKIP_BRIDGE=0
       BRIDGE_CHECK_SEVERITY="warn"
       ;;
     bridge)
       PROFILE="bridge"
+      SKIP_MAP=0
       SKIP_BRIDGE=0
       BRIDGE_CHECK_SEVERITY="critical-optional"
       ;;
@@ -91,7 +96,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --profile)
-      apply_profile "$2"
+      PROFILE="$2"
       shift 2
       ;;
     --bridge-url)
@@ -107,11 +112,11 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --skip-map)
-      SKIP_MAP=1
+      CLI_SKIP_MAP=1
       shift
       ;;
     --skip-bridge)
-      SKIP_BRIDGE=1
+      CLI_SKIP_BRIDGE=1
       shift
       ;;
     -h|--help)
@@ -125,6 +130,14 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+apply_profile "$PROFILE"
+if [[ "$CLI_SKIP_MAP" -eq 1 ]]; then
+  SKIP_MAP=1
+fi
+if [[ "$CLI_SKIP_BRIDGE" -eq 1 ]]; then
+  SKIP_BRIDGE=1
+fi
 
 if ! [[ "$HTTP_TIMEOUT_SEC" =~ ^[0-9]+$ ]] || [[ "$HTTP_TIMEOUT_SEC" -lt 1 ]]; then
   echo "Invalid --timeout-sec: $HTTP_TIMEOUT_SEC" >&2
