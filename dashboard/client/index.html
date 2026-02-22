@@ -4488,6 +4488,11 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
             <span id="liveAge" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);"></span>
           </div>
         </div>
+        <div style="margin-top:10px;">
+          <span id="overviewFreshnessSummary" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(113,113,122,0.16);color:var(--text-muted);font-size:11px;">
+            Data freshness unknown
+          </span>
+        </div>
       </div>
 
       <div class="grid mb-24" style="grid-template-columns: repeat(3, 1fr);">
@@ -7045,6 +7050,7 @@ function updateVentureWidgets() {
   const obsEl = document.getElementById('obsRecentList');
   const obsErrEl = document.getElementById('obsRecentError');
   const obsFreshnessEl = document.getElementById('obsFreshnessBadge');
+  const freshnessStates = [];
 
   if (kpiErrEl) kpiErrEl.textContent = kpisLatestError ? kpisLatestError : '';
 
@@ -7054,7 +7060,8 @@ function updateVentureWidgets() {
   const kpiSourceMs = kpiMtimeMs > 0
     ? kpiMtimeMs
     : (parseDateOnlyMs(latest?.date) || parseDateOnlyMs((kpisLatest?.file || '').replace(/\.json$/, '')));
-  setFreshnessBadge(kpiFreshnessEl, kpiSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.kpi);
+  const kpiFreshness = setFreshnessBadge(kpiFreshnessEl, kpiSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.kpi);
+  if (kpiFreshness) freshnessStates.push(kpiFreshness);
 
   const sr = latest?.overall?.success_rate;
   if (srEl) srEl.textContent = (typeof sr === 'number') ? fmtPct(sr, 1) : '--';
@@ -7099,7 +7106,8 @@ function updateVentureWidgets() {
   const healthSourceMs = (typeof agentHealth?.lastActiveMs === 'number' && agentHealth.lastActiveMs > 0)
     ? agentHealth.lastActiveMs
     : 0;
-  setFreshnessBadge(healthFreshnessEl, healthSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.agentHealth);
+  const healthFreshness = setFreshnessBadge(healthFreshnessEl, healthSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.agentHealth);
+  if (healthFreshness) freshnessStates.push(healthFreshness);
   if (healthEl) {
     if (!agentHealth?.agents) {
       healthEl.innerHTML = '<div class="empty-state-text">Loading…</div>';
@@ -7130,7 +7138,8 @@ function updateVentureWidgets() {
   if (obsErrEl) obsErrEl.textContent = recentObsError ? recentObsError : '';
   const obsItems = Array.isArray(recentObs?.items) ? recentObs.items : [];
   const obsSourceMs = obsItems.reduce((max, item) => Math.max(max, Number(item?.mtimeMs) || 0), 0);
-  setFreshnessBadge(obsFreshnessEl, obsSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.observations);
+  const obsFreshness = setFreshnessBadge(obsFreshnessEl, obsSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.observations);
+  if (obsFreshness) freshnessStates.push(obsFreshness);
   if (obsEl) {
     const items = obsItems.length ? obsItems : (recentObs?.items || null);
     if (!items) {
@@ -7152,6 +7161,8 @@ function updateVentureWidgets() {
       }).join('');
     }
   }
+
+  updateOverviewFreshnessSummary(freshnessStates);
 }
 
 let sessionFilter = 'all';
@@ -8041,27 +8052,64 @@ function setFreshnessBadge(el, sourceMs, thresholds) {
     el.style.background = 'rgba(113,113,122,0.16)';
     el.style.color = 'var(--text-muted)';
     el.title = 'No source timestamp available';
-    return;
+    return { state: 'no-data', ageMs: null, sourceMs: 0 };
   }
 
   const ageMs = Math.max(0, Date.now() - ts);
   let label = 'Fresh';
   let bg = 'rgba(16,185,129,0.16)';
   let color = 'var(--green)';
+  let state = 'fresh';
   if (ageMs > thresholds.staleMs) {
     label = 'Stale';
     bg = 'rgba(239,68,68,0.16)';
     color = 'var(--red)';
+    state = 'stale';
   } else if (ageMs > thresholds.freshMs) {
     label = 'Aging';
     bg = 'rgba(245,158,11,0.16)';
     color = 'var(--yellow)';
+    state = 'aging';
   }
 
   el.textContent = `${label} · ${formatAgeCompact(ageMs)} old`;
   el.style.background = bg;
   el.style.color = color;
   el.title = `Source timestamp: ${new Date(ts).toLocaleString()}`;
+  return { state, ageMs, sourceMs: ts };
+}
+
+function updateOverviewFreshnessSummary(states) {
+  const el = document.getElementById('overviewFreshnessSummary');
+  if (!el) return;
+
+  const valid = Array.isArray(states) ? states : [];
+  const stale = valid.filter((s) => s?.state === 'stale').length;
+  const aging = valid.filter((s) => s?.state === 'aging').length;
+  const noData = valid.filter((s) => s?.state === 'no-data').length;
+
+  if (stale > 0) {
+    el.textContent = `Data freshness: ${stale} stale`;
+    el.style.background = 'rgba(239,68,68,0.16)';
+    el.style.color = 'var(--red)';
+    return;
+  }
+  if (aging > 0) {
+    el.textContent = `Data freshness: ${aging} aging`;
+    el.style.background = 'rgba(245,158,11,0.16)';
+    el.style.color = 'var(--yellow)';
+    return;
+  }
+  if (noData > 0) {
+    el.textContent = `Data freshness: ${noData} unavailable`;
+    el.style.background = 'rgba(113,113,122,0.16)';
+    el.style.color = 'var(--text-muted)';
+    return;
+  }
+
+  el.textContent = 'Data freshness: all fresh';
+  el.style.background = 'rgba(16,185,129,0.16)';
+  el.style.color = 'var(--green)';
 }
 
 function escapeHtml(s) {
