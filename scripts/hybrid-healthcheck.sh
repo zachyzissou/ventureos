@@ -66,11 +66,6 @@ fi
 # Healthcheck runs on host; convert Docker host alias to host-local loopback.
 BRIDGE_BASE_URL="${BRIDGE_BASE_URL/host.docker.internal/localhost}"
 
-http_code() {
-  local url="$1"
-  curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000"
-}
-
 $JSON_OUTPUT || echo ""
 $JSON_OUTPUT || echo "── VentureOS Hybrid Health Check ──"
 $JSON_OUTPUT || echo ""
@@ -114,8 +109,9 @@ done
 
 for base in "${BRIDGE_CANDIDATES[@]}"; do
   health_url="${base}/health"
-  body=$(curl -s "$health_url" 2>/dev/null || true)
-  code=$(http_code "$health_url")
+  response=$(curl -s -w "\n%{http_code}" "$health_url" 2>/dev/null || true)
+  code=$(printf '%s\n' "$response" | tail -n1)
+  body=$(printf '%s\n' "$response" | sed '$d')
   if [ "$code" != "200" ]; then
     continue
   fi
