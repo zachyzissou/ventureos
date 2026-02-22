@@ -166,6 +166,11 @@ Run the cron-safe local readiness cadence wrapper:
 npm run openclaw:local-ready:cron
 ```
 
+Install/manage persistent host bridge LaunchAgent:
+```bash
+npm run openclaw:bridge:launchagent
+```
+
 Reference docs and artifacts:
 - `docs/OPENCLAW_LOCAL_INTEGRATION_SMOKE.md`
 - `docs/LOCAL_INTEGRATION_READY.md`
@@ -176,7 +181,7 @@ Current next steps (as of February 22, 2026):
 2. `npm run openclaw:local-ready:cron`
 3. Confirm Mission Control shows the latest `/api/openclaw-local-readiness` snapshot.
 4. If bridge checks should pass, set `BRIDGE_TOKEN_FILE` and rerun `npm run openclaw:local-smoke -- --profile bridge`.
-5. Ensure dashboard container has report artifact access via `OPENCLAW_LOCAL_READINESS_REPORT_DIR` + bind mount in `docker-compose.yml`.
+5. Ensure host bridge LaunchAgent is installed and healthy (`bash scripts/install-bridge-launchagent.sh --status`).
 
 ### Production Dashboard
 Tactical map integrates with the VentureOS dashboard on port 8001:

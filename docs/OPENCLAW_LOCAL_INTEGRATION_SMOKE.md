@@ -36,10 +36,8 @@ bash scripts/openclaw-local-ready-cron.sh
 
 Bridge-mode prerequisite (when `DASHBOARD_DATA_MODE=bridge`):
 ```bash
-REPO_ROOT="/absolute/path/to/ventureos"
-launchctl remove com.ventureos.bridge 2>/dev/null || true
-launchctl submit -l com.ventureos.bridge -- /bin/zsh -lc "cd \"$REPO_ROOT\" && set -a && source config/bridge.env && set +a && exec node dashboard/dist/dashboard/server/bridge.js >> runtime/logs/bridge.log 2>&1"
-curl -sS http://127.0.0.1:18790/health | jq .
+npm run openclaw:bridge:launchagent
+bash scripts/install-bridge-launchagent.sh --status
 ```
 
 Common options:
@@ -65,7 +63,7 @@ Profiles:
 - `SMOKE_HTTP_TIMEOUT_SEC`: per-request timeout
 - `SMOKE_HTTP_RETRY_MAX`: retry count for transient HTTP failures (default: `2`)
 - `SMOKE_HTTP_RETRY_BASE_SEC`: base retry delay in seconds (default: `1`)
-- `SMOKE_HTTP_RETRY_MAX_DELAY_SEC`: maximum retry delay in seconds (default: `15`)
+- `SMOKE_HTTP_RETRY_MAX_DELAY_SEC`: maximum retry delay in seconds (default: `60`)
 - `BRIDGE_URL`: optional direct bridge URL (`http://127.0.0.1:18790` default)
 - `BRIDGE_TOKEN`: auth token for direct bridge check
 - `BRIDGE_TOKEN_FILE`: optional token file for direct bridge check

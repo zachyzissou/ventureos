@@ -235,7 +235,7 @@ bash scripts/openclaw-local-smoke.sh \
   - default OpenClaw token file (`$OPENCLAW_DIR/bridge/bridge-token`)
 - Built-in transient retry behavior:
   - Retries HTTP `429` responses (dashboard + bridge checks) using `Retry-After` when present.
-  - Retry controls: `SMOKE_HTTP_RETRY_MAX` (default `2`), `SMOKE_HTTP_RETRY_BASE_SEC` (default `1`), `SMOKE_HTTP_RETRY_MAX_DELAY_SEC` (default `15`).
+  - Retry controls: `SMOKE_HTTP_RETRY_MAX` (default `2`), `SMOKE_HTTP_RETRY_BASE_SEC` (default `1`), `SMOKE_HTTP_RETRY_MAX_DELAY_SEC` (default `60`).
 - Gateway status check requires a healthy runtime signal (`RPC probe: ok` or `Listening:`) to pass.
 - Emits timestamped JSON + markdown + SVG reports to `runtime/reports/openclaw-local-smoke/`.
 - JSON summary includes `verdict`, `readinessScore`, `confidence`; each check includes `group`, `severity`, `likelyCause`, and `nextCommand`.
@@ -309,3 +309,29 @@ bash scripts/tests/test-openclaw-local-ready-cron.sh
 1. `bash scripts/install-cron.sh --force`
 2. `bash scripts/openclaw-local-ready-cron.sh`
 3. Validate `docs/LOCAL_INTEGRATION_READY.md` timestamp and `runtime/reports/openclaw-local-smoke/` artifact rotation.
+
+---
+
+## 16) install-bridge-launchagent.sh
+**Purpose:** Install/manage a persistent macOS LaunchAgent for the host Bridge API.
+
+**Usage:**
+```bash
+bash scripts/install-bridge-launchagent.sh
+```
+
+**Behavior:**
+- Renders `~/Library/LaunchAgents/com.ventureos.bridge.plist` (default label).
+- Starts bridge via `launchctl bootstrap` + `kickstart`.
+- Sources bridge runtime config from `config/bridge.env`.
+- Supports:
+  - `--status` (launchctl + health visibility)
+  - `--uninstall` (bootout + plist removal)
+  - `--print-only` (render without launchctl calls)
+  - path overrides for repo root/env/entry/plist/label.
+- Requires compiled bridge entry at `dashboard/dist/dashboard/server/bridge.js`.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-install-bridge-launchagent.sh
+```

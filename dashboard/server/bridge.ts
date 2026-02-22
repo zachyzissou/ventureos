@@ -810,7 +810,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   const group = rateLimitGroup(pathname);
-  if (!checkRateLimit(peerIp, group)) {
+  const rateLimit = checkRateLimit(peerIp, group);
+  const retryAfter = Math.max(1, Math.ceil(rateLimit.resetMs / 1000));
+  res.setHeader('X-RateLimit-Limit', String(rateLimit.limit));
+  res.setHeader('X-RateLimit-Remaining', String(rateLimit.remaining));
+  res.setHeader('X-RateLimit-Reset', String(retryAfter));
+  if (!rateLimit.allowed) {
+    res.setHeader('Retry-After', String(retryAfter));
     logBridgeAudit(BRIDGE_AUDIT_LOG, 'rate_limited', req, group);
     sendJson(res, { ok: false, error: 'Rate limit exceeded' }, 429);
     return;
