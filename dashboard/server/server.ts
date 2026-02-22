@@ -10,6 +10,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { exec, execSync } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import type { IncomingMessage, ServerResponse, Server } from 'node:http';
 
@@ -157,6 +158,7 @@ import {
   getMemoryFiles as getMemoryFilesInternal,
   getServicesStatus as getServicesStatusInternal,
 } from './server-ops-helpers.js';
+import { resolveRestartActionCommand } from './platform-ops.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -196,6 +198,27 @@ const bridgeProxyDeps = {
   bridgeUrl: BRIDGE_URL,
   bridgeToken: BRIDGE_TOKEN,
 };
+
+const execAsync = promisify(exec);
+
+async function runShellCommand(
+  command: string,
+  timeoutMs: number,
+): Promise<{ ok: boolean; output: string; error?: string }> {
+  try {
+    const { stdout, stderr } = await execAsync(command, {
+      timeout: timeoutMs,
+      maxBuffer: 1024 * 1024,
+      encoding: 'utf8',
+    });
+    const output = [stdout, stderr].map((s) => s.trim()).filter(Boolean).join('\n');
+    return { ok: true, output };
+  } catch (error: unknown) {
+    const e = error as { message?: string; stdout?: string; stderr?: string };
+    const output = [e.stdout, e.stderr].map((s) => (s ?? '').trim()).filter(Boolean).join('\n');
+    return { ok: false, output, error: e.message ?? 'Command execution failed' };
+  }
+}
 
 // Ensure data directory exists
 try {
@@ -2478,8 +2501,17 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   if (req.url === '/api/action/restart-openclaw' && req.method === 'POST') {
     try {
       logInfo('dashboard', 'action_invoked', 'restart-openclaw requested', { action: 'restart-openclaw' });
-      exec('systemctl restart openclaw', () => {});
-      sendJson(res, { success: true });
+      const plan = resolveRestartActionCommand('restart-openclaw');
+      if (plan.unsupportedReason) {
+        sendJson(res, { success: false, error: plan.unsupportedReason }, 400);
+        return;
+      }
+      const result = await runShellCommand(plan.command, plan.timeoutMs);
+      if (!result.ok) {
+        sendJson(res, { success: false, error: result.error, output: result.output }, 502);
+        return;
+      }
+      sendJson(res, { success: true, output: result.output });
     } catch (e: unknown) {
       const safe = toSafeError(e, { action: 'restart-openclaw' });
       slogError('dashboard', 'action_failed', 'restart-openclaw failed', { action: 'restart-openclaw', errorRef: safe.errorRef });
@@ -2489,10 +2521,17 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   }
   if (req.url === '/api/action/restart-dashboard' && req.method === 'POST') {
     try {
-      setTimeout(() => {
-        exec('systemctl restart agent-dashboard', () => {});
-      }, 2000);
-      sendJson(res, { success: true, message: 'Restarting in 2 seconds...' });
+      const plan = resolveRestartActionCommand('restart-dashboard');
+      if (plan.unsupportedReason) {
+        sendJson(res, { success: false, error: plan.unsupportedReason }, 400);
+        return;
+      }
+      const result = await runShellCommand(plan.command, plan.timeoutMs);
+      if (!result.ok) {
+        sendJson(res, { success: false, error: result.error, output: result.output }, 502);
+        return;
+      }
+      sendJson(res, { success: true, message: 'Dashboard restart command completed.', output: result.output });
     } catch (e: unknown) {
       const safe = toSafeError(e, { action: 'restart-dashboard' });
       sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
@@ -2513,9 +2552,13 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     return;
   }
   if (req.url === '/api/action/restart-tailscale' && req.method === 'POST') {
-    exec('systemctl restart tailscaled', (err) => {
-      sendJson(res, { success: !err, error: err?.message });
-    });
+    const plan = resolveRestartActionCommand('restart-tailscale');
+    if (plan.unsupportedReason) {
+      sendJson(res, { success: false, error: plan.unsupportedReason }, 400);
+      return;
+    }
+    const result = await runShellCommand(plan.command, plan.timeoutMs);
+    sendJson(res, { success: result.ok, output: result.output, error: result.error });
     return;
   }
   if (req.url === '/api/action/update-openclaw' && req.method === 'POST') {

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { execSync } from 'node:child_process';
 
 import type { CronJobInfo, GitCommit, GitRepo } from './types.js';
+import { getPlatformServiceStatuses } from './platform-ops.js';
 
 interface CronJobRaw {
   id: string;
@@ -109,18 +110,7 @@ export function getGitActivity(workspaceDir: string): GitCommit[] {
 }
 
 export function getServicesStatus(): Array<{ name: string; active: boolean }> {
-  const services: string[] = ['openclaw', 'agent-dashboard', 'tailscaled'];
-  return services.map((name) => {
-    try {
-      const status: string = execSync(`systemctl is-active ${name} 2>/dev/null`, {
-        encoding: 'utf8',
-        timeout: 3000,
-      }).trim();
-      return { name, active: status === 'active' };
-    } catch {
-      return { name, active: false };
-    }
-  });
+  return getPlatformServiceStatuses();
 }
 
 export function getMemoryFiles(

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { getPlatformServiceStatuses } from './platform-ops.js';
 
 interface BridgeAgentSessionEntry {
   sessionId: string;
@@ -225,18 +226,7 @@ function getGitActivity(workspaceDir: string): Array<{ repo: string; hash: strin
 }
 
 function getServicesStatus(): Array<{ name: string; active: boolean }> {
-  const services = ['openclaw', 'agent-dashboard', 'tailscaled'];
-  return services.map((name) => {
-    try {
-      const status = execSync(`systemctl is-active ${name} 2>/dev/null`, {
-        encoding: 'utf8',
-        timeout: 3000,
-      }).trim();
-      return { name, active: status === 'active' };
-    } catch {
-      return { name, active: false };
-    }
-  });
+  return getPlatformServiceStatuses();
 }
 
 function getMemoryFiles(
