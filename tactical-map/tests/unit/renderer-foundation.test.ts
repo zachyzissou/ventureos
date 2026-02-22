@@ -154,11 +154,28 @@ describe('renderer foundation', () => {
     hud.setSize(1920, 1080);
     hud.setKpiText('Oracle WIS: 85 | Atlas SPD: 72');
     hud.update(16);
+    hud.setSize(1366, 768);
+    hud.update(16);
 
     // Sanity: should have at least one Text child somewhere.
     const hasText =
       hud.container.children.some((c) => c instanceof Text) ||
       hud.container.children.some((c) => (c as Container).children?.some((cc) => cc instanceof Text));
     expect(hasText).toBe(true);
+
+    // Regression guard: ticker scroll layer must be clipped to the strip bounds.
+    const hasMask = findDescendant(hud.container, (node) => Boolean((node as { mask?: unknown }).mask));
+    expect(hasMask).toBe(true);
   });
 });
+
+function findDescendant(node: unknown, predicate: (node: unknown) => boolean): boolean {
+  if (!node || typeof node !== 'object') return false;
+  if (predicate(node)) return true;
+  const children = (node as { children?: unknown[] }).children;
+  if (!Array.isArray(children)) return false;
+  for (const child of children) {
+    if (findDescendant(child, predicate)) return true;
+  }
+  return false;
+}
