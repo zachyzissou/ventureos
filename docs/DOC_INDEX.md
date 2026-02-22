@@ -18,10 +18,10 @@
 - **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitHub-first work contract (legacy filename kept for compatibility)
 - **docs/process/LABEL_PROTOCOL.md** – how workflow labels are applied/removed
 - **docs/process/GITLAB_PROJECT_RESOLVER.md** – how Mission Control resolves the target GitHub repository for issues/PRs (legacy filename kept for compatibility)
-- **docs/process/STATUS.md** – current implementation status
-- **docs/process/ROADMAP.md** – phased roadmap
-- **docs/process/PROJECT_PLAN.md** – milestones + success metrics
-- **docs/process/FEATURE_BACKLOG.md** – backlog by workstream
+- **docs/STATUS.md** – current implementation status (archived pointer; live status in issue #138)
+- **docs/ROADMAP.md** – roadmap pointer (archived in-repo, live in issue #138)
+- **docs/PROJECT_PLAN.md** – milestones + success metrics
+- **docs/FEATURE_BACKLOG.md** – backlog by workstream
 - **docs/NEXUS_2_0_M2_AUTHORITY_PLANE.md** – M2 authority map, policy gate, and override path
 - **docs/NEXUS_2_0_M4_OBSERVABILITY.md** – M4 replay authority surfaces (explain + control-health)
 - **docs/NEXUS_2_0_M6_PRODUCTION_READINESS_2026-02-21.md** – M6 readiness decision and evidence matrix
@@ -131,7 +131,7 @@
 - **SESSIONS_SPAWN_RETRY_WRAPPER.md** – sessions_spawn retry wrapper usage, logging, and integration points
 - **SESSIONS_SPAWN_ANTFARM_PATTERNS.md** – Antfarm-inspired workflow patterns (fresh context, verification loop, retries)
 - **TEST_COVERAGE_SPAWN_PATTERNS.md** – test coverage report for spawn pattern scripts
-- **docs/process/CRON_SPECS.md** – cron job definitions & schedules
+- **docs/CRON_SPECS.md** – cron job definitions & schedules
 - **docs/process/METRICS_PLAN.md** – KPI definitions + collection approach
 - **docs/process/TEST_PLAN.md** – verification & test cases
 - **docs/process/ROLLOUT_PLAN.md** – phased rollout + rollback
