@@ -6669,13 +6669,44 @@ async function fetchData() {
       fetchJson('/api/observations/recent?hours=24')
     ]).then(res => {
       const r0 = res[0];
-      if (r0?.status === 'fulfilled') { kpisLatest = r0.value; kpisLatestError = null; } else { kpisLatestError = 'KPI latest fetch failed'; }
+      if (r0?.status === 'fulfilled' && !isApiErrorPayload(r0.value)) {
+        kpisLatest = r0.value;
+        kpisLatestError = null;
+      } else {
+        kpisLatest = null;
+        kpisLatestError = (r0?.status === 'rejected' && r0.reason?.message)
+          ? `KPI latest fetch failed: ${r0.reason.message}`
+          : 'KPI latest fetch failed';
+      }
+
       const r1 = res[1];
-      if (r1?.status === 'fulfilled') { kpisHistory = r1.value; } else { /* keep previous */ }
+      if (r1?.status === 'fulfilled' && !isApiErrorPayload(r1.value)) {
+        kpisHistory = r1.value;
+      } else {
+        kpisHistory = null;
+      }
+
       const r2 = res[2];
-      if (r2?.status === 'fulfilled') { agentHealth = r2.value; agentHealthError = null; } else { agentHealthError = 'Agent health fetch failed'; }
+      if (r2?.status === 'fulfilled' && !isApiErrorPayload(r2.value)) {
+        agentHealth = r2.value;
+        agentHealthError = null;
+      } else {
+        agentHealth = null;
+        agentHealthError = (r2?.status === 'rejected' && r2.reason?.message)
+          ? `Agent health fetch failed: ${r2.reason.message}`
+          : 'Agent health fetch failed';
+      }
+
       const r3 = res[3];
-      if (r3?.status === 'fulfilled') { recentObs = r3.value; recentObsError = null; } else { recentObsError = 'Observations fetch failed'; }
+      if (r3?.status === 'fulfilled' && !isApiErrorPayload(r3.value)) {
+        recentObs = r3.value;
+        recentObsError = null;
+      } else {
+        recentObs = null;
+        recentObsError = (r3?.status === 'rejected' && r3.reason?.message)
+          ? `Observations fetch failed: ${r3.reason.message}`
+          : 'Observations fetch failed';
+      }
       try { updateDashboard(); } catch {}
     }).catch(() => {});
 
@@ -8107,12 +8138,12 @@ function updateTeamDirectoryView() {
     loadDetailEl.textContent = `${sessions24h} sessions in last 24h`;
   }
 
-  const syntheticNexus = {
+  const aggregatedNexus = {
     status: teamOverall === 'busy' ? 'working' : 'idle',
     recentSessions24h: sessions24h,
     successRate24h: null,
     successRate: null,
-    lastActivityMs: mostRecentActivity || Date.now(),
+    lastActivityMs: mostRecentActivity || 0,
     recentSessions: [],
     recentCompletions: [],
   };
@@ -8125,7 +8156,7 @@ function updateTeamDirectoryView() {
   });
 
   const cards = [
-    renderTeamDirectoryCard('nexus', syntheticNexus, {
+    renderTeamDirectoryCard('nexus', aggregatedNexus, {
       cardClass: 'nexus',
       assignment: teamOverall === 'busy'
         ? 'Coordinating active mission execution'
