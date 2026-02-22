@@ -89,6 +89,22 @@ Optional env overrides for cron wrapper:
 - `OPENCLAW_LOCAL_READY_PRUNE_KEEP`
 - `OPENCLAW_LOCAL_READY_PROFILE` (`quick|full|bridge`)
 
+## Current Next Steps (February 22, 2026)
+1. Install or refresh managed cron entries:
+```bash
+bash scripts/install-cron.sh --force
+```
+2. Run one manual cadence cycle and confirm doc/artifact refresh:
+```bash
+bash scripts/openclaw-local-ready-cron.sh
+```
+3. Verify Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
+4. If bridge direct-check coverage is expected, configure `BRIDGE_TOKEN_FILE` and rerun bridge profile smoke:
+```bash
+bash scripts/openclaw-local-smoke.sh --profile bridge
+```
+5. Track active rollout work in issues `#431` (ops rollout) and `#432` (bridge readiness parity).
+
 ## Regression Test
 Run the mock-server regression test:
 ```bash

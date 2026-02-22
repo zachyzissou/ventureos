@@ -79,3 +79,8 @@
 - **Output:** refreshed `docs/LOCAL_INTEGRATION_READY.md` and paired JSON/MD/SVG artifacts
 - **Retention:** defaults to keep newest 14 artifact sets (configurable via env)
 - **Added:** 2026-02-22
+
+## Current Next Steps (February 22, 2026)
+1. Roll this schedule onto the host with `bash scripts/install-cron.sh --force`.
+2. Validate first run via `runtime/logs/cron-runs/openclaw-local-ready.jsonl`.
+3. Confirm `docs/LOCAL_INTEGRATION_READY.md` and Mission Control readiness card move forward on the next cadence tick.
