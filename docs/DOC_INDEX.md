@@ -89,6 +89,7 @@
 - **docs/DEPLOY_RUNBOOK.md** – production deploy/rollback operator guide (#197)
 - **docs/PRODUCTION_CUTOVER.md** – hybrid deployment cutover reference (#191)
 - **docs/OPENCLAW_LOCAL_INTEGRATION_SMOKE.md** – local OpenClaw smoke harness usage, checks, evidence artifacts, and regression test (#409)
+- **docs/LOCAL_INTEGRATION_READY.md** – latest automated mission-control readiness snapshot generated from smoke artifacts
 
 ## Templates (workspace starters)
 - **docs/templates/AGENTS.json** – AGENTS policy wiring template

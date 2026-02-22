@@ -17,6 +17,7 @@ import {
 describe('bridge-security', () => {
   afterEach(() => {
     vi.useRealTimers();
+    delete process.env.BRIDGE_TOKEN_FILE;
   });
 
   it('normalizes IPv4-mapped addresses and allowlist CIDRs', () => {
@@ -38,6 +39,17 @@ describe('bridge-security', () => {
 
     expect(readBridgeToken(tokenFile, 'env-token')).toBe('env-token');
     expect(readBridgeToken(tokenFile, undefined)).toBe('file-token');
+  });
+
+  it('uses BRIDGE_TOKEN_FILE env override when env token is unset', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-token-env-file-'));
+    const envFile = path.join(tmp, 'bridge-token-env');
+    const fallbackFile = path.join(tmp, 'bridge-token-default');
+    fs.writeFileSync(envFile, 'env-file-token\n', 'utf8');
+    fs.writeFileSync(fallbackFile, 'fallback-token\n', 'utf8');
+
+    process.env.BRIDGE_TOKEN_FILE = envFile;
+    expect(readBridgeToken(fallbackFile, undefined)).toBe('env-file-token');
   });
 
   it('parses rate limit rules with default fallback and enforces windows', () => {

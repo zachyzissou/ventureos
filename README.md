@@ -150,6 +150,22 @@ cd tactical-map
 npm test  # Vitest
 ```
 
+### Local OpenClaw Readiness
+Run deterministic local OpenClaw integration smoke checks:
+```bash
+npm run openclaw:local-smoke
+```
+
+Run smoke and regenerate the readiness mission card/checklist:
+```bash
+npm run openclaw:local-ready
+```
+
+Reference docs and artifacts:
+- `docs/OPENCLAW_LOCAL_INTEGRATION_SMOKE.md`
+- `docs/LOCAL_INTEGRATION_READY.md`
+- `runtime/reports/openclaw-local-smoke/`
+
 ### Production Dashboard
 Tactical map integrates with the VentureOS dashboard on port 8001:
 ```bash

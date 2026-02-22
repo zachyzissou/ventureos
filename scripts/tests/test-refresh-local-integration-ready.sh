@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REFRESH_SCRIPT="$ROOT/scripts/refresh-local-integration-ready.sh"
 SMOKE_SCRIPT="$ROOT/scripts/openclaw-local-smoke.sh"
 TMP_DIR="$(mktemp -d)"
 SERVER_PID=""
@@ -68,19 +69,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/api/health":
-            self._send_json(200, {"ok": True, "service": "mock-dashboard"})
-            return
-
-        if self.path == "/map/":
-            if not self._auth_ok():
-                self._send_json(401, {"ok": False, "error": "unauthorized"})
-                return
-            html = b"<html><body>map</body></html>"
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.send_header("Content-Length", str(len(html)))
-            self.end_headers()
-            self.wfile.write(html)
+            self._send_json(200, {"ok": True})
             return
 
         if self.path == "/api/live-telemetry":
@@ -96,12 +85,24 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
 
+        if self.path == "/map/":
+            if not self._auth_ok():
+                self._send_json(401, {"ok": False, "error": "unauthorized"})
+                return
+            html = b"<html><body>map</body></html>"
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(html)))
+            self.end_headers()
+            self.wfile.write(html)
+            return
+
         if not self._auth_ok():
             self._send_json(401, {"ok": False, "error": "unauthorized"})
             return
 
         if self.path == "/api/config":
-            self._send_json(200, {"name": "mock-dashboard", "services": ["demo"]})
+            self._send_json(200, {"name": "mock-dashboard"})
         elif self.path == "/api/services":
             self._send_json(
                 200,
@@ -162,123 +163,105 @@ python3 "$TMP_DIR/mock-bridge.py" "$BRIDGE_PORT" >/dev/null 2>&1 &
 BRIDGE_SERVER_PID=$!
 sleep 0.3
 
-REPORT_DIR_BASELINE="$TMP_DIR/reports-baseline"
-bash "$SMOKE_SCRIPT" \
+REPORT_DIR="$TMP_DIR/reports"
+OUT_DOC="$TMP_DIR/LOCAL_INTEGRATION_READY.md"
+
+bash "$REFRESH_SCRIPT" \
   --dashboard-url "http://127.0.0.1:$PORT" \
   --token-file "$TOKEN_FILE" \
-  --report-dir "$REPORT_DIR_BASELINE" \
-  --profile full \
-  --skip-openclaw-cli \
-  --skip-bridge \
-  --timeout-sec 3 >/tmp/openclaw-local-smoke-test.out
-
-python3 - "$REPORT_DIR_BASELINE" <<'PY'
-import json
-from pathlib import Path
-import sys
-
-report_dir = Path(sys.argv[1])
-json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
-svg_reports = sorted(report_dir.glob("openclaw-local-smoke-*.svg"))
-assert json_reports, "missing json report"
-assert svg_reports, "missing svg report"
-
-payload = json.loads(json_reports[-1].read_text())
-summary = payload.get("summary", {})
-assert summary.get("status") == "pass", summary
-assert summary.get("verdict") == "go", summary
-assert isinstance(summary.get("readinessScore"), int), summary
-assert summary.get("confidence") in {"high", "medium", "low"}, summary
-assert summary.get("profile") == "full", summary
-
-check = next(c for c in payload.get("checks", []) if c["id"] == "dashboard-services")
-for key in ("group", "severity", "likelyCause", "nextCommand"):
-    assert key in check, check
-print("OPENCLAW_LOCAL_SMOKE_BASELINE_OK")
-PY
-
-REPORT_DIR_QUICK="$TMP_DIR/reports-quick"
-bash "$SMOKE_SCRIPT" \
-  --dashboard-url "http://127.0.0.1:$PORT" \
-  --token-file "$TOKEN_FILE" \
-  --report-dir "$REPORT_DIR_QUICK" \
-  --profile quick \
-  --skip-openclaw-cli \
-  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-quick.out
-
-python3 - "$REPORT_DIR_QUICK" <<'PY'
-import json
-from pathlib import Path
-import sys
-
-report_dir = Path(sys.argv[1])
-json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
-assert json_reports, "missing quick json report"
-payload = json.loads(json_reports[-1].read_text())
-summary = payload.get("summary", {})
-assert summary.get("profile") == "quick", summary
-checks = {c["id"]: c for c in payload.get("checks", [])}
-assert checks["dashboard-map-route"]["status"] == "skipped", checks["dashboard-map-route"]
-assert checks["bridge-scheduler-jobs"]["status"] == "skipped", checks["bridge-scheduler-jobs"]
-print("OPENCLAW_LOCAL_SMOKE_QUICK_PROFILE_OK")
-PY
-
-REPORT_DIR_BRIDGE="$TMP_DIR/reports-bridge"
-bash "$SMOKE_SCRIPT" \
-  --dashboard-url "http://127.0.0.1:$PORT" \
-  --token-file "$TOKEN_FILE" \
-  --report-dir "$REPORT_DIR_BRIDGE" \
+  --report-dir "$REPORT_DIR" \
+  --output-doc "$OUT_DOC" \
   --profile bridge \
   --bridge-url "http://127.0.0.1:$BRIDGE_PORT" \
   --bridge-token-file "$BRIDGE_TOKEN_FILE" \
   --skip-openclaw-cli \
   --skip-map \
-  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-bridge.out
+  --timeout-sec 3 >/tmp/refresh-local-integration-ready-test.out
 
-python3 - "$REPORT_DIR_BRIDGE" <<'PY'
-import json
-from pathlib import Path
-import sys
-
-report_dir = Path(sys.argv[1])
-json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
-assert json_reports, "missing bridge json report"
-payload = json.loads(json_reports[-1].read_text())
-summary = payload.get("summary", {})
-assert summary.get("profile") == "bridge", summary
-assert summary.get("verdict") == "go", summary
-checks = {c["id"]: c for c in payload.get("checks", [])}
-bridge = checks.get("bridge-scheduler-jobs")
-assert bridge is not None, "missing bridge check"
-assert bridge.get("status") == "pass", bridge
-assert bridge.get("severity") == "critical-optional", bridge
-print("OPENCLAW_LOCAL_SMOKE_BRIDGE_PROFILE_OK")
-PY
-
-REPORT_DIR_FULL_BRIDGE="$TMP_DIR/reports-full-bridge"
+sleep 1
 bash "$SMOKE_SCRIPT" \
   --dashboard-url "http://127.0.0.1:$PORT" \
   --token-file "$TOKEN_FILE" \
-  --report-dir "$REPORT_DIR_FULL_BRIDGE" \
-  --profile full \
+  --report-dir "$REPORT_DIR" \
+  --profile bridge \
   --bridge-url "http://127.0.0.1:$BRIDGE_PORT" \
   --bridge-token-file "$BRIDGE_TOKEN_FILE" \
   --skip-openclaw-cli \
   --skip-map \
-  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-full-bridge.out
+  --timeout-sec 3 >/tmp/refresh-local-integration-ready-test-smoke-2.out
 
-python3 - "$REPORT_DIR_FULL_BRIDGE" <<'PY'
-import json
+bash "$REFRESH_SCRIPT" \
+  --skip-smoke \
+  --history-limit 1 \
+  --report-dir "$REPORT_DIR" \
+  --output-doc "$OUT_DOC" >/tmp/refresh-local-integration-ready-test-history.out
+
+python3 - "$REPORT_DIR" "$OUT_DOC" <<'PY'
 from pathlib import Path
+import json
 import sys
 
 report_dir = Path(sys.argv[1])
+doc_path = Path(sys.argv[2])
 json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
-assert json_reports, "missing full profile json report"
-payload = json.loads(json_reports[-1].read_text())
-checks = {c["id"]: c for c in payload.get("checks", [])}
-bridge = checks.get("bridge-scheduler-jobs")
-assert bridge is not None, "missing bridge check"
-assert bridge.get("severity") == "warn", bridge
-print("OPENCLAW_LOCAL_SMOKE_FULL_PROFILE_BRIDGE_SEVERITY_OK")
+svg_reports = sorted(report_dir.glob("openclaw-local-smoke-*.svg"))
+assert len(json_reports) >= 2, "expected multiple smoke reports"
+assert svg_reports, "missing status strip svg"
+
+latest = json.loads(json_reports[-1].read_text(encoding="utf-8"))
+summary = latest.get("summary", {})
+assert summary.get("verdict") == "go", summary
+assert summary.get("requiredFailures") == 0, summary
+
+text = doc_path.read_text(encoding="utf-8")
+assert "## Mission Control Card" in text, text
+assert "Verdict: `GO`" in text, text
+assert "## Trend (Last 1 Runs)" in text, text
+assert "Status strip SVG" in text, text
+assert "Top 3 Blockers" in text, text
+print("REFRESH_LOCAL_INTEGRATION_READY_GO_SCENARIO_OK")
 PY
+
+# Mismatch check: create a newer JSON without matching markdown.
+sleep 1
+cp "$(ls -1 "$REPORT_DIR"/openclaw-local-smoke-*.json | tail -n 1)" "$REPORT_DIR/openclaw-local-smoke-20990101T000000Z.json"
+set +e
+bash "$REFRESH_SCRIPT" --skip-smoke --report-dir "$REPORT_DIR" --output-doc "$OUT_DOC" >/tmp/refresh-local-mismatch.out 2>&1
+rc=$?
+set -e
+if [[ "$rc" -eq 0 ]]; then
+  echo "expected mismatch failure" >&2
+  exit 1
+fi
+if ! rg -q "mismatched" /tmp/refresh-local-mismatch.out; then
+  echo "expected mismatched error message" >&2
+  cat /tmp/refresh-local-mismatch.out >&2
+  exit 1
+fi
+
+echo "REFRESH_LOCAL_INTEGRATION_READY_MISMATCH_CHECK_OK"
+
+# Schema validation check: invalid latest paired JSON should fail.
+BAD_DIR="$TMP_DIR/reports-bad"
+mkdir -p "$BAD_DIR"
+cat > "$BAD_DIR/openclaw-local-smoke-20990101T010101Z.json" <<'JSON'
+{"generatedAt":"20990101T010101Z","summary":{"status":"pass"},"checks":[]}
+JSON
+cat > "$BAD_DIR/openclaw-local-smoke-20990101T010101Z.md" <<'MD'
+# bad
+MD
+set +e
+bash "$REFRESH_SCRIPT" --skip-smoke --report-dir "$BAD_DIR" --output-doc "$OUT_DOC" >/tmp/refresh-local-schema.out 2>&1
+rc=$?
+set -e
+if [[ "$rc" -eq 0 ]]; then
+  echo "expected schema validation failure" >&2
+  exit 1
+fi
+if ! rg -q "schema" /tmp/refresh-local-schema.out; then
+  echo "expected schema error message" >&2
+  cat /tmp/refresh-local-schema.out >&2
+  exit 1
+fi
+
+echo "REFRESH_LOCAL_INTEGRATION_READY_SCHEMA_CHECK_OK"
