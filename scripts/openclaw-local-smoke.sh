@@ -258,11 +258,19 @@ check_openclaw_gateway_status() {
     return 1
   fi
   local output
-  if output="$(openclaw gateway status 2>&1)"; then
+  if ! output="$(openclaw gateway status 2>&1)"; then
+    CHECK_DETAIL="$(echo "$output" | head -n 1 | sed 's/[[:space:]]\+/ /g')"
+    return 1
+  fi
+
+  local normalized
+  normalized="$(echo "$output" | tr '[:upper:]' '[:lower:]')"
+  if [[ "$normalized" == *"rpc probe: ok"* ]] || [[ "$normalized" == *"listening:"* ]]; then
     CHECK_DETAIL="$(echo "$output" | head -n 1 | sed 's/[[:space:]]\+/ /g')"
     return 0
   fi
-  CHECK_DETAIL="$(echo "$output" | head -n 1 | sed 's/[[:space:]]\+/ /g')"
+
+  CHECK_DETAIL="gateway status returned without healthy runtime signal"
   return 1
 }
 

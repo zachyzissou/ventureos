@@ -50,6 +50,15 @@ const SEVERITY_RANK: Record<CheckSeverity, number> = {
   info: 1,
 };
 
+export function resolveOpenclawLocalReadinessReportDir(
+  ventureosRoot: string,
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const explicit = (env.OPENCLAW_LOCAL_READINESS_REPORT_DIR ?? '').trim();
+  if (explicit) return explicit;
+  return path.join(ventureosRoot, 'runtime', 'reports', 'openclaw-local-smoke');
+}
+
 function toRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;

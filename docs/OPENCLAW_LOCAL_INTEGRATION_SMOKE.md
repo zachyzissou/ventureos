@@ -101,6 +101,12 @@ Optional env overrides for cron wrapper:
 - `OPENCLAW_LOCAL_READY_PRUNE_KEEP`
 - `OPENCLAW_LOCAL_READY_PROFILE` (`quick|full|bridge`)
 
+Mission Control API note (dashboard route):
+- `GET /api/openclaw-local-readiness` reads artifacts from:
+  - `OPENCLAW_LOCAL_READINESS_REPORT_DIR` when set
+  - otherwise `VENTUREOS_ROOT/runtime/reports/openclaw-local-smoke`
+- In hybrid Docker mode, ensure the report directory is bind-mounted into the dashboard container and wired via `OPENCLAW_LOCAL_READINESS_REPORT_DIR`.
+
 ## Current Next Steps (February 22, 2026)
 1. Install or refresh managed cron entries:
 ```bash
@@ -115,7 +121,7 @@ bash scripts/openclaw-local-ready-cron.sh
 ```bash
 bash scripts/openclaw-local-smoke.sh --profile bridge
 ```
-5. Track active rollout work in issues `#431` (ops rollout) and `#432` (bridge readiness parity).
+5. Keep bridge startup + readiness artifact wiring persistent across restarts.
 
 ## Regression Test
 Run the mock-server regression test:

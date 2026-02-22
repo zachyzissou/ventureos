@@ -54,6 +54,7 @@ services:
       DASHBOARD_ALLOW_LAN_BYPASS: "false"
       DASHBOARD_TRUST_PROXY: "false"
       DASHBOARD_ENABLE_ACTIONS: "false"
+      OPENCLAW_LOCAL_READINESS_REPORT_DIR: /var/ventureos-host/runtime/reports/openclaw-local-smoke
       # Hybrid mode: data sourced from host Bridge API
       DASHBOARD_DATA_MODE: bridge
       BRIDGE_URL: ${BRIDGE_URL:-http://host.docker.internal:18790}
@@ -62,6 +63,8 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-ventureos}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ventureos}}
     ports:
       - "${DASHBOARD_PORT:-8001}:8001"
+    volumes:
+      - ./runtime/reports/openclaw-local-smoke:/var/ventureos-host/runtime/reports/openclaw-local-smoke:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:

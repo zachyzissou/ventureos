@@ -8,6 +8,7 @@ import { mockRequest, mockResponse, parseJsonBody } from '../../helpers.js';
 import {
   handleOpenclawLocalReadiness,
   type OpenclawLocalReadinessDeps,
+  resolveOpenclawLocalReadinessReportDir,
 } from '../../../server/routes/openclaw-local-readiness.js';
 
 const tmpRoot = path.join(os.tmpdir(), `openclaw-local-readiness-${process.pid}`);
@@ -45,6 +46,18 @@ describe('openclaw local readiness route', () => {
 
     expect(handleOpenclawLocalReadiness(mockRequest({ url: '/api/scheduler-jobs' }), res, deps)).toBe(false);
     expect(handleOpenclawLocalReadiness(mockRequest({ url: '/api/openclaw-local-readiness', method: 'POST' }), res, deps)).toBe(false);
+  });
+
+  it('resolves report directory from OPENCLAW_LOCAL_READINESS_REPORT_DIR when set', () => {
+    const resolved = resolveOpenclawLocalReadinessReportDir('/opt/ventureos', {
+      OPENCLAW_LOCAL_READINESS_REPORT_DIR: '/var/ventureos-host/runtime/reports/openclaw-local-smoke',
+    });
+    expect(resolved).toBe('/var/ventureos-host/runtime/reports/openclaw-local-smoke');
+  });
+
+  it('resolves report directory from ventureos root when env override is missing', () => {
+    const resolved = resolveOpenclawLocalReadinessReportDir('/opt/ventureos', {});
+    expect(resolved).toBe('/opt/ventureos/runtime/reports/openclaw-local-smoke');
   });
 
   it('returns available=false when no artifacts exist', () => {
