@@ -7050,7 +7050,10 @@ function updateVentureWidgets() {
 
   const latest = kpisLatest?.latest || null;
   if (dateEl) dateEl.textContent = latest?.date || kpisLatest?.file || '--';
-  const kpiSourceMs = parseDateOnlyMs(latest?.date) || parseDateOnlyMs((kpisLatest?.file || '').replace(/\.json$/, ''));
+  const kpiMtimeMs = Number(kpisLatest?.latestMtimeMs) || 0;
+  const kpiSourceMs = kpiMtimeMs > 0
+    ? kpiMtimeMs
+    : (parseDateOnlyMs(latest?.date) || parseDateOnlyMs((kpisLatest?.file || '').replace(/\.json$/, '')));
   setFreshnessBadge(kpiFreshnessEl, kpiSourceMs, OVERVIEW_FRESHNESS_THRESHOLDS.kpi);
 
   const sr = latest?.overall?.success_rate;

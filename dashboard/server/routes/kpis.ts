@@ -33,6 +33,16 @@ function readKpiFile(
   return j;
 }
 
+function readFileMtimeMs(kpiDir: string, file: string): number {
+  try {
+    const full = path.join(kpiDir, file);
+    const stat = fs.statSync(full);
+    return Number.isFinite(stat.mtimeMs) ? stat.mtimeMs : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function handleKpis(req: IncomingMessage, res: ServerResponse, deps: KpiDeps): boolean {
   const { KPI_DIR, safeReadJson, sendJson, clampInt } = deps;
   if (!req || !res) return false;
@@ -42,7 +52,8 @@ export function handleKpis(req: IncomingMessage, res: ServerResponse, deps: KpiD
     const files: string[] = listKpiFiles(KPI_DIR);
     const latestFile: string | null = files[files.length - 1] ?? null;
     const latest: KpiFileData | null = latestFile ? readKpiFile(KPI_DIR, latestFile, safeReadJson) : null;
-    sendJson(res, { latest, file: latestFile, dir: KPI_DIR, count: files.length });
+    const latestMtimeMs: number = latestFile ? readFileMtimeMs(KPI_DIR, latestFile) : 0;
+    sendJson(res, { latest, file: latestFile, latestMtimeMs, dir: KPI_DIR, count: files.length });
     return true;
   }
 
