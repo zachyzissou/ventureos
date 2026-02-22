@@ -571,6 +571,58 @@ Returns CPU/RAM snapshots (sampled every 5 minutes, up to 288 entries = 24 hours
 
 Returns dashboard configuration and capability inventory.
 
+Also includes Overview freshness thresholds consumed by the Overview cards:
+
+```json
+{
+  "overviewFreshnessThresholdsMs": {
+    "kpi": { "freshMs": 129600000, "staleMs": 345600000 },
+    "agentHealth": { "freshMs": 900000, "staleMs": 7200000 },
+    "observations": { "freshMs": 21600000, "staleMs": 86400000 }
+  }
+}
+```
+
+Environment overrides:
+- `DASHBOARD_OVERVIEW_FRESHNESS_KPI_FRESH_MS`
+- `DASHBOARD_OVERVIEW_FRESHNESS_KPI_STALE_MS`
+- `DASHBOARD_OVERVIEW_FRESHNESS_AGENT_HEALTH_FRESH_MS`
+- `DASHBOARD_OVERVIEW_FRESHNESS_AGENT_HEALTH_STALE_MS`
+- `DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_FRESH_MS`
+- `DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_STALE_MS`
+
+### `POST /api/overview-freshness-event`
+
+Ingests stale/aging/freshness state transitions from the Overview UI and appends them to
+`data/overview-freshness-events.jsonl` for local auditing.
+
+**Request:**
+```json
+{
+  "state": "stale",
+  "stale": 1,
+  "aging": 0,
+  "unavailable": 0,
+  "total": 3,
+  "source": "overview-widget",
+  "emittedAt": 1700000000000
+}
+```
+
+**Response (200):**
+```json
+{
+  "ok": true,
+  "state": "stale",
+  "recordedAt": 1700000000300
+}
+```
+
+**Error (400):**
+```json
+{ "ok": false, "error": "Invalid freshness event payload" }
+```
+
 ### `GET /api/live`
 
 **Server-Sent Events (SSE)** stream of real-time session activity.

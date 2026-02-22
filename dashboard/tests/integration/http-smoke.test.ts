@@ -161,6 +161,12 @@ beforeAll(async () => {
   process.env.VENTUREOS_AGENTS = 'main,oracle';
   process.env.VENTUREOS_OFFICE_VIEW_ENABLED = '1';
   process.env.OBSIDIAN_CONFIG_PATH = path.join(tmpRoot, 'obsidian.json');
+  process.env.DASHBOARD_OVERVIEW_FRESHNESS_KPI_FRESH_MS = '60000';
+  process.env.DASHBOARD_OVERVIEW_FRESHNESS_KPI_STALE_MS = '180000';
+  process.env.DASHBOARD_OVERVIEW_FRESHNESS_AGENT_HEALTH_FRESH_MS = '45000';
+  process.env.DASHBOARD_OVERVIEW_FRESHNESS_AGENT_HEALTH_STALE_MS = '300000';
+  process.env.DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_FRESH_MS = '900000';
+  process.env.DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_STALE_MS = '3600000';
 
   fs.writeFileSync(process.env.OBSIDIAN_CONFIG_PATH, JSON.stringify({
     vaults: {
@@ -472,6 +478,51 @@ describe('Dashboard HTTP smoke tests', () => {
     expect(replayHealthRes.status).toBe(200);
     const replayHealth = await replayHealthRes.json();
     expect(replayHealth.health?.counts?.arbitrationAccepted).toBeGreaterThanOrEqual(1);
+  });
+
+  it('returns overview freshness threshold config to the client', async () => {
+    const res = await fetch(`${BASE_URL}/api/config`, { headers: authHeaders() });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.overviewFreshnessThresholdsMs?.kpi).toEqual({ freshMs: 60000, staleMs: 180000 });
+    expect(body.overviewFreshnessThresholdsMs?.agentHealth).toEqual({ freshMs: 45000, staleMs: 300000 });
+    expect(body.overviewFreshnessThresholdsMs?.observations).toEqual({ freshMs: 900000, staleMs: 3600000 });
+  });
+
+  it('accepts freshness events and persists them in workspace data', async () => {
+    const eventRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        state: 'stale',
+        stale: 1,
+        aging: 0,
+        unavailable: 0,
+        total: 3,
+        source: 'overview-widget',
+        emittedAt: Date.now() - 5000,
+      }),
+    });
+    expect(eventRes.status).toBe(200);
+    const eventBody = await eventRes.json();
+    expect(eventBody.ok).toBe(true);
+    expect(eventBody.state).toBe('stale');
+
+    const eventFile = path.join(tmpRoot, 'workspace', 'data', 'overview-freshness-events.jsonl');
+    expect(fs.existsSync(eventFile)).toBe(true);
+    const lines = fs.readFileSync(eventFile, 'utf8').trim().split('\n');
+    expect(lines.length).toBeGreaterThanOrEqual(1);
+    const latest = JSON.parse(lines[lines.length - 1]) as { state: string; stale: number; source: string };
+    expect(latest.state).toBe('stale');
+    expect(latest.stale).toBe(1);
+    expect(latest.source).toBe('overview-widget');
+
+    const badRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: 'bogus' }),
+    });
+    expect(badRes.status).toBe(400);
   });
 
   it('reports system metrics and redirects unauthenticated dashboard access', async () => {

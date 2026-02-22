@@ -139,6 +139,11 @@ import {
   handleOpenclawLocalReadiness,
   resolveOpenclawLocalReadinessReportDir,
 } from './routes/openclaw-local-readiness.js';
+import {
+  appendOverviewFreshnessEvent,
+  parseOverviewFreshnessEvent,
+  resolveOverviewFreshnessThresholds,
+} from './overview-freshness.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
 import {
   buildAvgResponseTime,
@@ -187,6 +192,7 @@ const OPENCLAW_LOCAL_READINESS_REPORT_DIR: string = resolveOpenclawLocalReadines
   VENTUREOS_ROOT,
   process.env,
 );
+const OVERVIEW_FRESHNESS_THRESHOLDS_MS = resolveOverviewFreshnessThresholds(process.env);
 
 // Client HTML paths — served from client/ directory
 const htmlPath: string = path.join(import.meta.dirname, '..', 'client', 'index.html');
@@ -2414,6 +2420,7 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     sendJson(res, {
       name: 'OpenClaw Dashboard',
       version: '1.0.0',
+      overviewFreshnessThresholdsMs: OVERVIEW_FRESHNESS_THRESHOLDS_MS,
       ventureos: {
         VENTUREOS_ROOT,
         SHARED_CONTEXT,
@@ -2432,6 +2439,42 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
         { id: 'workflow-patterns', name: 'Workflow Patterns', status: 'active' },
       ],
     });
+    return;
+  }
+  if (req.url === '/api/overview-freshness-event' && req.method === 'POST') {
+    try {
+      const raw = await readRequestBody(req, { maxBytes: 32 * 1024 });
+      const payload: unknown = JSON.parse(raw || '{}');
+      const event = parseOverviewFreshnessEvent(payload);
+      if (!event) {
+        sendJson(res, { ok: false, error: 'Invalid freshness event payload' }, 400);
+        return;
+      }
+
+      appendOverviewFreshnessEvent(dataDir, event);
+      if (event.state === 'stale') {
+        logWarn('dashboard', 'overview_freshness_stale', 'Overview freshness stale state reported', {
+          stale: event.stale,
+          aging: event.aging,
+          unavailable: event.unavailable,
+          total: event.total,
+          source: event.source,
+        });
+      } else {
+        logInfo('dashboard', 'overview_freshness_update', 'Overview freshness non-stale update reported', {
+          state: event.state,
+          stale: event.stale,
+          aging: event.aging,
+          unavailable: event.unavailable,
+          total: event.total,
+          source: event.source,
+        });
+      }
+
+      sendJson(res, { ok: true, state: event.state, recordedAt: event.receivedAt });
+    } catch {
+      sendJson(res, { ok: false, error: 'Invalid freshness event payload' }, 400);
+    }
     return;
   }
   if (req.url === '/api/claude-usage-scrape' && req.method === 'POST') {

@@ -146,6 +146,17 @@ All paths are resolved through `lib/paths.ts`. Override with environment variabl
 | `AGENT_HEALTH_CACHE_TTL_MS` | `15000` | 1000–60000 | Agent health endpoint cache |
 | `VENTUREOS_CACHE_TTL_MS` | `5000` | 1000–60000 | VentureOS data cache |
 
+### Overview Freshness Thresholds
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DASHBOARD_OVERVIEW_FRESHNESS_KPI_FRESH_MS` | `129600000` (36h) | KPI badge `Fresh` threshold |
+| `DASHBOARD_OVERVIEW_FRESHNESS_KPI_STALE_MS` | `345600000` (96h) | KPI badge `Stale` threshold |
+| `DASHBOARD_OVERVIEW_FRESHNESS_AGENT_HEALTH_FRESH_MS` | `900000` (15m) | Agent Health badge `Fresh` threshold |
+| `DASHBOARD_OVERVIEW_FRESHNESS_AGENT_HEALTH_STALE_MS` | `7200000` (2h) | Agent Health badge `Stale` threshold |
+| `DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_FRESH_MS` | `21600000` (6h) | Observations badge `Fresh` threshold |
+| `DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_STALE_MS` | `86400000` (24h) | Observations badge `Stale` threshold |
+
 ## API Reference
 
 See **[docs/API.md](docs/API.md)** for the complete API reference covering all endpoints, schemas, authentication, and rate limiting.
@@ -178,6 +189,7 @@ See **[docs/API.md](docs/API.md)** for the complete API reference covering all e
 | `GET /api/proposal-lifecycle/summary` | Read proposal queue + active mission progress for Mission Control |
 | `GET /api/living-files/dashboard` | Freshness counts + stale/missing file status for living docs registry |
 | `POST /api/living-files/check-run` | Run staleness detection and auto-trigger responsible owner tasks |
+| `POST /api/overview-freshness-event` | Persist overview stale/aging transitions for local audit trail |
 | `GET /api/live` | SSE real-time feed |
 
 ## Architecture
