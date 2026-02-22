@@ -233,6 +233,9 @@ bash scripts/openclaw-local-smoke.sh \
   - `BRIDGE_TOKEN`
   - `BRIDGE_TOKEN_FILE`
   - default OpenClaw token file (`$OPENCLAW_DIR/bridge/bridge-token`)
+- Built-in transient retry behavior:
+  - Retries HTTP `429` responses (dashboard + bridge checks) using `Retry-After` when present.
+  - Retry controls: `SMOKE_HTTP_RETRY_MAX` (default `2`), `SMOKE_HTTP_RETRY_BASE_SEC` (default `1`), `SMOKE_HTTP_RETRY_MAX_DELAY_SEC` (default `15`).
 - Emits timestamped JSON + markdown + SVG reports to `runtime/reports/openclaw-local-smoke/`.
 - JSON summary includes `verdict`, `readinessScore`, `confidence`; each check includes `group`, `severity`, `likelyCause`, and `nextCommand`.
 - Exits with code `2` when any required check fails.

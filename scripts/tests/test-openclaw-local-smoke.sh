@@ -6,6 +6,7 @@ SMOKE_SCRIPT="$ROOT/scripts/openclaw-local-smoke.sh"
 TMP_DIR="$(mktemp -d)"
 SERVER_PID=""
 BRIDGE_SERVER_PID=""
+RATE_LIMIT_SERVER_PID=""
 
 cleanup() {
   if [[ -n "$SERVER_PID" ]]; then
@@ -15,6 +16,10 @@ cleanup() {
   if [[ -n "$BRIDGE_SERVER_PID" ]]; then
     kill "$BRIDGE_SERVER_PID" 2>/dev/null || true
     wait "$BRIDGE_SERVER_PID" 2>/dev/null || true
+  fi
+  if [[ -n "$RATE_LIMIT_SERVER_PID" ]]; then
+    kill "$RATE_LIMIT_SERVER_PID" 2>/dev/null || true
+    wait "$RATE_LIMIT_SERVER_PID" 2>/dev/null || true
   fi
   rm -rf "$TMP_DIR"
 }
@@ -50,6 +55,8 @@ import sys
 
 PORT = int(sys.argv[1])
 TOKEN = "Bearer test-token"
+RATE_LIMIT_ONCE_PATH = sys.argv[2] if len(sys.argv) > 2 else ""
+REQUEST_COUNTS = {}
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
@@ -65,6 +72,24 @@ class Handler(BaseHTTPRequestHandler):
 
     def _auth_ok(self):
         return self.headers.get("Authorization", "") == TOKEN
+
+    def _send_rate_limited(self):
+        body = json.dumps({"ok": False, "error": "rate_limited"}).encode("utf-8")
+        self.send_response(429)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Retry-After", "1")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _should_rate_limit_once(self):
+        if not RATE_LIMIT_ONCE_PATH:
+            return False
+        if self.path != RATE_LIMIT_ONCE_PATH:
+            return False
+        count = REQUEST_COUNTS.get(self.path, 0)
+        REQUEST_COUNTS[self.path] = count + 1
+        return count == 0
 
     def do_GET(self):
         if self.path == "/api/health":
@@ -98,6 +123,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if not self._auth_ok():
             self._send_json(401, {"ok": False, "error": "unauthorized"})
+            return
+
+        if self._should_rate_limit_once():
+            self._send_rate_limited()
             return
 
         if self.path == "/api/config":
@@ -156,10 +185,21 @@ class Handler(BaseHTTPRequestHandler):
 HTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
 PY
 
+RATE_LIMIT_PORT="$(python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(('127.0.0.1', 0))
+print(s.getsockname()[1])
+s.close()
+PY
+)"
+
 python3 "$TMP_DIR/mock-dashboard.py" "$PORT" >/dev/null 2>&1 &
 SERVER_PID=$!
 python3 "$TMP_DIR/mock-bridge.py" "$BRIDGE_PORT" >/dev/null 2>&1 &
 BRIDGE_SERVER_PID=$!
+python3 "$TMP_DIR/mock-dashboard.py" "$RATE_LIMIT_PORT" "/api/services" >/dev/null 2>&1 &
+RATE_LIMIT_SERVER_PID=$!
 sleep 0.3
 
 REPORT_DIR_BASELINE="$TMP_DIR/reports-baseline"
@@ -341,4 +381,31 @@ assert summary.get("profile") == "full", summary
 checks = {c["id"]: c for c in payload.get("checks", [])}
 assert checks["dashboard-map-route"]["status"] == "skipped", checks["dashboard-map-route"]
 print("OPENCLAW_LOCAL_SMOKE_SKIP_OVERRIDE_OK")
+PY
+
+REPORT_DIR_RETRY="$TMP_DIR/reports-retry"
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$RATE_LIMIT_PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_RETRY" \
+  --profile full \
+  --skip-openclaw-cli \
+  --skip-map \
+  --skip-bridge \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-retry.out
+
+python3 - "$REPORT_DIR_RETRY" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing retry json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("status") == "pass", summary
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["dashboard-services"]["status"] == "pass", checks["dashboard-services"]
+print("OPENCLAW_LOCAL_SMOKE_RETRY_429_OK")
 PY

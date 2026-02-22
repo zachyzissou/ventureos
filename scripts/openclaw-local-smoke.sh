@@ -8,6 +8,9 @@ DASHBOARD_URL="${DASHBOARD_URL:-http://127.0.0.1:8001}"
 TOKEN_FILE="${DASHBOARD_TOKEN_FILE:-$REPO_ROOT/dashboard/data/.api-token}"
 REPORT_DIR="${SMOKE_REPORT_DIR:-$REPO_ROOT/runtime/reports/openclaw-local-smoke}"
 HTTP_TIMEOUT_SEC="${SMOKE_HTTP_TIMEOUT_SEC:-5}"
+HTTP_RETRY_MAX="${SMOKE_HTTP_RETRY_MAX:-2}"
+HTTP_RETRY_BASE_SEC="${SMOKE_HTTP_RETRY_BASE_SEC:-1}"
+HTTP_RETRY_MAX_DELAY_SEC="${SMOKE_HTTP_RETRY_MAX_DELAY_SEC:-15}"
 PROFILE="full"
 SKIP_OPENCLAW_CLI=0
 SKIP_MAP=0
@@ -46,6 +49,11 @@ Env overrides:
   BRIDGE_URL              Direct bridge URL for optional check (default: http://127.0.0.1:18790)
   BRIDGE_TOKEN            Direct bridge token override
   BRIDGE_TOKEN_FILE       Optional bridge token file (fallback: \$OPENCLAW_DIR/bridge/bridge-token)
+  SMOKE_HTTP_RETRY_MAX    Retry attempts for transient HTTP failures (default: 2)
+  SMOKE_HTTP_RETRY_BASE_SEC
+                          Base delay in seconds for retry backoff (default: 1)
+  SMOKE_HTTP_RETRY_MAX_DELAY_SEC
+                          Maximum retry delay in seconds (default: 15)
 EOF_USAGE
 }
 
@@ -141,6 +149,18 @@ fi
 
 if ! [[ "$HTTP_TIMEOUT_SEC" =~ ^[0-9]+$ ]] || [[ "$HTTP_TIMEOUT_SEC" -lt 1 ]]; then
   echo "Invalid --timeout-sec: $HTTP_TIMEOUT_SEC" >&2
+  exit 2
+fi
+if ! [[ "$HTTP_RETRY_MAX" =~ ^[0-9]+$ ]]; then
+  echo "Invalid SMOKE_HTTP_RETRY_MAX: $HTTP_RETRY_MAX" >&2
+  exit 2
+fi
+if ! [[ "$HTTP_RETRY_BASE_SEC" =~ ^[0-9]+$ ]] || [[ "$HTTP_RETRY_BASE_SEC" -lt 1 ]]; then
+  echo "Invalid SMOKE_HTTP_RETRY_BASE_SEC: $HTTP_RETRY_BASE_SEC" >&2
+  exit 2
+fi
+if ! [[ "$HTTP_RETRY_MAX_DELAY_SEC" =~ ^[0-9]+$ ]] || [[ "$HTTP_RETRY_MAX_DELAY_SEC" -lt 1 ]]; then
+  echo "Invalid SMOKE_HTTP_RETRY_MAX_DELAY_SEC: $HTTP_RETRY_MAX_DELAY_SEC" >&2
   exit 2
 fi
 
@@ -268,31 +288,102 @@ HTTP_STATUS=""
 HTTP_BODY_FILE=""
 HTTP_HEADER_FILE=""
 
+extract_retry_after_seconds() {
+  local header_file="$1"
+  python3 - "$header_file" <<'PY'
+import pathlib
+import sys
+
+value = 0
+for raw in pathlib.Path(sys.argv[1]).read_text(encoding='utf-8', errors='ignore').splitlines():
+    line = raw.strip()
+    if not line.lower().startswith('retry-after:'):
+        continue
+    token = line.split(':', 1)[1].strip()
+    if token.isdigit():
+        parsed = int(token)
+        if parsed > value:
+            value = parsed
+print(value)
+PY
+}
+
+extract_http_status_from_headers() {
+  local header_file="$1"
+  python3 - "$header_file" <<'PY'
+import pathlib
+import re
+import sys
+
+status = '000'
+pattern = re.compile(r'^HTTP/\d(?:\.\d)?\s+(\d{3})\b', re.IGNORECASE)
+for raw in pathlib.Path(sys.argv[1]).read_text(encoding='utf-8', errors='ignore').splitlines():
+    match = pattern.match(raw.strip())
+    if match:
+        status = match.group(1)
+print(status)
+PY
+}
+
+compute_retry_delay_sec() {
+  local attempt_index="$1"
+  local header_file="$2"
+  local delay retry_after
+  retry_after="$(extract_retry_after_seconds "$header_file")"
+  if [[ "$retry_after" =~ ^[0-9]+$ ]] && [[ "$retry_after" -gt 0 ]]; then
+    delay="$retry_after"
+  else
+    delay=$((HTTP_RETRY_BASE_SEC * (attempt_index + 1)))
+  fi
+  if [[ "$delay" -gt "$HTTP_RETRY_MAX_DELAY_SEC" ]]; then
+    delay="$HTTP_RETRY_MAX_DELAY_SEC"
+  fi
+  if [[ "$delay" -lt 1 ]]; then
+    delay=1
+  fi
+  echo "$delay"
+}
+
 http_get() {
   local path="$1"
   local use_auth="$2"
   local url="${DASHBOARD_URL}${path}"
-  local body_file header_file err_file
+  local body_file header_file err_file attempt status delay_sec
 
-  body_file="$(mktemp "$TMP_DIR/body.XXXXXX")"
-  header_file="$(mktemp "$TMP_DIR/header.XXXXXX")"
-  err_file="$(mktemp "$TMP_DIR/err.XXXXXX")"
+  attempt=0
+  while true; do
+    body_file="$(mktemp "$TMP_DIR/body.XXXXXX")"
+    header_file="$(mktemp "$TMP_DIR/header.XXXXXX")"
+    err_file="$(mktemp "$TMP_DIR/err.XXXXXX")"
 
-  local -a cmd=(curl -sS -m "$HTTP_TIMEOUT_SEC" -D "$header_file" -o "$body_file" -w "%{http_code}")
-  if [[ "$use_auth" == "1" ]]; then
-    cmd+=(-H "Authorization: Bearer ${DASHBOARD_TOKEN}")
-  fi
-  cmd+=("$url")
+    local -a cmd=(curl -sS -m "$HTTP_TIMEOUT_SEC" -D "$header_file" -o "$body_file" -w "%{http_code}")
+    if [[ "$use_auth" == "1" ]]; then
+      cmd+=(-H "Authorization: Bearer ${DASHBOARD_TOKEN}")
+    fi
+    cmd+=("$url")
 
-  local status
-  if ! status="$("${cmd[@]}" 2>"$err_file")"; then
-    CHECK_DETAIL="curl failed for ${path}"
-    return 1
-  fi
-  HTTP_STATUS="$status"
-  HTTP_BODY_FILE="$body_file"
-  HTTP_HEADER_FILE="$header_file"
-  return 0
+    if ! status="$("${cmd[@]}" 2>"$err_file")"; then
+      if [[ "$attempt" -lt "$HTTP_RETRY_MAX" ]]; then
+        sleep "$HTTP_RETRY_BASE_SEC"
+        attempt=$((attempt + 1))
+        continue
+      fi
+      CHECK_DETAIL="curl failed for ${path}"
+      return 1
+    fi
+
+    if [[ "$status" == "429" ]] && [[ "$attempt" -lt "$HTTP_RETRY_MAX" ]]; then
+      delay_sec="$(compute_retry_delay_sec "$attempt" "$header_file")"
+      sleep "$delay_sec"
+      attempt=$((attempt + 1))
+      continue
+    fi
+
+    HTTP_STATUS="$status"
+    HTTP_BODY_FILE="$body_file"
+    HTTP_HEADER_FILE="$header_file"
+    return 0
+  done
 }
 
 check_dashboard_health() {
@@ -418,21 +509,34 @@ check_tactical_map_route() {
 
 check_live_telemetry_handshake() {
   local url="${DASHBOARD_URL}/api/live-telemetry"
-  local header_file body_file err_file
-  header_file="$(mktemp "$TMP_DIR/sse-header.XXXXXX")"
-  body_file="$(mktemp "$TMP_DIR/sse-body.XXXXXX")"
-  err_file="$(mktemp "$TMP_DIR/sse-err.XXXXXX")"
-
+  local header_file body_file err_file status delay_sec
   local rc=0
-  if curl -sS -N -m "$HTTP_TIMEOUT_SEC" \
-    -H "Authorization: Bearer ${DASHBOARD_TOKEN}" \
-    -D "$header_file" \
-    -o "$body_file" \
-    "$url" 2>"$err_file"; then
-    rc=0
-  else
-    rc=$?
-  fi
+  local attempt=0
+
+  while true; do
+    header_file="$(mktemp "$TMP_DIR/sse-header.XXXXXX")"
+    body_file="$(mktemp "$TMP_DIR/sse-body.XXXXXX")"
+    err_file="$(mktemp "$TMP_DIR/sse-err.XXXXXX")"
+
+    if curl -sS -N -m "$HTTP_TIMEOUT_SEC" \
+      -H "Authorization: Bearer ${DASHBOARD_TOKEN}" \
+      -D "$header_file" \
+      -o "$body_file" \
+      "$url" 2>"$err_file"; then
+      rc=0
+    else
+      rc=$?
+    fi
+
+    status="$(extract_http_status_from_headers "$header_file")"
+    if [[ "$status" == "429" ]] && [[ "$attempt" -lt "$HTTP_RETRY_MAX" ]]; then
+      delay_sec="$(compute_retry_delay_sec "$attempt" "$header_file")"
+      sleep "$delay_sec"
+      attempt=$((attempt + 1))
+      continue
+    fi
+    break
+  done
 
   if [[ "$rc" -ne 0 && "$rc" -ne 28 ]]; then
     CHECK_DETAIL="SSE curl failed"
@@ -544,15 +648,31 @@ check_bridge_scheduler_jobs() {
     return 1
   fi
 
-  local body_file err_file status
-  body_file="$(mktemp "$TMP_DIR/bridge-body.XXXXXX")"
-  err_file="$(mktemp "$TMP_DIR/bridge-err.XXXXXX")"
-  if ! status="$(curl -sS -m "$HTTP_TIMEOUT_SEC" -o "$body_file" -w "%{http_code}" \
-    -H "Authorization: Bearer ${BRIDGE_TOKEN}" \
-    "${bridge_url}/api/bridge/scheduler-jobs" 2>"$err_file")"; then
-    CHECK_DETAIL="bridge request failed"
-    return 1
-  fi
+  local body_file header_file err_file status delay_sec
+  local attempt=0
+  while true; do
+    body_file="$(mktemp "$TMP_DIR/bridge-body.XXXXXX")"
+    header_file="$(mktemp "$TMP_DIR/bridge-header.XXXXXX")"
+    err_file="$(mktemp "$TMP_DIR/bridge-err.XXXXXX")"
+    if ! status="$(curl -sS -m "$HTTP_TIMEOUT_SEC" -D "$header_file" -o "$body_file" -w "%{http_code}" \
+      -H "Authorization: Bearer ${BRIDGE_TOKEN}" \
+      "${bridge_url}/api/bridge/scheduler-jobs" 2>"$err_file")"; then
+      if [[ "$attempt" -lt "$HTTP_RETRY_MAX" ]]; then
+        sleep "$HTTP_RETRY_BASE_SEC"
+        attempt=$((attempt + 1))
+        continue
+      fi
+      CHECK_DETAIL="bridge request failed"
+      return 1
+    fi
+    if [[ "$status" == "429" ]] && [[ "$attempt" -lt "$HTTP_RETRY_MAX" ]]; then
+      delay_sec="$(compute_retry_delay_sec "$attempt" "$header_file")"
+      sleep "$delay_sec"
+      attempt=$((attempt + 1))
+      continue
+    fi
+    break
+  done
   if [[ "$status" != "200" ]]; then
     CHECK_DETAIL="expected 200, got $status"
     return 1
@@ -743,6 +863,15 @@ with tsv_path.open('r', encoding='utf-8') as fh:
                 'owner': meta['owner'],
             }
         )
+
+for check in checks:
+    detail = str(check.get('detail', '')).lower()
+    if check.get('status') != 'fail':
+        continue
+    if 'got 429' not in detail:
+        continue
+    check['likelyCause'] = 'API rate limit window was exhausted by concurrent local requests.'
+    check['nextCommand'] = f"sleep 60 && bash scripts/openclaw-local-smoke.sh --profile {profile}"
 
 pass_count = sum(1 for c in checks if c['status'] == 'pass')
 fail_count = sum(1 for c in checks if c['status'] == 'fail')

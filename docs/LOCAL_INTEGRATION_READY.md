@@ -5,35 +5,35 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 
 ## Mission Control Card
 - Verdict: `GO`
-- Readiness score: `93`
-- Confidence: `medium`
+- Readiness score: `100`
+- Confidence: `high`
 - Profile: `full`
 - Required failures: `0`
 - Required skipped: `0`
-- Warnings: `1`
+- Warnings: `0`
 
 ## Latest Evidence Artifacts
-- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T085747Z.json`
-- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T085747Z.md`
-- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T085747Z.svg`
+- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T205446Z.json`
+- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T205446Z.md`
+- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T205446Z.svg`
 
 ## Top 3 Blockers
-- `bridge-scheduler-jobs` owner=`Bridge Ops`; cause: Bridge token/source is not configured or bridge API is unreachable.; next: `export BRIDGE_TOKEN_FILE=~/.openclaw/bridge/bridge-token && bash scripts/openclaw-local-smoke.sh --profile bridge`
+- No blockers in latest run.
 
 ## Trend (Last 7 Runs)
 | Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |
 |---|---|---:|---:|---:|---|
-| `20260222T051907Z` | `UNKNOWN` | n/a | 6 | 1 | `skipped` |
-| `20260222T051943Z` | `UNKNOWN` | n/a | 0 | 1 | `fail` |
-| `20260222T052026Z` | `UNKNOWN` | n/a | 0 | 1 | `fail` |
-| `20260222T053133Z` | `UNKNOWN` | n/a | 0 | 1 | `fail` |
-| `20260222T053305Z` | `UNKNOWN` | n/a | 0 | 1 | `fail` |
-| `20260222T054949Z` | `GO` | 93 | 0 | 1 | `fail` |
-| `20260222T085747Z` | `GO` | 93 | 0 | 1 | `fail` |
+| `20260222T204825Z` | `BLOCKED` | 62 | 3 | 1 | `fail` |
+| `20260222T204851Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260222T204902Z` | `BLOCKED` | 63 | 3 | 1 | `fail` |
+| `20260222T205052Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260222T205126Z` | `BLOCKED` | 63 | 3 | 1 | `fail` |
+| `20260222T205427Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260222T205446Z` | `GO` | 100 | 0 | 0 | `pass` |
 
 ## Required Checks
 - [x] `openclaw-cli` — `pass` group=`core` severity=`critical` (openclaw CLI found)
-- [x] `openclaw-gateway-status` — `pass` group=`core` severity=`critical` (Service: LaunchAgent (loaded))
+- [x] `openclaw-gateway-status` — `pass` group=`core` severity=`critical` (Service: LaunchAgent (not loaded))
 - [x] `dashboard-token` — `pass` group=`core` severity=`critical` (dashboard token loaded from token file)
 - [x] `dashboard-health` — `pass` group=`apis` severity=`critical` (health endpoint reachable)
 - [x] `dashboard-config-auth` — `pass` group=`apis` severity=`critical` (authenticated config access ok)
@@ -44,18 +44,17 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 
 ## Optional Checks
 - [x] `dashboard-map-route` — `pass` group=`apis` severity=`info` (map route reachable)
-- [ ] `bridge-scheduler-jobs` — `fail` group=`bridge` severity=`warn` (bridge token file not found); cause: Bridge token/source is not configured or bridge API is unreachable.; next: `export BRIDGE_TOKEN_FILE=~/.openclaw/bridge/bridge-token && bash scripts/openclaw-local-smoke.sh --profile bridge`
+- [x] `bridge-scheduler-jobs` — `pass` group=`bridge` severity=`warn` (bridge scheduler endpoint reachable)
 
 ## Bridge Token Setup Note
 - Direct bridge checks support `--bridge-token-file`, `BRIDGE_TOKEN`, `BRIDGE_TOKEN_FILE`, or default `OPENCLAW_DIR/bridge/bridge-token`.
-- Latest bridge check: `fail: bridge token file not found`
+- Latest bridge check: `pass: bridge scheduler endpoint reachable`
 
 ## Current Next Steps
 1. Install or refresh managed cron entries: `bash scripts/install-cron.sh --force`
 2. Run one manual cadence cycle and verify artifact generation: `bash scripts/openclaw-local-ready-cron.sh`
-3. Address optional blockers to raise confidence and reduce warning-only drift.
-4. If bridge coverage is expected, configure bridge token and rerun bridge profile: `export BRIDGE_TOKEN_FILE=~/.openclaw/bridge/bridge-token && bash scripts/openclaw-local-smoke.sh --profile bridge`
-5. Confirm Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
+3. Keep cadence running and monitor trend score/confidence for regressions.
+4. Confirm Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
 
 ## Refresh Command
 ```bash
