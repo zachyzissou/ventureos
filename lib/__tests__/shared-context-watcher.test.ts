@@ -338,6 +338,8 @@ describe('SharedContextWatcher — File Events', () => {
 
     watcher.on('change', (evt: SharedContextEvent) => events.push(evt));
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    // Ensure FS watcher has attached before update write (avoids attach race).
+    await waitForEvent(100);
 
     // Update the file
     fs.writeFileSync(path.join(teamDir, 'priorities.md'), 'Updated priorities\n\n1. Ship feature X');
