@@ -117,7 +117,7 @@ bash "$SMOKE_SCRIPT" \
   --report-dir "$REPORT_DIR" \
   --skip-openclaw-cli \
   --skip-bridge \
-  --timeout-sec 3 >/tmp/openclaw-local-smoke-test.out
+  --timeout-sec 3 >"$TMP_DIR/smoke-test.out"
 
 python3 - <<PY
 import json
