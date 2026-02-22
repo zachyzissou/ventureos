@@ -119,6 +119,7 @@ Returns the most recent KPI snapshot.
     }
   },
   "file": "2026-02-16.json",
+  "latestMtimeMs": 1760630400000,
   "dir": "/Users/you/clawd/shared-context/kpis",
   "count": 14
 }
@@ -127,6 +128,7 @@ Returns the most recent KPI snapshot.
 **Notes:**
 - Returns `{ "latest": null, ... }` if no KPI files exist
 - The `count` field indicates total KPI files available
+- `latestMtimeMs` is the latest KPI file modification timestamp (epoch ms), `0` when unavailable
 
 ### `GET /api/kpis/history`
 

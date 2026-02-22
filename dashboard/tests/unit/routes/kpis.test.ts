@@ -56,6 +56,8 @@ describe('KPI Route Handler', () => {
       const body = parseJsonBody(res);
       expect((body.latest as KpiFileData).date).toBe('2025-01-02');
       expect(body.count).toBe(2);
+      expect(typeof body.latestMtimeMs).toBe('number');
+      expect(body.latestMtimeMs).toBeGreaterThan(0);
     });
 
     it('returns null when no KPI files exist', () => {
@@ -64,12 +66,14 @@ describe('KPI Route Handler', () => {
       const res = mockResponse();
       handleKpis(mockRequest({ url: '/api/kpis/latest' }), res, createDeps({ KPI_DIR: emptyDir }));
       expect(parseJsonBody(res).latest).toBeNull();
+      expect(parseJsonBody(res).latestMtimeMs).toBe(0);
     });
 
     it('handles non-existent KPI directory', () => {
       const res = mockResponse();
       handleKpis(mockRequest({ url: '/api/kpis/latest' }), res, createDeps({ KPI_DIR: '/tmp/nonexistent-xyz' }));
       expect(parseJsonBody(res).latest).toBeNull();
+      expect(parseJsonBody(res).latestMtimeMs).toBe(0);
     });
   });
 
