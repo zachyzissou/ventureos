@@ -36,7 +36,6 @@ function readKpiFile(
 function readFileMtimeMs(kpiDir: string, file: string): number {
   try {
     const full = path.join(kpiDir, file);
-    if (!fs.existsSync(full)) return 0;
     const stat = fs.statSync(full);
     return Number.isFinite(stat.mtimeMs) ? stat.mtimeMs : 0;
   } catch {

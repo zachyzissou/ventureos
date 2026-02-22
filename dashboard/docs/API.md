@@ -128,7 +128,7 @@ Returns the most recent KPI snapshot.
 **Notes:**
 - Returns `{ "latest": null, ... }` if no KPI files exist
 - The `count` field indicates total KPI files available
-- `latestMtimeMs` is the latest KPI file modification timestamp (epoch ms), `0` when unavailable
+- `latestMtimeMs` is the modification timestamp (epoch ms) of the returned `file`, `0` when unavailable
 
 ### `GET /api/kpis/history`
 
