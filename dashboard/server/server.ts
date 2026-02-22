@@ -9,7 +9,6 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
 import { exec, execSync } from 'node:child_process';
 
 import type { IncomingMessage, ServerResponse, Server } from 'node:http';
@@ -136,6 +135,28 @@ import { handleVisualExplainer } from './routes/visual-explainer.js';
 import { handleProposalLifecycle, handleProposalLifecycleUpgrade } from './routes/proposal-lifecycle.js';
 import { handleLivingFiles } from './routes/living-files.js';
 import { getSchedulerJobs } from './scheduler-jobs.js';
+import {
+  buildAvgResponseTime,
+  buildCostData,
+  buildLifetimeStats,
+  buildSystemStats,
+  buildTodayTokens,
+  buildUsageWindows,
+  readHealthHistory,
+  sampleCpuPercent as sampleCpuPercentInternal,
+  trackDiskHistory,
+} from './bridge-metrics.js';
+import {
+  getAgentMetrics as getAgentMetricsInternal,
+  getSessionsJson as getSessionsJsonInternal,
+  resolveSessionName,
+} from './server-session-helpers.js';
+import {
+  getCronJobs as getCronJobsInternal,
+  getGitActivity as getGitActivityInternal,
+  getMemoryFiles as getMemoryFilesInternal,
+  getServicesStatus as getServicesStatusInternal,
+} from './server-ops-helpers.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // All VentureOS data paths flow through lib/paths.ts (no os.homedir() needed).
@@ -221,707 +242,32 @@ function getAgentSessionsDir(agentId: string): string {
   return agentSessionsDir(agentId);
 }
 
-function parseJsonlAvgLatencyMs(jsonlPath: string, maxLines: number = 600): number | null {
-  try {
-    if (!fs.existsSync(jsonlPath)) return null;
-    const data: string = fs.readFileSync(jsonlPath, 'utf8');
-    const lines: string[] = data.split('\n').filter((l) => l.trim());
-    const slice: string[] = lines.slice(Math.max(0, lines.length - maxLines));
-    let lastUserTs: number | null = null;
-    const deltas: number[] = [];
-    for (const line of slice) {
-      let d: JsonlEntry;
-      try {
-        d = JSON.parse(line) as JsonlEntry;
-      } catch {
-        continue;
-      }
-      if (d.type !== 'message') continue;
-      const msg: SessionMessage | undefined = d.message;
-      if (!msg) continue;
-      const role: string | undefined = msg.role;
-      const tsStr: string | undefined = d.timestamp ?? d.ts ?? (msg as Record<string, unknown>).timestamp as string | undefined;
-      const ts: number = tsStr ? Date.parse(tsStr) : NaN;
-      if (Number.isNaN(ts)) continue;
-      if (role === 'user') {
-        lastUserTs = ts;
-      } else if (role === 'assistant') {
-        if (lastUserTs && ts >= lastUserTs) {
-          deltas.push(ts - lastUserTs);
-          lastUserTs = null;
-        }
-      }
-    }
-    if (!deltas.length) return null;
-    return deltas.reduce((a, b) => a + b, 0) / deltas.length;
-  } catch {
-    return null;
-  }
-}
-
 function resolveName(key: string): string {
-  if (key.includes(':main:main')) return 'main';
-  if (key.includes('teleg')) return 'telegram-group';
-  if (key.includes('cron:')) {
-    try {
-      if (fs.existsSync(cronFile)) {
-        const crons = JSON.parse(fs.readFileSync(cronFile, 'utf8')) as { jobs?: Array<{ id: string; name?: string }> };
-        const jobs = crons.jobs ?? [];
-        const cronPart: string = key.split('cron:')[1] ?? '';
-        const cronUuid: string = cronPart.split(':')[0];
-        const job = jobs.find((j) => j.id === cronUuid);
-        if (job?.name) return job.name;
-      }
-    } catch {
-      // ignore
-    }
-    const cronPart: string = key.split('cron:')[1] ?? '';
-    const cronUuid: string = cronPart.split(':')[0];
-    return 'Cron: ' + cronUuid.substring(0, 8);
-  }
-  if (key.includes('subagent')) {
-    const parts: string[] = key.split(':');
-    return parts[parts.length - 1].substring(0, 12);
-  }
-  return key.split(':').pop()?.substring(0, 12) ?? key.substring(0, 12);
-}
-
-function getLastMessage(sessionId: string): string {
-  try {
-    const filePath: string = path.join(sessDir, sessionId + '.jsonl');
-    if (!fs.existsSync(filePath)) return '';
-    const data: string = fs.readFileSync(filePath, 'utf8');
-    const lines: string[] = data.split('\n').filter((l) => l.trim());
-    for (let i = lines.length - 1; i >= Math.max(0, lines.length - 20); i--) {
-      try {
-        const d = JSON.parse(lines[i]) as JsonlEntry;
-        if (d.type !== 'message') continue;
-        const msg: SessionMessage | undefined = d.message;
-        if (!msg) continue;
-        const role: string | undefined = msg.role;
-        if (role !== 'user' && role !== 'assistant') continue;
-        let text: string = '';
-        if (typeof msg.content === 'string') {
-          text = msg.content;
-        } else if (Array.isArray(msg.content)) {
-          for (const b of msg.content) {
-            if (b.type === 'text' && b.text) {
-              text = b.text;
-              break;
-            }
-          }
-        }
-        if (text) return text.replace(/\n/g, ' ').substring(0, 80);
-      } catch {
-        // ignore parse error
-      }
-    }
-    return '';
-  } catch {
-    return '';
-  }
-}
-
-let sessionCostCache: Record<string, number> = {};
-let sessionCostCacheTime: number = 0;
-
-function getSessionCost(sessionId: string): number {
-  const now: number = Date.now();
-  if (now - sessionCostCacheTime > 60000) {
-    sessionCostCache = {};
-    sessionCostCacheTime = now;
-    try {
-      const files: string[] = fs.readdirSync(sessDir).filter((f) => f.endsWith('.jsonl'));
-      for (const file of files) {
-        const sid: string = file.replace('.jsonl', '');
-        let total: number = 0;
-        const lines: string[] = fs.readFileSync(path.join(sessDir, file), 'utf8').split('\n');
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const d = JSON.parse(line) as JsonlEntry;
-            if (d.type !== 'message') continue;
-            const c: number = d.message?.usage?.cost?.total ?? 0;
-            if (c > 0) total += c;
-          } catch {
-            // ignore
-          }
-        }
-        if (total > 0) sessionCostCache[sid] = Math.round(total * 100) / 100;
-      }
-    } catch {
-      // ignore
-    }
-  }
-  return sessionCostCache[sessionId] ?? 0;
+  return resolveSessionName(key, cronFile);
 }
 
 function getSessionsJson(): SessionInfo[] {
-  try {
-    const sFile: string = path.join(sessDir, 'sessions.json');
-    const data = JSON.parse(fs.readFileSync(sFile, 'utf8')) as Record<string, SessionsJsonEntry>;
-    return Object.entries(data).map(([key, s]): SessionInfo => ({
-      key,
-      label: s.label ?? resolveName(key),
-      model: s.modelOverride ?? s.model ?? '-',
-      totalTokens: s.totalTokens ?? 0,
-      contextTokens: s.contextTokens ?? 0,
-      kind: s.kind ?? (key.includes('group') ? 'group' : 'direct'),
-      updatedAt: s.updatedAt ?? 0,
-      createdAt: s.createdAt ?? s.updatedAt ?? 0,
-      aborted: s.abortedLastRun ?? false,
-      thinkingLevel: s.thinkingLevel ?? null,
-      channel: s.channel ?? '-',
-      sessionId: s.sessionId ?? '-',
-      lastMessage: getLastMessage(s.sessionId ?? key),
-      cost: getSessionCost(s.sessionId ?? key),
-    }));
-  } catch {
-    return [];
-  }
+  return getSessionsJsonInternal({ sessDir, cronFile });
 }
 
 function getCostData(): CostData {
-  try {
-    const files: string[] = fs.readdirSync(sessDir).filter((f) => f.endsWith('.jsonl'));
-    const perModel: Record<string, number> = {};
-    const perDay: Record<string, number> = {};
-    const perSession: Record<string, number> = {};
-    let total: number = 0;
-
-    for (const file of files) {
-      const sid: string = file.replace('.jsonl', '');
-      let scost: number = 0;
-      const lines: string[] = fs.readFileSync(path.join(sessDir, file), 'utf8').split('\n');
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const d = JSON.parse(line) as JsonlEntry;
-          if (d.type !== 'message') continue;
-          const msg: SessionMessage | undefined = d.message;
-          if (!msg?.usage?.cost) continue;
-          const c: number = msg.usage.cost.total ?? 0;
-          if (c <= 0) continue;
-          const model: string = msg.model ?? 'unknown';
-          if (model.includes('delivery-mirror')) continue;
-          const ts: string = d.timestamp ?? '';
-          const day: string = ts.substring(0, 10);
-          perModel[model] = (perModel[model] ?? 0) + c;
-          perDay[day] = (perDay[day] ?? 0) + c;
-          scost += c;
-          total += c;
-        } catch {
-          // ignore
-        }
-      }
-      if (scost > 0) perSession[sid] = scost;
-    }
-
-    const now = new Date();
-    const todayKey: string = now.toISOString().substring(0, 10);
-    const weekAgo: string = new Date(now.getTime() - 7 * 86400000).toISOString().substring(0, 10);
-    let weekCost: number = 0;
-    for (const [d, c] of Object.entries(perDay)) {
-      if (d >= weekAgo) weekCost += c;
-    }
-
-    // Build per-session with labels
-    let sidLabels: Record<string, string> = {};
-    try {
-      const sData = JSON.parse(
-        fs.readFileSync(path.join(sessDir, 'sessions.json'), 'utf8'),
-      ) as Record<string, SessionsJsonEntry>;
-      for (const [key, val] of Object.entries(sData)) {
-        if (val.sessionId) sidLabels[val.sessionId] = val.label ?? key.split(':').slice(2).join(':');
-      }
-    } catch {
-      // ignore
-    }
-
-    const perSessionLabeled: Record<string, { cost: number; label: string }> = {};
-    const topSessions = Object.entries(perSession)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-
-    for (const [sid, cost] of topSessions) {
-      let label: string | null = sidLabels[sid] ?? null;
-      if (!label) {
-        label = resolveSessionLabel(sid);
-      }
-      perSessionLabeled[sid] = { cost, label: label ?? 'session-' + sid.substring(0, 8) };
-    }
-
-    return {
-      total: Math.round(total * 100) / 100,
-      today: Math.round((perDay[todayKey] ?? 0) * 100) / 100,
-      week: Math.round(weekCost * 100) / 100,
-      perModel,
-      perDay: Object.fromEntries(
-        Object.entries(perDay)
-          .sort((a, b) => b[0].localeCompare(a[0]))
-          .slice(0, 14),
-      ),
-      perSession: perSessionLabeled,
-    };
-  } catch {
-    return { total: 0, today: 0, week: 0, perModel: {}, perDay: {}, perSession: {} };
-  }
-}
-
-/**
- * Try to resolve a human-readable label for a session ID by scanning the JSONL.
- */
-function resolveSessionLabel(sid: string): string | null {
-  try {
-    const jf: string = path.join(sessDir, sid + '.jsonl');
-    if (!fs.existsSync(jf)) return null;
-    const lines: string[] = fs.readFileSync(jf, 'utf8').split('\n');
-    for (const l of lines) {
-      if (!l.includes('"user"')) continue;
-      try {
-        const d = JSON.parse(l) as JsonlEntry;
-        const c = d.message?.content;
-        const txt: string =
-          typeof c === 'string'
-            ? c
-            : Array.isArray(c)
-              ? (c as MessageContentBlock[]).find((x) => x.type === 'text')?.text ?? ''
-              : '';
-        if (txt) {
-          let t: string = txt.replace(/\n/g, ' ').trim();
-          const bgMatch: RegExpMatchArray | null = t.match(/background task "([^"]+)"/i);
-          if (bgMatch) t = 'Sub: ' + bgMatch[1];
-          const cronMatch: RegExpMatchArray | null = t.match(/\[cron:([^\]]+)\]/);
-          if (cronMatch) {
-            let cronName: string = cronMatch[1].substring(0, 8);
-            try {
-              const cj = JSON.parse(fs.readFileSync(cronFile, 'utf8')) as {
-                jobs?: Array<{ id: string; name?: string }>;
-              };
-              const job = cj.jobs?.find((j) => j.id?.startsWith(cronMatch[1].substring(0, 8)));
-              if (job?.name) cronName = job.name;
-            } catch {
-              // ignore
-            }
-            t = 'Cron: ' + cronName;
-          }
-          if (t.startsWith('System:')) t = t.substring(7).trim();
-          t = t.replace(/^\[\d{4}-\d{2}-\d{2}[^\]]*\]\s*/, '');
-          if (t.startsWith('You are running a boot')) t = 'Boot check';
-          if (/whatsapp/i.test(t)) t = 'WhatsApp session';
-          const subMatch2: RegExpMatchArray | null = t.match(/background task "([^"]+)"/i);
-          if (!bgMatch && subMatch2) t = 'Sub: ' + subMatch2[1];
-          let label: string = t.substring(0, 35);
-          if (t.length > 35) label += '…';
-          return label;
-        }
-      } catch {
-        // ignore
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return null;
+  return buildCostData({ sessDir, cronFile });
 }
 
 let costCache: CostData | null = null;
 let costCacheTime: number = 0;
 
 function getUsageWindows(): UsageWindowsResponse {
-  try {
-    const now: number = Date.now();
-    const fiveHoursMs: number = 5 * 3600000;
-    const oneWeekMs: number = 7 * 86400000;
-    const files: string[] = fs.readdirSync(sessDir).filter((f) => {
-      if (!f.endsWith('.jsonl')) return false;
-      try {
-        return fs.statSync(path.join(sessDir, f)).mtimeMs > now - oneWeekMs;
-      } catch {
-        return false;
-      }
-    });
-
-    const perModel5h: Record<string, ModelUsageStats> = {};
-    const perModelWeek: Record<string, ModelUsageStats> = {};
-    const recentMessages: Array<{ ts: number; model: string; input: number; output: number; cost: number }> = [];
-
-    for (const file of files) {
-      const lines: string[] = fs.readFileSync(path.join(sessDir, file), 'utf8').split('\n');
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const d = JSON.parse(line) as JsonlEntry;
-          if (d.type !== 'message') continue;
-          const msg: SessionMessage | undefined = d.message;
-          if (!msg?.usage) continue;
-          const ts: number = d.timestamp ? new Date(d.timestamp).getTime() : 0;
-          if (!ts) continue;
-          const model: string = msg.model ?? 'unknown';
-          const inTok: number =
-            (msg.usage.input ?? 0) + (msg.usage.cacheRead ?? 0) + (msg.usage.cacheWrite ?? 0);
-          const outTok: number = msg.usage.output ?? 0;
-          const cost: number = msg.usage.cost?.total ?? 0;
-
-          if (now - ts < fiveHoursMs) {
-            if (!perModel5h[model])
-              perModel5h[model] = { input: 0, output: 0, cost: 0, calls: 0 };
-            perModel5h[model].input += inTok;
-            perModel5h[model].output += outTok;
-            perModel5h[model].cost += cost;
-            perModel5h[model].calls++;
-          }
-          if (now - ts < oneWeekMs) {
-            if (!perModelWeek[model])
-              perModelWeek[model] = { input: 0, output: 0, cost: 0, calls: 0 };
-            perModelWeek[model].input += inTok;
-            perModelWeek[model].output += outTok;
-            perModelWeek[model].cost += cost;
-            perModelWeek[model].calls++;
-          }
-          if (now - ts < fiveHoursMs) {
-            recentMessages.push({ ts, model, input: inTok, output: outTok, cost });
-          }
-        } catch {
-          // ignore
-        }
-      }
-    }
-
-    recentMessages.sort((a, b) => b.ts - a.ts);
-
-    const estimatedLimits = { opus: 88000, sonnet: 220000 };
-
-    let windowStart: number | null = null;
-    if (recentMessages.length > 0) {
-      windowStart = recentMessages[recentMessages.length - 1].ts;
-    }
-    const windowResetIn: number = windowStart
-      ? Math.max(0, windowStart + fiveHoursMs - now)
-      : 0;
-
-    const thirtyMinAgo: number = now - 30 * 60000;
-    const recent30 = recentMessages.filter((m) => m.ts >= thirtyMinAgo);
-    let burnTokensPerMin: number = 0;
-    let burnCostPerMin: number = 0;
-    if (recent30.length > 0) {
-      const totalOut30: number = recent30.reduce((s, m) => s + m.output, 0);
-      const totalCost30: number = recent30.reduce((s, m) => s + m.cost, 0);
-      const spanMs: number = Math.max(now - Math.min(...recent30.map((m) => m.ts)), 60000);
-      burnTokensPerMin = totalOut30 / (spanMs / 60000);
-      burnCostPerMin = totalCost30 / (spanMs / 60000);
-    }
-
-    const opusKey: string = Object.keys(perModel5h).find((k) => k.includes('opus')) ?? '';
-    const opusOut: number = opusKey ? perModel5h[opusKey].output : 0;
-    const sonnetKey: string = Object.keys(perModel5h).find((k) => k.includes('sonnet')) ?? '';
-    const sonnetOut: number = sonnetKey ? perModel5h[sonnetKey].output : 0;
-
-    const opusRemaining: number = estimatedLimits.opus - opusOut;
-    const timeToLimit: number | null =
-      burnTokensPerMin > 0 ? (opusRemaining / burnTokensPerMin) * 60000 : null;
-
-    const perModelCost5h: Record<string, { inputCost: number; outputCost: number; totalCost: number }> = {};
-    for (const [model, data] of Object.entries(perModel5h)) {
-      const isOpus: boolean = model.includes('opus');
-      const isSonnet: boolean = model.includes('sonnet');
-      let inputPrice: number = 0;
-      let outputPrice: number = 0;
-      if (isOpus) {
-        inputPrice = 15;
-        outputPrice = 75;
-      } else if (isSonnet) {
-        inputPrice = 3;
-        outputPrice = 15;
-      }
-      perModelCost5h[model] = {
-        inputCost: (data.input || 0) / 1000000 * inputPrice,
-        outputCost: (data.output || 0) / 1000000 * outputPrice,
-        totalCost: data.cost || 0,
-      };
-    }
-
-    const totalCost5h: number = Object.values(perModel5h).reduce((s, m) => s + (m.cost || 0), 0);
-    const totalCalls5h: number = Object.values(perModel5h).reduce(
-      (s, m) => s + (m.calls || 0),
-      0,
-    );
-    const costLimit: number = 35.0;
-    const messageLimit: number = 1000;
-
-    return {
-      fiveHour: {
-        perModel: perModel5h,
-        perModelCost: perModelCost5h,
-        windowStart,
-        windowResetIn,
-        recentCalls: recentMessages.slice(0, 20).map((m) => ({
-          ...m,
-          ago: Math.round((now - m.ts) / 60000) + 'm ago',
-        })),
-      },
-      weekly: {
-        perModel: perModelWeek,
-      },
-      burnRate: {
-        tokensPerMinute: Math.round(burnTokensPerMin * 100) / 100,
-        costPerMinute: Math.round(burnCostPerMin * 10000) / 10000,
-      },
-      estimatedLimits,
-      current: {
-        opusOutput: opusOut,
-        sonnetOutput: sonnetOut,
-        totalCost: Math.round(totalCost5h * 100) / 100,
-        totalCalls: totalCalls5h,
-        opusPct: Math.round((opusOut / estimatedLimits.opus) * 100),
-        sonnetPct: Math.round((sonnetOut / estimatedLimits.sonnet) * 100),
-        costPct: Math.round((totalCost5h / costLimit) * 100),
-        messagePct: Math.round((totalCalls5h / messageLimit) * 100),
-        costLimit,
-        messageLimit,
-      },
-      predictions: {
-        timeToLimit: timeToLimit ? Math.round(timeToLimit) : null,
-        safe: !timeToLimit || timeToLimit > 3600000,
-      },
-    };
-  } catch {
-    return {
-      fiveHour: { perModel: {}, windowStart: null, windowResetIn: 0 },
-      weekly: { perModel: {} },
-    };
-  }
-}
-
-function getRateLimitEvents(): Array<{ ts: number; type: string; detail: string }> {
-  try {
-    const files: string[] = fs.readdirSync(sessDir).filter((f) => f.endsWith('.jsonl'));
-    const events: Array<{ ts: number; type: string; detail: string }> = [];
-    const now: number = Date.now();
-    const fiveHoursMs: number = 5 * 3600000;
-
-    for (const file of files) {
-      const lines: string[] = fs.readFileSync(path.join(sessDir, file), 'utf8').split('\n');
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const d = JSON.parse(line) as JsonlEntry;
-          const ts: number = d.timestamp ? new Date(d.timestamp).getTime() : 0;
-          if (now - ts > fiveHoursMs) continue;
-          if (
-            d.type === 'error' ||
-            (d.message && d.message.stopReason === 'rate_limit')
-          ) {
-            const text: string = JSON.stringify(d);
-            if (
-              text.includes('rate') ||
-              text.includes('overloaded') ||
-              text.includes('429') ||
-              text.includes('limit')
-            ) {
-              events.push({ ts, type: 'rate_limit', detail: text.substring(0, 200) });
-            }
-          }
-        } catch {
-          // ignore
-        }
-      }
-    }
-    return events;
-  } catch {
-    return [];
-  }
+  return buildUsageWindows({ sessDir });
 }
 
 let usageCache: UsageWindowsResponse | null = null;
 let usageCacheTime: number = 0;
 
-// ─── CPU Sampler (delta-based, matches `top` semantics) ──────────────────────
-//
-// os.loadavg() counts ALL runnable threads including those blocked on I/O,
-// which inflates CPU% significantly on macOS (and multi-core Linux).
-// Instead we sample os.cpus() time deltas to measure actual CPU utilisation.
-
-interface CpuTimes {
-  user: number;
-  nice: number;
-  sys: number;
-  idle: number;
-  irq: number;
-}
-
-let _prevCpuSample: CpuTimes[] | null = null;
-let _prevCpuSampleTime: number = 0;
-let _lastCpuPercent: number = 0;
-
-/** Snapshot current aggregate CPU times from os.cpus(). */
-function _snapshotCpuTimes(): CpuTimes[] {
-  return os.cpus().map((c) => ({ ...c.times }));
-}
-
-/**
- * Return CPU usage percentage based on the delta between two os.cpus() samples.
- * Falls back to load-average heuristic only on the very first call (no prior sample).
- */
-export function sampleCpuPercent(): number {
-  const now: number = Date.now();
-  const current: CpuTimes[] = _snapshotCpuTimes();
-
-  if (_prevCpuSample && _prevCpuSample.length === current.length) {
-    let totalDelta: number = 0;
-    let idleDelta: number = 0;
-    for (let i = 0; i < current.length; i++) {
-      const p: CpuTimes = _prevCpuSample[i];
-      const c: CpuTimes = current[i];
-      const pTotal: number = p.user + p.nice + p.sys + p.idle + p.irq;
-      const cTotal: number = c.user + c.nice + c.sys + c.idle + c.irq;
-      totalDelta += cTotal - pTotal;
-      idleDelta += c.idle - p.idle;
-    }
-    _prevCpuSample = current;
-    _prevCpuSampleTime = now;
-
-    if (totalDelta > 0) {
-      _lastCpuPercent = Math.min(Math.round(((totalDelta - idleDelta) / totalDelta) * 100), 100);
-    }
-    return _lastCpuPercent;
-  }
-
-  // First call — no prior sample; fall back to load-average as an approximation
-  _prevCpuSample = current;
-  _prevCpuSampleTime = now;
-
-  try {
-    const loadAvg1m: number = os.loadavg()[0];
-    const numCpus: number = current.length || 1;
-    _lastCpuPercent = Math.min(Math.round((loadAvg1m / numCpus) * 100), 100);
-  } catch {
-    _lastCpuPercent = 0;
-  }
-  return _lastCpuPercent;
-}
-
-// Seed the first sample so the first real call has a delta to work with.
-sampleCpuPercent();
-
-// ─── System Stats ────────────────────────────────────────────────────────────
+export const sampleCpuPercent = sampleCpuPercentInternal;
 
 function getSystemStats(): SystemStats {
-  try {
-    const totalMem: number = os.totalmem();
-    const freeMem: number = os.freemem();
-    const usedMem: number = totalMem - freeMem;
-    const memPercent: number = Math.round((usedMem / totalMem) * 100);
-
-    let cpuTemp: number | null = null;
-    try {
-      const tempRaw: string = fs.readFileSync('/sys/class/thermal/thermal_zone0/temp', 'utf8').trim();
-      cpuTemp = parseInt(tempRaw) / 1000;
-    } catch {
-      // not available on this platform
-    }
-
-    const loadAvg: number[] = os.loadavg();
-    const uptime: number = os.uptime();
-
-    // Delta-based CPU usage — see sampleCpuPercent() above.
-    const cpuUsage: number = sampleCpuPercent();
-
-    let diskPercent: number = 0;
-    let diskUsed: string = '';
-    let diskTotal: string = '';
-    try {
-      let out: string = '';
-      try {
-        out = execSync("df / --output=pcent,used,size -B1G 2>/dev/null | tail -1", {
-          encoding: 'utf8',
-        }).trim();
-        const parts: string[] = out.split(/\s+/);
-        if (parts.length >= 3 && parts[0].includes('%')) {
-          diskPercent = parseInt(parts[0]);
-          diskUsed = parts[1] + 'G';
-          diskTotal = parts[2] + 'G';
-        } else {
-          throw new Error('df output not in expected GNU format');
-        }
-      } catch {
-        out = execSync("df -k / 2>/dev/null | tail -1", { encoding: 'utf8' }).trim();
-        const parts: string[] = out.split(/\s+/);
-        const totalKb: number = parseInt(parts[1]) || 0;
-        const usedKb: number = parseInt(parts[2]) || 0;
-        const cap: string = parts[4] ?? '';
-        diskPercent = parseInt(cap.replace('%', '')) || 0;
-        const usedG: number = Math.round(usedKb / 1048576);
-        const totalG: number = Math.round(totalKb / 1048576);
-        if (usedG > 0) diskUsed = usedG + 'G';
-        if (totalG > 0) diskTotal = totalG + 'G';
-      }
-    } catch {
-      // ignore
-    }
-
-    let crashCount: number = 0;
-    try {
-      const logs: string = execSync(
-        "journalctl -u openclaw --since '7 days ago' --no-pager -o short 2>/dev/null | grep -ci 'SIGABRT\\|SIGSEGV\\|exit code [1-9]\\|process crashed\\|fatal error' || echo 0",
-        { encoding: 'utf8' },
-      ).trim();
-      crashCount = parseInt(logs) || 0;
-    } catch {
-      // not available
-    }
-
-    let crashesToday: number = 0;
-    try {
-      const logs: string = execSync(
-        "journalctl -u openclaw --since today --no-pager -o short 2>/dev/null | grep -ci 'SIGABRT\\|SIGSEGV\\|exit code [1-9]\\|process crashed\\|fatal error' || echo 0",
-        { encoding: 'utf8' },
-      ).trim();
-      crashesToday = parseInt(logs) || 0;
-    } catch {
-      // not available
-    }
-
-    return {
-      cpu: { usage: cpuUsage, temp: cpuTemp },
-      disk: { percent: diskPercent, used: diskUsed, total: diskTotal },
-      crashCount,
-      crashesToday,
-      memory: {
-        total: totalMem,
-        used: usedMem,
-        free: freeMem,
-        percent: memPercent,
-        totalGB: (totalMem / 1073741824).toFixed(1),
-        usedGB: (usedMem / 1073741824).toFixed(1),
-        freeGB: (freeMem / 1073741824).toFixed(1),
-      },
-      loadAvg: {
-        '1m': loadAvg[0].toFixed(2),
-        '5m': loadAvg[1].toFixed(2),
-        '15m': loadAvg[2].toFixed(2),
-      },
-      uptime,
-    };
-  } catch {
-    return {
-      cpu: { usage: 0, temp: null },
-      disk: { percent: 0, used: '', total: '' },
-      crashCount: 0,
-      crashesToday: 0,
-      memory: {
-        total: 0,
-        used: 0,
-        free: 0,
-        percent: 0,
-        totalGB: '0.0',
-        usedGB: '0.0',
-        freeGB: '0.0',
-      },
-      loadAvg: { '1m': '0', '5m': '0', '15m': '0' },
-      uptime: 0,
-    };
-  }
+  return buildSystemStats();
 }
 
 // ─── Live Feed (SSE) ─────────────────────────────────────────────────────────
@@ -1071,302 +417,42 @@ function formatLiveEvent(data: JsonlEntry): LiveEvent | null {
 
 // ─── Cron ────────────────────────────────────────────────────────────────────
 
-interface CronJobRaw {
-  id: string;
-  name?: string;
-  schedule?: { expr?: string; tz?: string };
-  enabled?: boolean;
-  state?: {
-    lastStatus?: string;
-    lastRunAtMs?: number;
-    nextRunAtMs?: number;
-    lastDurationMs?: number;
-  };
-}
-
 function getCronJobs(): CronJobInfo[] {
-  try {
-    if (!fs.existsSync(cronFile)) return [];
-    const data = JSON.parse(fs.readFileSync(cronFile, 'utf8')) as { jobs?: CronJobRaw[] };
-    return (data.jobs ?? []).map((j): CronJobInfo => {
-      let humanSchedule: string = j.schedule?.expr ?? '';
-      try {
-        const parts: string[] = humanSchedule.split(' ');
-        if (parts.length === 5) {
-          const [min, hour, , , dow] = parts;
-          const dowNames: string[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-          let readable: string = '';
-          if (dow !== '*') readable = dowNames[parseInt(dow)] ?? dow;
-          if (hour !== '*' && min !== '*')
-            readable += (readable ? ' ' : '') + `${hour.padStart(2, '0')}:${min.padStart(2, '0')}`;
-          if (j.schedule?.tz) readable += ` (${j.schedule.tz.split('/').pop()})`;
-          if (readable) humanSchedule = readable;
-        }
-      } catch {
-        // ignore
-      }
-      return {
-        id: j.id,
-        name: j.name ?? j.id.substring(0, 8),
-        schedule: humanSchedule,
-        enabled: j.enabled !== false,
-        lastStatus: j.state?.lastStatus ?? 'unknown',
-        lastRunAt: j.state?.lastRunAtMs ?? 0,
-        nextRunAt: j.state?.nextRunAtMs ?? 0,
-        lastDuration: j.state?.lastDurationMs ?? 0,
-      };
-    });
-  } catch {
-    return [];
-  }
+  return getCronJobsInternal(cronFile);
 }
 
 // ─── Git ─────────────────────────────────────────────────────────────────────
 
-function getGitRepos(): GitRepo[] {
-  const repos: GitRepo[] = [];
-  const projDir: string = path.join(WORKSPACE_DIR, 'projects');
-  try {
-    if (fs.existsSync(projDir)) {
-      fs.readdirSync(projDir).forEach((d) => {
-        const full: string = path.join(projDir, d);
-        if (fs.existsSync(path.join(full, '.git'))) repos.push({ path: full, name: d });
-      });
-    }
-  } catch {
-    // ignore
-  }
-  if (fs.existsSync(path.join(WORKSPACE_DIR, '.git')))
-    repos.push({ path: WORKSPACE_DIR, name: path.basename(WORKSPACE_DIR) });
-  return repos;
-}
-
 function getGitActivity(): GitCommit[] {
-  try {
-    const repos: GitRepo[] = getGitRepos();
-    const commits: GitCommit[] = [];
-    for (const repo of repos) {
-      try {
-        if (!fs.existsSync(path.join(repo.path, '.git'))) continue;
-        const log: string = execSync(
-          `git -C ${repo.path} log --oneline --since='7 days ago' -10 --format='%H|%s|%at'`,
-          { encoding: 'utf8', timeout: 5000 },
-        ).trim();
-        if (!log) continue;
-        log.split('\n').forEach((line) => {
-          const [hash, msg, ts] = line.split('|');
-          commits.push({
-            repo: repo.name,
-            hash: (hash ?? '').substring(0, 7),
-            message: msg ?? '',
-            timestamp: parseInt(ts ?? '0') * 1000,
-          });
-        });
-      } catch {
-        // ignore
-      }
-    }
-    commits.sort((a, b) => b.timestamp - a.timestamp);
-    return commits.slice(0, 15);
-  } catch {
-    return [];
-  }
+  return getGitActivityInternal(WORKSPACE_DIR);
 }
 
 // ─── Services ────────────────────────────────────────────────────────────────
 
 function getServicesStatus(): Array<{ name: string; active: boolean }> {
-  const services: string[] = ['openclaw', 'agent-dashboard', 'tailscaled'];
-  return services.map((name) => {
-    try {
-      const status: string = execSync(`systemctl is-active ${name} 2>/dev/null`, {
-        encoding: 'utf8',
-        timeout: 3000,
-      }).trim();
-      return { name, active: status === 'active' };
-    } catch {
-      return { name, active: false };
-    }
-  });
+  return getServicesStatusInternal();
 }
 
 // ─── Memory ──────────────────────────────────────────────────────────────────
 
 function getMemoryFiles(): Array<{ name: string; modified: number; size: number }> {
-  const files: Array<{ name: string; modified: number; size: number }> = [];
-  try {
-    if (fs.existsSync(memoryMdPath)) {
-      const stat: fs.Stats = fs.statSync(memoryMdPath);
-      files.push({ name: 'MEMORY.md', modified: stat.mtimeMs, size: stat.size });
-    }
-  } catch {
-    // ignore
-  }
-  try {
-    if (fs.existsSync(heartbeatPath)) {
-      const stat: fs.Stats = fs.statSync(heartbeatPath);
-      files.push({ name: 'HEARTBEAT.md', modified: stat.mtimeMs, size: stat.size });
-    }
-  } catch {
-    // ignore
-  }
-  try {
-    if (fs.existsSync(memoryDir)) {
-      const entries: string[] = fs
-        .readdirSync(memoryDir)
-        .filter((f) => f.endsWith('.md'))
-        .sort()
-        .reverse();
-      entries.forEach((e) => {
-        try {
-          const stat: fs.Stats = fs.statSync(path.join(memoryDir, e));
-          files.push({ name: 'memory/' + e, modified: stat.mtimeMs, size: stat.size });
-        } catch {
-          // ignore
-        }
-      });
-    }
-  } catch {
-    // ignore
-  }
-  return files;
+  return getMemoryFilesInternal(memoryMdPath, heartbeatPath, memoryDir);
 }
 
 // ─── Tokens / Response Time ──────────────────────────────────────────────────
 
 function getTodayTokens(): { totalInput: number; totalOutput: number; perModel: Record<string, { input: number; output: number }> } {
-  try {
-    const files: string[] = fs.readdirSync(sessDir).filter((f) => f.endsWith('.jsonl'));
-    const now = new Date();
-    const todayStr: string = now.toISOString().substring(0, 10);
-    const perModel: Record<string, { input: number; output: number }> = {};
-    let totalInput: number = 0;
-    let totalOutput: number = 0;
-
-    for (const file of files) {
-      const lines: string[] = fs.readFileSync(path.join(sessDir, file), 'utf8').split('\n');
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const d = JSON.parse(line) as JsonlEntry;
-          if (d.type !== 'message') continue;
-          const ts: string = d.timestamp ?? '';
-          if (!ts.startsWith(todayStr)) continue;
-          const msg: SessionMessage | undefined = d.message;
-          if (!msg?.usage) continue;
-          const model: string = (msg.model ?? 'unknown').split('/').pop() ?? 'unknown';
-          if (model === 'delivery-mirror') continue;
-          const inTok: number =
-            (msg.usage.input ?? 0) + (msg.usage.cacheRead ?? 0) + (msg.usage.cacheWrite ?? 0);
-          const outTok: number = msg.usage.output ?? 0;
-          if (!perModel[model]) perModel[model] = { input: 0, output: 0 };
-          perModel[model].input += inTok;
-          perModel[model].output += outTok;
-          totalInput += inTok;
-          totalOutput += outTok;
-        } catch {
-          // ignore
-        }
-      }
-    }
-    return { totalInput, totalOutput, perModel };
-  } catch {
-    return { totalInput: 0, totalOutput: 0, perModel: {} };
-  }
+  return buildTodayTokens({ sessDir });
 }
 
 function getAvgResponseTime(): number {
-  try {
-    const files: string[] = fs.readdirSync(sessDir).filter((f) => f.endsWith('.jsonl'));
-    const now = new Date();
-    const todayStr: string = now.toISOString().substring(0, 10);
-    const diffs: number[] = [];
-
-    for (const file of files) {
-      const lines: string[] = fs.readFileSync(path.join(sessDir, file), 'utf8').split('\n');
-      let lastUserTs: number | null = null;
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const d = JSON.parse(line) as JsonlEntry;
-          if (d.type !== 'message') continue;
-          const ts: string = d.timestamp ?? '';
-          if (!ts.startsWith(todayStr)) continue;
-          const role: string | undefined = d.message?.role;
-          const msgTs: number = new Date(ts).getTime();
-          if (role === 'user') {
-            lastUserTs = msgTs;
-          } else if (role === 'assistant' && lastUserTs) {
-            const diff: number = msgTs - lastUserTs;
-            if (diff > 0 && diff < 600000) diffs.push(diff);
-            lastUserTs = null;
-          }
-        } catch {
-          // ignore
-        }
-      }
-    }
-    if (diffs.length === 0) return 0;
-    return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length / 1000);
-  } catch {
-    return 0;
-  }
+  return buildAvgResponseTime({ sessDir });
 }
 
 // ─── VentureOS Extensions ────────────────────────────────────────────────────
 
 function getAgentMetrics(agentId: string): AgentMetrics {
-  const agentSessDir: string = getAgentSessionsDir(agentId);
-  const sFile: string = path.join(agentSessDir, 'sessions.json');
-  const sessionsObj = safeReadJson(sFile, {}) as Record<string, SessionsJsonEntry>;
-  const entries = Object.entries(sessionsObj ?? {}).map(([key, s]) => ({
-    key,
-    sessionId: s.sessionId ?? null,
-    label: s.label ?? resolveName(key),
-    updatedAt: s.updatedAt ?? 0,
-    createdAt: s.createdAt ?? s.updatedAt ?? 0,
-    aborted: !!s.abortedLastRun,
-  }));
-  entries.sort((a, b) => b.updatedAt - a.updatedAt);
-
-  const sessionCount: number = entries.length;
-  const failures: number = entries.filter((e) => e.aborted).length;
-  const successRate: number | null = sessionCount ? (sessionCount - failures) / sessionCount : null;
-
-  let avgLatencyMs: number | null = null;
-  try {
-    const sample = entries.slice(0, 5);
-    const lats: number[] = [];
-    for (const e of sample) {
-      const sid: string = e.sessionId ?? e.key;
-      if (!sid) continue;
-      const candidate: string = path.join(agentSessDir, sid + '.jsonl');
-      const lat: number | null = parseJsonlAvgLatencyMs(candidate);
-      if (lat !== null) lats.push(lat);
-    }
-    if (lats.length) avgLatencyMs = lats.reduce((a, b) => a + b, 0) / lats.length;
-  } catch {
-    // ignore
-  }
-
-  const now: number = Date.now();
-  const lastUpdatedAt: number = entries[0]?.updatedAt ?? 0;
-  const recentlyActive: boolean = !!lastUpdatedAt && now - lastUpdatedAt < 2 * 60 * 1000;
-  const recentlyFailed: boolean = entries.some(
-    (e) => e.aborted && now - (e.updatedAt || 0) < 60 * 60 * 1000,
-  );
-  const status: string = recentlyFailed ? 'degraded' : recentlyActive ? 'busy' : 'operational';
-
-  return {
-    agentId: String(agentId),
-    sessionsDir: agentSessDir,
-    sessionCount,
-    successRate,
-    avgLatencyMs,
-    status,
-    lastUpdatedAt,
-    recentSessions: entries.slice(0, 10),
-  };
+  return getAgentMetricsInternal(agentId, { cronFile, getAgentSessionsDir });
 }
 
 function getLatestKpiFiles(limitDays: number = 7): string[] {
@@ -2394,38 +1480,9 @@ function searchObservations(params: ObservationSearchParams): {
   return { updatedAt: obs.updatedAt, total, entries: slice };
 }
 
-// ─── Disk History ────────────────────────────────────────────────────────────
-
-function trackDiskHistory(diskPercent: number): Array<{ t: number; v: number }> {
-  const histFile: string = path.join(import.meta.dirname, '..', 'disk-history.json');
-  let history: Array<{ t: number; v: number }> = [];
-  try {
-    history = JSON.parse(fs.readFileSync(histFile, 'utf8')) as Array<{ t: number; v: number }>;
-  } catch {
-    // ignore
-  }
-  const now: number = Date.now();
-  if (history.length > 0 && now - history[history.length - 1].t < 1800000) return history;
-  history.push({ t: now, v: diskPercent });
-  if (history.length > 48) history = history.slice(-48);
-  try {
-    fs.writeFileSync(histFile, JSON.stringify(history));
-  } catch {
-    // ignore
-  }
-  return history;
-}
-
 // ─── Health History ──────────────────────────────────────────────────────────
 
-let healthHistory: HealthSnapshot[] = [];
-try {
-  if (fs.existsSync(healthHistoryFile)) {
-    healthHistory = JSON.parse(fs.readFileSync(healthHistoryFile, 'utf8')) as HealthSnapshot[];
-  }
-} catch {
-  // ignore
-}
+let healthHistory: HealthSnapshot[] = readHealthHistory(healthHistoryFile);
 
 function saveHealthSnapshot(): void {
   try {
@@ -3607,48 +2664,7 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
         sendJson(res, lifetimeStatsCache);
         return;
       }
-      const files: string[] = fs.readdirSync(sessDir).filter((f) => f.endsWith('.jsonl'));
-      let totalTokens: number = 0;
-      let totalMessages: number = 0;
-      let totalCost: number = 0;
-      const totalSessions: number = files.length;
-      let firstSessionDate: number | null = null;
-      const activeDays: Set<string> = new Set();
-      for (const file of files) {
-        const lines: string[] = fs.readFileSync(path.join(sessDir, file), 'utf8').split('\n');
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const d = JSON.parse(line) as JsonlEntry;
-            if (d.type !== 'message') continue;
-            totalMessages++;
-            const msg: SessionMessage | undefined = d.message;
-            if (msg?.usage) {
-              const inTok: number =
-                (msg.usage.input ?? 0) + (msg.usage.cacheRead ?? 0) + (msg.usage.cacheWrite ?? 0);
-              const outTok: number = msg.usage.output ?? 0;
-              totalTokens += inTok + outTok;
-              totalCost += msg.usage.cost?.total ?? 0;
-            }
-            if (d.timestamp) {
-              const ts: number = new Date(d.timestamp).getTime();
-              if (!firstSessionDate || ts < firstSessionDate) firstSessionDate = ts;
-              const day: string = d.timestamp.substring(0, 10);
-              activeDays.add(day);
-            }
-          } catch {
-            // ignore
-          }
-        }
-      }
-      const result: LifetimeStats = {
-        totalTokens,
-        totalMessages,
-        totalCost: Math.round(totalCost * 100) / 100,
-        totalSessions,
-        firstSessionDate,
-        daysActive: activeDays.size,
-      };
+      const result: LifetimeStats = buildLifetimeStats({ sessDir });
       lifetimeStatsCache = result;
       lifetimeStatsCacheTime = now;
       sendJson(res, result);
@@ -3719,7 +2735,9 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
 
       if (action === 'toggle') {
         if (!fs.existsSync(cronFile)) throw new Error('No cron file');
-        const data = JSON.parse(fs.readFileSync(cronFile, 'utf8')) as { jobs?: CronJobRaw[] };
+        const data = JSON.parse(fs.readFileSync(cronFile, 'utf8')) as {
+          jobs?: Array<{ id: string; enabled?: boolean }>;
+        };
         const job = (data.jobs ?? []).find((j) => j.id === id);
         if (!job) throw new Error('Job not found');
         job.enabled = !job.enabled;

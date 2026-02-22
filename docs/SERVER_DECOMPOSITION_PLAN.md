@@ -8,10 +8,13 @@ Reduce regression blast-radius from oversized dashboard server modules while pre
 - `dashboard/server/routes/task-board.ts`: 2650 LOC (86570 bytes)
 
 ## Progress Snapshot (2026-02-22)
+- `dashboard/server/server.ts`: 3095 LOC (104064 bytes, ~26.9% smaller than baseline)
 - `dashboard/server/routes/task-board.ts`: 1609 LOC (60381 bytes, ~30.3% smaller than baseline)
 - `dashboard/server/routes/task-board-templates.ts`: 519 LOC (17877 bytes)
 - `dashboard/server/routes/task-board-operations.ts`: 426 LOC (11569 bytes)
 - `dashboard/server/routes/task-board-utils.ts`: 15 LOC (408 bytes)
+- `dashboard/server/server-session-helpers.ts`: extracted session labeling/session rollups/agent metrics helpers
+- `dashboard/server/server-ops-helpers.ts`: extracted cron/git/services/memory helpers
 
 ## Staged Plan
 1. Stage 1 (completed)
@@ -19,8 +22,11 @@ Reduce regression blast-radius from oversized dashboard server modules while pre
 - Extract task-board metrics/stuck-task logic from `task-board.ts` into `dashboard/server/routes/task-board-metrics.ts`.
 - Add file-size guardrails in `dashboard/tests/unit/maintainability/file-size-guard.test.ts`.
 
-2. Stage 1.1 (in progress, Issue #384)
+2. Stage 1.1 (completed, Issue #384)
 - Extract shared request/file/auth utility helpers from `server.ts` into `dashboard/server/server-utils.ts`.
+- Extract session rollup + agent metrics helpers into `dashboard/server/server-session-helpers.ts`.
+- Extract cron/git/services/memory helpers into `dashboard/server/server-ops-helpers.ts`.
+- Consolidate low-risk system/metrics/lifetime helpers via `dashboard/server/bridge-metrics.ts`.
 - Keep routing and response semantics unchanged while shrinking entrypoint responsibilities.
 
 3. Stage 2 (in progress)
