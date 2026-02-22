@@ -21,6 +21,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
+has_pattern() {
+  local pattern="$1"
+  local file="$2"
+  if command -v rg >/dev/null 2>&1; then
+    rg -q "$pattern" "$file"
+    return $?
+  fi
+  grep -E -q "$pattern" "$file"
+}
+
 PORT="$(python3 - <<'PY'
 import socket
 s = socket.socket()
@@ -233,7 +243,7 @@ if [[ "$rc" -eq 0 ]]; then
   echo "expected mismatch failure" >&2
   exit 1
 fi
-if ! rg -q "mismatched" /tmp/refresh-local-mismatch.out; then
+if ! has_pattern "mismatched" /tmp/refresh-local-mismatch.out; then
   echo "expected mismatched error message" >&2
   cat /tmp/refresh-local-mismatch.out >&2
   exit 1
@@ -258,7 +268,7 @@ if [[ "$rc" -eq 0 ]]; then
   echo "expected schema validation failure" >&2
   exit 1
 fi
-if ! rg -q "schema" /tmp/refresh-local-schema.out; then
+if ! has_pattern "schema" /tmp/refresh-local-schema.out; then
   echo "expected schema error message" >&2
   cat /tmp/refresh-local-schema.out >&2
   exit 1
