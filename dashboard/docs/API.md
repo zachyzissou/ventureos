@@ -542,7 +542,9 @@ Returns recent git commits (last 7 days) from tracked repositories.
 
 ### `GET /api/services`
 
-Returns systemd service status for `openclaw`, `agent-dashboard`, `tailscaled`.
+Returns service status for `openclaw`, `agent-dashboard`, `tailscaled` using platform-aware checks:
+- Linux: `systemctl is-active`
+- macOS: `openclaw gateway status`, `launchctl list`, `tailscale status`
 
 ### `GET /api/memory`
 
@@ -646,7 +648,7 @@ Security guardrails:
 | Endpoint | Description |
 |----------|-------------|
 | `POST /api/action/restart-openclaw` | Restart OpenClaw service |
-| `POST /api/action/restart-dashboard` | Restart dashboard (2s delay) |
+| `POST /api/action/restart-dashboard` | Restart dashboard service |
 | `POST /api/action/clear-cache` | Clear all in-memory caches |
 | `POST /api/action/restart-tailscale` | Restart Tailscale daemon |
 | `POST /api/action/update-openclaw` | Run `npm update -g openclaw` |
