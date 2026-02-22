@@ -72,6 +72,7 @@ The JSON report includes machine-readable check metadata and readiness summary f
 - Per-check metadata: `group`, `severity`, `likelyCause`, `nextCommand`
 
 `scripts/refresh-local-integration-ready.sh` now enforces strict latest JSON/MD/SVG timestamp pairing and schema validation before regenerating `docs/LOCAL_INTEGRATION_READY.md`.
+Use `--prune-keep <n>` if you want refresh to keep only the newest `n` timestamp groups of smoke artifacts after regeneration.
 
 ## Regression Test
 Run the mock-server regression test:

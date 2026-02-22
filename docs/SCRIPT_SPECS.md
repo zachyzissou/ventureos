@@ -260,6 +260,7 @@ bash scripts/refresh-local-integration-ready.sh \
 - Enforces strict latest JSON/MD/SVG timestamp pairing.
 - Validates required smoke JSON schema before rendering readiness markdown.
 - Supports `--history-limit <n>` to control trend rows in the output.
+- Supports `--prune-keep <n>` to retain only newest `n` timestamp groups after refresh.
 - Rewrites readiness summary markdown with:
   - mission control card (`GO/HOLD/BLOCKED`, score, confidence)
   - top blockers and next commands

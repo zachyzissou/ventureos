@@ -7,6 +7,7 @@ SMOKE_SCRIPT="$REPO_ROOT/scripts/openclaw-local-smoke.sh"
 REPORT_DIR="${SMOKE_REPORT_DIR:-$REPO_ROOT/runtime/reports/openclaw-local-smoke}"
 OUTPUT_DOC="$REPO_ROOT/docs/LOCAL_INTEGRATION_READY.md"
 HISTORY_LIMIT=7
+PRUNE_KEEP=0
 RUN_SMOKE=1
 SMOKE_ARGS=()
 
@@ -21,6 +22,7 @@ Options:
   --output-doc <path>          Output markdown path (default: docs/LOCAL_INTEGRATION_READY.md)
   --report-dir <path>          Smoke report directory (default: runtime/reports/openclaw-local-smoke)
   --history-limit <n>          Number of historical runs in trend table (default: 7)
+  --prune-keep <n>             Keep only newest N timestamped artifact sets after refresh (default: 0=disabled)
   --skip-smoke                 Do not run smoke; refresh doc from existing artifacts
 
   Forwarded smoke options:
@@ -62,6 +64,11 @@ while [[ $# -gt 0 ]]; do
       HISTORY_LIMIT="$2"
       shift 2
       ;;
+    --prune-keep)
+      need_value "$@"
+      PRUNE_KEEP="$2"
+      shift 2
+      ;;
     --skip-smoke)
       RUN_SMOKE=0
       shift
@@ -91,6 +98,10 @@ if ! [[ "$HISTORY_LIMIT" =~ ^[0-9]+$ ]] || [[ "$HISTORY_LIMIT" -lt 1 ]]; then
   echo "Invalid --history-limit: $HISTORY_LIMIT" >&2
   exit 2
 fi
+if ! [[ "$PRUNE_KEEP" =~ ^[0-9]+$ ]]; then
+  echo "Invalid --prune-keep: $PRUNE_KEEP" >&2
+  exit 2
+fi
 
 if [[ "${#SMOKE_ARGS[@]}" -gt 0 ]]; then
   SMOKE_ARGS=(--report-dir "$REPORT_DIR" "${SMOKE_ARGS[@]}")
@@ -106,7 +117,7 @@ if [[ "$RUN_SMOKE" == "1" ]]; then
   set -e
 fi
 
-python3 - "$REPORT_DIR" "$OUTPUT_DOC" "$REPO_ROOT" "$smoke_rc" "$HISTORY_LIMIT" <<'PY'
+python3 - "$REPORT_DIR" "$OUTPUT_DOC" "$REPO_ROOT" "$smoke_rc" "$HISTORY_LIMIT" "$PRUNE_KEEP" <<'PY'
 from __future__ import annotations
 
 import json
@@ -120,6 +131,7 @@ output_path = pathlib.Path(sys.argv[2]).resolve()
 repo_root = pathlib.Path(sys.argv[3]).resolve()
 smoke_rc = int(sys.argv[4])
 history_limit = int(sys.argv[5])
+prune_keep = int(sys.argv[6])
 
 if not report_dir.exists() or not report_dir.is_dir():
     raise SystemExit(f"No report directory found: {report_dir}")
@@ -391,10 +403,25 @@ if smoke_rc != 0:
 
 output_path.parent.mkdir(parents=True, exist_ok=True)
 output_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+pruned_files = 0
+if prune_keep > 0:
+    all_timestamps = sorted(set(json_by_ts.keys()) | set(md_by_ts.keys()) | set(svg_by_ts.keys()))
+    keep_timestamps = set(all_timestamps[-prune_keep:])
+    for mapping in (json_by_ts, md_by_ts, svg_by_ts):
+        for ts, artifact_path in list(mapping.items()):
+            if ts in keep_timestamps:
+                continue
+            if artifact_path.exists():
+                artifact_path.unlink()
+                pruned_files += 1
+
 print(f"REFRESH_SOURCE_JSON={latest_json}")
 print(f"REFRESH_SOURCE_MD={latest_md}")
 if latest_svg:
     print(f"REFRESH_SOURCE_SVG={latest_svg}")
+if prune_keep > 0:
+    print(f"REFRESH_PRUNED_FILES={pruned_files}")
 PY
 
 echo "Local integration readiness refreshed:"
