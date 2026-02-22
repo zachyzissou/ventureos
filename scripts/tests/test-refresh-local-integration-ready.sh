@@ -232,6 +232,42 @@ assert "Top 3 Blockers" in text, text
 print("REFRESH_LOCAL_INTEGRATION_READY_GO_SCENARIO_OK")
 PY
 
+# Retention check: prune to latest single timestamp group.
+bash "$REFRESH_SCRIPT" \
+  --skip-smoke \
+  --history-limit 1 \
+  --prune-keep 1 \
+  --report-dir "$REPORT_DIR" \
+  --output-doc "$OUT_DOC" >/tmp/refresh-local-prune.out
+
+python3 - "$REPORT_DIR" <<'PY'
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+assert len(list(report_dir.glob("openclaw-local-smoke-*.json"))) == 1
+assert len(list(report_dir.glob("openclaw-local-smoke-*.md"))) == 1
+assert len(list(report_dir.glob("openclaw-local-smoke-*.svg"))) == 1
+print("REFRESH_LOCAL_INTEGRATION_READY_PRUNE_CHECK_OK")
+PY
+
+# Input validation: prune-keep must be numeric.
+set +e
+bash "$REFRESH_SCRIPT" --skip-smoke --prune-keep nope --report-dir "$REPORT_DIR" --output-doc "$OUT_DOC" >/tmp/refresh-local-prune-invalid.out 2>&1
+rc=$?
+set -e
+if [[ "$rc" -eq 0 ]]; then
+  echo "expected invalid prune-keep failure" >&2
+  exit 1
+fi
+if ! has_pattern "Invalid --prune-keep" /tmp/refresh-local-prune-invalid.out; then
+  echo "expected prune-keep validation message" >&2
+  cat /tmp/refresh-local-prune-invalid.out >&2
+  exit 1
+fi
+
+echo "REFRESH_LOCAL_INTEGRATION_READY_PRUNE_VALIDATION_OK"
+
 # Mismatch check: create a newer JSON without matching markdown.
 sleep 1
 cp "$(ls -1 "$REPORT_DIR"/openclaw-local-smoke-*.json | tail -n 1)" "$REPORT_DIR/openclaw-local-smoke-20990101T000000Z.json"
