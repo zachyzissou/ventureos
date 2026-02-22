@@ -25,13 +25,14 @@ const DEFAULT_BACKOFF_SECONDS = [2, 4, 8, 16];
 const DEFAULT_MAX_SPAWN_RETRIES = 3;
 const DEFAULT_MAX_VERIFY_CYCLES = 2;
 const DEFAULT_SPAWN_CMD = process.env.SESSIONS_SPAWN_CMD || "sessions_spawn";
+const HOME_DIR = os.homedir();
 
 const DEFAULT_SHARED_ALLOWLIST = [
   path.resolve(REPO_ROOT, "scripts/spawn-with-retry.mjs"),
   path.resolve(REPO_ROOT, "scripts/discord-webhook-send.mjs"),
-  "/Users/zachgonser/clawd/scripts/discord-webhook-send.mjs",
-  "/Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/retry.sh",
-  "/Users/zachgonser/clawd/projects/openclaw-upgrade/scripts/with-timeout.sh",
+  path.join(HOME_DIR, "clawd", "scripts", "discord-webhook-send.mjs"),
+  path.join(HOME_DIR, "clawd", "projects", "openclaw-upgrade", "scripts", "retry.sh"),
+  path.join(HOME_DIR, "clawd", "projects", "openclaw-upgrade", "scripts", "with-timeout.sh"),
 ].map((p) => path.resolve(p));
 
 function getAgentId() {
