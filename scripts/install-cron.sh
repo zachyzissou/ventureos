@@ -100,6 +100,9 @@ NEW_CRON=$(cat <<EOF
 # 11) Routing Healthcheck — every 30 minutes
 */30 * * * * $RUNNER routing-healthcheck >> $LOG_BASE/cron-routing-healthcheck.log 2>&1
 
+# 12) Local OpenClaw readiness refresh — every 4 hours
+15 */4 * * * $RUNNER openclaw-local-ready >> $LOG_BASE/cron-openclaw-local-ready.log 2>&1
+
 # === END $CRON_MARKER ===
 EOF
 )

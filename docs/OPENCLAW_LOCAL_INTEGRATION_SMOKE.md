@@ -29,6 +29,11 @@ Single command to run smoke and refresh the readiness summary doc:
 bash scripts/refresh-local-integration-ready.sh
 ```
 
+Cron-safe wrapper for unattended cadence:
+```bash
+bash scripts/openclaw-local-ready-cron.sh
+```
+
 Common options:
 ```bash
 bash scripts/openclaw-local-smoke.sh \
@@ -73,6 +78,16 @@ The JSON report includes machine-readable check metadata and readiness summary f
 
 `scripts/refresh-local-integration-ready.sh` now enforces strict latest JSON/MD/SVG timestamp pairing and schema validation before regenerating `docs/LOCAL_INTEGRATION_READY.md`.
 Use `--prune-keep <n>` if you want refresh to keep only the newest `n` timestamp groups of smoke artifacts after regeneration.
+
+`scripts/openclaw-local-ready-cron.sh` defaults:
+- `--history-limit 7`
+- `--prune-keep 14`
+- `--profile full`
+
+Optional env overrides for cron wrapper:
+- `OPENCLAW_LOCAL_READY_HISTORY_LIMIT`
+- `OPENCLAW_LOCAL_READY_PRUNE_KEEP`
+- `OPENCLAW_LOCAL_READY_PROFILE` (`quick|full|bridge`)
 
 ## Regression Test
 Run the mock-server regression test:

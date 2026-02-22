@@ -161,6 +161,11 @@ Run smoke and regenerate the readiness mission card/checklist:
 npm run openclaw:local-ready
 ```
 
+Run the cron-safe local readiness cadence wrapper:
+```bash
+npm run openclaw:local-ready:cron
+```
+
 Reference docs and artifacts:
 - `docs/OPENCLAW_LOCAL_INTEGRATION_SMOKE.md`
 - `docs/LOCAL_INTEGRATION_READY.md`
