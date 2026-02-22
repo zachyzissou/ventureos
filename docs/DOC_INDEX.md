@@ -29,7 +29,7 @@
 - **docs/TOKEN_COMPACTION.md** – deterministic 5-layer token compression pipeline, metrics, and benchmark harness (#221)
 - **docs/SELF_IMPROVEMENT_DIGEST.md** – daily self-review digest flow, recommendation approvals, and scope guardrails (#222)
 - **docs/CODE_FACTORY_PIPELINE.md** – risk-tiered CI policy, SHA-discipline, auto-remediation, and harness-gap tracker (#220)
-- **docs/SERVER_DECOMPOSITION_PLAN.md** – stage plan + guardrails for large dashboard server modules (#366)
+- **docs/SERVER_DECOMPOSITION_PLAN.md** – stage plan + guardrails for large dashboard server modules (#366, #384, #385)
 - **docs/BRIDGE_DECOMPOSITION_PLAN.md** – stage plan + guardrails for bridge server decomposition (#375)
 - **docs/WORKFLOW_MACROS_DECOMPOSITION_PLAN.md** – stage plan + guardrails for workflow macro module decomposition (#376)
 - **docs/MODEL_ROUTER_DECOMPOSITION_PLAN.md** – stage plan + guardrails for model router decomposition (#377)
