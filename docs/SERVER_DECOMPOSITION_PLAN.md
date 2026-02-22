@@ -8,8 +8,10 @@ Reduce regression blast-radius from oversized dashboard server modules while pre
 - `dashboard/server/routes/task-board.ts`: 2650 LOC (86570 bytes)
 
 ## Progress Snapshot (2026-02-22)
-- `dashboard/server/routes/task-board.ts`: 1958 LOC (70034 bytes)
-- `dashboard/server/routes/task-board-templates.ts`: 527 LOC (18011 bytes)
+- `dashboard/server/routes/task-board.ts`: 1609 LOC (60381 bytes, ~30.3% smaller than baseline)
+- `dashboard/server/routes/task-board-templates.ts`: 519 LOC (17877 bytes)
+- `dashboard/server/routes/task-board-operations.ts`: 426 LOC (11569 bytes)
+- `dashboard/server/routes/task-board-utils.ts`: 15 LOC (408 bytes)
 
 ## Staged Plan
 1. Stage 1 (completed)
@@ -21,15 +23,19 @@ Reduce regression blast-radius from oversized dashboard server modules while pre
 - Extract shared request/file/auth utility helpers from `server.ts` into `dashboard/server/server-utils.ts`.
 - Keep routing and response semantics unchanged while shrinking entrypoint responsibilities.
 
-3. Stage 2 (next)
+3. Stage 2 (in progress)
 - Split task-board API surface by concern (metrics/history/webhooks/escalations) into route-local modules.
 - Keep `handleTaskBoard` as a thin dispatcher/composer.
 
-4. Stage 2.1 (in progress, Issue #385)
+4. Stage 2.1 (completed, Issue #385)
 - Extract pipeline template registry + normalization + template-based instantiation from `task-board.ts` into `dashboard/server/routes/task-board-templates.ts`.
 - Keep route contract and response codes stable while reducing route-local complexity.
 
-5. Stage 3 (next)
+5. Stage 2.2 (completed, Issue #385)
+- Extract batch operations + heartbeat pickup + recovery resume logic from `task-board.ts` into `dashboard/server/routes/task-board-operations.ts`.
+- Keep external task-board endpoint behavior unchanged via route-local wrappers.
+
+6. Stage 3 (next)
 - Group high-volume route wiring in `server.ts` into route registrars by domain.
 - Preserve middleware ordering, auth boundaries, and existing response semantics.
 
