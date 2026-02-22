@@ -13,9 +13,9 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - Warnings: `0`
 
 ## Latest Evidence Artifacts
-- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T205446Z.json`
-- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T205446Z.md`
-- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T205446Z.svg`
+- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T205733Z.json`
+- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T205733Z.md`
+- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T205733Z.svg`
 
 ## Top 3 Blockers
 - No blockers in latest run.
@@ -23,13 +23,13 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 ## Trend (Last 7 Runs)
 | Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |
 |---|---|---:|---:|---:|---|
-| `20260222T204825Z` | `BLOCKED` | 62 | 3 | 1 | `fail` |
-| `20260222T204851Z` | `GO` | 100 | 0 | 0 | `pass` |
-| `20260222T204902Z` | `BLOCKED` | 63 | 3 | 1 | `fail` |
 | `20260222T205052Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260222T205126Z` | `BLOCKED` | 63 | 3 | 1 | `fail` |
 | `20260222T205427Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260222T205446Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260222T205623Z` | `BLOCKED` | 63 | 3 | 1 | `fail` |
+| `20260222T205731Z` | `HOLD` | 92 | 0 | 1 | `fail` |
+| `20260222T205733Z` | `GO` | 100 | 0 | 0 | `pass` |
 
 ## Required Checks
 - [x] `openclaw-cli` — `pass` group=`core` severity=`critical` (openclaw CLI found)
