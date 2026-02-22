@@ -70,3 +70,12 @@
 - **Payload:** run `scripts/detect-phantom-sessions.sh --alert`
 - **Alert:** if phantom sessions or unhealthy workspaces detected
 - **Added:** 2026-02-15
+
+## 12) OpenClaw Local Readiness Refresh
+- **Schedule:** `15 */4 * * *`
+- **Session:** isolated
+- **Agent:** nexus
+- **Payload:** run `scripts/openclaw-local-ready-cron.sh`
+- **Output:** refreshed `docs/LOCAL_INTEGRATION_READY.md` and paired JSON/MD/SVG artifacts
+- **Retention:** defaults to keep newest 14 artifact sets (configurable via env)
+- **Added:** 2026-02-22

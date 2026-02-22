@@ -64,3 +64,4 @@ jobs:
         run: |
           npm run test:openclaw:local-smoke
           npm run test:openclaw:local-ready
+          npm run test:openclaw:local-ready-cron

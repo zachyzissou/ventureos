@@ -154,6 +154,7 @@ This matrix maps **every cron job** to its degradation behavior, timeout/retry c
 | 9 | **Session Rotation** | `0 8 * * *` | 180s | 1 | **Yes** | D2: sessions accumulate | D2: spawn risk increases; manual rotation needed | D2 | Session bloat risk |
 | 10 | **Session Monitor** | `0 */6 * * *` | 60s | 2 | **Yes** | D1: check next 6h cycle | D1: auto-rotate skipped | D1 | 6h monitoring gap |
 | 11 | **Routing Healthcheck** | `*/30 * * * *` | 30s | 2 | **Yes** | D2: routing unknown | D2: alert routing may be broken | D2 | Missed P1 alerts |
+| 12 | **OpenClaw Local Readiness Refresh** | `15 */4 * * *` | 180s | 1 | No | D1: keep prior readiness snapshot | D1: no doc/artifact refresh for this cycle | D1 | Stale local readiness card/evidence |
 
 ### Failure Cascades
 

@@ -272,3 +272,31 @@ bash scripts/refresh-local-integration-ready.sh \
 ```bash
 bash scripts/tests/test-refresh-local-integration-ready.sh
 ```
+
+---
+
+## 15) openclaw-local-ready-cron.sh
+**Purpose:** Cron-safe wrapper around readiness refresh with deterministic retention defaults.
+
+**Usage:**
+```bash
+bash scripts/openclaw-local-ready-cron.sh
+```
+
+**Behavior:**
+- Invokes `scripts/refresh-local-integration-ready.sh`.
+- Applies defaults optimized for unattended cadence:
+  - `--history-limit 7`
+  - `--prune-keep 14`
+  - `--profile full`
+- Allows env overrides:
+  - `OPENCLAW_LOCAL_READY_HISTORY_LIMIT`
+  - `OPENCLAW_LOCAL_READY_PRUNE_KEEP`
+  - `OPENCLAW_LOCAL_READY_PROFILE` (`quick|full|bridge`)
+- Validates env inputs and exits `2` on invalid values before running refresh.
+- Forwards any additional CLI flags to the underlying refresh script (last flag wins).
+
+**Regression test:**
+```bash
+bash scripts/tests/test-openclaw-local-ready-cron.sh
+```
