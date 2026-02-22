@@ -205,3 +205,29 @@ node scripts/spawn-with-verification.mjs \
 - On `STATUS: retry`, carries `ISSUES:` forward into the next dev context and re-runs dev + verify
 - Enforces workspace isolation for `--run-dir`, `--log-file`, and explicit `--spawn-cmd` paths
 
+---
+
+## 13) openclaw-local-smoke.sh
+**Purpose:** Run a repeatable local OpenClaw integration smoke test and emit evidence artifacts.
+
+**Usage:**
+```bash
+bash scripts/openclaw-local-smoke.sh \
+  --dashboard-url http://127.0.0.1:8001 \
+  --token-file dashboard/data/.api-token \
+  --report-dir runtime/reports/openclaw-local-smoke
+```
+
+**Behavior:**
+- Validates required integration surfaces:
+  - `/api/health`
+  - auth-protected `/api/config`, `/api/services`, `/api/scheduler-jobs`, `/api/agent-health`
+  - `/api/live-telemetry` SSE handshake
+- Optionally checks `/map/` and direct bridge scheduler endpoint.
+- Emits timestamped JSON + markdown reports to `runtime/reports/openclaw-local-smoke/`.
+- Exits with code `2` when any required check fails.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-openclaw-local-smoke.sh
+```
