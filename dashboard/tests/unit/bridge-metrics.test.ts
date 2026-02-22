@@ -2,7 +2,7 @@
  * Bridge metrics helper tests.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -26,6 +26,9 @@ function writeJsonl(sessionId: string, entries: Record<string, unknown>[]): void
 }
 
 beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-02-20T12:00:00.000Z'));
+
   sessDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-metrics-'));
   cronFile = path.join(sessDir, 'jobs.json');
   fs.writeFileSync(cronFile, JSON.stringify({ jobs: [] }));
@@ -100,6 +103,7 @@ beforeEach(() => {
 
 afterEach(() => {
   fs.rmSync(sessDir, { recursive: true, force: true });
+  vi.useRealTimers();
 });
 
 describe('bridge metrics helpers', () => {
