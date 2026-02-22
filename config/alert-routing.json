@@ -9,6 +9,6 @@
     "archivist": "1470210653154185298",
     "synth": "1470210654819451024"
   },
-  "webhookMapPath": "/Users/zachgonser/.openclaw/credentials/discord/webhooks.json",
+  "webhookMapPath": "~/.openclaw/credentials/discord/webhooks.json",
   "suppressSeconds": 14400
 }

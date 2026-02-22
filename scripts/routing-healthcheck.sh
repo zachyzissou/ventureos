@@ -109,14 +109,15 @@ fi
 alerts_channel_id=$(jq -r '.alertsChannelId' "$CFG")
 webhook_map_path=$(jq -r '.webhookMapPath' "$CFG")
 suppress_seconds=$(jq -r '.suppressSeconds' "$CFG")
+resolved_webhook_map_path="$(agent_env_resolve_path "$webhook_map_path")"
 
 if [[ -z "$alerts_channel_id" || "$alerts_channel_id" == "null" ]]; then
   fail "invalid_config:alertsChannelId"
   exit 1
 fi
 
-if [[ ! -f "$webhook_map_path" ]]; then
-  fail "missing_webhook_map:$webhook_map_path"
+if [[ ! -f "$resolved_webhook_map_path" ]]; then
+  fail "missing_webhook_map:$resolved_webhook_map_path"
   exit 1
 fi
 
@@ -127,13 +128,13 @@ missing_roles=()
 for cid in $role_ids; do
   # webhook map is expected to be an object keyed by channelId
   # (we treat presence of any value at that key as "configured")
-  present=$(jq -r --arg cid "$cid" 'has($cid)' "$webhook_map_path")
+  present=$(jq -r --arg cid "$cid" 'has($cid)' "$resolved_webhook_map_path")
   if [[ "$present" != "true" ]]; then
     missing_roles+=("$cid")
   fi
 done
 
-has_alerts_webhook=$(jq -r --arg cid "$alerts_channel_id" 'has($cid)' "$webhook_map_path")
+has_alerts_webhook=$(jq -r --arg cid "$alerts_channel_id" 'has($cid)' "$resolved_webhook_map_path")
 
 status="ok"
 reason=""
@@ -172,8 +173,9 @@ P1 Routing Healthcheck FAILED ($(now_iso_utc))
 - workspace: ${WORKSPACE_ROOT}
 - reason: ${reason}
 - cfg: ${CFG}
+- webhookMapPath: ${resolved_webhook_map_path}
 - expected webhook map keys for alerts + role channels
-- remediation: create/add webhooks for missing channel ids in ${webhook_map_path}
+- remediation: create/add webhooks for missing channel ids in ${resolved_webhook_map_path}
 EOF
   )
 
