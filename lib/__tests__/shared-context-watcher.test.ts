@@ -402,23 +402,33 @@ describe('SharedContextWatcher — File Events', () => {
     const watcher = createWatcher({ debounceMs: 50 });
 
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    try {
+      await waitForEvent(75);
 
-    fs.writeFileSync(
-      path.join(teamDir, 'agent-outputs', 'nexus', 'report.md'),
-      'Daily report content',
-    );
-    await waitForEvent(300);
+      fs.writeFileSync(
+        path.join(teamDir, 'agent-outputs', 'nexus', 'report.md'),
+        'Daily report content',
+      );
+      await waitForCondition(
+        () =>
+          watcher.getAuditByTeam(TEAM_ID).some(
+            (e) => e.filePath.includes('report.md') && e.action === 'write',
+          ),
+        1500,
+        25,
+      );
 
-    const auditEntries = watcher.getAuditByTeam(TEAM_ID);
-    expect(auditEntries.length).toBeGreaterThanOrEqual(1);
+      const auditEntries = watcher.getAuditByTeam(TEAM_ID);
+      expect(auditEntries.length).toBeGreaterThanOrEqual(1);
 
-    const writeEntry = auditEntries.find((e) =>
-      e.filePath.includes('report.md') && e.action === 'write',
-    );
-    expect(writeEntry).toBeDefined();
-    expect(writeEntry!.agentId).toBe('nexus'); // attributed via agent-outputs/ path
-
-    watcher.close();
+      const writeEntry = auditEntries.find((e) =>
+        e.filePath.includes('report.md') && e.action === 'write',
+      );
+      expect(writeEntry).toBeDefined();
+      expect(writeEntry!.agentId).toBe('nexus'); // attributed via agent-outputs/ path
+    } finally {
+      watcher.close();
+    }
   });
 });
 
@@ -467,15 +477,22 @@ describe('SharedContextWatcher — Agent Attribution', () => {
 
     watcher.on('change', (evt: SharedContextEvent) => events.push(evt));
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    try {
+      await waitForEvent(75);
 
-    fs.writeFileSync(path.join(teamDir, 'priorities.md'), 'Updated by nexus');
-    await waitForEvent(300);
+      fs.writeFileSync(path.join(teamDir, 'priorities.md'), 'Updated by nexus');
+      await waitForCondition(
+        () => events.some((e) => e.path === 'priorities.md'),
+        1500,
+        25,
+      );
 
-    watcher.close();
-
-    const priorityEvent = events.find((e) => e.path === 'priorities.md');
-    expect(priorityEvent).toBeDefined();
-    expect(priorityEvent!.agentId).toBe('nexus');
+      const priorityEvent = events.find((e) => e.path === 'priorities.md');
+      expect(priorityEvent).toBeDefined();
+      expect(priorityEvent!.agentId).toBe('nexus');
+    } finally {
+      watcher.close();
+    }
   });
 
   test('falls back to "unknown" when no attribution is possible', async () => {
@@ -487,15 +504,22 @@ describe('SharedContextWatcher — Agent Attribution', () => {
 
     watcher.on('change', (evt: SharedContextEvent) => events.push(evt));
     watcher.watchTeam(TEAM_ID, TEAM_NAME);
+    try {
+      await waitForEvent(75);
 
-    fs.writeFileSync(path.join(teamDir, 'kpis', 'metric.json'), '{"value": 42}');
-    await waitForEvent(300);
+      fs.writeFileSync(path.join(teamDir, 'kpis', 'metric.json'), '{"value": 42}');
+      await waitForCondition(
+        () => events.some((e) => e.path.includes('metric.json')),
+        1500,
+        25,
+      );
 
-    watcher.close();
-
-    const kpiEvent = events.find((e) => e.path.includes('metric.json'));
-    expect(kpiEvent).toBeDefined();
-    expect(kpiEvent!.agentId).toBe('unknown');
+      const kpiEvent = events.find((e) => e.path.includes('metric.json'));
+      expect(kpiEvent).toBeDefined();
+      expect(kpiEvent!.agentId).toBe('unknown');
+    } finally {
+      watcher.close();
+    }
   });
 });
 
