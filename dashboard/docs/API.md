@@ -579,7 +579,9 @@ Also includes Overview freshness thresholds consumed by the Overview cards:
     "kpi": { "freshMs": 129600000, "staleMs": 345600000 },
     "agentHealth": { "freshMs": 900000, "staleMs": 7200000 },
     "observations": { "freshMs": 21600000, "staleMs": 86400000 }
-  }
+  },
+  "overviewFreshnessTimelineLimit": 8,
+  "overviewFreshnessEventDedupeWindowMs": 30000
 }
 ```
 
@@ -590,11 +592,42 @@ Environment overrides:
 - `DASHBOARD_OVERVIEW_FRESHNESS_AGENT_HEALTH_STALE_MS`
 - `DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_FRESH_MS`
 - `DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_STALE_MS`
+- `DASHBOARD_OVERVIEW_FRESHNESS_TIMELINE_LIMIT`
+- `DASHBOARD_OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS`
+
+### `GET /api/overview-freshness-events?limit=8`
+
+Returns newest-first Overview freshness transition history from
+`data/overview-freshness-events.jsonl`.
+
+**Response (200):**
+```json
+{
+  "ok": true,
+  "limit": 8,
+  "dedupeWindowMs": 30000,
+  "events": [
+    {
+      "state": "fresh",
+      "stale": 0,
+      "aging": 0,
+      "unavailable": 0,
+      "total": 3,
+      "source": "overview-widget",
+      "emittedAt": 1700000002000,
+      "receivedAt": 1700000002300
+    }
+  ]
+}
+```
 
 ### `POST /api/overview-freshness-event`
 
 Ingests stale/aging/freshness state transitions from the Overview UI and appends them to
 `data/overview-freshness-events.jsonl` for local auditing.
+
+Duplicate events (same state/count/source tuple) are suppressed within
+`DASHBOARD_OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS` to reduce multi-tab noise.
 
 **Request:**
 ```json
@@ -614,7 +647,10 @@ Ingests stale/aging/freshness state transitions from the Overview UI and appends
 {
   "ok": true,
   "state": "stale",
-  "recordedAt": 1700000000300
+  "recordedAt": 1700000000300,
+  "accepted": true,
+  "dedupeWindowMs": 30000,
+  "duplicateOfReceivedAt": null
 }
 ```
 

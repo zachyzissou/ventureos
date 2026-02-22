@@ -6,10 +6,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   appendOverviewFreshnessEvent,
+  evaluateOverviewFreshnessEventForPersistence,
   getOverviewFreshnessDefaultThresholds,
   getOverviewFreshnessEventFilePath,
   parseOverviewFreshnessEvent,
+  readOverviewFreshnessEvents,
+  resolveOverviewFreshnessEventDedupeWindowMs,
   resolveOverviewFreshnessThresholds,
+  resolveOverviewFreshnessTimelineLimit,
 } from '../../server/overview-freshness.js';
 
 describe('overview freshness server helpers', () => {
@@ -44,6 +48,17 @@ describe('overview freshness server helpers', () => {
 
     expect(thresholds.kpi.freshMs).toBe(5000);
     expect(thresholds.kpi.staleMs).toBe(5001);
+  });
+
+  it('resolves timeline limit and dedupe window from environment', () => {
+    const limit = resolveOverviewFreshnessTimelineLimit({
+      DASHBOARD_OVERVIEW_FRESHNESS_TIMELINE_LIMIT: '12',
+    });
+    const dedupeWindow = resolveOverviewFreshnessEventDedupeWindowMs({
+      DASHBOARD_OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS: '45000',
+    });
+    expect(limit).toBe(12);
+    expect(dedupeWindow).toBe(45000);
   });
 
   it('parses and sanitizes event payload', () => {
@@ -96,5 +111,61 @@ describe('overview freshness server helpers', () => {
     expect(parsed.stale).toBe(1);
 
     fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('reads latest timeline events newest-first with limit', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'overview-freshness-read-'));
+    const base = 1700000000000;
+    for (let i = 0; i < 4; i += 1) {
+      const event = parseOverviewFreshnessEvent({
+        state: i % 2 === 0 ? 'stale' : 'fresh',
+        stale: i % 2 === 0 ? 1 : 0,
+        aging: 0,
+        unavailable: 0,
+        total: 3,
+        source: `overview-${i}`,
+        emittedAt: base + i * 1000,
+      }, base + i * 1000)!;
+      appendOverviewFreshnessEvent(tmpDir, event);
+    }
+
+    const latestTwo = readOverviewFreshnessEvents(tmpDir, { limit: 2 });
+    expect(latestTwo.length).toBe(2);
+    expect(latestTwo[0]?.source).toBe('overview-3');
+    expect(latestTwo[1]?.source).toBe('overview-2');
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('suppresses duplicate events inside dedupe window', () => {
+    const state = new Map<string, number>();
+    const t0 = 1700000000000;
+    const event = parseOverviewFreshnessEvent({
+      state: 'stale',
+      stale: 1,
+      aging: 0,
+      unavailable: 0,
+      total: 3,
+      source: 'overview-widget',
+      emittedAt: t0 - 10,
+    }, t0)!;
+
+    const first = evaluateOverviewFreshnessEventForPersistence(event, 60000, state, t0);
+    const second = evaluateOverviewFreshnessEventForPersistence(event, 60000, state, t0 + 1000);
+    const thirdEvent = parseOverviewFreshnessEvent({
+      state: 'stale',
+      stale: 1,
+      aging: 0,
+      unavailable: 0,
+      total: 3,
+      source: 'overview-widget',
+      emittedAt: t0 + 61000 - 10,
+    }, t0 + 61000)!;
+    const third = evaluateOverviewFreshnessEventForPersistence(thirdEvent, 60000, state, t0 + 61000);
+
+    expect(first.accepted).toBe(true);
+    expect(second.accepted).toBe(false);
+    expect(second.duplicateOfReceivedAt).toBe(t0);
+    expect(third.accepted).toBe(true);
   });
 });

@@ -90,7 +90,8 @@ dashboard/
 │   └── rollback.sh             # Emergency rollback
 ├── docs/             # Dashboard-specific documentation
 │   ├── API.md        # Complete API reference
-│   └── MIGRATION.md  # Full migration guide
+│   ├── MIGRATION.md  # Full migration guide
+│   └── OVERVIEW_FRESHNESS_RUNBOOK.md # Freshness tuning + operations guide
 ├── examples/         # Service templates
 │   ├── launchd.plist       # macOS service template
 │   └── systemd.service     # Linux service template
@@ -156,6 +157,8 @@ All paths are resolved through `lib/paths.ts`. Override with environment variabl
 | `DASHBOARD_OVERVIEW_FRESHNESS_AGENT_HEALTH_STALE_MS` | `7200000` (2h) | Agent Health badge `Stale` threshold |
 | `DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_FRESH_MS` | `21600000` (6h) | Observations badge `Fresh` threshold |
 | `DASHBOARD_OVERVIEW_FRESHNESS_OBSERVATIONS_STALE_MS` | `86400000` (24h) | Observations badge `Stale` threshold |
+| `DASHBOARD_OVERVIEW_FRESHNESS_TIMELINE_LIMIT` | `8` | Number of timeline transitions returned to Overview |
+| `DASHBOARD_OVERVIEW_FRESHNESS_EVENT_DEDUPE_WINDOW_MS` | `30000` (30s) | Server-side duplicate suppression window for multi-tab event spam |
 
 ## API Reference
 
@@ -189,6 +192,7 @@ See **[docs/API.md](docs/API.md)** for the complete API reference covering all e
 | `GET /api/proposal-lifecycle/summary` | Read proposal queue + active mission progress for Mission Control |
 | `GET /api/living-files/dashboard` | Freshness counts + stale/missing file status for living docs registry |
 | `POST /api/living-files/check-run` | Run staleness detection and auto-trigger responsible owner tasks |
+| `GET /api/overview-freshness-events` | Read newest-first freshness transition timeline for Overview |
 | `POST /api/overview-freshness-event` | Persist overview stale/aging transitions for local audit trail |
 | `GET /api/live` | SSE real-time feed |
 
@@ -398,6 +402,7 @@ cd dashboard && npm run test:parity
 ## Related Documentation
 
 - **[docs/API.md](docs/API.md)** — Complete API reference
+- **[docs/OVERVIEW_FRESHNESS_RUNBOOK.md](docs/OVERVIEW_FRESHNESS_RUNBOOK.md)** — Threshold tuning profiles, dedupe behavior, and operator checks
 - **[docs/DASHBOARD.md](../docs/DASHBOARD.md)** — VentureOS integration guide
 - **[docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)** — System architecture
 - **[ADR-001](../docs/decisions/001-merge-dashboard-into-monorepo.md)** — Merge decision record
