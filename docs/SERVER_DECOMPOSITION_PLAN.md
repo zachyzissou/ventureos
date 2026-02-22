@@ -1,4 +1,4 @@
-# Server Decomposition Plan (Issues #366, #384)
+# Server Decomposition Plan (Issues #366, #384, #385)
 
 ## Goal
 Reduce regression blast-radius from oversized dashboard server modules while preserving behavior parity.
@@ -6,6 +6,10 @@ Reduce regression blast-radius from oversized dashboard server modules while pre
 ## Baseline (2026-02-21)
 - `dashboard/server/server.ts`: 4231 LOC (142282 bytes)
 - `dashboard/server/routes/task-board.ts`: 2650 LOC (86570 bytes)
+
+## Progress Snapshot (2026-02-22)
+- `dashboard/server/routes/task-board.ts`: 1958 LOC (70034 bytes)
+- `dashboard/server/routes/task-board-templates.ts`: 527 LOC (18011 bytes)
 
 ## Staged Plan
 1. Stage 1 (completed)
@@ -21,7 +25,11 @@ Reduce regression blast-radius from oversized dashboard server modules while pre
 - Split task-board API surface by concern (metrics/history/webhooks/escalations) into route-local modules.
 - Keep `handleTaskBoard` as a thin dispatcher/composer.
 
-4. Stage 3 (next)
+4. Stage 2.1 (in progress, Issue #385)
+- Extract pipeline template registry + normalization + template-based instantiation from `task-board.ts` into `dashboard/server/routes/task-board-templates.ts`.
+- Keep route contract and response codes stable while reducing route-local complexity.
+
+5. Stage 3 (next)
 - Group high-volume route wiring in `server.ts` into route registrars by domain.
 - Preserve middleware ordering, auth boundaries, and existing response semantics.
 
