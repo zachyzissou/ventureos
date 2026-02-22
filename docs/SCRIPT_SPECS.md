@@ -300,3 +300,8 @@ bash scripts/openclaw-local-ready-cron.sh
 ```bash
 bash scripts/tests/test-openclaw-local-ready-cron.sh
 ```
+
+**Current next steps (operator rollout):**
+1. `bash scripts/install-cron.sh --force`
+2. `bash scripts/openclaw-local-ready-cron.sh`
+3. Validate `docs/LOCAL_INTEGRATION_READY.md` timestamp and `runtime/reports/openclaw-local-smoke/` artifact rotation.

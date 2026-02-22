@@ -229,6 +229,7 @@ assert "Verdict: `GO`" in text, text
 assert "## Trend (Last 1 Runs)" in text, text
 assert "Status strip SVG" in text, text
 assert "Top 3 Blockers" in text, text
+assert "## Current Next Steps" in text, text
 print("REFRESH_LOCAL_INTEGRATION_READY_GO_SCENARIO_OK")
 PY
 

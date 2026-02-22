@@ -388,6 +388,29 @@ out.extend([
     "- Direct bridge checks support `--bridge-token-file`, `BRIDGE_TOKEN`, `BRIDGE_TOKEN_FILE`, or default `OPENCLAW_DIR/bridge/bridge-token`.",
     f"- Latest bridge check: `{bridge_note}`",
     "",
+    "## Current Next Steps",
+    "1. Install or refresh managed cron entries: `bash scripts/install-cron.sh --force`",
+    "2. Run one manual cadence cycle and verify artifact generation: `bash scripts/openclaw-local-ready-cron.sh`",
+])
+
+if summary["requiredFailures"] > 0:
+    out.append("3. Resolve required check failures before relying on automated readiness cadence.")
+elif failed_checks:
+    out.append("3. Address optional blockers to raise confidence and reduce warning-only drift.")
+else:
+    out.append("3. Keep cadence running and monitor trend score/confidence for regressions.")
+
+if bridge_check and bridge_check.get("status") == "fail":
+    out.append(
+        "4. If bridge coverage is expected, configure bridge token and rerun bridge profile: "
+        "`export BRIDGE_TOKEN_FILE=~/.openclaw/bridge/bridge-token && bash scripts/openclaw-local-smoke.sh --profile bridge`"
+    )
+    out.append("5. Confirm Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.")
+else:
+    out.append("4. Confirm Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.")
+
+out.extend([
+    "",
     "## Refresh Command",
     "```bash",
     "bash scripts/refresh-local-integration-ready.sh",

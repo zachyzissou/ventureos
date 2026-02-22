@@ -13,3 +13,9 @@ As of 2026-02-22, planning/status updates are maintained directly in GitHub issu
 ## Related
 - Project overview and active pointers: [`README.md`](../README.md)
 - Historical roadmap pointer: [`docs/ROADMAP.md`](./ROADMAP.md)
+
+## Current Next Steps
+- Operate and verify local readiness cadence using:
+  - `bash scripts/install-cron.sh --force`
+  - `bash scripts/openclaw-local-ready-cron.sh`
+- Track active work and follow-up priorities in issue #138.
