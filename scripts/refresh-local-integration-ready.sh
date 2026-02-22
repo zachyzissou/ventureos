@@ -145,13 +145,19 @@ for path in report_dir.iterdir():
 
 if not json_by_ts or not md_by_ts:
     raise SystemExit(f"No smoke artifacts found in {report_dir}")
+if not svg_by_ts:
+    raise SystemExit(
+        f"No smoke SVG artifacts found in {report_dir}. "
+        "Run smoke again to generate a complete evidence set."
+    )
 
 latest_json_ts = max(json_by_ts.keys())
 latest_md_ts = max(md_by_ts.keys())
-if latest_json_ts != latest_md_ts:
+latest_svg_ts = max(svg_by_ts.keys())
+if latest_json_ts != latest_md_ts or latest_json_ts != latest_svg_ts:
     raise SystemExit(
         "Latest smoke artifacts are mismatched "
-        f"(latest json={latest_json_ts}, latest md={latest_md_ts}). "
+        f"(latest json={latest_json_ts}, latest md={latest_md_ts}, latest svg={latest_svg_ts}). "
         "Run smoke again to produce a paired set."
     )
 
@@ -162,7 +168,7 @@ if not paired_timestamps:
 latest_ts = paired_timestamps[-1]
 latest_json = json_by_ts[latest_ts]
 latest_md = md_by_ts[latest_ts]
-latest_svg = svg_by_ts.get(latest_ts)
+latest_svg = svg_by_ts[latest_ts]
 
 payload = json.loads(latest_json.read_text(encoding="utf-8"))
 
@@ -263,7 +269,7 @@ def rel(path: pathlib.Path) -> str:
 now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 verdict = str(summary["verdict"]).upper()
 
-status_strip_rel = rel(latest_svg) if latest_svg else "(not generated)"
+status_strip_rel = rel(latest_svg)
 
 out = [
     "# Local Integration Ready Checklist",

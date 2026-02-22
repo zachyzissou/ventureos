@@ -71,7 +71,7 @@ The JSON report includes machine-readable check metadata and readiness summary f
 - `summary.confidence`: `high|medium|low`
 - Per-check metadata: `group`, `severity`, `likelyCause`, `nextCommand`
 
-`scripts/refresh-local-integration-ready.sh` now enforces strict JSON/MD pairing and schema validation before regenerating `docs/LOCAL_INTEGRATION_READY.md`.
+`scripts/refresh-local-integration-ready.sh` now enforces strict latest JSON/MD/SVG timestamp pairing and schema validation before regenerating `docs/LOCAL_INTEGRATION_READY.md`.
 
 ## Regression Test
 Run the mock-server regression test:
