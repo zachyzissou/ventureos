@@ -1,301 +1,196 @@
-# VentureOS — Protoss Multi-Agent Operating System
+# ventureos
 
-**"En Taro Adun — Through the Khala, We Are One"**
+> Protoss-inspired coordination runtime for multi-agent systems, operational playbooks, and dashboard tooling.
+> Status: `active`
 
-VentureOS is a Protoss-themed RPG system overlay for multi-agent coordination, making agent performance visible, relational, and evolutionary.
+![CI](https://img.shields.io/github/actions/workflow/status/zachyzissou/ventureos/.github/workflows/baseline-ts-ci.yml)
+![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
+![License](https://img.shields.io/github/license/zachyzissou/ventureos)
+![Security](https://img.shields.io/badge/security-SECURITY.md-green)
 
-## Quick Links
+## Overview
 
-- **Master Plan:** [docs/RPG_SYSTEM.md](docs/RPG_SYSTEM.md) — Full spec, phases, KPIs, formulas
-- **Dashboard:** [dashboard/](dashboard/) — Operational monitoring, KPI tracking, agent health ([API docs](dashboard/docs/API.md))
-- **Roadmap Tracker:** [#138](https://github.com/zachyzissou/ventureos/issues/138) — Living delivery plan (source of truth)
-- **Phase 5 Tactical Map:** [tactical-map/](tactical-map/) — Real-time 2D StarCraft-style command center
+VentureOS is a TypeScript monorepo that coordinates multi-agent operations, dashboard observability, and tactical command UX in a Protoss-themed production workflow.
+It combines shared libraries, API services, and a web dashboard to track role readiness, mission health, and session handoffs with audit-friendly artifacts.
+The repo currently acts as the local execution layer for roadmap delivery and readiness checks used in OpenClaw-integrated environments.
 
-## Project Structure
+## Problem / value
 
-```
-ventureos/
-├── dashboard/                 # Operational monitoring dashboard
-│   ├── server/                # HTTP server & API (Node.js, no Express)
-│   │   ├── routes/            # Modular API handlers (KPIs, observations, health)
-│   │   └── middleware/        # Auth, CORS, rate-limit, security headers
-│   ├── client/                # Static frontend (SPA)
-│   ├── docs/API.md            # Complete API reference
-│   └── scripts/install.sh     # Deployment installer
-├── docs/
-│   ├── RPG_SYSTEM.md          # Master plan (Protoss RPG spec)
-│   ├── DASHBOARD.md           # Dashboard integration guide
-│   ├── GITLAB_PROCESS.md      # Verification workflow
-│   └── CRON_SPECS.md          # Cron job specifications
-├── lib/                       # Shared libraries
-│   ├── paths.ts               # Centralized path resolution
-│   └── error-handler.ts       # Safe error serialization
-├── tactical-map/              # Phase 5 StarCraft command center
-│   ├── src/                   # TypeScript source
-│   ├── tests/                 # Vitest test suite
-│   └── server/                # Dev server (Vite)
-├── tactical-map-server/       # Production server (Node.js)
-│   └── middleware/            # Security middleware (TypeScript reference)
-├── scripts/                   # Utility scripts
-│   ├── spawn-with-verification.mjs  # Fresh context + dev↔verify loops
-│   ├── spawn-with-retry.mjs         # Retry logic for reliability
-│   └── estimation/            # Three-tier estimation framework
-└── .gitlab/
-    └── merge_request_templates/
-        └── Fix.md             # P0/P1 fix template with verification checklist
-```
-
-## Current Status
-
-### Completed
-
-- ✅ **Phase 4:** VOXYZ Integration — Role Cards, KPI Registry, Voice RULES, Security Infrastructure, Conversation Orchestration (450+ lib tests)
-- ✅ **Phase 5.0:** Prerequisites — Session bridge, Security architecture, MapState contract, Assets licensing
-- ✅ **Phase 5.1:** Foundation — Security middleware, Rendering core
-- ✅ **Phase 5.2:** Activity & Animation — Activity mapper, Building states, Unit sprites
-- ✅ **Phase 5.3:** Khala Network — Bond visualization, affinity tiers, collaboration particles (#9)
-- ✅ **Phase 5.4:** Resource Economy — Token budgets, cost tracking, sparklines, budget alerts (#15)
-- ✅ **Phase 5.5:** Mission Tracking — Mission timeline, dependency arrows, completion animations, task queue (#16)
-- ✅ **Phase 5.6:** Health & Diagnostics — Health indicators, alert overlays, metrics dashboard (#18)
-- ✅ **Phase 5.7:** Interactive Controls — Agent detail panel, command palette, mission spawn, budget slider, undo/redo (#19)
-- ✅ **Phase 5.8:** Replay & History — replay engine + session create/delete APIs shipped (#17)
-- ✅ **P0 Remediation:** All security (VULN-002/003, XSS, auth bypass), QA (phantom tests, XSS coverage), and performance (N+1 query) issues resolved (#2–#6, #142–#149)
-- ✅ **Dashboard Merge:** Monorepo consolidation — TypeScript migration, shared libraries, deployment procedures (epic #84)
-- ✅ **Security Hardening:** Auth bypass fix, query-token removal, XSS sanitization, RPG static auth gating, action endpoint defense-in-depth, DoS body-read bounding (#142–#149)
-- ✅ **Infrastructure:** CI/CD pipeline (#23), performance benchmarking suite (#24), accessibility audit WCAG 2.1 AA (#25), dashboard logs page (#137), live telemetry SSE, hybrid deployment design (#140)
-- ✅ **P0 Infrastructure Sprint:** Estimation framework, Cron fixes, SQLite hardening, Session handoff docs
-
-### In Progress
-
-- 🔄 **Installer Automation Phase 3:** one-command bootstrap + first-run verification report (#466)
-
-### Next Up
-
-- **Roadmap execution from #138:** convert living-plan items into tracked implementation issues/PRs
-- **Phase 4.5:** Deep Progression System — extended levels, skill trees, XP diversification
-- **Polish & Sound:** Audio atmosphere, voice lines, onboarding tour, help overlay
-
-## Roadmap
-
-Roadmap tracking lives in GitHub issue [#138: Roadmap: VentureOS delivery plan (living)](https://github.com/zachyzissou/ventureos/issues/138). That issue is the source of truth; this section is a high-level snapshot.
-
-## Nexus 2.0 Trackable Milestones
-
-Nexus-native execution plan and clarifications:
-- Plan: [docs/NEXUS_2_0_MASTER_PLAN.md](docs/NEXUS_2_0_MASTER_PLAN.md)
-- Clarifications: [docs/NEXUS_2_0_QA_CLARIFICATIONS.md](docs/NEXUS_2_0_QA_CLARIFICATIONS.md)
-- Planning PR: [#283](https://github.com/zachyzissou/ventureos/pull/283)
-
-Implementation milestones (visible incremental rollout):
-- [M1 / #284 Contract Foundation](https://github.com/zachyzissou/ventureos/issues/284)
-- [M2 / #285 Nexus Authority Plane](https://github.com/zachyzissou/ventureos/issues/285)
-- [M3 / #286 Competition Engine](https://github.com/zachyzissou/ventureos/issues/286)
-- [M4 / #287 Observability + Replay Authority](https://github.com/zachyzissou/ventureos/issues/287)
-- [M5 / #288 Deployment Safety (Single Token First)](https://github.com/zachyzissou/ventureos/issues/288)
-- [M6 / #289 Production Readiness Report](https://github.com/zachyzissou/ventureos/issues/289)
-
-### Milestone status board
-
-| Milestone | Scope | Issue | Status |
-|---|---|---|---|
-| M1 | Contract Foundation | [#284](https://github.com/zachyzissou/ventureos/issues/284) | Closed (2026-02-19) |
-| M2 | Nexus Authority Plane | [#285](https://github.com/zachyzissou/ventureos/issues/285) | Closed (2026-02-21) |
-| M3 | Competition Engine | [#286](https://github.com/zachyzissou/ventureos/issues/286) | Closed (2026-02-20) |
-| M4 | Observability + Replay Authority | [#287](https://github.com/zachyzissou/ventureos/issues/287) | Closed (2026-02-21) |
-| M5 | Deployment Safety | [#288](https://github.com/zachyzissou/ventureos/issues/288) | Closed (2026-02-21) |
-| M6 | Production Readiness Report | [#289](https://github.com/zachyzissou/ventureos/issues/289) | Closed (2026-02-21) |
-
-
-### Now (active)
-
-- Installer automation phase 3 one-command bootstrap and verification workstream (#466)
-- Living roadmap stewardship in issue #138
-
-### Next
-
-- Deep Progression System (Phase 4.5) — skill trees, XP diversification, prestige ranks
-- Polish & Sound — audio atmosphere, onboarding tour, guided help
-- Close observability gaps (correlation IDs, report bundles)
-- Repeatable production rollout workflow
-
-### Later
-
-- Richer logs UX (filter presets, export)
-- Expanded in-map mission editing (#135)
-- Deeper diagnostics drill-downs from dashboard cards
-- Release notes / change log panel in dashboard
-
-Now items map to currently open issues; see #138 and linked issues for live status.
-
-## Development
-
-### Prerequisites
-- Node.js 25+ (for tactical-map)
-- SQLite 3.x (for ventureos-rpg)
-
-### Running the Tactical Map (Dev)
-```bash
-cd tactical-map
-npm install
-npm run dev  # Vite dev server on port 5174
-```
-
-### Running Tests
-```bash
-cd tactical-map
-npm test  # Vitest
-```
-
-### Local OpenClaw Readiness
-Run unified local install + onboarding (dashboard, bridge, cron, readiness):
-```bash
-npm run openclaw:install
-```
-
-Non-interactive automation example:
-```bash
-npm run openclaw:install -- --non-interactive --profile bridge
-```
-
-Preset-based onboarding examples:
-```bash
-npm run openclaw:install -- --non-interactive --preset minimal
-npm run openclaw:install -- --non-interactive --preset bridge
-```
-
-Run onboarding with post-install verification gates enabled:
-```bash
-npm run openclaw:install -- --non-interactive --verify
-```
-
-Run deterministic local OpenClaw integration smoke checks:
-```bash
-npm run openclaw:local-smoke
-```
-
-Run smoke and regenerate the readiness mission card/checklist:
-```bash
-npm run openclaw:local-ready
-```
-
-Run the cron-safe local readiness cadence wrapper:
-```bash
-npm run openclaw:local-ready:cron
-```
-
-Check latest readiness status without running a new smoke cycle (fails if stale > 360 min):
-```bash
-npm run openclaw:local-ready:status
-```
-
-Install/manage persistent host bridge LaunchAgent:
-```bash
-npm run openclaw:bridge:launchagent
-```
-
-Reference docs and artifacts:
-- `docs/OPENCLAW_LOCAL_INTEGRATION_SMOKE.md`
-- `docs/LOCAL_INTEGRATION_READY.md`
-- `runtime/reports/openclaw-local-smoke/`
-- `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
-- `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
-- `runtime/reports/ventureos-install/` (installer onboarding reports with pass/fail + next command details)
-
-Current next steps (as of February 23, 2026):
-1. Run one command onboarding: `npm run openclaw:install`
-2. Keep cadence active: `npm run openclaw:local-ready:cron`
-3. Confirm stale guardrail status: `npm run openclaw:local-ready:status`
-4. Confirm Mission Control shows the latest `/api/openclaw-local-readiness` snapshot.
-5. If bridge checks should pass, set `BRIDGE_TOKEN_FILE` and rerun `npm run openclaw:local-smoke -- --profile bridge`.
-
-### Next.js Hybrid Frontend (Incremental)
-Launch the new Next.js migration surface:
-```bash
-npm run dashboard:next:dev
-```
-
-Reference:
-- `dashboard-next/README.md`
-- `dashboard-next/docs/MIGRATION_CHECKLIST.md`
-
-### Production Dashboard
-Tactical map integrates with the VentureOS dashboard on port 8001:
-```bash
-# Dashboard serves tactical map at /map
-http://192.168.225.149:8001/map
-```
-
-## GitHub Workflow
-
-All implementation work is tracked and merged via GitHub issues + PRs:
-
-1. **Issue created** (acceptance criteria + verification steps)
-2. **PR opened** (link issue, include verification commands)
-3. **Verification** (actual testing, not just code review)
-4. **Copilot review addressed** (if comments are generated)
-5. **Merge** (only after checks pass)
-
-Queue sweep helper:
-```bash
-npm run pr:queue:sweep
-```
-
-Dry-run merge of approved+ready PRs:
-```bash
-npm run pr:queue:sweep -- --merge-approved --dry-run
-```
-
-Roadmap/readme drift check:
-```bash
-npm run roadmap:sync:check
-```
-
-Workflow details:
-- `docs/ROADMAP_STATUS_SYNC.md`
-
-Legacy GitLab process notes remain in [docs/GITLAB_PROCESS.md](docs/GITLAB_PROCESS.md).
+- **Problem:** Operations visibility and reproducibility were fragmented across ad hoc scripts, docs, and one-off dashboards.
+- **Value:** This repository centralizes orchestration logic, standardized checks, and reusable onboarding/verification flows under one maintained codebase.
+- **Users:** Contributors building mission/control tooling, operators running local readiness drills, and maintainers running release/rollout workflows.
 
 ## Architecture
 
-### Agent → Protoss Mapping
+```text
+Clients/Operators --> dashboard (UI + API) --> shared domain libs (lib/)
+                                   |
+                                   +--> tactical-map --> websocket/event pipelines
+                                   |
+                                   +--> scripts automation --> onboarding + verification jobs
+                                   |
+                                   +--> Git workflows --> PR checks + rollout gates
+```
 
-| Agent ID | Protoss Unit | Role |
-|----------|--------------|------|
-| **echo** | Artanis | CEO Orchestrator |
-| **nexus** | Nexus | Mission Control Hub |
-| **oracle** | Zeratul | Research & Foresight |
-| **atlas** | Probe | Infrastructure Fabricator |
-| **sentinel** | Sentinel | Security Guardian |
-| **verifier** | Observer | Detection & QA |
-| **archivist** | High Templar | Knowledge Keeper |
-| **synth** | Dark Templar | Shadow Weaver / Creator |
+Source boundaries:
+- **Core domain:** `lib/`
+- **Dashboard runtime:** `dashboard/` (plus Next migration surface `dashboard-next/`)
+- **Tactical map:** `tactical-map/` and `tactical-map-server/`
+- **Automation:** `scripts/` and `.github/workflows/`
+- **Docs + operating playbooks:** `docs/`
 
-### Psionic Attributes
+## Features
 
-6 real-time KPIs mapped to Protoss-themed stats:
+- ✅ Monorepo architecture with shared TypeScript domain logic.
+- ✅ Dashboard + tactical-map split path for observability and command controls.
+- ✅ Automated onboarding and readiness checks for OpenClaw (`scripts/*install*`, `scripts/openclaw-local-*`).
+- ✅ Existing CI gates for accessibility, performance, and tactical-map quality.
+- ✅ Local smoke and readiness verification workflows.
+- ✅ Documentation and roadmap tracking with living status checks.
+- ⏳ Planned: standardized baseline governance and PR readme/runbook expansion across core workflows.
 
-1. **Psionic Mastery** (WIS) — Memory depth + archive impact
-2. **Energy** (SPD) — Response time + recovery speed
-3. **Shields** (STR) — Error resilience + recovery capability
-4. **Strategic Vision** (INT) — Planning depth + foresight accuracy
-5. **Psionic Bonds** (CHA) — Collaboration + teaching impact
-6. **Templar Dedication** (CON) — Consistency + persistence
+## Tech Stack
 
-See [docs/RPG_SYSTEM.md](docs/RPG_SYSTEM.md) for formulas.
+- Runtime: Node.js 20+ (Ubuntu CI), TypeScript 5.x
+- Frameworks/Libraries: React/Next for dashboard surfaces, Jest, Playwright, Better-SQLite3
+- Tooling: npm, tsc, Jest, Playwright, GitHub Actions
+- Storage: local SQLite + file-backed runtime report artifacts
+- Deployments: Docker Compose and custom deployment scripts
+
+## Prerequisites
+
+- Node.js 20+ and npm
+- On Linux/macOS: `git`, `make` optional for utility scripts
+- Optional: Docker + docker-compose for hybrid runbook
+- Optional: Python 3 + `scripts/docs-lint.py` runner for doc quality checks
+
+## Installation
+
+```bash
+# from repository root
+git clone https://github.com/zachyzissou/ventureos.git
+cd ventureos
+npm ci
+```
+
+Dashboard package install is covered by workspace resolution from root.
+
+## Configuration
+
+| Key | Required | Default | Notes |
+| --- | --- | --- | --- |
+| `NODE_ENV` | no | `production` | CI/runtime mode
+| `DASHBOARD_PORT` | no | project-specific | Dashboard server binding port
+| `LOG_LEVEL` | no | `info` | Structured logs (debug/info/warn/error)
+| `BRIDGE_TOKEN_FILE` | no | none | Use secret-backed token file for bridge checks |
+| `CRON_SCHEDULE` | no | workflow defaults | For readiness/check scheduling where applicable |
+
+## Usage
+
+```bash
+# Launch dashboard workspace
+git checkout main
+npm install
+npm run dashboard:dev
+```
+
+```bash
+# Run local readiness smoke and checks
+npm run openclaw:local-smoke
+npm run openclaw:local-ready
+npm run openclaw:local-ready:status
+```
+
+```bash
+# Run tests/build pipelines
+npm run test
+npm run build
+npm run test:e2e
+```
+
+### Reproducible output sample
+
+```text
+$ npm run openclaw:local-ready -- --skip-smoke
+✅ Readiness report refreshed
+✅ No stale readiness window detected
+```
+
+## Testing & quality
+
+```bash
+npm ci
+npm run test
+npm run build
+# repository-specific smoke checks
+npm run test:openclaw:local-smoke
+```
+
+Acceptance is expected from:
+- Unit/regression suites (`jest`)
+- Scripted onboarding validations in CI and local runs
+- Workflow-specific gates in `.github/workflows`
+
+Coverage goal for touched areas: 70%+, with growth toward complete module coverage.
+
+## Security
+
+- See [SECURITY.md](./SECURITY.md)
+- Do not commit secrets, `.env` files, or credentials.
+- Keep deployment and workflow tokens in repository secrets.
+- Prefer branch-protected default branch (`main`) with review + CI gates.
 
 ## Contributing
 
-1. Create issue in GitHub (use templates where available)
-2. Create branch (`git checkout -b fix/your-fix-name`)
-3. Make changes + tests
-4. Open PR (fill verification checklist in PR body)
-5. Request/handle Copilot review
-6. Merge after checks pass
+1. Start from default branch: `main`.
+2. Create a focused branch and include test evidence in PR description.
+3. Run scoped checks and include outputs.
+4. Link issue and architecture/doc references for behavior changes.
+5. Obtain review and merge only after checks pass.
 
-## License
+## Deployment / runbook
 
-Internal VentureOS project — not open source.
+- **Deploy target:** Docker Compose and scripted deployment workflows in `.github/workflows` and `scripts/`.
+- **Primary flow:** execute relevant workflow + smoke checks; verify `openclaw` readiness artifacts are updated.
+- **Rollback:** revert merge commit or redeploy prior successful artifact and restart services.
+- **Emergency:** stop/disable current deploy workflow path and revert container/service state as documented in repo runbooks.
 
----
+## Troubleshooting
 
-**En Taro Adun, Executor.**
+- **Symptom: readiness check stale failures**  
+  Run `npm run openclaw:local-ready:status` and refresh artifacts under `runtime/reports/`.
+- **Symptom: dashboard startup errors**  
+  Confirm dependencies and build artifacts; run `npm run dashboard:build` and inspect startup scripts.
+- **Symptom: npm install failure for native dependencies**  
+  Rebuild/retry on supported OS image and confirm prebuilt module compatibility.
+
+## Observability
+
+- Health/state endpoints exposed by dashboard/services.
+- Runtime artifacts under `runtime/reports/` and generated logs.
+- GitHub workflow artifacts for readiness/build checks.
+- Alerts/process: repo maintainers via existing issue/PR and runbook docs.
+
+## Roadmap
+
+- Baseline governance files + README depth harmonization across repo touchpoints.
+- Expand observability and incident evidence bundle for each major workflow.
+- Improve rollout safety + rollback auditability for deployments.
+- Consolidate long-form runbooks where process drift has appeared.
+
+## Known risks
+
+- Some workflows are intentionally broad and may fail outside their intended trigger paths.
+- Native module dependencies can be host-sensitive (`better-sqlite3` ABI issues).
+- Multi-workspace monorepo test runtime can be long on cold CI nodes.
+
+## Release notes / changelog
+
+- `README` and governance baseline updates are part of the current operational hardening wave.
+- No user-facing API behavior change in this PR.
+
+## License & contact
+
+- License: MIT (see repo metadata for exact terms if changed).
+- Maintainer contact: `@zachyzissou`
+- Security contact: via [SECURITY.md](./SECURITY.md)
