@@ -10,6 +10,9 @@ YES=0
 DRY_RUN=0
 VERIFY_POST_INSTALL=0
 VERIFY_TIMEOUT_SEC="${VENTUREOS_INSTALL_VERIFY_TIMEOUT_SEC:-3}"
+REVERT_FROM=""
+LIST_RESTORE_POINTS=0
+CAPTURE_RESTORE_POINT=1
 
 SKIP_DASHBOARD_INSTALL=0
 SKIP_BRIDGE_LAUNCHAGENT=0
@@ -40,10 +43,15 @@ BRIDGE_INSTALL_SCRIPT="${VENTUREOS_INSTALL_BRIDGE_SCRIPT:-$REPO_ROOT/scripts/ins
 CRON_INSTALL_SCRIPT="${VENTUREOS_INSTALL_CRON_SCRIPT:-$REPO_ROOT/scripts/install-cron.sh}"
 READINESS_REFRESH_SCRIPT="${VENTUREOS_INSTALL_READINESS_SCRIPT:-$REPO_ROOT/scripts/refresh-local-integration-ready.sh}"
 READINESS_STATUS_JSON="${SMOKE_REPORT_DIR:-$REPO_ROOT/runtime/reports/openclaw-local-smoke}/openclaw-local-ready-latest.json"
+RESTORE_BASE_DIR="${VENTUREOS_INSTALL_RESTORE_BASE_DIR:-$REPO_ROOT/runtime/backups/ventureos-install}"
+RESTORE_POINT_ID=""
+RESTORE_POINT_DIR=""
+RESTORE_MANIFEST_PATH=""
 
 REPORT_DIR="${VENTUREOS_INSTALL_REPORT_DIR:-$REPO_ROOT/runtime/reports/ventureos-install}"
 SUMMARY_TSV="$(mktemp)"
-trap 'rm -f "$SUMMARY_TSV"' EXIT
+RESTORE_INDEX_TSV="$(mktemp)"
+trap 'rm -f "$SUMMARY_TSV" "$RESTORE_INDEX_TSV"' EXIT
 INSTALL_FAILED=0
 
 usage() {
@@ -66,6 +74,11 @@ Options:
   --dry-run                 Print planned actions without executing installers
   --verify                  Run post-install verification checks and fail on verification errors
   --verify-timeout-sec <n>  Timeout (seconds) for verification checks (default: 3)
+  --restore-base-dir <path> Override restore-point base dir (default: runtime/backups/ventureos-install)
+  --no-restore-point        Skip pre-install restore-point capture (not recommended)
+  --list-restore-points     List available restore points and exit
+  --revert <dir-or-manifest>
+                            Revert configs from a prior restore point and exit
   --preset <name>           Install preset: full|bridge|minimal (default: full)
   --dashboard-port <port>   Dashboard port (default: 7000)
   --dashboard-url <url>     Override readiness dashboard URL (default: http://127.0.0.1:<dashboard-port>)
@@ -191,6 +204,279 @@ if not isinstance(payload, dict):
 if "status" not in payload or "summary" not in payload:
     raise SystemExit(1)
 PY
+}
+
+list_restore_points() {
+  mkdir -p "$RESTORE_BASE_DIR"
+  local points
+  points="$(find "$RESTORE_BASE_DIR" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r || true)"
+  if [[ -z "$points" ]]; then
+    echo "No restore points found at: $RESTORE_BASE_DIR"
+    return 0
+  fi
+  echo "Restore points:"
+  while IFS= read -r point; do
+    [[ -z "$point" ]] && continue
+    local manifest="$point/restore-point.json"
+    if [[ -f "$manifest" ]]; then
+      echo "  - $point"
+    else
+      echo "  - $point (missing restore-point.json)"
+    fi
+  done <<< "$points"
+}
+
+snapshot_file_record() {
+  local snapshot_id="$1"
+  local target_path="$2"
+  local restore_files_dir="$3"
+  local backup_path="$restore_files_dir/${snapshot_id}.before"
+
+  if [[ -e "$target_path" && ! -d "$target_path" ]]; then
+    cp -p "$target_path" "$backup_path"
+    printf '%s\t%s\ttrue\t%s\n' "$snapshot_id" "$target_path" "$backup_path" >> "$RESTORE_INDEX_TSV"
+  else
+    printf '%s\t%s\tfalse\t\n' "$snapshot_id" "$target_path" >> "$RESTORE_INDEX_TSV"
+  fi
+}
+
+create_restore_point() {
+  mkdir -p "$RESTORE_BASE_DIR"
+  : > "$RESTORE_INDEX_TSV"
+
+  RESTORE_POINT_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
+  RESTORE_POINT_DIR="$RESTORE_BASE_DIR/$RESTORE_POINT_ID"
+  RESTORE_MANIFEST_PATH="$RESTORE_POINT_DIR/restore-point.json"
+  local restore_files_dir="$RESTORE_POINT_DIR/files"
+  local crontab_backup="$RESTORE_POINT_DIR/crontab.before"
+  local crontab_state="missing_command"
+
+  mkdir -p "$restore_files_dir"
+
+  if command -v crontab >/dev/null 2>&1; then
+    if crontab -l > "$crontab_backup" 2>/dev/null; then
+      crontab_state="present"
+    else
+      : > "$crontab_backup"
+      crontab_state="empty"
+    fi
+  else
+    : > "$crontab_backup"
+  fi
+
+  snapshot_file_record "bridge_env" "$BRIDGE_ENV" "$restore_files_dir"
+  snapshot_file_record "openclaw_openclaw_json" "$OPENCLAW_DIR/openclaw.json" "$restore_files_dir"
+  snapshot_file_record "openclaw_cron_jobs_json" "$OPENCLAW_DIR/cron/jobs.json" "$restore_files_dir"
+  snapshot_file_record "openclaw_discord_webhooks_json" "$OPENCLAW_DIR/credentials/discord/webhooks.json" "$restore_files_dir"
+
+  if [[ "$OS_NAME" == "Darwin" ]]; then
+    snapshot_file_record "bridge_launchagent_plist" "$HOME/Library/LaunchAgents/com.ventureos.bridge.plist" "$restore_files_dir"
+  fi
+
+  python3 - "$RESTORE_INDEX_TSV" "$RESTORE_MANIFEST_PATH" "$RESTORE_POINT_ID" "$REPO_ROOT" "$OS_NAME" "$crontab_state" "$crontab_backup" "$SCRIPT_DIR/ventureos-install.sh" "$RESTORE_POINT_DIR" <<'PY'
+import csv
+import json
+import pathlib
+import sys
+
+index_path = pathlib.Path(sys.argv[1])
+manifest_path = pathlib.Path(sys.argv[2])
+restore_id = sys.argv[3]
+repo_root = sys.argv[4]
+os_name = sys.argv[5]
+crontab_state = sys.argv[6]
+crontab_backup = sys.argv[7]
+script_path = sys.argv[8]
+restore_dir = sys.argv[9]
+
+snapshots = []
+with index_path.open("r", encoding="utf-8") as fh:
+    reader = csv.reader(fh, delimiter="\t")
+    for row in reader:
+        if len(row) < 3:
+            continue
+        snap = {
+            "id": row[0],
+            "path": row[1],
+            "existed_before": row[2].lower() == "true",
+            "backup_path": row[3] if len(row) > 3 and row[3] else None,
+        }
+        snapshots.append(snap)
+
+payload = {
+    "schema_version": 1,
+    "restore_point_id": restore_id,
+    "created_at_utc": __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "repo_root": repo_root,
+    "os_name": os_name,
+    "crontab": {
+        "state": crontab_state,
+        "backup_path": crontab_backup,
+    },
+    "snapshots": snapshots,
+    "revert_command": f"bash {script_path} --revert {restore_dir}",
+}
+
+manifest_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
+resolve_revert_manifest_path() {
+  local input_path="$1"
+  if [[ -d "$input_path" ]]; then
+    echo "$input_path/restore-point.json"
+    return 0
+  fi
+  echo "$input_path"
+}
+
+revert_restore_point() {
+  local input_path="$1"
+  local manifest_path
+  manifest_path="$(resolve_revert_manifest_path "$input_path")"
+
+  if [[ ! -f "$manifest_path" ]]; then
+    echo "Restore manifest not found: $manifest_path" >&2
+    return 2
+  fi
+
+  if [[ "$NON_INTERACTIVE" == "0" && -t 0 && "$YES" != "1" ]]; then
+    if [[ "$(prompt_yes_no "Revert configs from restore point '$manifest_path'?" "n")" != "y" ]]; then
+      echo "Revert cancelled."
+      return 0
+    fi
+  fi
+
+  python3 - "$manifest_path" <<'PY'
+import json
+import os
+import pathlib
+import shutil
+import subprocess
+import sys
+
+manifest = pathlib.Path(sys.argv[1])
+payload = json.loads(manifest.read_text(encoding="utf-8"))
+
+errors = 0
+restored = 0
+removed = 0
+skipped = 0
+
+for snap in payload.get("snapshots", []):
+    sid = snap.get("id", "unknown")
+    target = snap.get("path")
+    existed_before = bool(snap.get("existed_before"))
+    backup = snap.get("backup_path")
+
+    if not target:
+      print(f"SKIP  {sid} :: missing target path in manifest")
+      skipped += 1
+      continue
+
+    target_path = pathlib.Path(target)
+    if existed_before:
+      if not backup or not pathlib.Path(backup).exists():
+        print(f"FAIL  {sid} :: missing backup payload ({backup})")
+        errors += 1
+        continue
+      target_path.parent.mkdir(parents=True, exist_ok=True)
+      shutil.copy2(backup, target_path)
+      print(f"PASS  {sid} :: restored {target}")
+      restored += 1
+    else:
+      if target_path.exists() or target_path.is_symlink():
+        if target_path.is_dir():
+          print(f"SKIP  {sid} :: target is directory; not removing ({target})")
+          skipped += 1
+        else:
+          target_path.unlink()
+          print(f"PASS  {sid} :: removed {target} (did not exist pre-install)")
+          removed += 1
+      else:
+        print(f"SKIP  {sid} :: already absent")
+        skipped += 1
+
+crontab = payload.get("crontab", {})
+crontab_state = crontab.get("state", "unknown")
+crontab_backup = crontab.get("backup_path")
+if shutil.which("crontab") is None:
+  print("SKIP  crontab :: crontab command unavailable")
+  skipped += 1
+else:
+  if crontab_state == "present":
+    if crontab_backup and pathlib.Path(crontab_backup).exists():
+      rc = subprocess.run(["crontab", crontab_backup], capture_output=True, text=True)
+      if rc.returncode == 0:
+        print("PASS  crontab :: restored prior crontab")
+        restored += 1
+      else:
+        print(f"FAIL  crontab :: restore failed ({rc.stderr.strip() or rc.stdout.strip()})")
+        errors += 1
+    else:
+      print("FAIL  crontab :: backup missing for state=present")
+      errors += 1
+  elif crontab_state == "empty":
+    rc = subprocess.run(["crontab", "-r"], capture_output=True, text=True)
+    if rc.returncode == 0:
+      print("PASS  crontab :: removed crontab (pre-install state was empty)")
+      removed += 1
+    else:
+      msg = (rc.stderr or rc.stdout or "").strip().lower()
+      if "no crontab" in msg:
+        print("SKIP  crontab :: already empty")
+        skipped += 1
+      else:
+        print(f"FAIL  crontab :: unable to clear crontab ({msg})")
+        errors += 1
+  else:
+    print(f"SKIP  crontab :: unsupported prior state '{crontab_state}'")
+    skipped += 1
+
+print(f"REVERT_SUMMARY restored={restored} removed={removed} skipped={skipped} errors={errors}")
+sys.exit(1 if errors else 0)
+PY
+}
+
+discover_existing_state() {
+  local dashboard_url="$1"
+  local dashboard_state="unreachable"
+  local openclaw_state="missing"
+  local bridge_env_state="missing"
+  local cron_state="empty"
+  local venture_cron_state="not-installed"
+
+  if verify_dashboard_health "$dashboard_url"; then
+    dashboard_state="healthy"
+  fi
+
+  if [[ -d "$OPENCLAW_DIR" ]]; then
+    openclaw_state="present"
+  fi
+
+  if [[ -f "$BRIDGE_ENV" ]]; then
+    bridge_env_state="present"
+  fi
+
+  if command -v crontab >/dev/null 2>&1; then
+    local existing_cron
+    existing_cron="$(crontab -l 2>/dev/null || true)"
+    if [[ -n "$existing_cron" ]]; then
+      cron_state="present"
+      if printf '%s\n' "$existing_cron" | grep -Fq "VentureOS Managed Cron"; then
+        venture_cron_state="installed"
+      fi
+    fi
+  else
+    cron_state="unavailable"
+  fi
+
+  echo "Discovered existing configuration:"
+  echo "  openclaw dir: $openclaw_state ($OPENCLAW_DIR)"
+  echo "  bridge env: $bridge_env_state ($BRIDGE_ENV)"
+  echo "  dashboard health: $dashboard_state ($dashboard_url)"
+  echo "  user crontab: $cron_state"
+  echo "  ventureos managed cron block: $venture_cron_state"
 }
 
 prompt_yes_no() {
@@ -322,6 +608,24 @@ while [[ $# -gt 0 ]]; do
       VERIFY_TIMEOUT_SEC="$2"
       shift 2
       ;;
+    --restore-base-dir)
+      need_value "$@"
+      RESTORE_BASE_DIR="$2"
+      shift 2
+      ;;
+    --no-restore-point)
+      CAPTURE_RESTORE_POINT=0
+      shift
+      ;;
+    --list-restore-points)
+      LIST_RESTORE_POINTS=1
+      shift
+      ;;
+    --revert)
+      need_value "$@"
+      REVERT_FROM="$2"
+      shift 2
+      ;;
     --preset)
       need_value "$@"
       INSTALL_PRESET="$2"
@@ -391,6 +695,25 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "$LIST_RESTORE_POINTS" == "1" && -n "$REVERT_FROM" ]]; then
+  echo "Cannot combine --list-restore-points and --revert" >&2
+  exit 2
+fi
+
+if [[ "$LIST_RESTORE_POINTS" == "1" ]]; then
+  list_restore_points
+  exit 0
+fi
+
+if [[ -n "$REVERT_FROM" ]]; then
+  if revert_restore_point "$REVERT_FROM"; then
+    echo "VENTUREOS_INSTALL_RESULT=REVERTED"
+    exit 0
+  fi
+  echo "VENTUREOS_INSTALL_RESULT=REVERT_FAILED"
+  exit 1
+fi
+
 validate_dashboard_port
 validate_verify_timeout
 
@@ -405,10 +728,18 @@ if [[ "$OS_NAME" != "Darwin" && "$OS_NAME" != "Linux" ]]; then
 fi
 
 if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
+  discovery_dashboard_url="$(resolve_dashboard_url)"
   echo "VentureOS Installer Onboarding"
   echo "Repo: $REPO_ROOT"
   echo "Platform: $OS_NAME"
   echo ""
+  discover_existing_state "$discovery_dashboard_url"
+  echo ""
+
+  if [[ "$(prompt_yes_no "Continue with onboarding plan?" "y")" != "y" ]]; then
+    echo "Install cancelled."
+    exit 0
+  fi
 
   if [[ -z "$EXPLICIT_PRESET" ]]; then
     INSTALL_PRESET="$(prompt_value "Install preset (full|bridge|minimal)" "$INSTALL_PRESET")"
@@ -423,7 +754,15 @@ if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
   validate_profile
 
   if [[ -z "$EXPLICIT_SKIP_DASHBOARD" ]]; then
-    SKIP_DASHBOARD_INSTALL="$(prompt_run_toggle "Run dashboard installer?" "$SKIP_DASHBOARD_INSTALL")"
+    if verify_dashboard_health "$(resolve_dashboard_url)"; then
+      if [[ "$(prompt_yes_no "Existing dashboard looks healthy. Adopt it and skip dashboard reinstall?" "y")" == "y" ]]; then
+        SKIP_DASHBOARD_INSTALL=1
+      else
+        SKIP_DASHBOARD_INSTALL=0
+      fi
+    else
+      SKIP_DASHBOARD_INSTALL="$(prompt_run_toggle "Run dashboard installer?" "$SKIP_DASHBOARD_INSTALL")"
+    fi
   fi
   if [[ "$OS_NAME" == "Darwin" && -z "$EXPLICIT_SKIP_BRIDGE" ]]; then
     SKIP_BRIDGE_LAUNCHAGENT="$(prompt_run_toggle "Install/refresh bridge LaunchAgent?" "$SKIP_BRIDGE_LAUNCHAGENT")"
@@ -460,10 +799,40 @@ echo "  cron install: $([[ "$SKIP_CRON_INSTALL" == "1" ]] && echo skip || echo r
 echo "  readiness refresh: $([[ "$SKIP_READINESS" == "1" ]] && echo skip || echo run)"
 echo "  post-install verify: $([[ "$VERIFY_POST_INSTALL" == "1" ]] && echo run || echo skip)"
 echo "  bridge env: $BRIDGE_ENV"
+echo "  restore point: $([[ "$CAPTURE_RESTORE_POINT" == "1" ]] && echo enabled || echo disabled)"
+echo "  restore base dir: $RESTORE_BASE_DIR"
 if [[ "$DRY_RUN" == "1" ]]; then
   echo "  mode: dry-run"
 fi
 echo ""
+
+discover_existing_state "$dashboard_url"
+echo ""
+
+if [[ "$CAPTURE_RESTORE_POINT" == "1" ]]; then
+  if [[ "$DRY_RUN" == "1" ]]; then
+    record_step "restore-point" "planned" "would snapshot user config before install" "bash scripts/ventureos-install.sh --list-restore-points"
+  else
+    if create_restore_point; then
+      echo "PASS  restore-point :: $RESTORE_POINT_DIR"
+      record_step "restore-point" "pass" "restore point created at $RESTORE_POINT_DIR" "bash scripts/ventureos-install.sh --revert $RESTORE_POINT_DIR"
+    else
+      echo "FAIL  restore-point :: unable to capture pre-install snapshot" >&2
+      record_step "restore-point" "fail" "unable to capture pre-install snapshot" "Re-run with --no-restore-point only if you accept no rollback safety"
+      INSTALL_FAILED=1
+    fi
+  fi
+else
+  echo "WARN  restore-point :: disabled by --no-restore-point"
+  record_step "restore-point" "skipped" "restore point capture disabled by flag" "Re-run without --no-restore-point"
+fi
+echo ""
+
+if [[ "$INSTALL_FAILED" != "0" ]]; then
+  echo "Aborting install due to failed safety checks."
+  echo "VENTUREOS_INSTALL_RESULT=FAIL"
+  exit 1
+fi
 
 if [[ "$SKIP_DASHBOARD_INSTALL" == "0" ]]; then
   if [[ "$OS_NAME" == "Darwin" ]]; then
@@ -697,6 +1066,12 @@ PY
 echo ""
 echo "Install report written:"
 echo "  - $report_file"
+if [[ -n "$RESTORE_POINT_DIR" ]]; then
+  echo "Restore point:"
+  echo "  - $RESTORE_POINT_DIR"
+  echo "Revert command:"
+  echo "  - bash scripts/ventureos-install.sh --revert $RESTORE_POINT_DIR"
+fi
 
 if [[ "$DRY_RUN" == "1" ]]; then
   echo "VENTUREOS_INSTALL_RESULT=PLANNED"
@@ -708,5 +1083,8 @@ if [[ "$INSTALL_FAILED" != "0" ]]; then
   exit 1
 fi
 
+if [[ -n "$RESTORE_POINT_DIR" ]]; then
+  echo "VENTUREOS_INSTALL_RESTORE_POINT=$RESTORE_POINT_DIR"
+fi
 echo "VENTUREOS_INSTALL_RESULT=PASS"
 exit 0
