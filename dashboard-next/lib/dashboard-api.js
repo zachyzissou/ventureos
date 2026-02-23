@@ -70,3 +70,31 @@ export async function requestDashboardJson(
 export async function fetchDashboardJson(apiBase, path, token = "") {
   return requestDashboardJson(apiBase, path, { method: "GET", token });
 }
+
+export async function requestLocalJson(
+  path,
+  { method = "GET", token = "", body = undefined } = {},
+) {
+  const headers = buildAuthHeaders(token);
+  const init = {
+    method,
+    credentials: "include",
+    headers,
+  };
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(body);
+  }
+
+  const res = await fetch(path, init);
+  if (!res.ok) {
+    const payload = await readResponseJson(res);
+    const detail =
+      payload && typeof payload.error === "string" ? payload.error : "";
+    if (detail) {
+      throw new Error(`${path} failed (${res.status}): ${detail}`);
+    }
+    throw new Error(`${path} failed (${res.status})`);
+  }
+  return readResponseJson(res);
+}

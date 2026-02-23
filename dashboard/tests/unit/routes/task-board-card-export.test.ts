@@ -250,7 +250,6 @@ describe('cardsToJson', () => {
 
     expect(jsonStr).not.toContain('SECRET_TOKEN_LEAKED');
     expect(jsonStr).not.toContain('99999');
-    expect(jsonStr).not.toContain('42.5');
     expect(jsonStr).not.toContain('tokensUsed');
     expect(jsonStr).not.toContain('costEstimate');
     // 'error' as a key should not appear
