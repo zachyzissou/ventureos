@@ -68,7 +68,6 @@ ventureos/
 ### In Progress
 
 - 🔄 **Next.js Hybrid Phase 3:** migrate authenticated interactive surfaces incrementally (#457)
-- 🔄 **Installer Onboarding Phase 2:** add post-install verification mode and clearer reports (#459)
 
 ### Next Up
 
@@ -110,7 +109,6 @@ Implementation milestones (visible incremental rollout):
 ### Now (active)
 
 - Next.js hybrid phase 3 migration workstream (#457)
-- Installer onboarding phase 2 verification/reporting improvements (#459)
 - Living roadmap stewardship in issue #138
 
 ### Next
