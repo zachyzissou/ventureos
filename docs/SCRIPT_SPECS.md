@@ -309,6 +309,7 @@ bash scripts/openclaw-local-ready-cron.sh
   - `OPENCLAW_LOCAL_READY_PRUNE_KEEP`
   - `OPENCLAW_LOCAL_READY_MAX_AGE_MIN`
   - `OPENCLAW_LOCAL_READY_PROFILE` (`quick|full|bridge`)
+  - `OPENCLAW_LOCAL_READY_DASHBOARD_URL` (must start with `http://` or `https://`)
 - Validates env inputs and exits `2` on invalid values before running refresh.
 - Forwards any additional CLI flags to the underlying refresh script (last flag wins).
 
@@ -335,6 +336,13 @@ bash scripts/vb003-watchdog.sh
   - `budget-check`
   - `routing-healthcheck`
   - `monitoring`
+- Applies active alert gating on a short window (`VB003_WATCHDOG_ALERT_WINDOW_MINUTES`, default `90`):
+  - flags when a job has all-fail behavior in the active window
+  - flags when a job has high active-window failure rate (`>=2` failures and `>=50%` fail rate)
+- Applies per-job start staleness thresholds to avoid false positives on lower-frequency jobs:
+  - `budget-check`: stale if no start for >30h
+  - `routing-healthcheck`: stale if no start for >90m
+  - `monitoring`: stale if no start for >45m
 - Emits timestamped + latest watchdog artifacts:
   - `runtime/reports/model-orchestration/vb003-watchdog-<timestamp>.json`
   - `runtime/reports/model-orchestration/vb003-watchdog-<timestamp>.md`
@@ -348,6 +356,7 @@ bash scripts/vb003-watchdog.sh
 - `VB003_CRON_RUN_DIR`
 - `VB003_TARGET_HOURS` (default `168`)
 - `VB003_WATCHDOG_LOOKBACK_MINUTES` (default `360`)
+- `VB003_WATCHDOG_ALERT_WINDOW_MINUTES` (default `90`)
 - `VB003_WATCHDOG_MAX_TELEMETRY_AGE_MINUTES` (default `480`)
 
 ---

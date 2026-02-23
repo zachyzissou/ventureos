@@ -101,7 +101,7 @@ NEW_CRON=$(cat <<EOF
 */30 * * * * $RUNNER routing-healthcheck >> $LOG_BASE/cron-routing-healthcheck.log 2>&1
 
 # 12) Local OpenClaw readiness refresh — every 4 hours
-15 */4 * * * $RUNNER openclaw-local-ready >> $LOG_BASE/cron-openclaw-local-ready.log 2>&1
+15 */4 * * * OPENCLAW_LOCAL_READY_DASHBOARD_URL=http://127.0.0.1:7000 $RUNNER openclaw-local-ready >> $LOG_BASE/cron-openclaw-local-ready.log 2>&1
 
 # 13) VB-003 telemetry synthesis — every 6 hours
 30 */6 * * * $RUNNER vb003-telemetry-synthesis >> $LOG_BASE/cron-vb003-telemetry.log 2>&1

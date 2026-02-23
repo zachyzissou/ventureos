@@ -76,6 +76,7 @@
 - **Session:** isolated
 - **Agent:** nexus
 - **Payload:** run `scripts/openclaw-local-ready-cron.sh`
+- **Default dashboard URL in managed cron:** `http://127.0.0.1:7000` via `OPENCLAW_LOCAL_READY_DASHBOARD_URL`
 - **Output:** refreshed `docs/LOCAL_INTEGRATION_READY.md` and paired JSON/MD/SVG artifacts
 - **Status artifact:** `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - **Retention:** defaults to keep newest 14 artifact sets (configurable via env)

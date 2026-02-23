@@ -17,6 +17,7 @@ LATEST_TELEMETRY="${VB003_TELEMETRY_LATEST_JSON:-$OUT_DIR/vb003-telemetry-latest
 CRON_RUN_DIR="${VB003_CRON_RUN_DIR:-$WORKSPACE_ROOT/runtime/logs/cron-runs}"
 TARGET_HOURS="${VB003_TARGET_HOURS:-168}"
 LOOKBACK_MINUTES="${VB003_WATCHDOG_LOOKBACK_MINUTES:-360}"
+ALERT_WINDOW_MINUTES="${VB003_WATCHDOG_ALERT_WINDOW_MINUTES:-90}"
 MAX_TELEMETRY_AGE_MINUTES="${VB003_WATCHDOG_MAX_TELEMETRY_AGE_MINUTES:-480}"
 
 if ! [[ "$TARGET_HOURS" =~ ^[0-9]+$ ]] || [[ "$TARGET_HOURS" -lt 1 ]]; then
@@ -25,6 +26,10 @@ if ! [[ "$TARGET_HOURS" =~ ^[0-9]+$ ]] || [[ "$TARGET_HOURS" -lt 1 ]]; then
 fi
 if ! [[ "$LOOKBACK_MINUTES" =~ ^[0-9]+$ ]] || [[ "$LOOKBACK_MINUTES" -lt 1 ]]; then
   echo "Invalid VB003_WATCHDOG_LOOKBACK_MINUTES: $LOOKBACK_MINUTES" >&2
+  exit 2
+fi
+if ! [[ "$ALERT_WINDOW_MINUTES" =~ ^[0-9]+$ ]] || [[ "$ALERT_WINDOW_MINUTES" -lt 1 ]]; then
+  echo "Invalid VB003_WATCHDOG_ALERT_WINDOW_MINUTES: $ALERT_WINDOW_MINUTES" >&2
   exit 2
 fi
 if ! [[ "$MAX_TELEMETRY_AGE_MINUTES" =~ ^[0-9]+$ ]] || [[ "$MAX_TELEMETRY_AGE_MINUTES" -lt 1 ]]; then
@@ -40,6 +45,7 @@ python3 - <<'PY' \
   "$CRON_RUN_DIR" \
   "$TARGET_HOURS" \
   "$LOOKBACK_MINUTES" \
+  "$ALERT_WINDOW_MINUTES" \
   "$MAX_TELEMETRY_AGE_MINUTES" \
   "$AGENT_ID" \
   "$WORKSPACE_ROOT"
@@ -54,12 +60,14 @@ latest_telemetry = os.path.abspath(sys.argv[2])
 cron_run_dir = os.path.abspath(sys.argv[3])
 target_hours = int(sys.argv[4])
 lookback_minutes = int(sys.argv[5])
-max_age_minutes = int(sys.argv[6])
-agent_id = sys.argv[7]
-workspace_root = os.path.abspath(sys.argv[8])
+alert_window_minutes = int(sys.argv[6])
+max_age_minutes = int(sys.argv[7])
+agent_id = sys.argv[8]
+workspace_root = os.path.abspath(sys.argv[9])
 
 now = datetime.now(timezone.utc)
 cutoff = now - timedelta(minutes=lookback_minutes)
+alert_cutoff = now - timedelta(minutes=alert_window_minutes)
 
 
 def parse_iso_z(ts):
@@ -132,9 +140,17 @@ if telemetry:
             closure_eta_utc = (start_dt + timedelta(hours=target_hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 job_window = {}
+alert_window = {}
+staleness_threshold_minutes = {
+    "budget-check": 1800,        # 30h (daily schedule + buffer)
+    "routing-healthcheck": 90,   # every 30m + buffer
+    "monitoring": 45,            # every 15m + buffer
+}
 for job in ("budget-check", "routing-healthcheck", "monitoring"):
     path = os.path.join(cron_run_dir, f"{job}.jsonl")
     stats = {"starts": 0, "success": 0, "failure": 0}
+    alert_stats = {"starts": 0, "success": 0, "failure": 0}
+    latest_start_dt = None
     if os.path.exists(path):
         try:
             with open(path, "r", encoding="utf-8") as fh:
@@ -151,17 +167,44 @@ for job in ("budget-check", "routing-healthcheck", "monitoring"):
                     event = rec.get("event")
                     if event == "start":
                         stats["starts"] += 1
+                        if latest_start_dt is None or ts > latest_start_dt:
+                            latest_start_dt = ts
                     elif event == "success":
                         stats["success"] += 1
-                    elif event == "failure":
+                    elif event in ("failure", "timeout"):
                         stats["failure"] += 1
+                    if ts >= alert_cutoff:
+                        if event == "start":
+                            alert_stats["starts"] += 1
+                            if latest_start_dt is None or ts > latest_start_dt:
+                                latest_start_dt = ts
+                        elif event == "success":
+                            alert_stats["success"] += 1
+                        elif event in ("failure", "timeout"):
+                            alert_stats["failure"] += 1
         except OSError:
             issues.append(f"log_unreadable:{job}")
     else:
         issues.append(f"log_missing:{job}")
-    if stats["failure"] > 0:
-        issues.append(f"recent_failures:{job}:{stats['failure']}")
+    if alert_stats["starts"] > 0:
+        fail_rate = alert_stats["failure"] / max(1, alert_stats["starts"])
+        if alert_stats["success"] == 0 and alert_stats["failure"] > 0:
+            issues.append(f"active_window_all_fail:{job}:{alert_stats['failure']}")
+        elif alert_stats["failure"] >= 2 and fail_rate >= 0.5:
+            issues.append(f"active_window_high_fail_rate:{job}:{alert_stats['failure']}/{alert_stats['starts']}")
+
+    if latest_start_dt is None:
+        issues.append(f"no_recent_start:{job}")
+    else:
+        age_minutes = (now - latest_start_dt).total_seconds() / 60.0
+        threshold = staleness_threshold_minutes.get(job, lookback_minutes)
+        if age_minutes > threshold:
+            issues.append(f"run_stale:{job}:{round(age_minutes,1)}m>{threshold}m")
     job_window[job] = stats
+    alert_window[job] = {
+        **alert_stats,
+        "latest_start_utc": latest_start_dt.strftime("%Y-%m-%dT%H:%M:%SZ") if latest_start_dt else None,
+    }
 
 if coverage_hours >= target_hours and verification_state == "ready_for_closure_review":
     closure_ready = True
@@ -192,6 +235,11 @@ report = {
         "cutoff_utc": cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "jobs": job_window,
     },
+    "alert_window": {
+        "lookback_minutes": alert_window_minutes,
+        "cutoff_utc": alert_cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "jobs": alert_window,
+    },
     "agent_id": agent_id,
     "workspace_root": workspace_root,
 }
@@ -210,6 +258,12 @@ jobs_md = []
 for name in ("budget-check", "routing-healthcheck", "monitoring"):
     m = job_window.get(name, {})
     jobs_md.append(
+        f"- {name}: starts={m.get('starts', 0)}, success={m.get('success', 0)}, failure={m.get('failure', 0)}"
+    )
+alert_jobs_md = []
+for name in ("budget-check", "routing-healthcheck", "monitoring"):
+    m = alert_window.get(name, {})
+    alert_jobs_md.append(
         f"- {name}: starts={m.get('starts', 0)}, success={m.get('success', 0)}, failure={m.get('failure', 0)}"
     )
 
@@ -232,6 +286,9 @@ md = f"""# VB-003 Watchdog ({report['generated_at_utc']})
 
 ## Job Health (last {lookback_minutes} minutes)
 {os.linesep.join(jobs_md)}
+
+## Active Alert Window (last {alert_window_minutes} minutes)
+{os.linesep.join(alert_jobs_md)}
 
 ## Issues
 {issues_md}
