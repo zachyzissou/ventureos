@@ -164,6 +164,21 @@ ui_section() {
   fi
 }
 
+ui_phase() {
+  local index="$1"
+  local total="$2"
+  local title="$3"
+  if [[ "$ONBOARDING_MODE" != "interactive" ]]; then
+    return 0
+  fi
+  if [[ "$UI_ENABLED" == "1" ]]; then
+    printf '\n\033[1;35m[Phase %s/%s]\033[0m %s\n' "$index" "$total" "$title"
+  else
+    printf '\n[Phase %s/%s] %s\n' "$index" "$total" "$title"
+  fi
+  ui_sleep 0.05
+}
+
 ui_step() {
   local marker="$1"
   local label="$2"
@@ -221,6 +236,10 @@ run_step() {
   local detail="$2"
   shift 2
   local next_command=""
+  local started_epoch=0
+  local finished_epoch=0
+  local elapsed_sec=0
+  local detail_with_duration="$detail"
   if [[ "${1:-}" == "--next-command" ]]; then
     if [[ $# -lt 3 ]]; then
       echo "run_step missing command after --next-command" >&2
@@ -245,14 +264,25 @@ run_step() {
     return 0
   fi
 
+  if [[ "$ONBOARDING_MODE" == "interactive" ]]; then
+    echo "RUN   $step :: $detail"
+  fi
+  started_epoch="$(date +%s)"
+
   if "$@"; then
-    echo "PASS  $step :: $detail"
-    record_step "$step" "pass" "$detail" "$next_command"
+    finished_epoch="$(date +%s)"
+    elapsed_sec=$((finished_epoch - started_epoch))
+    detail_with_duration="$detail (duration=${elapsed_sec}s)"
+    echo "PASS  $step :: $detail_with_duration"
+    record_step "$step" "pass" "$detail_with_duration" "$next_command"
     return 0
   fi
 
-  echo "FAIL  $step :: $detail" >&2
-  record_step "$step" "fail" "$detail" "$next_command"
+  finished_epoch="$(date +%s)"
+  elapsed_sec=$((finished_epoch - started_epoch))
+  detail_with_duration="$detail (duration=${elapsed_sec}s)"
+  echo "FAIL  $step :: $detail_with_duration" >&2
+  record_step "$step" "fail" "$detail_with_duration" "$next_command"
   return 1
 }
 
@@ -1454,6 +1484,7 @@ if [[ "$NON_INTERACTIVE" == "0" && stdin_is_tty ]]; then
     echo "Invalid dashboard URL: $discovery_dashboard_url" >&2
     exit 2
   fi
+  ui_phase "1" "6" "Discovery + recommendations"
   ui_section "VentureOS Onboarding"
   echo "Repo: $REPO_ROOT"
   echo "Platform: $OS_NAME"
@@ -1487,6 +1518,7 @@ if [[ "$NON_INTERACTIVE" == "0" && stdin_is_tty ]]; then
     exit 0
   fi
 
+  ui_phase "2" "6" "Preference selection"
   if [[ -z "$EXPLICIT_PRESET" ]]; then
     ui_step "1/7" "Choose install preset"
     INSTALL_PRESET="$(prompt_value "Install preset (full|bridge|minimal)" "$INSTALL_PRESET")"
@@ -1573,6 +1605,7 @@ if ! openclaw_local_validate_dashboard_url "$dashboard_url"; then
   exit 2
 fi
 
+ui_phase "3" "6" "Plan + compatibility review"
 ui_section "Execution Plan"
 echo "Install plan:"
 echo "  preset: $INSTALL_PRESET"
@@ -1642,6 +1675,7 @@ else
   INSTALL_FAILED=1
 fi
 
+ui_phase "4" "6" "Rollback safety checkpoint"
 ui_section "Preflight Safety"
 if [[ "$CAPTURE_RESTORE_POINT" == "1" ]]; then
   if [[ "$DRY_RUN" == "1" ]]; then
@@ -1680,6 +1714,7 @@ if [[ "$INSTALL_FAILED" != "0" ]]; then
   exit 1
 fi
 
+ui_phase "5" "6" "Installer execution"
 if [[ "$PREFLIGHT_ONLY" == "1" ]]; then
   echo "PREFLIGHT  installer-steps :: preflight-only mode; apply steps skipped"
   record_step "dashboard-install" "planned" "preflight-only mode; dashboard installer not executed" "Re-run without --preflight-only to apply"
@@ -1849,6 +1884,7 @@ else
 fi
 fi
 
+ui_phase "6" "6" "Evidence + summary artifacts"
 mkdir -p "$REPORT_DIR"
 timestamp_utc="$(date -u +%Y%m%dT%H%M%SZ)"
 report_file="$REPORT_DIR/ventureos-install-${timestamp_utc}.md"
