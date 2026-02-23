@@ -1,0 +1,47 @@
+name: baseline-ts-ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-typecheck-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Rebuild native dependencies
+        run: npm rebuild better-sqlite3
+      - name: Type check
+        run: npx tsc -p tsconfig.json --noEmit
+      - name: Lint
+        run: |
+          if npm pkg get scripts.lint > /dev/null 2>&1; then
+            npm run -s lint
+          elif npm pkg get scripts.lint:check > /dev/null 2>&1; then
+            npm run -s lint:check
+          else
+            echo "No lint script configured; skipping." 
+          fi
+      - name: Test
+        run: |
+          if npm pkg get scripts.test > /dev/null 2>&1; then
+            npm run -s test
+          else
+            echo "No test script configured; skipping."
+          fi
+      - name: Build
+        run: |
+          if npm pkg get scripts.build > /dev/null 2>&1; then
+            npm run -s build
+          else
+            echo "No build script configured; skipping."
+          fi
