@@ -55,6 +55,7 @@ UI_ENABLED=0
 DISCOVER_DASHBOARD_STATE="unknown"
 DISCOVER_OPENCLAW_STATE="unknown"
 DISCOVER_BRIDGE_ENV_STATE="unknown"
+DISCOVER_BRIDGE_LAUNCHAGENT_STATE="unknown"
 DISCOVER_CRON_STATE="unknown"
 DISCOVER_VENTURE_CRON_STATE="unknown"
 
@@ -526,6 +527,7 @@ discover_existing_state() {
   DISCOVER_DASHBOARD_STATE="unreachable"
   DISCOVER_OPENCLAW_STATE="missing"
   DISCOVER_BRIDGE_ENV_STATE="missing"
+  DISCOVER_BRIDGE_LAUNCHAGENT_STATE="unavailable"
   DISCOVER_CRON_STATE="empty"
   DISCOVER_VENTURE_CRON_STATE="not-installed"
 
@@ -539,6 +541,14 @@ discover_existing_state() {
 
   if [[ -f "$BRIDGE_ENV" ]]; then
     DISCOVER_BRIDGE_ENV_STATE="present"
+  fi
+
+  if [[ "$OS_NAME" == "Darwin" && -f "$BRIDGE_INSTALL_SCRIPT" ]]; then
+    if bash "$BRIDGE_INSTALL_SCRIPT" --bridge-env "$BRIDGE_ENV" --status >/dev/null 2>&1; then
+      DISCOVER_BRIDGE_LAUNCHAGENT_STATE="healthy"
+    else
+      DISCOVER_BRIDGE_LAUNCHAGENT_STATE="unhealthy"
+    fi
   fi
 
   if command -v crontab >/dev/null 2>&1; then
@@ -561,6 +571,9 @@ discover_existing_state() {
   ui_section "Discovery"
   ui_state_line "openclaw dir" "$DISCOVER_OPENCLAW_STATE" "$OPENCLAW_DIR"
   ui_state_line "bridge env" "$DISCOVER_BRIDGE_ENV_STATE" "$BRIDGE_ENV"
+  if [[ "$OS_NAME" == "Darwin" ]]; then
+    ui_state_line "bridge launchagent" "$DISCOVER_BRIDGE_LAUNCHAGENT_STATE"
+  fi
   ui_state_line "dashboard health" "$DISCOVER_DASHBOARD_STATE" "$dashboard_url"
   ui_state_line "user crontab" "$DISCOVER_CRON_STATE"
   ui_state_line "ventureos managed cron block" "$DISCOVER_VENTURE_CRON_STATE"
@@ -711,7 +724,9 @@ generate_integration_adoption_plan() {
       record_adoption_target "bridge-env-auth-source" "adopt" "$bridge_env_exists" "$BRIDGE_ENV" "platform does not run bridge launchagent installer"
     fi
   else
-    if [[ "$SKIP_BRIDGE_LAUNCHAGENT" == "0" && "$OS_NAME" == "Darwin" ]]; then
+    if [[ "$SKIP_BRIDGE_LAUNCHAGENT" == "0" && "$OS_NAME" == "Darwin" && "$DISCOVER_BRIDGE_LAUNCHAGENT_STATE" == "healthy" ]]; then
+      record_adoption_target "bridge-env-auth-source" "adopt" "$bridge_env_exists" "$BRIDGE_ENV" "bridge env missing but existing launchagent is healthy; installer adopts existing bridge state"
+    elif [[ "$SKIP_BRIDGE_LAUNCHAGENT" == "0" && "$OS_NAME" == "Darwin" ]]; then
       record_adoption_target "bridge-env-auth-source" "skip" "$bridge_env_exists" "$BRIDGE_ENV" "bridge env missing; manual creation required before launchagent install"
     else
       record_adoption_target "bridge-env-auth-source" "skip" "$bridge_env_exists" "$BRIDGE_ENV" "bridge integration skipped by plan/platform"
@@ -728,6 +743,8 @@ generate_integration_adoption_plan() {
       else
         record_adoption_target "bridge-launchagent-plist" "skip" "$launchagent_exists" "$launchagent_plist" "bridge launchagent step skipped"
       fi
+    elif [[ "$bridge_env_exists" == "false" && "$DISCOVER_BRIDGE_LAUNCHAGENT_STATE" == "healthy" ]]; then
+      record_adoption_target "bridge-launchagent-plist" "adopt" "$launchagent_exists" "$launchagent_plist" "bridge env missing; adopt existing healthy launchagent state"
     else
       if [[ "$launchagent_exists" == "true" ]]; then
         record_adoption_target "bridge-launchagent-plist" "merge" "$launchagent_exists" "$launchagent_plist" "refresh launchagent without destructive overwrite"
@@ -1381,9 +1398,14 @@ if [[ "$SKIP_BRIDGE_LAUNCHAGENT" == "0" ]]; then
     echo "SKIP  bridge-launchagent :: not supported on $OS_NAME"
     record_step "bridge-launchagent" "skipped" "bridge LaunchAgent installer is macOS-only" "Use macOS for LaunchAgent install"
   elif [[ ! -f "$BRIDGE_ENV" ]]; then
-    echo "FAIL  bridge-launchagent :: missing bridge env file: $BRIDGE_ENV" >&2
-    record_step "bridge-launchagent" "fail" "missing bridge env file" "Create bridge env file or pass --skip-bridge-launchagent"
-    INSTALL_FAILED=1
+    if bash "$BRIDGE_INSTALL_SCRIPT" --bridge-env "$BRIDGE_ENV" --status >/dev/null 2>&1; then
+      echo "PASS  bridge-launchagent :: bridge env missing; adopted existing healthy launchagent"
+      record_step "bridge-launchagent" "pass" "bridge env missing; adopted existing healthy launchagent" "Create bridge env only when launchagent reconfiguration is required"
+    else
+      echo "FAIL  bridge-launchagent :: missing bridge env file and no healthy launchagent to adopt: $BRIDGE_ENV" >&2
+      record_step "bridge-launchagent" "fail" "missing bridge env file and no healthy launchagent to adopt" "Create bridge env file or pass --skip-bridge-launchagent"
+      INSTALL_FAILED=1
+    fi
   else
     if ! run_step "bridge-launchagent" "scripts/install-bridge-launchagent.sh" \
       bash "$BRIDGE_INSTALL_SCRIPT" --bridge-env "$BRIDGE_ENV"; then
