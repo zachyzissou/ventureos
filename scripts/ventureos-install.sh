@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib/openclaw-local-defaults.sh"
 
 OS_NAME="${VENTUREOS_INSTALL_OS:-$(uname)}"
 NON_INTERACTIVE=0
@@ -90,7 +91,7 @@ Options:
                             Revert configs from a prior restore point and exit
   --preset <name>           Install preset: full|bridge|minimal (default: full)
   --dashboard-port <port>   Dashboard port (default: 7000)
-  --dashboard-url <url>     Override readiness dashboard URL (default: http://127.0.0.1:<dashboard-port>)
+  --dashboard-url <url>     Override readiness dashboard URL (default: canonical local URL policy)
   --profile <name>          Readiness profile: quick|full|bridge (default: full)
   --bridge-env <path>       Bridge env file path (default: config/bridge.env)
   --bridge-token-file <p>   Bridge token file path forwarded to readiness refresh
@@ -659,11 +660,11 @@ prompt_run_toggle() {
 }
 
 resolve_dashboard_url() {
-  if [[ -n "$DASHBOARD_URL_OVERRIDE" ]]; then
-    echo "$DASHBOARD_URL_OVERRIDE"
-  else
-    echo "http://127.0.0.1:${DASHBOARD_PORT}"
-  fi
+  openclaw_local_resolve_dashboard_url \
+    "$DASHBOARD_URL_OVERRIDE" \
+    "${OPENCLAW_LOCAL_READY_DASHBOARD_URL:-}" \
+    "${DASHBOARD_URL:-}" \
+    "$DASHBOARD_PORT"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -814,6 +815,10 @@ fi
 
 if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
   discovery_dashboard_url="$(resolve_dashboard_url)"
+  if ! openclaw_local_validate_dashboard_url "$discovery_dashboard_url"; then
+    echo "Invalid dashboard URL: $discovery_dashboard_url" >&2
+    exit 2
+  fi
   ui_section "VentureOS Onboarding"
   echo "Repo: $REPO_ROOT"
   echo "Platform: $OS_NAME"
@@ -921,6 +926,10 @@ if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
 fi
 
 dashboard_url="$(resolve_dashboard_url)"
+if ! openclaw_local_validate_dashboard_url "$dashboard_url"; then
+  echo "Invalid dashboard URL: $dashboard_url" >&2
+  exit 2
+fi
 
 ui_section "Execution Plan"
 echo "Install plan:"

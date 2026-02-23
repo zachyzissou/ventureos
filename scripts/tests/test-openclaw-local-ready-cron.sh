@@ -37,6 +37,7 @@ assert args == [
     '--prune-keep', '14',
     '--max-age-min', '360',
     '--profile', 'full',
+    '--dashboard-url', 'http://127.0.0.1:7000',
     '--skip-smoke',
 ], args
 print('OPENCLAW_LOCAL_READY_CRON_DEFAULTS_OK')

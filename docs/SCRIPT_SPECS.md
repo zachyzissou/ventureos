@@ -218,7 +218,7 @@ node scripts/spawn-with-verification.mjs \
 **Usage:**
 ```bash
 bash scripts/openclaw-local-smoke.sh \
-  --dashboard-url http://127.0.0.1:8001 \
+  --dashboard-url http://127.0.0.1:7000 \
   --token-file dashboard/data/.api-token \
   --report-dir runtime/reports/openclaw-local-smoke
 ```
@@ -243,7 +243,16 @@ bash scripts/openclaw-local-smoke.sh \
   - Retry controls: `SMOKE_HTTP_RETRY_MAX` (default `2`), `SMOKE_HTTP_RETRY_BASE_SEC` (default `1`), `SMOKE_HTTP_RETRY_MAX_DELAY_SEC` (default `60`).
 - Gateway status check requires a healthy runtime signal (`RPC probe: ok` or `Listening:`) to pass.
 - Emits timestamped JSON + markdown + SVG reports to `runtime/reports/openclaw-local-smoke/`.
-- JSON summary includes `verdict`, `readinessScore`, `confidence`; each check includes `group`, `severity`, `likelyCause`, and `nextCommand`.
+- Uses canonical dashboard URL resolution policy:
+  - `--dashboard-url`
+  - `OPENCLAW_LOCAL_READY_DASHBOARD_URL`
+  - `DASHBOARD_URL` (legacy)
+  - fallback `http://127.0.0.1:${DASHBOARD_PORT:-7000}`
+- Token guardrails:
+  - validates `.api-token` format
+  - auto-repairs safe malformed states with explicit logging
+  - emits non-secret auth diagnostics (`tokenSource`, `tokenHealth`, `tokenRepairAction`)
+- JSON summary includes `verdict`, `readinessScore`, `confidence`, and `requiredCheckStatusMap`; each check includes `group`, `severity`, `likelyCause`, and `nextCommand`.
 - Exits with code `2` when any required check fails.
 
 **Regression test:**
@@ -259,13 +268,14 @@ bash scripts/tests/test-openclaw-local-smoke.sh
 **Usage:**
 ```bash
 bash scripts/refresh-local-integration-ready.sh \
-  --dashboard-url http://127.0.0.1:8001 \
+  --dashboard-url http://127.0.0.1:7000 \
   --token-file dashboard/data/.api-token \
   --report-dir runtime/reports/openclaw-local-smoke
 ```
 
 **Behavior:**
 - Runs `scripts/openclaw-local-smoke.sh` (unless `--skip-smoke` is set).
+- Applies canonical dashboard URL policy when `--dashboard-url` is not provided.
 - Enforces strict latest JSON/MD/SVG timestamp pairing.
 - Validates required smoke JSON schema before rendering readiness markdown.
 - Supports `--history-limit <n>` to control trend rows in the output.

@@ -260,6 +260,12 @@ assert summary.get("verdict") == "go", summary
 assert isinstance(summary.get("readinessScore"), int), summary
 assert summary.get("confidence") in {"high", "medium", "low"}, summary
 assert summary.get("profile") == "full", summary
+required_map = summary.get("requiredCheckStatusMap", {})
+assert isinstance(required_map, dict), summary
+assert required_map.get("dashboard-token") == "pass", required_map
+auth = payload.get("auth", {})
+assert auth.get("tokenSource") == "token-file", auth
+assert auth.get("tokenHealth") in {"ok", "repaired"}, auth
 
 check = next(c for c in payload.get("checks", []) if c["id"] == "dashboard-services")
 for key in ("group", "severity", "likelyCause", "nextCommand"):
@@ -438,6 +444,92 @@ assert summary.get("status") == "pass", summary
 checks = {c["id"]: c for c in payload.get("checks", [])}
 assert checks["dashboard-services"]["status"] == "pass", checks["dashboard-services"]
 print("OPENCLAW_LOCAL_SMOKE_RETRY_429_OK")
+PY
+
+REPORT_DIR_URL_POLICY="$TMP_DIR/reports-url-policy"
+DASHBOARD_PORT="$PORT" OPENCLAW_LOCAL_READY_DASHBOARD_URL="http://127.0.0.1:$PORT" DASHBOARD_URL="http://127.0.0.1:1" bash "$SMOKE_SCRIPT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_URL_POLICY" \
+  --profile quick \
+  --skip-openclaw-cli \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-url-policy.out
+
+python3 - "$REPORT_DIR_URL_POLICY" "$PORT" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+port = sys.argv[2]
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing url-policy json report"
+payload = json.loads(json_reports[-1].read_text())
+assert payload.get("dashboardUrl") == f"http://127.0.0.1:{port}", payload
+print("OPENCLAW_LOCAL_SMOKE_URL_POLICY_OK")
+PY
+
+REPAIR_TOKEN_FILE="$TMP_DIR/token-repair.txt"
+printf "  test-token  \n" > "$REPAIR_TOKEN_FILE"
+REPORT_DIR_TOKEN_REPAIR="$TMP_DIR/reports-token-repair"
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$REPAIR_TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_TOKEN_REPAIR" \
+  --profile quick \
+  --skip-openclaw-cli \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-token-repair.out
+
+python3 - "$REPORT_DIR_TOKEN_REPAIR" "$REPAIR_TOKEN_FILE" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+token_file = Path(sys.argv[2])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing token-repair json report"
+payload = json.loads(json_reports[-1].read_text())
+auth = payload.get("auth", {})
+assert auth.get("tokenHealth") == "repaired", auth
+assert auth.get("tokenRepairAction") in {"normalized-single-line", "collapsed-duplicate-lines"}, auth
+assert token_file.read_text(encoding="utf-8") == "test-token\n"
+print("OPENCLAW_LOCAL_SMOKE_TOKEN_REPAIR_OK")
+PY
+
+BAD_TOKEN_FILE="$TMP_DIR/token-bad.txt"
+printf "token-one\ntoken-two\n" > "$BAD_TOKEN_FILE"
+REPORT_DIR_TOKEN_BAD="$TMP_DIR/reports-token-bad"
+set +e
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$PORT" \
+  --token-file "$BAD_TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_TOKEN_BAD" \
+  --profile quick \
+  --skip-openclaw-cli \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-token-bad.out 2>&1
+TOKEN_BAD_RC=$?
+set -e
+if [[ "$TOKEN_BAD_RC" -ne 2 ]]; then
+  echo "Expected malformed token run to fail with exit 2, got $TOKEN_BAD_RC" >&2
+  exit 1
+fi
+
+python3 - "$REPORT_DIR_TOKEN_BAD" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing token-bad json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("requiredFailures", 0) >= 1, summary
+auth = payload.get("auth", {})
+assert auth.get("tokenHealth") == "invalid", auth
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["dashboard-token"]["status"] == "fail", checks["dashboard-token"]
+print("OPENCLAW_LOCAL_SMOKE_TOKEN_GUARDRAIL_FAILURE_OK")
 PY
 
 REPORT_DIR_OPENCLAW_HEALTHY="$TMP_DIR/reports-openclaw-healthy"

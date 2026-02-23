@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib/openclaw-local-defaults.sh"
 SMOKE_SCRIPT="$REPO_ROOT/scripts/openclaw-local-smoke.sh"
 REPORT_DIR="${SMOKE_REPORT_DIR:-$REPO_ROOT/runtime/reports/openclaw-local-smoke}"
 OUTPUT_DOC="$REPO_ROOT/docs/LOCAL_INTEGRATION_READY.md"
@@ -11,6 +12,7 @@ PRUNE_KEEP=0
 MAX_AGE_MIN="${OPENCLAW_LOCAL_READY_MAX_AGE_MIN:-0}"
 RUN_SMOKE=1
 SMOKE_ARGS=()
+DASHBOARD_URL_FLAG_SEEN=0
 
 usage() {
   cat <<EOF_USAGE
@@ -80,7 +82,13 @@ while [[ $# -gt 0 ]]; do
       RUN_SMOKE=0
       shift
       ;;
-    --dashboard-url|--token-file|--timeout-sec|--profile|--bridge-url|--bridge-token-file)
+    --dashboard-url)
+      need_value "$@"
+      DASHBOARD_URL_FLAG_SEEN=1
+      SMOKE_ARGS+=("$1" "$2")
+      shift 2
+      ;;
+    --token-file|--timeout-sec|--profile|--bridge-url|--bridge-token-file)
       need_value "$@"
       SMOKE_ARGS+=("$1" "$2")
       shift 2
@@ -114,6 +122,18 @@ if ! [[ "$MAX_AGE_MIN" =~ ^[0-9]+$ ]]; then
   exit 2
 fi
 
+if [[ "$DASHBOARD_URL_FLAG_SEEN" == "0" ]]; then
+  dashboard_url="$(openclaw_local_resolve_dashboard_url "" "${OPENCLAW_LOCAL_READY_DASHBOARD_URL:-}" "${DASHBOARD_URL:-}" "${DASHBOARD_PORT:-7000}")"
+  if ! openclaw_local_validate_dashboard_url "$dashboard_url"; then
+    echo "Invalid dashboard URL: $dashboard_url" >&2
+    exit 2
+  fi
+  if [[ "${#SMOKE_ARGS[@]}" -gt 0 ]]; then
+    SMOKE_ARGS=(--dashboard-url "$dashboard_url" "${SMOKE_ARGS[@]}")
+  else
+    SMOKE_ARGS=(--dashboard-url "$dashboard_url")
+  fi
+fi
 if [[ "${#SMOKE_ARGS[@]}" -gt 0 ]]; then
   SMOKE_ARGS=(--report-dir "$REPORT_DIR" "${SMOKE_ARGS[@]}")
 else
@@ -200,6 +220,16 @@ is_stale = max_age_min > 0 and latest_age_seconds > max_age_min * 60
 guardrail_rc = 3 if is_stale else 0
 
 payload = json.loads(latest_json.read_text(encoding="utf-8"))
+dashboard_url = str(payload.get("dashboardUrl", "unknown"))
+auth_payload = payload.get("auth")
+if isinstance(auth_payload, dict):
+    token_source = str(auth_payload.get("tokenSource", "unknown"))
+    token_health = str(auth_payload.get("tokenHealth", "unknown"))
+    token_repair = str(auth_payload.get("tokenRepairAction", "none"))
+else:
+    token_source = "unknown"
+    token_health = "unknown"
+    token_repair = "none"
 
 summary = payload.get("summary")
 checks = payload.get("checks")
@@ -288,6 +318,14 @@ failed_checks.sort(
         str(c.get("id", "")),
     )
 )
+required_checks = [c for c in checks if c.get("required") is True]
+optional_checks = [c for c in checks if c.get("required") is not True]
+required_status_map = summary.get("requiredCheckStatusMap")
+if not isinstance(required_status_map, dict):
+    required_status_map = {
+        str(c.get("id", "unknown")): str(c.get("status", "unknown"))
+        for c in required_checks
+    }
 
 def rel(path: pathlib.Path) -> str:
     try:
@@ -313,6 +351,10 @@ out = [
     f"- Readiness score: `{summary['readinessScore']}`",
     f"- Confidence: `{summary['confidence']}`",
     f"- Profile: `{summary['profile']}`",
+    f"- Dashboard URL: `{dashboard_url}`",
+    f"- Token source: `{token_source}`",
+    f"- Token health: `{token_health}`",
+    f"- Token repair action: `{token_repair}`",
     f"- Required failures: `{summary['requiredFailures']}`",
     f"- Required skipped: `{summary['requiredSkipped']}`",
     f"- Warnings: `{summary['warnings']}`",
@@ -351,6 +393,16 @@ else:
 
 out.extend([
     "",
+    "## Required Check Status Map",
+])
+if required_status_map:
+    for check_id in sorted(required_status_map.keys()):
+        out.append(f"- `{check_id}`: `{required_status_map[check_id]}`")
+else:
+    out.append("- (none)")
+
+out.extend([
+    "",
     f"## Trend (Last {len(history_rows)} Runs)",
     "| Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |",
     "|---|---|---:|---:|---:|---|",
@@ -359,10 +411,6 @@ for row in history_rows:
     out.append(
         f"| `{row['ts']}` | `{str(row['verdict']).upper()}` | {row['score']} | {row['requiredFailures']} | {row['warnings']} | `{row['bridge']}` |"
     )
-
-required_checks = [c for c in checks if c.get("required") is True]
-optional_checks = [c for c in checks if c.get("required") is not True]
-
 
 def format_check_line(check: dict) -> str:
     status = str(check.get("status", "unknown"))
@@ -485,6 +533,13 @@ status_payload = {
         "requiredFailures": summary.get("requiredFailures"),
         "warnings": summary.get("warnings"),
         "profile": summary.get("profile"),
+        "dashboardUrl": dashboard_url,
+        "requiredCheckStatusMap": required_status_map,
+    },
+    "auth": {
+        "tokenSource": token_source,
+        "tokenHealth": token_health,
+        "tokenRepairAction": token_repair,
     },
     "guardrails": {
         "maxAgeMin": max_age_min,
@@ -509,6 +564,10 @@ status_md_lines = [
     f"- Verdict: `{str(summary.get('verdict', 'unknown')).upper()}`",
     f"- Readiness score: `{summary.get('readinessScore', 'n/a')}`",
     f"- Confidence: `{summary.get('confidence', 'n/a')}`",
+    f"- Dashboard URL: `{dashboard_url}`",
+    f"- Token source: `{token_source}`",
+    f"- Token health: `{token_health}`",
+    f"- Token repair action: `{token_repair}`",
     f"- Required failures: `{summary.get('requiredFailures', 'n/a')}`",
     f"- Warnings: `{summary.get('warnings', 'n/a')}`",
     f"- Latest report timestamp: `{latest_ts}`",
@@ -527,6 +586,13 @@ if top_blockers:
         )
 else:
     status_md_lines.extend(["", "## Top Blockers", "- none"])
+
+status_md_lines.extend(["", "## Required Check Status Map"])
+if required_status_map:
+    for check_id in sorted(required_status_map.keys()):
+        status_md_lines.append(f"- `{check_id}`: `{required_status_map[check_id]}`")
+else:
+    status_md_lines.append("- none")
 
 status_md_path.write_text("\n".join(status_md_lines) + "\n", encoding="utf-8")
 
