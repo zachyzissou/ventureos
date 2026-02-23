@@ -68,7 +68,6 @@ ventureos/
 ### In Progress
 
 - 🔄 **Next.js Hybrid Phase 3:** migrate authenticated interactive surfaces incrementally (#457)
-- 🔄 **Readiness Cadence v3:** add stale-state guardrails and operator summary artifacts (#458)
 - 🔄 **Installer Onboarding Phase 2:** add post-install verification mode and clearer reports (#459)
 
 ### Next Up
@@ -111,7 +110,6 @@ Implementation milestones (visible incremental rollout):
 ### Now (active)
 
 - Next.js hybrid phase 3 migration workstream (#457)
-- Local integration readiness cadence v3 hardening (#458)
 - Installer onboarding phase 2 verification/reporting improvements (#459)
 - Living roadmap stewardship in issue #138
 
@@ -161,6 +159,17 @@ Non-interactive automation example:
 npm run openclaw:install -- --non-interactive --profile bridge
 ```
 
+Preset-based onboarding examples:
+```bash
+npm run openclaw:install -- --non-interactive --preset minimal
+npm run openclaw:install -- --non-interactive --preset bridge
+```
+
+Run onboarding with post-install verification gates enabled:
+```bash
+npm run openclaw:install -- --non-interactive --verify
+```
+
 Run deterministic local OpenClaw integration smoke checks:
 ```bash
 npm run openclaw:local-smoke
@@ -192,6 +201,7 @@ Reference docs and artifacts:
 - `runtime/reports/openclaw-local-smoke/`
 - `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
+- `runtime/reports/ventureos-install/` (installer onboarding reports with pass/fail + next command details)
 
 Current next steps (as of February 23, 2026):
 1. Run one command onboarding: `npm run openclaw:install`
