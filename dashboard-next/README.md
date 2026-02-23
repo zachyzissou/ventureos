@@ -29,6 +29,7 @@ The readiness page (`/readiness`) calls backend endpoints directly and supports:
 - `/readiness` (read-only): consumes `/api/openclaw-local-readiness`
 - `/overview` (read-only): consumes `/api/health`, `/api/services`, `/api/system`
 - `/logs` (read-only): consumes `/api/logs/sources`, `/api/logs/entries`
+- `/task-board` (interactive): consumes `/api/task-board`, `/api/task-board/summary`, and task mutation routes
 
 ## Parity Guard
 
@@ -36,7 +37,7 @@ The readiness page (`/readiness`) calls backend endpoints directly and supports:
 npm run dashboard:next:parity
 ```
 
-This runs parity guards for readiness, overview, and logs view-model mappings.
+This runs parity guards for readiness, overview, logs, and task-board view-model mappings.
 
 ## Migration Notes
 
