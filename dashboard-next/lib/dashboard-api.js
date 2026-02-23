@@ -13,6 +13,14 @@ export function buildAuthHeaders(token, extra = {}) {
   return headers;
 }
 
+async function readResponseJson(res) {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export async function loginWithToken(apiBase, token) {
   const base = normalizeApiBase(apiBase);
   const clean = String(token ?? "").trim();
@@ -26,14 +34,39 @@ export async function loginWithToken(apiBase, token) {
   if (!res.ok) throw new Error(`Login failed (${res.status})`);
 }
 
-export async function fetchDashboardJson(apiBase, path, token = "") {
+export async function requestDashboardJson(
+  apiBase,
+  path,
+  { method = "GET", token = "", body = undefined } = {},
+) {
   const base = normalizeApiBase(apiBase);
   if (!base) throw new Error("API base URL is required");
-  const res = await fetch(`${base}${path}`, {
-    method: "GET",
+  const headers = buildAuthHeaders(token);
+  const init = {
+    method,
     credentials: "include",
-    headers: buildAuthHeaders(token),
+    headers,
+  };
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(body);
+  }
+
+  const res = await fetch(`${base}${path}`, {
+    ...init,
   });
-  if (!res.ok) throw new Error(`${path} failed (${res.status})`);
-  return res.json();
+  if (!res.ok) {
+    const payload = await readResponseJson(res);
+    const detail =
+      payload && typeof payload.error === "string" ? payload.error : "";
+    if (detail) {
+      throw new Error(`${path} failed (${res.status}): ${detail}`);
+    }
+    throw new Error(`${path} failed (${res.status})`);
+  }
+  return readResponseJson(res);
+}
+
+export async function fetchDashboardJson(apiBase, path, token = "") {
+  return requestDashboardJson(apiBase, path, { method: "GET", token });
 }

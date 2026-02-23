@@ -2,12 +2,9 @@
 
 import { useMemo, useState } from "react";
 
-import {
-  DEFAULT_API_BASE,
-  fetchDashboardJson,
-  loginWithToken,
-  normalizeApiBase,
-} from "@/lib/dashboard-api";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { useDashboardSession } from "@/components/dashboard-session-context";
+import { fetchDashboardJson } from "@/lib/dashboard-api";
 import {
   normalizeLogEntriesPayload,
   normalizeLogSourcesPayload,
@@ -33,8 +30,12 @@ async function fetchEntries(apiBase, token, sourceId, opts) {
 }
 
 export default function LogsPage() {
-  const [apiBase, setApiBase] = useState(DEFAULT_API_BASE);
-  const [token, setToken] = useState("");
+  const {
+    normalizedApiBase,
+    token,
+    authenticateIfNeeded,
+  } = useDashboardSession();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sources, setSources] = useState([]);
@@ -51,10 +52,9 @@ export default function LogsPage() {
     setLoading(true);
     setError("");
     try {
-      const base = normalizeApiBase(apiBase);
-      if (!base) throw new Error("API base URL is required");
-      if (includeLogin && token.trim()) await loginWithToken(base, token);
-      const payload = await fetchSources(base, token);
+      if (!normalizedApiBase) throw new Error("API base URL is required");
+      if (includeLogin) await authenticateIfNeeded();
+      const payload = await fetchSources(normalizedApiBase, token);
       setSources(payload.sources);
       if (!selectedSource && payload.sources[0]?.id) {
         setSelectedSource(payload.sources[0].id);
@@ -71,11 +71,10 @@ export default function LogsPage() {
     setLoading(true);
     setError("");
     try {
-      const base = normalizeApiBase(apiBase);
-      if (!base) throw new Error("API base URL is required");
+      if (!normalizedApiBase) throw new Error("API base URL is required");
       if (!selectedSource) throw new Error("Select a log source first");
       const limitNum = Math.max(10, Math.min(2000, Number.parseInt(limit, 10) || 200));
-      const payload = await fetchEntries(base, token, selectedSource, {
+      const payload = await fetchEntries(normalizedApiBase, token, selectedSource, {
         limit: limitNum,
         search: search.trim(),
         level,
@@ -90,37 +89,17 @@ export default function LogsPage() {
   }
 
   return (
-    <main className="page">
-      <section className="hero">
-        <h1 className="title">Logs (Next Hybrid)</h1>
-        <p className="subtitle">
-          Read-only logs UI powered by backend routes <code>/api/logs/sources</code>{" "}
-          and <code>/api/logs/entries</code>.
-        </p>
-      </section>
-
-      <section className="card">
-        <h3>Connection</h3>
-        <div className="actions">
-          <input
-            type="text"
-            value={apiBase}
-            onChange={(e) => setApiBase(e.target.value)}
-            placeholder="Dashboard API base URL"
-          />
-          <input
-            type="text"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Optional token (used for login/header)"
-          />
-        </div>
-        <div className="actions">
+    <DashboardShell
+      title="Logs (Next Hybrid)"
+      subtitle="Read-only logs interface backed by /api/logs/sources and /api/logs/entries."
+      loadedAt={loadedAt}
+      actionButtons={(
+        <>
           <button
             disabled={loading}
             onClick={() => loadSources({ includeLogin: true })}
           >
-            {loading ? "Loading..." : "Login + Load Sources"}
+            {loading ? "Loading..." : "Authenticate + Load Sources"}
           </button>
           <button
             className="secondary"
@@ -129,10 +108,9 @@ export default function LogsPage() {
           >
             Load Sources Only
           </button>
-        </div>
-        {loadedAt ? <p className="muted">Last loaded: {loadedAt}</p> : null}
-      </section>
-
+        </>
+      )}
+    >
       {error ? (
         <section className="section card">
           <h3>Error</h3>
@@ -238,6 +216,6 @@ export default function LogsPage() {
           </table>
         )}
       </section>
-    </main>
+    </DashboardShell>
   );
 }
