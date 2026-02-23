@@ -1,10 +1,9 @@
 # ventureos
 
 > Protoss-inspired coordination runtime for multi-agent systems, operational playbooks, and dashboard tooling.
-> Status: `active`
+> Status: `Production` (actively maintained)
 
-![CI](https://img.shields.io/github/actions/workflow/status/zachyzissou/ventureos/.github/workflows/baseline-ts-ci.yml)
-![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
+![CI](https://github.com/zachyzissou/ventureos/actions/workflows/baseline-ts-ci.yml/badge.svg?branch=main)
 ![License](https://img.shields.io/github/license/zachyzissou/ventureos)
 ![Security](https://img.shields.io/badge/security-SECURITY.md-green)
 
@@ -131,7 +130,6 @@ Acceptance is expected from:
 - Scripted onboarding validations in CI and local runs
 - Workflow-specific gates in `.github/workflows`
 
-Coverage goal for touched areas: 70%+, with growth toward complete module coverage.
 
 ## Security
 
