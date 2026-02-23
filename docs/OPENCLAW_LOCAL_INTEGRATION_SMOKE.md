@@ -53,7 +53,7 @@ bash scripts/install-bridge-launchagent.sh --status
 Common options:
 ```bash
 bash scripts/openclaw-local-smoke.sh \
-  --dashboard-url http://127.0.0.1:8001 \
+  --dashboard-url http://127.0.0.1:7000 \
   --token-file dashboard/data/.api-token \
   --report-dir runtime/reports/openclaw-local-smoke \
   --profile bridge \
@@ -69,6 +69,9 @@ Profiles:
 ## Environment Overrides
 - `DASHBOARD_TOKEN`: inline dashboard token (skips reading token file)
 - `DASHBOARD_TOKEN_FILE`: default token file path
+- `OPENCLAW_LOCAL_READY_DASHBOARD_URL`: canonical dashboard URL override
+- `DASHBOARD_PORT`: fallback port when no dashboard URL override is provided (default: `7000`)
+- `DASHBOARD_URL`: legacy dashboard URL override (lower precedence than `OPENCLAW_LOCAL_READY_DASHBOARD_URL`)
 - `SMOKE_REPORT_DIR`: output directory for smoke reports
 - `SMOKE_HTTP_TIMEOUT_SEC`: per-request timeout
 - `SMOKE_HTTP_RETRY_MAX`: retry count for transient HTTP failures (default: `2`)
@@ -97,6 +100,9 @@ The JSON report includes machine-readable check metadata and readiness summary f
 - `summary.verdict`: `go|hold|blocked`
 - `summary.readinessScore`: `0..100`
 - `summary.confidence`: `high|medium|low`
+- `summary.requiredCheckStatusMap`: required check id -> `pass|fail|skipped`
+- `dashboardUrl`: resolved URL used for this run
+- `auth.tokenSource|tokenHealth|tokenRepairAction`: non-secret auth readiness diagnostics
 - Per-check metadata: `group`, `severity`, `likelyCause`, `nextCommand`
 - If a check fails with HTTP `429`, smoke classifies it as rate-limit pressure and emits a `sleep 60 && bash scripts/openclaw-local-smoke.sh --profile <profile>` next-command hint.
 

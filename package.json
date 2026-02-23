@@ -28,6 +28,7 @@
     "dashboard:next:start": "npm run start --workspace=dashboard-next",
     "dashboard:next:parity": "npm run parity:all --workspace=dashboard-next",
     "pr:queue:sweep": "bash scripts/pr-queue-sweep.sh",
+    "lint": "npm run docs:lint",
     "docs:lint": "python3 scripts/docs-lint.py",
     "roadmap:sync:check": "python3 scripts/roadmap-status-sync.py",
     "openclaw:local-smoke": "bash scripts/openclaw-local-smoke.sh",
