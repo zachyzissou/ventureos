@@ -576,6 +576,45 @@ bash scripts/tests/test-pr-queue-sweep.sh
 
 ---
 
+## 20a) pr-merge-readiness.sh
+**Purpose:** Evaluate merge readiness for a specific PR and emit exact blockers + next action.
+
+**Usage:**
+```bash
+bash scripts/pr-merge-readiness.sh --pr 483
+```
+
+JSON report output:
+```bash
+bash scripts/pr-merge-readiness.sh --pr 483 --json-out runtime/reports/pr-merge-readiness/pr-483.json
+```
+
+**Behavior:**
+- Reads a specific PR from `gh pr view`.
+- Evaluates merge blockers from:
+  - PR state / draft status
+  - review decision (`APPROVED` vs approval required)
+  - status checks (pending/failing)
+  - GitHub merge state when all other signals appear clear
+- Prints a human-readable summary:
+  - merge status (`merge-ready|blocked`)
+  - blocker list with `next` commands
+  - recommended next action
+- Emits machine-readable status marker:
+  - `PR_MERGE_READINESS_STATUS=merge-ready|blocked`
+- Exit behavior:
+  - `0`: merge-ready
+  - `3`: blocked
+  - `2`: invalid inputs
+- Supports deterministic fixture mode for tests via `PR_MERGE_READINESS_FIXTURE_JSON`.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-pr-merge-readiness.sh
+```
+
+---
+
 ## 21) roadmap-status-sync.py
 **Purpose:** Detect status drift between `README.md` active work and roadmap anchor issue `#138`.
 

@@ -22,6 +22,7 @@
 - **docs/STATUS.md** – current implementation status (archived pointer; live status in issue #138)
 - **docs/ROADMAP.md** – roadmap pointer (archived in-repo, live in issue #138)
 - **docs/ROADMAP_STATUS_SYNC.md** – README/roadmap drift rules + maintainer workflow
+- **docs/PR_MERGE_RUNBOOK.md** – PR merge readiness checks, blocker handling, and solo-maintainer fallback flow
 - **docs/PROJECT_PLAN.md** – milestones + success metrics
 - **docs/FEATURE_BACKLOG.md** – backlog by workstream
 - **docs/NEXUS_2_0_M2_AUTHORITY_PLANE.md** – M2 authority map, policy gate, and override path
