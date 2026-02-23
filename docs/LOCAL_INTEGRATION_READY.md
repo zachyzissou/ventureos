@@ -7,7 +7,7 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - Verdict: `GO`
 - Readiness score: `100`
 - Confidence: `high`
-- Profile: `bridge`
+- Profile: `full`
 - Dashboard URL: `http://127.0.0.1:7000`
 - Token source: `token-file`
 - Token health: `ok`
@@ -17,9 +17,9 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - Warnings: `0`
 
 ## Latest Evidence Artifacts
-- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T070058Z.json`
-- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T070058Z.md`
-- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T070058Z.svg`
+- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T181511Z.json`
+- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T181511Z.md`
+- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T181511Z.svg`
 - Status summary JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - Status summary Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
 
@@ -37,13 +37,16 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - `openclaw-cli`: `pass`
 - `openclaw-gateway-status`: `pass`
 
-## Trend (Last 4 Runs)
+## Trend (Last 7 Runs)
 | Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |
 |---|---|---:|---:|---:|---|
 | `20260223T061513Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260223T064406Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260223T065224Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260223T070058Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260223T101512Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260223T141510Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260223T181511Z` | `GO` | 100 | 0 | 0 | `pass` |
 
 ## Required Checks
 - [x] `openclaw-cli` — `pass` group=`core` severity=`critical` (openclaw CLI found)
@@ -58,7 +61,7 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 
 ## Optional Checks
 - [x] `dashboard-map-route` — `pass` group=`apis` severity=`info` (map route reachable)
-- [x] `bridge-scheduler-jobs` — `pass` group=`bridge` severity=`critical-optional` (bridge scheduler endpoint reachable)
+- [x] `bridge-scheduler-jobs` — `pass` group=`bridge` severity=`warn` (bridge scheduler endpoint reachable)
 
 ## Bridge Token Setup Note
 - Direct bridge checks support `--bridge-token-file`, `BRIDGE_TOKEN`, `BRIDGE_TOKEN_FILE`, or default `OPENCLAW_DIR/bridge/bridge-token`.
