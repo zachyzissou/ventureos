@@ -82,8 +82,21 @@
 - **Stale guardrail:** defaults to `--max-age-min 360`; job fails when latest paired report is older
 - **Added:** 2026-02-22
 
+## 13) VB-003 Telemetry Synthesis
+- **Schedule:** `30 */6 * * *`
+- **Session:** isolated
+- **Agent:** main
+- **Payload:** run `scripts/vb003-telemetry-synthesis.sh`
+- **Outputs:**
+  - `runtime/reports/model-orchestration/vb003-telemetry-<timestamp>.json`
+  - `runtime/reports/model-orchestration/vb003-telemetry-<timestamp>.md`
+  - `runtime/reports/model-orchestration/vb003-telemetry-latest.json`
+  - `runtime/reports/model-orchestration/vb003-telemetry-latest.md`
+- **Goal:** maintain a rolling 7-day evidence trail for VB-003 closure decisions.
+- **Added:** 2026-02-22
+
 ## Current Next Steps (February 23, 2026)
 1. Roll this schedule onto the host with `bash scripts/install-cron.sh --force`.
-2. Validate first run via `runtime/logs/cron-runs/openclaw-local-ready.jsonl`.
-3. Validate stale guardrail via `bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360`.
-4. Confirm `docs/LOCAL_INTEGRATION_READY.md` and Mission Control readiness card move forward on the next cadence tick.
+2. Validate first run via `runtime/logs/cron-runs/vb003-telemetry-synthesis.jsonl`.
+3. Validate latest synthesis artifacts under `runtime/reports/model-orchestration/`.
+4. Confirm `docs/LOCAL_INTEGRATION_READY.md` and Mission Control readiness card continue moving on cadence.

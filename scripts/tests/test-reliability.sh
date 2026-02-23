@@ -394,7 +394,7 @@ else
   fi
 
   # Has all expected jobs?
-  EXPECTED_JOBS="nightly-backup weekly-backup-verify monitoring budget-check export-cron-logs archive-task-runs workspace-health phantom-detector session-rotation session-monitor routing-healthcheck openclaw-local-ready"
+  EXPECTED_JOBS="nightly-backup weekly-backup-verify monitoring budget-check export-cron-logs archive-task-runs workspace-health phantom-detector session-rotation session-monitor routing-healthcheck openclaw-local-ready vb003-telemetry-synthesis"
   MISSING=""
   for job in $EXPECTED_JOBS; do
     if ! python3 -c "import json; assert '$job' in json.load(open('$CONFIG_FILE'))['cron_jobs']" 2>/dev/null; then
@@ -403,7 +403,7 @@ else
   done
 
   if [[ -z "$MISSING" ]]; then
-    pass "All 12 cron jobs defined in reliability config"
+    pass "All 13 cron jobs defined in reliability config"
   else
     fail "Missing jobs in config:$MISSING"
   fi
@@ -454,7 +454,8 @@ for script in \
   "$SCRIPTS_DIR/rotate-agent-sessions.sh" \
   "$SCRIPTS_DIR/check-session-counts.sh" \
   "$SCRIPTS_DIR/routing-healthcheck.sh" \
-  "$SCRIPTS_DIR/openclaw-local-ready-cron.sh"; do
+  "$SCRIPTS_DIR/openclaw-local-ready-cron.sh" \
+  "$SCRIPTS_DIR/vb003-telemetry-synthesis.sh"; do
   if [[ -f "$script" && ! -x "$script" ]]; then
     NON_EXEC="$NON_EXEC $(basename "$script")"
   fi
@@ -626,14 +627,14 @@ section "Test 19: Degradation policy completeness"
 DEGRAD_FILE="$REPO_ROOT/docs/DEGRADATION_POLICY.md"
 if [[ -f "$DEGRAD_FILE" ]]; then
   MISSING_IN_DOC=""
-  for job in "Nightly Backup" "Backup Verify" "Monitoring" "Budget Check" "Export Cron Logs" "Archive Task Runs" "Workspace Health" "Phantom Detector" "Session Rotation" "Session Monitor" "Routing Healthcheck" "OpenClaw Local Readiness Refresh"; do
+  for job in "Nightly Backup" "Backup Verify" "Monitoring" "Budget Check" "Export Cron Logs" "Archive Task Runs" "Workspace Health" "Phantom Detector" "Session Rotation" "Session Monitor" "Routing Healthcheck" "OpenClaw Local Readiness Refresh" "VB-003 Telemetry Synthesis"; do
     if ! grep -qi "$job" "$DEGRAD_FILE" 2>/dev/null; then
       MISSING_IN_DOC="$MISSING_IN_DOC '$job'"
     fi
   done
 
   if [[ -z "$MISSING_IN_DOC" ]]; then
-    pass "Degradation policy documents all 12 cron jobs"
+    pass "Degradation policy documents all 13 cron jobs"
   else
     fail "Degradation policy missing:$MISSING_IN_DOC"
   fi

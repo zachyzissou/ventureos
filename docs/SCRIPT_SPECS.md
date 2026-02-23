@@ -93,11 +93,16 @@
 ---
 
 ## 6) budget-check.sh
-**Purpose:** Emit quota usage report using `subscription-quota-tracker.js`.
+**Purpose:** Emit quota usage report using `subscription-quota-tracker.js`, with OpenClaw usage fallback when tracker is unavailable.
 
 **Outputs:**
 - stdout quota usage report
 - Cron job will parse/alert at 50/80/90%
+
+**Behavior:**
+- Uses `SUBSCRIPTION_TRACKER_PATH` override when set.
+- If tracker is missing, falls back to `openclaw channels list --json` and emits normalized JSON.
+- Supports `OPENCLAW_BIN` override for non-default CLI path.
 
 ---
 
@@ -312,10 +317,47 @@ bash scripts/openclaw-local-ready-cron.sh
 bash scripts/tests/test-openclaw-local-ready-cron.sh
 ```
 
+---
+
+## 16) vb003-telemetry-synthesis.sh
+**Purpose:** Generate a rolling telemetry synthesis artifact for VB-003 model-orchestration verification.
+
+**Usage:**
+```bash
+bash scripts/vb003-telemetry-synthesis.sh
+```
+
+**Behavior:**
+- Reads run telemetry from `~/.openclaw/cron/runs/*.jsonl`.
+- Applies a lookback window (default: `168h`, configurable via `VB003_LOOKBACK_HOURS`).
+- Aggregates model/runtime metrics:
+  - run counts and status counts
+  - latency distribution (`p50`, `p95`)
+  - token totals
+  - model/provider mix
+- Aggregates VentureOS cron metrics for:
+  - `budget-check`
+  - `routing-healthcheck`
+  - `monitoring`
+- Includes latest budget snapshot payload (if present) from `~/.openclaw/logs/cron-budget.log`.
+- Writes timestamped artifacts plus latest pointers:
+  - `runtime/reports/model-orchestration/vb003-telemetry-<timestamp>.json`
+  - `runtime/reports/model-orchestration/vb003-telemetry-<timestamp>.md`
+  - `runtime/reports/model-orchestration/vb003-telemetry-latest.json`
+  - `runtime/reports/model-orchestration/vb003-telemetry-latest.md`
+- Emits a verification state:
+  - `no_data`
+  - `window_insufficient`
+  - `ready_for_closure_review`
+
+**Cron integration:**
+- Wired as `vb003-telemetry-synthesis` in `config/reliability.json`.
+- Scheduled every 6 hours via `scripts/install-cron.sh`.
+
 **Current next steps (operator rollout):**
 1. `bash scripts/install-cron.sh --force`
-2. `bash scripts/openclaw-local-ready-cron.sh`
-3. `bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360`
+2. `bash scripts/vb003-telemetry-synthesis.sh`
+3. Validate `runtime/reports/model-orchestration/vb003-telemetry-latest.{json,md}`.
 4. Validate `docs/LOCAL_INTEGRATION_READY.md` timestamp and `runtime/reports/openclaw-local-smoke/` artifact rotation.
 
 ---

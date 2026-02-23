@@ -103,6 +103,9 @@ NEW_CRON=$(cat <<EOF
 # 12) Local OpenClaw readiness refresh — every 4 hours
 15 */4 * * * $RUNNER openclaw-local-ready >> $LOG_BASE/cron-openclaw-local-ready.log 2>&1
 
+# 13) VB-003 telemetry synthesis — every 6 hours
+30 */6 * * * $RUNNER vb003-telemetry-synthesis >> $LOG_BASE/cron-vb003-telemetry.log 2>&1
+
 # === END $CRON_MARKER ===
 EOF
 )
