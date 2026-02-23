@@ -68,6 +68,49 @@ a {
   padding: 14px;
 }
 
+.shell-card {
+  margin-bottom: 18px;
+}
+
+.shell-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.shell-title-wrap {
+  display: grid;
+  gap: 4px;
+}
+
+.shell-title {
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+.nav-row {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nav-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.nav-chip.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(47, 212, 181, 0.12);
+}
+
 .card h3 {
   margin: 0 0 8px;
   color: var(--muted);
@@ -90,6 +133,8 @@ a {
   display: inline-flex;
   align-items: center;
   letter-spacing: 0.02em;
+  background: rgba(152, 184, 202, 0.14);
+  color: var(--muted);
 }
 
 .chip.go {
@@ -112,6 +157,10 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.compact-actions {
+  margin-top: 0;
 }
 
 input[type="text"] {
@@ -192,6 +241,11 @@ th {
 
 .muted {
   color: var(--muted);
+}
+
+.error-text {
+  margin-top: 10px;
+  color: var(--danger);
 }
 
 @media (max-width: 640px) {

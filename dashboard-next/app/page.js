@@ -29,6 +29,10 @@ export default function HomePage() {
             <Link href="/logs">/logs</Link> (
             <code>/api/logs/sources</code>, <code>/api/logs/entries</code>)
           </li>
+          <li>
+            <Link href="/task-board">/task-board</Link> (
+            <code>/api/task-board</code>, <code>/api/task-board/summary</code>)
+          </li>
         </ul>
       </section>
     </main>
