@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>XSS Sanitization Test Harness</title>
+</head>
+<body>
+  <!--
+    This page is the browser test harness for XSS sanitization tests.
+    Playwright injects sanitized content via innerHTML and verifies
+    that no scripts execute.
+  -->
+  <div id="render-target"></div>
+  <div id="raw-target"></div>
+  <div id="activity-name"></div>
+  <div id="message-display"></div>
+
+  <script>
+    // Global XSS canary — any successful XSS sets this
+    window.__xss_triggered = false;
+    window.__xss_payloads = [];
+
+    // Override alert/confirm/prompt to catch XSS attempts
+    window.alert = function(msg) {
+      window.__xss_triggered = true;
+      window.__xss_payloads.push('alert:' + msg);
+    };
+    window.confirm = function(msg) {
+      window.__xss_triggered = true;
+      window.__xss_payloads.push('confirm:' + msg);
+      return false;
+    };
+    window.prompt = function(msg) {
+      window.__xss_triggered = true;
+      window.__xss_payloads.push('prompt:' + msg);
+      return null;
+    };
+
+    // Expose a function for Playwright to inject content
+    window.__renderContent = function(containerId, html) {
+      document.getElementById(containerId).innerHTML = html;
+    };
+
+    // Expose function to set textContent (safe baseline)
+    window.__renderText = function(containerId, text) {
+      document.getElementById(containerId).textContent = text;
+    };
+  </script>
+</body>
+</html>

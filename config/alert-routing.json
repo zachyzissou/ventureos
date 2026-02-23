@@ -1,0 +1,14 @@
+{
+  "alertsChannelId": "1466893115460812979",
+  "roleChannels": {
+    "mission-control": "1470210601879076914",
+    "oracle": "1470210648624599192",
+    "atlas": "1470210649786159348",
+    "sentinel": "1470210650855837696",
+    "verifier": "1470210652143354077",
+    "archivist": "1470210653154185298",
+    "synth": "1470210654819451024"
+  },
+  "webhookMapPath": "~/.openclaw/credentials/discord/webhooks.json",
+  "suppressSeconds": 14400
+}

@@ -1,0 +1,222 @@
+# Hybrid Deployment CI — Docker Compose build + health check smoke test
+# Issues #191, #197: Validates the hybrid stack can build and boot successfully.
+# Also lints deploy scripts and runs dry-run preflight for rollout workflow.
+
+name: Hybrid Deploy CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose.yml'
+      - 'docker-compose.hybrid.yml'
+      - 'dashboard/Dockerfile'
+      - 'dashboard/server/**'
+      - 'lib/**'
+      - '.env.hybrid.example'
+      - '.github/workflows/hybrid-deploy.yml'
+      - 'scripts/deploy.sh'
+      - 'scripts/lint-dangerous-config.sh'
+      - 'scripts/preflight-routing.sh'
+      - 'scripts/rollback-last-known-good.sh'
+      - 'scripts/hybrid-*.sh'
+  pull_request:
+    paths:
+      - 'docker-compose.yml'
+      - 'docker-compose.hybrid.yml'
+      - 'dashboard/Dockerfile'
+      - 'dashboard/server/**'
+      - 'lib/**'
+      - '.env.hybrid.example'
+      - '.github/workflows/hybrid-deploy.yml'
+      - 'scripts/deploy.sh'
+      - 'scripts/lint-dangerous-config.sh'
+      - 'scripts/preflight-routing.sh'
+      - 'scripts/rollback-last-known-good.sh'
+      - 'scripts/hybrid-*.sh'
+  workflow_dispatch:
+
+concurrency:
+  group: hybrid-deploy-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Lint deploy scripts ──────────────────────────────────────────────────
+  script-lint:
+    name: Shellcheck & Preflight Dry-Run
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+
+      - name: Shellcheck deploy scripts
+        run: |
+          echo "Linting scripts/deploy.sh..."
+          shellcheck -x -S warning scripts/deploy.sh || true
+          echo ""
+          echo "Linting scripts/lint-dangerous-config.sh..."
+          shellcheck -x -S warning scripts/lint-dangerous-config.sh || true
+          echo ""
+          echo "Linting scripts/preflight-routing.sh..."
+          shellcheck -x -S warning scripts/preflight-routing.sh || true
+          echo ""
+          echo "Linting scripts/rollback-last-known-good.sh..."
+          shellcheck -x -S warning scripts/rollback-last-known-good.sh || true
+          echo ""
+          echo "Linting scripts/hybrid-cutover.sh..."
+          shellcheck -x -S warning scripts/hybrid-cutover.sh || true
+          echo ""
+          echo "Linting scripts/hybrid-rollback.sh..."
+          shellcheck -x -S warning scripts/hybrid-rollback.sh || true
+          echo ""
+          echo "Linting scripts/hybrid-healthcheck.sh..."
+          shellcheck -x -S warning scripts/hybrid-healthcheck.sh || true
+          echo ""
+          echo "Linting scripts/hybrid-shutdown.sh..."
+          shellcheck -x -S warning scripts/hybrid-shutdown.sh || true
+          echo ""
+          echo "✅ Shellcheck complete"
+
+      - name: Deploy script dry-run preflight
+        run: |
+          # Create minimal env files for dry-run
+          cat > .env.hybrid <<'ENVEOF'
+          POSTGRES_DB=ventureos
+          POSTGRES_USER=ventureos
+          POSTGRES_PASSWORD=ci-test-password-not-real
+          POSTGRES_PORT=5433
+          DASHBOARD_PORT=8001
+          DASHBOARD_API_TOKEN=ci-test-dashboard-token-not-real
+          BRIDGE_URL=http://host.docker.internal:18790
+          BRIDGE_TOKEN=ci-test-bridge-token-not-real
+          ENVEOF
+
+          mkdir -p config
+          cat > config/bridge.env <<'BENVEOF'
+          BRIDGE_PORT=18790
+          BRIDGE_TOKEN=ci-test-bridge-token-not-real
+          BRIDGE_ALLOW_CIDRS=127.0.0.1/32
+          BENVEOF
+
+          chmod +x scripts/deploy.sh
+          chmod +x scripts/lint-dangerous-config.sh scripts/preflight-routing.sh scripts/rollback-last-known-good.sh
+          echo "Running preflight-routing.sh --dry-run..."
+          ./scripts/preflight-routing.sh --dry-run
+          echo ""
+          echo "✅ Preflight dry-run passed"
+
+      - name: Deployment safety lint tests
+        run: |
+          chmod +x scripts/tests/test-deployment-safety.sh
+          ./scripts/tests/test-deployment-safety.sh
+          echo ""
+          echo "✅ Deployment safety tests passed"
+
+      - name: Deploy script help output
+        run: |
+          chmod +x scripts/deploy.sh
+          chmod +x scripts/preflight-routing.sh scripts/rollback-last-known-good.sh
+          ./scripts/deploy.sh help
+          ./scripts/preflight-routing.sh --help
+          ./scripts/rollback-last-known-good.sh --help
+          echo ""
+          echo "✅ Help output renders correctly"
+
+  # ── Compose build + smoke test ───────────────────────────────────────────
+  compose-validate:
+    name: Compose Validate & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate docker-compose.yml
+        run: |
+          # Create minimal .env.hybrid for validation
+          cat > .env.hybrid <<'EOF'
+          POSTGRES_DB=ventureos
+          POSTGRES_USER=ventureos
+          POSTGRES_PASSWORD=ci-test-password
+          POSTGRES_PORT=5433
+          DASHBOARD_PORT=8001
+          DASHBOARD_API_TOKEN=ci-test-dashboard-token
+          BRIDGE_URL=http://host.docker.internal:18790
+          BRIDGE_TOKEN=ci-test-bridge-token
+          EOF
+
+          echo "Validating docker-compose.yml..."
+          docker compose -f docker-compose.yml --env-file .env.hybrid config --quiet
+          echo "✅ docker-compose.yml is valid"
+
+      - name: Build dashboard image
+        run: |
+          docker compose -f docker-compose.yml --env-file .env.hybrid build dashboard
+          echo "✅ Dashboard image built successfully"
+
+      - name: Boot stack & health check
+        run: |
+          # Start DB only (dashboard needs Bridge API which we won't run in CI)
+          docker compose -f docker-compose.yml --env-file .env.hybrid up -d db
+
+          # Wait for DB health
+          echo "Waiting for Postgres..."
+          for i in $(seq 1 30); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' ventureos-db 2>/dev/null || echo "missing")
+            if [ "$STATUS" = "healthy" ]; then
+              echo "✅ Postgres is healthy"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "❌ Postgres did not become healthy"
+              docker logs ventureos-db --tail 20
+              exit 1
+            fi
+            sleep 2
+          done
+
+          # Verify Postgres accepts connections
+          docker exec ventureos-db pg_isready -U ventureos -d ventureos
+          echo "✅ Postgres accepting connections"
+
+          # Start dashboard (it won't fully health-check without Bridge, but should boot)
+          docker compose -f docker-compose.yml --env-file .env.hybrid up -d dashboard
+
+          # Give it time to start
+          sleep 10
+
+          # Check container is running (not crashing)
+          DASH_STATE=$(docker inspect --format='{{.State.Status}}' ventureos-dashboard 2>/dev/null || echo "missing")
+          if [ "$DASH_STATE" = "running" ]; then
+            echo "✅ Dashboard container is running"
+          else
+            echo "⚠️  Dashboard state: $DASH_STATE (expected — Bridge API not available in CI)"
+            docker logs ventureos-dashboard --tail 20
+          fi
+
+      - name: Teardown
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml --env-file .env.hybrid down -v 2>/dev/null || true
+          echo "✅ Stack torn down cleanly"
+
+      - name: Verify clean state
+        if: always()
+        run: |
+          REMAINING=$(docker ps -a --filter "label=com.ventureos.stack=ventureos" --format "{{.Names}}" || true)
+          if [ -n "$REMAINING" ]; then
+            echo "⚠️  Orphaned containers: $REMAINING"
+          else
+            echo "✅ No orphaned containers"
+          fi

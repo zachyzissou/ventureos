@@ -1,0 +1,56 @@
+{
+  "ok": true,
+  "available": true,
+  "latest": {
+    "timestamp": "20260222T020202Z",
+    "generatedAt": "20260222T020202Z",
+    "artifacts": {
+      "json": "openclaw-local-smoke-20260222T020202Z.json",
+      "markdown": "openclaw-local-smoke-20260222T020202Z.md",
+      "svg": "openclaw-local-smoke-20260222T020202Z.svg",
+      "markdownExists": true,
+      "svgExists": true
+    },
+    "summary": {
+      "profile": "bridge",
+      "requiredFailures": 1,
+      "requiredSkipped": 0,
+      "warnings": 0,
+      "totalChecks": 2,
+      "passCount": 1,
+      "failCount": 1,
+      "skippedCount": 0,
+      "verdict": "blocked",
+      "readinessScore": 45,
+      "confidence": "low"
+    },
+    "checksByGroup": [
+      {
+        "id": "apis",
+        "total": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      {
+        "id": "core",
+        "total": 1,
+        "pass": 0,
+        "fail": 1,
+        "skipped": 0
+      }
+    ],
+    "blockers": [
+      {
+        "id": "openclaw-gateway-status",
+        "required": true,
+        "severity": "critical",
+        "owner": "Platform Ops",
+        "description": "Gateway status",
+        "detail": "service not loaded",
+        "likelyCause": "gateway down",
+        "nextCommand": "openclaw gateway status"
+      }
+    ]
+  }
+}

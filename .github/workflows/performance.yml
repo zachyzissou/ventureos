@@ -1,0 +1,191 @@
+# =============================================================================
+# Performance Benchmarks CI
+# =============================================================================
+#
+# Runs the VentureOS Tactical Map performance benchmark suite on:
+#   - PRs touching tactical-map/**
+#   - Push to main (to update baselines)
+#   - Manual dispatch (for ad-hoc runs)
+#
+# Detects regressions by comparing against committed baselines.
+# Fails the check if any metric regresses by more than 10%.
+# =============================================================================
+
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tactical-map/**'
+  pull_request:
+    paths:
+      - 'tactical-map/**'
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: 'Update performance baselines after run'
+        required: false
+        default: 'false'
+        type: boolean
+
+# Cancel in-progress runs for the same PR/branch
+concurrency:
+  group: perf-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tactical-map/package-lock.json
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install tactical-map dependencies
+        working-directory: tactical-map
+        run: npm install
+
+      - name: Install Playwright Chromium
+        working-directory: tactical-map
+        run: npx playwright install chromium --with-deps
+
+      - name: Build tactical-map
+        working-directory: tactical-map
+        run: npm run build
+
+      - name: Run performance benchmarks
+        working-directory: tactical-map
+        env:
+          PERF: '1'
+          CI: 'true'
+        run: |
+          npx playwright test tests/performance/ \
+            --reporter=list,json \
+            --retries=1 \
+            2>&1 | tee performance-output.txt
+        continue-on-error: true
+
+      - name: Collect benchmark results
+        if: always()
+        working-directory: tactical-map
+        run: |
+          mkdir -p performance-reports
+
+          # Save raw output
+          cp performance-output.txt performance-reports/ 2>/dev/null || true
+
+          # Save Playwright JSON results
+          if [ -f test-results/.last-run.json ]; then
+            cp test-results/.last-run.json performance-reports/playwright-results.json
+          fi
+
+          # Git metadata
+          echo '{
+            "commitSha": "${{ github.sha }}",
+            "branch": "${{ github.head_ref || github.ref_name }}",
+            "pr": "${{ github.event.pull_request.number || 'none' }}",
+            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+            "runner": "'$(uname -m)'"
+          }' > performance-reports/metadata.json
+
+          # Parse key metrics from output
+          echo "## 🏎️ Performance Benchmark Results" > performance-reports/summary.md
+          echo "" >> performance-reports/summary.md
+          echo "**Commit:** \`${{ github.sha }}\`" >> performance-reports/summary.md
+          echo "**Branch:** \`${{ github.head_ref || github.ref_name }}\`" >> performance-reports/summary.md
+          echo "" >> performance-reports/summary.md
+
+          if grep -q "FAILED" performance-output.txt 2>/dev/null; then
+            echo "### ❌ Some benchmarks failed" >> performance-reports/summary.md
+          else
+            echo "### ✅ All benchmarks passed" >> performance-reports/summary.md
+          fi
+
+          echo "" >> performance-reports/summary.md
+          echo '```' >> performance-reports/summary.md
+          grep -E '\[perf:' performance-output.txt >> performance-reports/summary.md 2>/dev/null || echo "No perf metrics captured" >> performance-reports/summary.md
+          echo '```' >> performance-reports/summary.md
+
+      - name: Upload performance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports
+          path: tactical-map/performance-reports/
+          retention-days: 30
+
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'tactical-map/performance-reports/summary.md';
+
+            let body = '## 🏎️ Performance Benchmarks\n\nReport not generated.';
+            try {
+              body = fs.readFileSync(path, 'utf-8');
+            } catch (e) {
+              console.log('No summary file found');
+            }
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.body.includes('🏎️ Performance Benchmark') &&
+              c.user.type === 'Bot'
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Check for regressions
+        working-directory: tactical-map
+        run: |
+          # Fail the job if any performance test failed
+          if grep -q "failed" performance-output.txt 2>/dev/null; then
+            echo "::error::Performance regression detected! Check the benchmark report."
+            exit 1
+          fi
+
+          echo "✅ No performance regressions detected."
+
+      - name: Update baselines (main branch only)
+        if: |
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' || github.event.inputs.update_baselines == 'true')
+        working-directory: tactical-map
+        run: |
+          echo "ℹ️ Baseline updates should be done manually after reviewing results."
+          echo "Run: ./scripts/run-benchmarks.sh --update-baselines"
