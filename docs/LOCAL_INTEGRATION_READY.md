@@ -17,9 +17,9 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - Warnings: `0`
 
 ## Latest Evidence Artifacts
-- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T065224Z.json`
-- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T065224Z.md`
-- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T065224Z.svg`
+- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T070058Z.json`
+- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T070058Z.md`
+- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T070058Z.svg`
 - Status summary JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - Status summary Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
 
@@ -37,12 +37,13 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - `openclaw-cli`: `pass`
 - `openclaw-gateway-status`: `pass`
 
-## Trend (Last 3 Runs)
+## Trend (Last 4 Runs)
 | Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |
 |---|---|---:|---:|---:|---|
 | `20260223T061513Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260223T064406Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260223T065224Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260223T070058Z` | `GO` | 100 | 0 | 0 | `pass` |
 
 ## Required Checks
 - [x] `openclaw-cli` — `pass` group=`core` severity=`critical` (openclaw CLI found)

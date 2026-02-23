@@ -193,14 +193,42 @@ run_install_expect_fail() {
   fi
 }
 
+run_install_interactive() {
+  local run_name="$1"
+  local input_payload="$2"
+  shift 2
+  local out_file="$OUT_DIR/${run_name}.out"
+  local report_dir="$REPORT_BASE/${run_name}"
+  mkdir -p "$report_dir"
+  set +e
+  printf '%s' "$input_payload" | \
+    VENTUREOS_INSTALL_REPORT_DIR="$report_dir" \
+    VENTUREOS_INSTALL_ASSUME_TTY=1 \
+    SMOKE_REPORT_DIR="$SMOKE_DIR" \
+    PATH="$BIN_DIR:$PATH" \
+    bash "$SCRIPT" "$@" >"$out_file" 2>&1
+  local rc=$?
+  set -e
+  if [[ "$rc" -ne 0 ]]; then
+    echo "Expected interactive run '$run_name' to pass but it failed" >&2
+    cat "$out_file" >&2
+    exit 1
+  fi
+}
+
 latest_report() {
   local run_name="$1"
-  ls -1 "$REPORT_BASE/${run_name}"/ventureos-install-*.md | tail -n 1
+  ls -1 "$REPORT_BASE/${run_name}"/ventureos-install-[0-9]*.md | tail -n 1
 }
 
 latest_adoption_evidence() {
   local run_name="$1"
   ls -1 "$REPORT_BASE/${run_name}"/ventureos-install-adoption-*.json | tail -n 1
+}
+
+latest_onboarding_transcript() {
+  local run_name="$1"
+  ls -1 "$REPORT_BASE/${run_name}"/ventureos-onboarding-*.md | tail -n 1
 }
 
 export CALL_LOG
@@ -310,6 +338,11 @@ assert "user-crontab" in ids, ids
 assert "ventureos-managed-cron-block" in ids, ids
 print("VENTUREOS_INSTALL_ADOPTION_EVIDENCE_OK")
 PY
+verify_onboarding="$(latest_onboarding_transcript verify_success)"
+grep -q -- '- Final status: `pass`' "$verify_onboarding"
+grep -q -- '- Mode: `non-interactive`' "$verify_onboarding"
+grep -q -- '- Approval: `auto-non-interactive`' "$verify_onboarding"
+grep -q -- '- Restore point validated: `yes`' "$verify_onboarding"
 echo "VENTUREOS_INSTALL_VERIFY_OK"
 
 # Minimal preset should skip bridge + cron by default while still running dashboard/readiness.
@@ -337,6 +370,57 @@ grep -q "VENTUREOS_INSTALL_RESULT=PASS" "$OUT_DIR/minimal_preset.out"
 minimal_report="$(latest_report minimal_preset)"
 grep -q -- '- Preset: `minimal`' "$minimal_report"
 echo "VENTUREOS_INSTALL_PRESET_OK"
+
+# Interactive onboarding apply path should require action-matrix confirmation and then execute.
+: > "$CALL_LOG"
+interactive_apply_input=$'y\n\n\n\nn\ny\ny\ny\ny\ny\ny\n'
+run_install_interactive interactive_apply \
+  "$interactive_apply_input" \
+  --dashboard-port 8128 \
+  --openclaw-dir "$OPENCLAW_FIXTURE_DIR" \
+  --bridge-env "$BRIDGE_ENV" \
+  --bridge-token-file "$TMP_DIR/bridge-token"
+
+grep -q "VENTUREOS_INSTALL_RESULT=PASS" "$OUT_DIR/interactive_apply.out"
+grep -q "dashboard-macos|" "$CALL_LOG"
+grep -q "cron|--force" "$CALL_LOG"
+grep -q "ready|--profile full --dashboard-url http://127.0.0.1:8128 --bridge-token-file $TMP_DIR/bridge-token|BRIDGE_TOKEN=test-bridge-token" "$CALL_LOG"
+interactive_apply_report="$(latest_report interactive_apply)"
+grep -q '`restore-point-validate` | `pass`' "$interactive_apply_report"
+grep -q '`onboarding-transcript` | `pass`' "$interactive_apply_report"
+interactive_apply_transcript="$(latest_onboarding_transcript interactive_apply)"
+grep -q -- '- Final status: `pass`' "$interactive_apply_transcript"
+grep -q -- '- Mode: `interactive`' "$interactive_apply_transcript"
+grep -q -- '- Approval: `approved`' "$interactive_apply_transcript"
+grep -q '## Action Matrix Summary' "$interactive_apply_transcript"
+echo "VENTUREOS_INSTALL_INTERACTIVE_APPLY_OK"
+
+# Interactive onboarding abort path should stop before apply and emit cancel transcript.
+: > "$CALL_LOG"
+interactive_abort_input=$'y\n\n\n\nn\ny\ny\ny\ny\ny\nn\n'
+run_install_interactive interactive_abort \
+  "$interactive_abort_input" \
+  --dashboard-port 8129 \
+  --openclaw-dir "$OPENCLAW_FIXTURE_DIR" \
+  --bridge-env "$BRIDGE_ENV" \
+  --bridge-token-file "$TMP_DIR/bridge-token"
+
+grep -q "VENTUREOS_INSTALL_RESULT=CANCELLED" "$OUT_DIR/interactive_abort.out"
+if grep -E -q '^(dashboard-macos|dashboard-linux|cron\||ready\|)' "$CALL_LOG"; then
+  echo "Interactive cancel should not execute installer primitives" >&2
+  exit 1
+fi
+if grep -E '^bridge\|' "$CALL_LOG" >/dev/null 2>&1; then
+  if grep -E '^bridge\|' "$CALL_LOG" | grep -vq -- '--status'; then
+    echo "Interactive cancel should not run bridge install execution (status checks are allowed)" >&2
+    exit 1
+  fi
+fi
+interactive_abort_transcript="$(latest_onboarding_transcript interactive_abort)"
+grep -q -- '- Final status: `cancelled`' "$interactive_abort_transcript"
+grep -q -- '- Approval: `declined`' "$interactive_abort_transcript"
+grep -q -- 'operator declined action matrix confirmation' "$interactive_abort_transcript"
+echo "VENTUREOS_INSTALL_INTERACTIVE_ABORT_OK"
 
 # Missing bridge env should adopt existing healthy launchagent state (non-destructive mode).
 : > "$CALL_LOG"
