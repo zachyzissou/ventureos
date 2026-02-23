@@ -2,12 +2,9 @@
 
 import { useMemo, useState } from "react";
 
-import {
-  DEFAULT_API_BASE,
-  fetchDashboardJson,
-  loginWithToken,
-  normalizeApiBase,
-} from "@/lib/dashboard-api";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { useDashboardSession } from "@/components/dashboard-session-context";
+import { fetchDashboardJson } from "@/lib/dashboard-api";
 import { normalizeOverviewPayload } from "@/lib/overview";
 
 async function fetchOverview(apiBase, token) {
@@ -20,8 +17,12 @@ async function fetchOverview(apiBase, token) {
 }
 
 export default function OverviewPage() {
-  const [apiBase, setApiBase] = useState(DEFAULT_API_BASE);
-  const [token, setToken] = useState("");
+  const {
+    normalizedApiBase,
+    token,
+    authenticateIfNeeded,
+  } = useDashboardSession();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [rawPayload, setRawPayload] = useState(null);
@@ -36,10 +37,9 @@ export default function OverviewPage() {
     setLoading(true);
     setError("");
     try {
-      const base = normalizeApiBase(apiBase);
-      if (!base) throw new Error("API base URL is required");
-      if (includeLogin && token.trim()) await loginWithToken(base, token);
-      const payload = await fetchOverview(base, token);
+      if (!normalizedApiBase) throw new Error("API base URL is required");
+      if (includeLogin) await authenticateIfNeeded();
+      const payload = await fetchOverview(normalizedApiBase, token);
       setRawPayload(payload);
       setLoadedAt(new Date().toISOString());
     } catch (err) {
@@ -50,34 +50,14 @@ export default function OverviewPage() {
   }
 
   return (
-    <main className="page">
-      <section className="hero">
-        <h1 className="title">Overview (Next Hybrid)</h1>
-        <p className="subtitle">
-          Read-only operational overview powered by existing backend contracts:
-          <code> /api/health</code>, <code>/api/services</code>, <code>/api/system</code>.
-        </p>
-      </section>
-
-      <section className="card">
-        <h3>Connection</h3>
-        <div className="actions">
-          <input
-            type="text"
-            value={apiBase}
-            onChange={(e) => setApiBase(e.target.value)}
-            placeholder="Dashboard API base URL"
-          />
-          <input
-            type="text"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Optional token (used for login/header)"
-          />
-        </div>
-        <div className="actions">
+    <DashboardShell
+      title="Overview (Next Hybrid)"
+      subtitle="Operational overview backed by /api/health, /api/services, and /api/system."
+      loadedAt={loadedAt}
+      actionButtons={(
+        <>
           <button disabled={loading} onClick={() => load({ includeLogin: true })}>
-            {loading ? "Loading..." : "Login + Load"}
+            {loading ? "Loading..." : "Authenticate + Load"}
           </button>
           <button
             className="secondary"
@@ -86,10 +66,9 @@ export default function OverviewPage() {
           >
             Load Only
           </button>
-        </div>
-        {loadedAt ? <p className="muted">Last loaded: {loadedAt}</p> : null}
-      </section>
-
+        </>
+      )}
+    >
       {error ? (
         <section className="section card">
           <h3>Error</h3>
@@ -165,6 +144,6 @@ export default function OverviewPage() {
           <p className="muted">Load overview data to see system and service metrics.</p>
         </section>
       )}
-    </main>
+    </DashboardShell>
   );
 }

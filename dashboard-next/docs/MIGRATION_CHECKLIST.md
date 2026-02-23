@@ -1,7 +1,7 @@
 # Next Hybrid Migration Checklist
 
-Date: 2026-02-22
-Issue: #454
+Date: 2026-02-23
+Issue: #457
 
 ## Scope
 
@@ -14,6 +14,7 @@ Incrementally adopt Next.js for dashboard UI while preserving existing backend A
 | Readiness | `dashboard/client/index.html` readiness card | `/readiness` | `GET /api/openclaw-local-readiness` | Phase 1 shipped |
 | Overview | `dashboard/client/index.html` overview panel | `/overview` | `GET /api/health`, `GET /api/services`, `GET /api/system` | Phase 2 shipped |
 | Logs | `dashboard/client/index.html` logs panels | `/logs` | `GET /api/logs/sources`, `GET /api/logs/entries` | Phase 2 shipped |
+| Task Board (Interactive) | `dashboard/client/index.html` task board surface | `/task-board` | `GET /api/task-board`, `GET /api/task-board/summary`, `POST /api/task-board`, `PATCH /api/task-board/:id` | Phase 3 shipped |
 
 ## Auth + Security Constraints
 
@@ -28,7 +29,8 @@ Incrementally adopt Next.js for dashboard UI while preserving existing backend A
   - `npm run dashboard:next:parity`
 - Manual endpoint verification:
   - Login against backend (`/api/login`)
-  - Load `/readiness`, `/overview`, `/logs` pages
+  - Load `/readiness`, `/overview`, `/logs`, `/task-board` pages
+  - Create a task and transition status in `/task-board`
   - Confirm displayed metrics/rows align with backend API payloads
 
 ## Rollback Notes

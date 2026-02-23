@@ -1,13 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
+import { DashboardShell } from "@/components/dashboard-shell";
+import { useDashboardSession } from "@/components/dashboard-session-context";
+import { fetchDashboardJson } from "@/lib/dashboard-api";
 import { normalizeReadinessPayload } from "@/lib/readiness";
-import {
-  DEFAULT_API_BASE,
-  fetchDashboardJson,
-  loginWithToken,
-  normalizeApiBase,
-} from "@/lib/dashboard-api";
 
 function verdictClass(verdict) {
   if (verdict === "go") return "chip go";
@@ -20,8 +18,12 @@ async function fetchReadiness(apiBase, token) {
 }
 
 export default function ReadinessPage() {
-  const [apiBase, setApiBase] = useState(DEFAULT_API_BASE);
-  const [token, setToken] = useState("");
+  const {
+    normalizedApiBase,
+    token,
+    authenticateIfNeeded,
+  } = useDashboardSession();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [rawPayload, setRawPayload] = useState(null);
@@ -36,12 +38,9 @@ export default function ReadinessPage() {
     setLoading(true);
     setError("");
     try {
-      const base = normalizeApiBase(apiBase);
-      if (!base) throw new Error("API base URL is required");
-      if (includeLogin && token.trim()) {
-        await loginWithToken(base, token);
-      }
-      const payload = await fetchReadiness(base, token);
+      if (!normalizedApiBase) throw new Error("API base URL is required");
+      if (includeLogin) await authenticateIfNeeded();
+      const payload = await fetchReadiness(normalizedApiBase, token);
       setRawPayload(payload);
       setLoadedAt(new Date().toISOString());
     } catch (err) {
@@ -56,38 +55,17 @@ export default function ReadinessPage() {
   const blockers = normalized.latest?.blockers ?? [];
 
   return (
-    <main className="page">
-      <section className="hero">
-        <h1 className="title">Local Readiness (Next Hybrid)</h1>
-        <p className="subtitle">
-          This page consumes the existing backend contract at{" "}
-          <code>/api/openclaw-local-readiness</code>. Authentication remains
-          backend-owned via <code>/api/login</code> and standard auth middleware.
-        </p>
-      </section>
-
-      <section className="card">
-        <h3>Connection</h3>
-        <div className="actions">
-          <input
-            type="text"
-            value={apiBase}
-            onChange={(e) => setApiBase(e.target.value)}
-            placeholder="Dashboard API base URL"
-          />
-          <input
-            type="text"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Optional token (used for login/header)"
-          />
-        </div>
-        <div className="actions">
+    <DashboardShell
+      title="Local Readiness (Next Hybrid)"
+      subtitle="Consumes /api/openclaw-local-readiness from the existing backend with cookie/token auth parity."
+      loadedAt={loadedAt}
+      actionButtons={(
+        <>
           <button
             disabled={loading}
             onClick={() => loadReadiness({ includeLogin: true })}
           >
-            {loading ? "Loading..." : "Login + Load"}
+            {loading ? "Loading..." : "Authenticate + Load"}
           </button>
           <button
             className="secondary"
@@ -96,12 +74,9 @@ export default function ReadinessPage() {
           >
             Load Only
           </button>
-        </div>
-        {loadedAt ? (
-          <p className="muted">Last loaded: {loadedAt}</p>
-        ) : null}
-      </section>
-
+        </>
+      )}
+    >
       {error ? (
         <section className="section card">
           <h3>Error</h3>
@@ -155,7 +130,8 @@ export default function ReadinessPage() {
           <h2>Top Blockers</h2>
           {blockers.map((blocker) => (
             <div key={blocker.id} className="blocker">
-              <strong>{blocker.id}</strong> ({blocker.severity})<br />
+              <strong>{blocker.id}</strong> ({blocker.severity})
+              <br />
               {blocker.description}
               <br />
               <span className="muted">
@@ -195,6 +171,6 @@ export default function ReadinessPage() {
           </table>
         </section>
       ) : null}
-    </main>
+    </DashboardShell>
   );
 }
