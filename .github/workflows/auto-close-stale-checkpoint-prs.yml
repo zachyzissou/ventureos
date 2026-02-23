@@ -1,0 +1,61 @@
+name: Auto-close stale checkpoint PRs
+
+on:
+  pull_request_target:
+    types: [opened, reopened, edited]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  close-stale-checkpoint:
+    if: startsWith(github.event.pull_request.title, '[Auto] #')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close stale auto-checkpoint PR when source issue is closed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title || "";
+            const match = title.match(/\[Auto\]\s*#(\d+)\b/i);
+            if (!match) {
+              core.info("No auto-checkpoint issue reference found in title; skipping.");
+              return;
+            }
+
+            const issueNumber = Number(match[1]);
+            const prNumber = context.payload.pull_request.number;
+
+            const issueResp = await github.rest.issues.get({
+              ...context.repo,
+              issue_number: issueNumber,
+            });
+            const issue = issueResp.data;
+
+            if (issue.pull_request) {
+              core.info(`Referenced #${issueNumber} is a pull request, not an issue; skipping.`);
+              return;
+            }
+
+            if (issue.state === "open") {
+              core.info(`Referenced issue #${issueNumber} is open; keeping PR #${prNumber}.`);
+              return;
+            }
+
+            const closeReason = `Auto-closing stale checkpoint PR: referenced issue #${issueNumber} is \`${issue.state}\`. Open a new scoped PR for an active issue if work should continue.`;
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: prNumber,
+              body: closeReason,
+            });
+
+            await github.rest.pulls.update({
+              ...context.repo,
+              pull_number: prNumber,
+              state: "closed",
+            });
+
+            core.notice(`Closed stale checkpoint PR #${prNumber} (issue #${issueNumber} is ${issue.state}).`);
