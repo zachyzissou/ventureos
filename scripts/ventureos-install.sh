@@ -9,6 +9,7 @@ OS_NAME="${VENTUREOS_INSTALL_OS:-$(uname)}"
 NON_INTERACTIVE=0
 YES=0
 DRY_RUN=0
+PREFLIGHT_ONLY=0
 VERIFY_POST_INSTALL=0
 VERIFY_TIMEOUT_SEC="${VENTUREOS_INSTALL_VERIFY_TIMEOUT_SEC:-3}"
 REVERT_FROM=""
@@ -74,7 +75,8 @@ RESTORE_INDEX_TSV="$(mktemp)"
 ADOPTION_PLAN_TSV="$(mktemp)"
 FINGERPRINT_BEFORE_JSON="$(mktemp)"
 FINGERPRINT_AFTER_JSON="$(mktemp)"
-trap 'rm -f "$SUMMARY_TSV" "$RESTORE_INDEX_TSV" "$ADOPTION_PLAN_TSV" "$FINGERPRINT_BEFORE_JSON" "$FINGERPRINT_AFTER_JSON"' EXIT
+COMPATIBILITY_TSV="$(mktemp)"
+trap 'rm -f "$SUMMARY_TSV" "$RESTORE_INDEX_TSV" "$ADOPTION_PLAN_TSV" "$FINGERPRINT_BEFORE_JSON" "$FINGERPRINT_AFTER_JSON" "$COMPATIBILITY_TSV"' EXIT
 INSTALL_FAILED=0
 
 usage() {
@@ -96,6 +98,7 @@ Options:
   --non-interactive         Disable prompts and use flags/defaults
   --yes                     Auto-accept interactive prompts
   --dry-run                 Print planned actions without executing installers
+  --preflight-only          Run compatibility + rollback rehearsal without applying installer steps
   --verify                  Run post-install verification checks and fail on verification errors
   --verify-timeout-sec <n>  Timeout (seconds) for verification checks (default: 3)
   --restore-base-dir <path> Override restore-point base dir (default: runtime/backups/ventureos-install)
@@ -1024,6 +1027,63 @@ render_integration_adoption_plan() {
   done < "$ADOPTION_PLAN_TSV"
 }
 
+generate_compatibility_matrix() {
+  local output_tsv="$1"
+  python3 - "$ADOPTION_PLAN_TSV" "$output_tsv" <<'PY'
+from __future__ import annotations
+
+import csv
+import os
+import pathlib
+import shutil
+import sys
+
+plan_path = pathlib.Path(sys.argv[1])
+out_path = pathlib.Path(sys.argv[2])
+
+rows = []
+with plan_path.open("r", encoding="utf-8") as fh:
+    reader = csv.reader(fh, delimiter="\t")
+    for row in reader:
+        if len(row) != 5:
+            continue
+        rows.append(row)
+
+with out_path.open("w", encoding="utf-8", newline="") as fh:
+    writer = csv.writer(fh, delimiter="\t", lineterminator="\n")
+    for target, _decision, _exists_before, subject, _reason in rows:
+        status = "pass"
+        detail = ""
+        next_cmd = "n/a"
+
+        if target in {"user-crontab", "ventureos-managed-cron-block"}:
+            next_cmd = "command -v crontab >/dev/null"
+            if shutil.which("crontab") is None:
+                status = "fail"
+                detail = "crontab command unavailable on host"
+            else:
+                detail = "crontab command available"
+        elif subject.startswith("http://") or subject.startswith("https://"):
+            detail = "endpoint target recorded for install/adoption"
+            next_cmd = f"curl -sSf --max-time 3 {subject.rstrip('/')}/api/health"
+        else:
+            path = pathlib.Path(subject).expanduser()
+            if path.exists():
+                writable = os.access(path, os.W_OK)
+                status = "pass" if writable else "fail"
+                detail = "target exists and is writable" if writable else "target exists but is not writable"
+                next_cmd = f"test -w '{path}'"
+            else:
+                parent = path.parent if str(path.parent) else pathlib.Path(".")
+                writable = parent.exists() and os.access(parent, os.W_OK)
+                status = "pass" if writable else "fail"
+                detail = "target missing but parent is writable" if writable else "target missing and parent is not writable"
+                next_cmd = f"mkdir -p '{parent}' && test -w '{parent}'"
+
+        writer.writerow([target, status, detail, next_cmd])
+PY
+}
+
 collect_install_target_fingerprints() {
   local output_json="$1"
   python3 - "$output_json" "$BRIDGE_ENV" "$OPENCLAW_DIR/openclaw.json" "$OPENCLAW_DIR/cron/jobs.json" "$OPENCLAW_DIR/credentials/discord/webhooks.json" "$READINESS_STATUS_JSON" <<'PY'
@@ -1245,6 +1305,10 @@ while [[ $# -gt 0 ]]; do
       DRY_RUN=1
       shift
       ;;
+    --preflight-only)
+      PREFLIGHT_ONLY=1
+      shift
+      ;;
     --verify)
       VERIFY_POST_INSTALL=1
       EXPLICIT_VERIFY=1
@@ -1347,6 +1411,11 @@ ui_init
 
 if [[ "$LIST_RESTORE_POINTS" == "1" && -n "$REVERT_FROM" ]]; then
   echo "Cannot combine --list-restore-points and --revert" >&2
+  exit 2
+fi
+
+if [[ "$DRY_RUN" == "1" && "$PREFLIGHT_ONLY" == "1" ]]; then
+  echo "Cannot combine --dry-run and --preflight-only" >&2
   exit 2
 fi
 
@@ -1519,6 +1588,8 @@ echo "  restore point: $([[ "$CAPTURE_RESTORE_POINT" == "1" ]] && echo enabled |
 echo "  restore base dir: $RESTORE_BASE_DIR"
 if [[ "$DRY_RUN" == "1" ]]; then
   echo "  mode: dry-run"
+elif [[ "$PREFLIGHT_ONLY" == "1" ]]; then
+  echo "  mode: preflight-only"
 fi
 discover_existing_state "$dashboard_url"
 
@@ -1526,10 +1597,27 @@ ui_section "Integration Adoption Plan"
 generate_integration_adoption_plan "$dashboard_url"
 render_integration_adoption_plan
 adoption_target_count="$(wc -l < "$ADOPTION_PLAN_TSV" | tr -d ' ')"
-if [[ "$DRY_RUN" == "1" ]]; then
+if [[ "$DRY_RUN" == "1" || "$PREFLIGHT_ONLY" == "1" ]]; then
   record_step "adoption-plan" "planned" "generated adoption/merge plan for $adoption_target_count targets" "Inspect installer report adoption plan section"
 else
   record_step "adoption-plan" "pass" "generated adoption/merge plan for $adoption_target_count targets" "Inspect installer report adoption plan section"
+fi
+
+generate_compatibility_matrix "$COMPATIBILITY_TSV"
+compatibility_fail_count="$(awk -F '\t' '$2 == "fail" {count++} END {print count + 0}' "$COMPATIBILITY_TSV")"
+compatibility_target_count="$(wc -l < "$COMPATIBILITY_TSV" | tr -d ' ')"
+if [[ "$compatibility_fail_count" -gt 0 ]]; then
+  echo "Compatibility check failures detected: $compatibility_fail_count/$compatibility_target_count"
+  while IFS=$'\t' read -r target status detail next_cmd; do
+    [[ -z "${target:-}" ]] && continue
+    if [[ "$status" == "fail" ]]; then
+      echo "  - $target :: $detail :: next: $next_cmd"
+    fi
+  done < "$COMPATIBILITY_TSV"
+  record_step "compatibility-check" "fail" "compatibility rehearsal failed for $compatibility_fail_count of $compatibility_target_count targets" "Inspect installer report compatibility matrix section"
+  INSTALL_FAILED=1
+else
+  record_step "compatibility-check" "pass" "compatibility rehearsal passed for $compatibility_target_count targets" "Inspect installer report compatibility matrix section"
 fi
 
 if [[ "$ONBOARDING_MODE" == "interactive" ]]; then
@@ -1592,6 +1680,17 @@ if [[ "$INSTALL_FAILED" != "0" ]]; then
   exit 1
 fi
 
+if [[ "$PREFLIGHT_ONLY" == "1" ]]; then
+  echo "PREFLIGHT  installer-steps :: preflight-only mode; apply steps skipped"
+  record_step "dashboard-install" "planned" "preflight-only mode; dashboard installer not executed" "Re-run without --preflight-only to apply"
+  record_step "bridge-launchagent" "planned" "preflight-only mode; bridge installer not executed" "Re-run without --preflight-only to apply"
+  record_step "cron-install" "planned" "preflight-only mode; cron installer not executed" "Re-run without --preflight-only to apply"
+  record_step "readiness-refresh" "planned" "preflight-only mode; readiness refresh not executed" "Re-run without --preflight-only to apply"
+  record_step "verify-dashboard-health" "planned" "preflight-only mode; verification deferred to apply run" "Re-run without --preflight-only and with --verify"
+  record_step "verify-bridge-launchagent" "planned" "preflight-only mode; verification deferred to apply run" "Re-run without --preflight-only and with --verify"
+  record_step "verify-cron-marker" "planned" "preflight-only mode; verification deferred to apply run" "Re-run without --preflight-only and with --verify"
+  record_step "verify-readiness-status-artifact" "planned" "preflight-only mode; verification deferred to apply run" "Re-run without --preflight-only and with --verify"
+else
 if [[ "$SKIP_DASHBOARD_INSTALL" == "0" ]]; then
   if [[ "$OS_NAME" == "Darwin" ]]; then
     if ! run_step "dashboard-install" "dashboard/scripts/install-macos.sh" \
@@ -1748,6 +1847,7 @@ else
   record_step "verify-cron-marker" "skipped" "post-install verify disabled" "Re-run with --verify"
   record_step "verify-readiness-status-artifact" "skipped" "post-install verify disabled" "Re-run with --verify"
 fi
+fi
 
 mkdir -p "$REPORT_DIR"
 timestamp_utc="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -1764,12 +1864,14 @@ fi
 adoption_status="pass"
 if [[ "$INSTALL_FAILED" != "0" ]]; then
   adoption_status="fail"
-elif [[ "$DRY_RUN" == "1" ]]; then
+elif [[ "$DRY_RUN" == "1" || "$PREFLIGHT_ONLY" == "1" ]]; then
   adoption_status="planned"
 fi
 adoption_mode="execute"
 if [[ "$DRY_RUN" == "1" ]]; then
   adoption_mode="dry-run"
+elif [[ "$PREFLIGHT_ONLY" == "1" ]]; then
+  adoption_mode="preflight"
 fi
 rollback_command=""
 if [[ -n "$RESTORE_POINT_DIR" ]]; then
@@ -1786,7 +1888,7 @@ fi
 onboarding_status="pass"
 if [[ "$INSTALL_FAILED" != "0" ]]; then
   onboarding_status="fail"
-elif [[ "$DRY_RUN" == "1" ]]; then
+elif [[ "$DRY_RUN" == "1" || "$PREFLIGHT_ONLY" == "1" ]]; then
   onboarding_status="planned"
 fi
 if write_onboarding_transcript "$onboarding_status" "installer execution completed"; then
@@ -1796,7 +1898,7 @@ else
   INSTALL_FAILED=1
 fi
 
-python3 - "$SUMMARY_TSV" "$report_file" "$timestamp_utc" "$OS_NAME" "$DASHBOARD_PORT" "$PROFILE" "$dashboard_url" "$DRY_RUN" "$INSTALL_PRESET" "$VERIFY_POST_INSTALL" "$ADOPTION_PLAN_TSV" "$adoption_evidence_file" "$ONBOARDING_TRANSCRIPT_FILE" <<'PY'
+python3 - "$SUMMARY_TSV" "$report_file" "$timestamp_utc" "$OS_NAME" "$DASHBOARD_PORT" "$PROFILE" "$dashboard_url" "$DRY_RUN" "$PREFLIGHT_ONLY" "$INSTALL_PRESET" "$VERIFY_POST_INSTALL" "$ADOPTION_PLAN_TSV" "$COMPATIBILITY_TSV" "$adoption_evidence_file" "$ONBOARDING_TRANSCRIPT_FILE" <<'PY'
 import csv
 import json
 import pathlib
@@ -1810,11 +1912,13 @@ dashboard_port = sys.argv[5]
 profile = sys.argv[6]
 dashboard_url = sys.argv[7]
 dry_run = sys.argv[8] == "1"
-preset = sys.argv[9]
-verify_enabled = sys.argv[10] == "1"
-adoption_plan_path = pathlib.Path(sys.argv[11])
-adoption_evidence_path = pathlib.Path(sys.argv[12])
-onboarding_transcript_path = pathlib.Path(sys.argv[13])
+preflight_only = sys.argv[9] == "1"
+preset = sys.argv[10]
+verify_enabled = sys.argv[11] == "1"
+adoption_plan_path = pathlib.Path(sys.argv[12])
+compatibility_path = pathlib.Path(sys.argv[13])
+adoption_evidence_path = pathlib.Path(sys.argv[14])
+onboarding_transcript_path = pathlib.Path(sys.argv[15])
 
 rows = []
 with summary_tsv.open("r", encoding="utf-8") as fh:
@@ -1853,7 +1957,7 @@ planned_count = sum(1 for r in rows if r["status"] == "planned")
 status = "pass"
 if fail_count > 0:
     status = "fail"
-elif dry_run:
+elif dry_run or preflight_only:
     status = "planned"
 
 lines = [
@@ -1866,7 +1970,7 @@ lines = [
     f"- Dashboard URL: `{dashboard_url}`",
     f"- Readiness profile: `{profile}`",
     f"- Post-install verify: `{'enabled' if verify_enabled else 'disabled'}`",
-    f"- Mode: `{'dry-run' if dry_run else 'execute'}`",
+    f"- Mode: `{'dry-run' if dry_run else 'preflight' if preflight_only else 'execute'}`",
     f"- Status: `{status}`",
     f"- Pass: `{pass_count}`",
     f"- Fail: `{fail_count}`",
@@ -1893,6 +1997,32 @@ if adoption_plan_rows:
         )
 else:
     lines.append("| `(none)` | `skip` | `false` | `n/a` | no adoption targets were generated |")
+
+compatibility_rows = []
+if compatibility_path.exists():
+    with compatibility_path.open("r", encoding="utf-8") as fh:
+        reader = csv.reader(fh, delimiter="\t")
+        for row in reader:
+            if len(row) != 4:
+                continue
+            compatibility_rows.append({
+                "target": row[0],
+                "status": row[1],
+                "detail": row[2],
+                "next": row[3],
+            })
+
+lines.extend([
+    "",
+    "## Compatibility Rehearsal",
+    "| Target | Status | Detail | Next Command |",
+    "|---|---|---|---|",
+])
+if compatibility_rows:
+    for row in compatibility_rows:
+        lines.append(f"| `{row['target']}` | `{row['status']}` | {row['detail']} | `{row['next']}` |")
+else:
+    lines.append("| `(none)` | `skip` | no compatibility data generated | `n/a` |")
 
 changed_targets = adoption_evidence.get("changedTargets", []) if isinstance(adoption_evidence, dict) else []
 rollback_command = adoption_evidence.get("rollbackCommand", "n/a") if isinstance(adoption_evidence, dict) else "n/a"
@@ -1958,6 +2088,14 @@ fi
 if [[ "$INSTALL_FAILED" != "0" ]]; then
   echo "VENTUREOS_INSTALL_RESULT=FAIL"
   exit 1
+fi
+
+if [[ "$PREFLIGHT_ONLY" == "1" ]]; then
+  if [[ -n "$RESTORE_POINT_DIR" ]]; then
+    echo "VENTUREOS_INSTALL_RESTORE_POINT=$RESTORE_POINT_DIR"
+  fi
+  echo "VENTUREOS_INSTALL_RESULT=PREFLIGHT"
+  exit 0
 fi
 
 if [[ -n "$RESTORE_POINT_DIR" ]]; then
