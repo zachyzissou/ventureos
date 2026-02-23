@@ -615,6 +615,47 @@ bash scripts/tests/test-pr-merge-readiness.sh
 
 ---
 
+## 20b) required-check-contexts.sh
+**Purpose:** Audit required branch-protection check contexts against actual statuses/check-runs on a PR head commit.
+
+**Usage:**
+```bash
+bash scripts/required-check-contexts.sh --pr 485
+```
+
+JSON report output:
+```bash
+bash scripts/required-check-contexts.sh --pr 485 --json-out runtime/reports/pr-required-checks/pr-485.json
+```
+
+**Behavior:**
+- Reads required status contexts from branch protection on the PR base branch.
+- Reads commit status contexts + check-run names from the PR head SHA.
+- Produces per-context classification:
+  - `pass`
+  - `pending`
+  - `fail`
+  - `missing`
+- Emits machine-readable status marker:
+  - `REQUIRED_CHECK_CONTEXT_STATUS=aligned-ready|aligned-not-ready|missing-contexts`
+- Exit behavior:
+  - `0`: all required contexts present and successful
+  - `3`: one or more required contexts are missing (alignment drift)
+  - `4`: contexts aligned but at least one is pending/failing
+  - `2`: invalid input
+- Supports deterministic fixture mode for tests via:
+  - `PR_HEAD_FIXTURE_JSON`
+  - `REQUIRED_CHECKS_FIXTURE_JSON`
+  - `COMMIT_STATUS_FIXTURE_JSON`
+  - `CHECK_RUNS_FIXTURE_JSON`
+
+**Regression test:**
+```bash
+bash scripts/tests/test-required-check-contexts.sh
+```
+
+---
+
 ## 21) roadmap-status-sync.py
 **Purpose:** Detect status drift between `README.md` active work and roadmap anchor issue `#138`.
 
