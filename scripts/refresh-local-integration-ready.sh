@@ -8,6 +8,7 @@ REPORT_DIR="${SMOKE_REPORT_DIR:-$REPO_ROOT/runtime/reports/openclaw-local-smoke}
 OUTPUT_DOC="$REPO_ROOT/docs/LOCAL_INTEGRATION_READY.md"
 HISTORY_LIMIT=7
 PRUNE_KEEP=0
+MAX_AGE_MIN="${OPENCLAW_LOCAL_READY_MAX_AGE_MIN:-0}"
 RUN_SMOKE=1
 SMOKE_ARGS=()
 
@@ -23,6 +24,7 @@ Options:
   --report-dir <path>          Smoke report directory (default: runtime/reports/openclaw-local-smoke)
   --history-limit <n>          Number of historical runs in trend table (default: 7)
   --prune-keep <n>             Keep only newest N timestamped artifact sets after refresh (default: 0=disabled)
+  --max-age-min <n>            Fail stale guardrail when latest paired report is older than N minutes (default: 0=disabled)
   --skip-smoke                 Do not run smoke; refresh doc from existing artifacts
 
   Forwarded smoke options:
@@ -69,6 +71,11 @@ while [[ $# -gt 0 ]]; do
       PRUNE_KEEP="$2"
       shift 2
       ;;
+    --max-age-min)
+      need_value "$@"
+      MAX_AGE_MIN="$2"
+      shift 2
+      ;;
     --skip-smoke)
       RUN_SMOKE=0
       shift
@@ -102,6 +109,10 @@ if ! [[ "$PRUNE_KEEP" =~ ^[0-9]+$ ]]; then
   echo "Invalid --prune-keep: $PRUNE_KEEP" >&2
   exit 2
 fi
+if ! [[ "$MAX_AGE_MIN" =~ ^[0-9]+$ ]]; then
+  echo "Invalid --max-age-min: $MAX_AGE_MIN" >&2
+  exit 2
+fi
 
 if [[ "${#SMOKE_ARGS[@]}" -gt 0 ]]; then
   SMOKE_ARGS=(--report-dir "$REPORT_DIR" "${SMOKE_ARGS[@]}")
@@ -117,7 +128,7 @@ if [[ "$RUN_SMOKE" == "1" ]]; then
   set -e
 fi
 
-python3 - "$REPORT_DIR" "$OUTPUT_DOC" "$REPO_ROOT" "$smoke_rc" "$HISTORY_LIMIT" "$PRUNE_KEEP" <<'PY'
+PYTHON_OUTPUT="$(python3 - "$REPORT_DIR" "$OUTPUT_DOC" "$REPO_ROOT" "$smoke_rc" "$HISTORY_LIMIT" "$PRUNE_KEEP" "$MAX_AGE_MIN" <<'PY'
 from __future__ import annotations
 
 import json
@@ -132,6 +143,7 @@ repo_root = pathlib.Path(sys.argv[3]).resolve()
 smoke_rc = int(sys.argv[4])
 history_limit = int(sys.argv[5])
 prune_keep = int(sys.argv[6])
+max_age_min = int(sys.argv[7])
 
 if not report_dir.exists() or not report_dir.is_dir():
     raise SystemExit(f"No report directory found: {report_dir}")
@@ -181,6 +193,11 @@ latest_ts = paired_timestamps[-1]
 latest_json = json_by_ts[latest_ts]
 latest_md = md_by_ts[latest_ts]
 latest_svg = svg_by_ts[latest_ts]
+latest_dt = datetime.strptime(latest_ts, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
+now_dt = datetime.now(timezone.utc)
+latest_age_seconds = max(0, int((now_dt - latest_dt).total_seconds()))
+is_stale = max_age_min > 0 and latest_age_seconds > max_age_min * 60
+guardrail_rc = 3 if is_stale else 0
 
 payload = json.loads(latest_json.read_text(encoding="utf-8"))
 
@@ -282,6 +299,8 @@ now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 verdict = str(summary["verdict"]).upper()
 
 status_strip_rel = rel(latest_svg)
+status_json_path = (report_dir / "openclaw-local-ready-latest.json").resolve()
+status_md_path = (report_dir / "openclaw-local-ready-latest.md").resolve()
 
 out = [
     "# Local Integration Ready Checklist",
@@ -302,6 +321,8 @@ out = [
     f"- JSON: `{rel(latest_json)}`",
     f"- Markdown: `{rel(latest_md)}`",
     f"- Status strip SVG: `{status_strip_rel}`",
+    f"- Status summary JSON: `{rel(status_json_path)}`",
+    f"- Status summary Markdown: `{rel(status_md_path)}`",
 ]
 
 if latest_svg:
@@ -423,9 +444,91 @@ if smoke_rc != 0:
         "## Run Exit Note",
         f"- The smoke command exited non-zero (`{smoke_rc}`). This document still reflects the latest generated report.",
     ])
+if is_stale:
+    out.extend([
+        "",
+        "## Stale Guardrail",
+        f"- Latest paired report age (`{latest_age_seconds}s`) exceeded `--max-age-min {max_age_min}`.",
+        "- Cadence should be treated as degraded until a fresh run succeeds.",
+    ])
 
 output_path.parent.mkdir(parents=True, exist_ok=True)
 output_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+top_blockers: list[dict] = []
+for blocker in failed_checks[:3]:
+    top_blockers.append(
+        {
+            "id": blocker.get("id", "unknown"),
+            "owner": blocker.get("owner", "Ops"),
+            "severity": blocker.get("severity", "warn"),
+            "likelyCause": blocker.get("likelyCause", "unknown cause"),
+            "nextCommand": blocker.get("nextCommand", "n/a"),
+            "required": bool(blocker.get("required")),
+        }
+    )
+
+status_payload = {
+    "generatedAt": now_dt.isoformat(),
+    "latestTimestamp": latest_ts,
+    "latestAgeSeconds": latest_age_seconds,
+    "status": (
+        "alert"
+        if smoke_rc != 0 or is_stale or int(summary.get("requiredFailures", 0)) > 0
+        else "ok"
+    ),
+    "summary": {
+        "verdict": summary.get("verdict"),
+        "status": summary.get("status"),
+        "readinessScore": summary.get("readinessScore"),
+        "confidence": summary.get("confidence"),
+        "requiredFailures": summary.get("requiredFailures"),
+        "warnings": summary.get("warnings"),
+        "profile": summary.get("profile"),
+    },
+    "guardrails": {
+        "maxAgeMin": max_age_min,
+        "stale": is_stale,
+        "guardrailRc": guardrail_rc,
+    },
+    "smokeExitCode": smoke_rc,
+    "artifacts": {
+        "json": rel(latest_json),
+        "markdown": rel(latest_md),
+        "svg": rel(latest_svg),
+        "readinessDoc": rel(output_path),
+    },
+    "topBlockers": top_blockers,
+}
+status_json_path.write_text(json.dumps(status_payload, indent=2) + "\n", encoding="utf-8")
+
+status_md_lines = [
+    "# Local Readiness Status Summary",
+    "",
+    f"- Status: `{status_payload['status'].upper()}`",
+    f"- Verdict: `{str(summary.get('verdict', 'unknown')).upper()}`",
+    f"- Readiness score: `{summary.get('readinessScore', 'n/a')}`",
+    f"- Confidence: `{summary.get('confidence', 'n/a')}`",
+    f"- Required failures: `{summary.get('requiredFailures', 'n/a')}`",
+    f"- Warnings: `{summary.get('warnings', 'n/a')}`",
+    f"- Latest report timestamp: `{latest_ts}`",
+    f"- Latest report age seconds: `{latest_age_seconds}`",
+    f"- Stale guardrail: `{'STALE' if is_stale else 'fresh'}` (maxAgeMin={max_age_min})",
+    f"- Smoke exit code: `{smoke_rc}`",
+]
+if top_blockers:
+    status_md_lines.extend(["", "## Top Blockers"])
+    for blocker in top_blockers:
+        status_md_lines.append(
+            f"- `{blocker['id']}` owner=`{blocker['owner']}` "
+            f"severity=`{blocker['severity']}` "
+            f"cause: {blocker['likelyCause']} "
+            f"next: `{blocker['nextCommand']}`"
+        )
+else:
+    status_md_lines.extend(["", "## Top Blockers", "- none"])
+
+status_md_path.write_text("\n".join(status_md_lines) + "\n", encoding="utf-8")
 
 pruned_files = 0
 if prune_keep > 0:
@@ -443,14 +546,35 @@ print(f"REFRESH_SOURCE_JSON={latest_json}")
 print(f"REFRESH_SOURCE_MD={latest_md}")
 if latest_svg:
     print(f"REFRESH_SOURCE_SVG={latest_svg}")
+print(f"REFRESH_STATUS_JSON={status_json_path}")
+print(f"REFRESH_STATUS_MD={status_md_path}")
+print(f"REFRESH_LATEST_AGE_SEC={latest_age_seconds}")
+print(f"REFRESH_STALE={'true' if is_stale else 'false'}")
+print(f"REFRESH_GUARDRAIL_RC={guardrail_rc}")
 if prune_keep > 0:
     print(f"REFRESH_PRUNED_FILES={pruned_files}")
 PY
+)"
+
+echo "$PYTHON_OUTPUT"
+
+GUARDRAIL_RC="$(echo "$PYTHON_OUTPUT" | awk -F= '/^REFRESH_GUARDRAIL_RC=/{print $2}' | tail -n 1)"
+if [[ -z "$GUARDRAIL_RC" ]]; then
+  GUARDRAIL_RC=0
+fi
 
 echo "Local integration readiness refreshed:"
 echo "  - $OUTPUT_DOC"
 
-if [[ "$RUN_SMOKE" == "1" ]]; then
+if ! [[ "$GUARDRAIL_RC" =~ ^[0-9]+$ ]]; then
+  echo "Invalid REFRESH_GUARDRAIL_RC from refresh helper: $GUARDRAIL_RC" >&2
+  exit 2
+fi
+
+if [[ "$smoke_rc" -ne 0 ]]; then
   exit "$smoke_rc"
+fi
+if [[ "$GUARDRAIL_RC" -ne 0 ]]; then
+  exit "$GUARDRAIL_RC"
 fi
 exit 0

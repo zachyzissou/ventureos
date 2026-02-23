@@ -176,6 +176,11 @@ Run the cron-safe local readiness cadence wrapper:
 npm run openclaw:local-ready:cron
 ```
 
+Check latest readiness status without running a new smoke cycle (fails if stale > 360 min):
+```bash
+npm run openclaw:local-ready:status
+```
+
 Install/manage persistent host bridge LaunchAgent:
 ```bash
 npm run openclaw:bridge:launchagent
@@ -185,12 +190,15 @@ Reference docs and artifacts:
 - `docs/OPENCLAW_LOCAL_INTEGRATION_SMOKE.md`
 - `docs/LOCAL_INTEGRATION_READY.md`
 - `runtime/reports/openclaw-local-smoke/`
+- `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
+- `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
 
-Current next steps (as of February 22, 2026):
+Current next steps (as of February 23, 2026):
 1. Run one command onboarding: `npm run openclaw:install`
 2. Keep cadence active: `npm run openclaw:local-ready:cron`
-3. Confirm Mission Control shows the latest `/api/openclaw-local-readiness` snapshot.
-4. If bridge checks should pass, set `BRIDGE_TOKEN_FILE` and rerun `npm run openclaw:local-smoke -- --profile bridge`.
+3. Confirm stale guardrail status: `npm run openclaw:local-ready:status`
+4. Confirm Mission Control shows the latest `/api/openclaw-local-readiness` snapshot.
+5. If bridge checks should pass, set `BRIDGE_TOKEN_FILE` and rerun `npm run openclaw:local-smoke -- --profile bridge`.
 
 ### Next.js Hybrid Frontend (Incremental)
 Launch the new Next.js migration surface:

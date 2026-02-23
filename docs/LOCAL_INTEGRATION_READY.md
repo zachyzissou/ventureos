@@ -1,6 +1,6 @@
 # Local Integration Ready Checklist
 
-Date: 2026-02-22 (UTC)
+Date: 2026-02-23 (UTC)
 Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 
 ## Mission Control Card
@@ -16,6 +16,8 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T231659Z.json`
 - Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T231659Z.md`
 - Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T231659Z.svg`
+- Status summary JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
+- Status summary Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
 
 ## Top 3 Blockers
 - No blockers in latest run.

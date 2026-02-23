@@ -265,12 +265,17 @@ bash scripts/refresh-local-integration-ready.sh \
 - Validates required smoke JSON schema before rendering readiness markdown.
 - Supports `--history-limit <n>` to control trend rows in the output.
 - Supports `--prune-keep <n>` to retain only newest `n` timestamp groups after refresh.
+- Supports `--max-age-min <n>` stale guardrail checks against the latest paired artifact timestamp.
 - Rewrites readiness summary markdown with:
   - mission control card (`GO/HOLD/BLOCKED`, score, confidence)
   - top blockers and next commands
   - trend table from the latest N paired runs
-  - latest artifact references (JSON/MD/SVG)
+  - latest artifact references (JSON/MD/SVG + latest status summary paths)
+- Emits rolling operator status artifacts:
+  - `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
+  - `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
 - Preserves smoke exit status when smoke is executed.
+- Returns non-zero (`3`) when stale guardrail is enabled and violated.
 
 **Regression test:**
 ```bash
@@ -292,10 +297,12 @@ bash scripts/openclaw-local-ready-cron.sh
 - Applies defaults optimized for unattended cadence:
   - `--history-limit 7`
   - `--prune-keep 14`
+  - `--max-age-min 360`
   - `--profile full`
 - Allows env overrides:
   - `OPENCLAW_LOCAL_READY_HISTORY_LIMIT`
   - `OPENCLAW_LOCAL_READY_PRUNE_KEEP`
+  - `OPENCLAW_LOCAL_READY_MAX_AGE_MIN`
   - `OPENCLAW_LOCAL_READY_PROFILE` (`quick|full|bridge`)
 - Validates env inputs and exits `2` on invalid values before running refresh.
 - Forwards any additional CLI flags to the underlying refresh script (last flag wins).
@@ -308,7 +315,8 @@ bash scripts/tests/test-openclaw-local-ready-cron.sh
 **Current next steps (operator rollout):**
 1. `bash scripts/install-cron.sh --force`
 2. `bash scripts/openclaw-local-ready-cron.sh`
-3. Validate `docs/LOCAL_INTEGRATION_READY.md` timestamp and `runtime/reports/openclaw-local-smoke/` artifact rotation.
+3. `bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360`
+4. Validate `docs/LOCAL_INTEGRATION_READY.md` timestamp and `runtime/reports/openclaw-local-smoke/` artifact rotation.
 
 ---
 

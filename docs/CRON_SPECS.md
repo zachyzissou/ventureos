@@ -77,10 +77,13 @@
 - **Agent:** nexus
 - **Payload:** run `scripts/openclaw-local-ready-cron.sh`
 - **Output:** refreshed `docs/LOCAL_INTEGRATION_READY.md` and paired JSON/MD/SVG artifacts
+- **Status artifact:** `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - **Retention:** defaults to keep newest 14 artifact sets (configurable via env)
+- **Stale guardrail:** defaults to `--max-age-min 360`; job fails when latest paired report is older
 - **Added:** 2026-02-22
 
-## Current Next Steps (February 22, 2026)
+## Current Next Steps (February 23, 2026)
 1. Roll this schedule onto the host with `bash scripts/install-cron.sh --force`.
 2. Validate first run via `runtime/logs/cron-runs/openclaw-local-ready.jsonl`.
-3. Confirm `docs/LOCAL_INTEGRATION_READY.md` and Mission Control readiness card move forward on the next cadence tick.
+3. Validate stale guardrail via `bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360`.
+4. Confirm `docs/LOCAL_INTEGRATION_READY.md` and Mission Control readiness card move forward on the next cadence tick.
