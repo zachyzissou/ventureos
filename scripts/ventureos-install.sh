@@ -61,7 +61,10 @@ DISCOVER_VENTURE_CRON_STATE="unknown"
 REPORT_DIR="${VENTUREOS_INSTALL_REPORT_DIR:-$REPO_ROOT/runtime/reports/ventureos-install}"
 SUMMARY_TSV="$(mktemp)"
 RESTORE_INDEX_TSV="$(mktemp)"
-trap 'rm -f "$SUMMARY_TSV" "$RESTORE_INDEX_TSV"' EXIT
+ADOPTION_PLAN_TSV="$(mktemp)"
+FINGERPRINT_BEFORE_JSON="$(mktemp)"
+FINGERPRINT_AFTER_JSON="$(mktemp)"
+trap 'rm -f "$SUMMARY_TSV" "$RESTORE_INDEX_TSV" "$ADOPTION_PLAN_TSV" "$FINGERPRINT_BEFORE_JSON" "$FINGERPRINT_AFTER_JSON"' EXIT
 INSTALL_FAILED=0
 
 usage() {
@@ -76,6 +79,7 @@ Default behavior:
   - Installs bridge LaunchAgent on macOS
   - Installs managed cron entries
   - Runs local readiness refresh smoke
+  - Generates deterministic integration adoption/merge plan + change evidence artifact
   - Writes an install report artifact
 
 Options:
@@ -667,6 +671,353 @@ resolve_dashboard_url() {
     "$DASHBOARD_PORT"
 }
 
+record_adoption_target() {
+  local target="$1"
+  local decision="$2"
+  local exists_before="$3"
+  local subject="$4"
+  local reason="$5"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$target" "$decision" "$exists_before" "$subject" "$reason" >> "$ADOPTION_PLAN_TSV"
+}
+
+generate_integration_adoption_plan() {
+  local dashboard_url="$1"
+  : > "$ADOPTION_PLAN_TSV"
+
+  local dashboard_exists="false"
+  [[ "$DISCOVER_DASHBOARD_STATE" == "healthy" ]] && dashboard_exists="true"
+  if [[ "$SKIP_DASHBOARD_INSTALL" == "1" ]]; then
+    if [[ "$dashboard_exists" == "true" ]]; then
+      record_adoption_target "dashboard-service" "adopt" "$dashboard_exists" "$dashboard_url" "existing dashboard is healthy; installer will not replace it"
+    else
+      record_adoption_target "dashboard-service" "skip" "$dashboard_exists" "$dashboard_url" "dashboard install explicitly skipped"
+    fi
+  else
+    if [[ "$dashboard_exists" == "true" ]]; then
+      record_adoption_target "dashboard-service" "merge" "$dashboard_exists" "$dashboard_url" "refresh dashboard install in place"
+    else
+      record_adoption_target "dashboard-service" "create" "$dashboard_exists" "$dashboard_url" "provision dashboard service for local readiness"
+    fi
+  fi
+
+  local bridge_env_exists="false"
+  [[ -f "$BRIDGE_ENV" ]] && bridge_env_exists="true"
+  if [[ "$bridge_env_exists" == "true" ]]; then
+    if [[ "$SKIP_BRIDGE_LAUNCHAGENT" == "1" ]]; then
+      record_adoption_target "bridge-env-auth-source" "adopt" "$bridge_env_exists" "$BRIDGE_ENV" "existing bridge auth source preserved"
+    elif [[ "$OS_NAME" == "Darwin" ]]; then
+      record_adoption_target "bridge-env-auth-source" "merge" "$bridge_env_exists" "$BRIDGE_ENV" "bridge launchagent install reuses existing bridge env"
+    else
+      record_adoption_target "bridge-env-auth-source" "adopt" "$bridge_env_exists" "$BRIDGE_ENV" "platform does not run bridge launchagent installer"
+    fi
+  else
+    if [[ "$SKIP_BRIDGE_LAUNCHAGENT" == "0" && "$OS_NAME" == "Darwin" ]]; then
+      record_adoption_target "bridge-env-auth-source" "skip" "$bridge_env_exists" "$BRIDGE_ENV" "bridge env missing; manual creation required before launchagent install"
+    else
+      record_adoption_target "bridge-env-auth-source" "skip" "$bridge_env_exists" "$BRIDGE_ENV" "bridge integration skipped by plan/platform"
+    fi
+  fi
+
+  if [[ "$OS_NAME" == "Darwin" ]]; then
+    local launchagent_plist="$HOME/Library/LaunchAgents/com.ventureos.bridge.plist"
+    local launchagent_exists="false"
+    [[ -f "$launchagent_plist" ]] && launchagent_exists="true"
+    if [[ "$SKIP_BRIDGE_LAUNCHAGENT" == "1" ]]; then
+      if [[ "$launchagent_exists" == "true" ]]; then
+        record_adoption_target "bridge-launchagent-plist" "adopt" "$launchagent_exists" "$launchagent_plist" "existing launchagent preserved"
+      else
+        record_adoption_target "bridge-launchagent-plist" "skip" "$launchagent_exists" "$launchagent_plist" "bridge launchagent step skipped"
+      fi
+    else
+      if [[ "$launchagent_exists" == "true" ]]; then
+        record_adoption_target "bridge-launchagent-plist" "merge" "$launchagent_exists" "$launchagent_plist" "refresh launchagent without destructive overwrite"
+      else
+        record_adoption_target "bridge-launchagent-plist" "create" "$launchagent_exists" "$launchagent_plist" "create launchagent for persistent bridge start"
+      fi
+    fi
+  fi
+
+  local managed_cron_exists="false"
+  [[ "$DISCOVER_VENTURE_CRON_STATE" == "installed" ]] && managed_cron_exists="true"
+  if [[ "$DISCOVER_CRON_STATE" == "unavailable" ]]; then
+    record_adoption_target "user-crontab" "skip" "false" "crontab -l" "crontab command unavailable on host"
+    record_adoption_target "ventureos-managed-cron-block" "skip" "$managed_cron_exists" "crontab -l" "cannot manage cron block without crontab command"
+  else
+    local user_cron_exists="false"
+    [[ "$DISCOVER_CRON_STATE" == "present" ]] && user_cron_exists="true"
+    if [[ "$SKIP_CRON_INSTALL" == "1" ]]; then
+      if [[ "$user_cron_exists" == "true" ]]; then
+        record_adoption_target "user-crontab" "adopt" "$user_cron_exists" "crontab -l" "existing user cron entries preserved"
+      else
+        record_adoption_target "user-crontab" "skip" "$user_cron_exists" "crontab -l" "cron integration skipped"
+      fi
+      if [[ "$managed_cron_exists" == "true" ]]; then
+        record_adoption_target "ventureos-managed-cron-block" "adopt" "$managed_cron_exists" "crontab -l" "existing VentureOS managed block retained"
+      else
+        record_adoption_target "ventureos-managed-cron-block" "skip" "$managed_cron_exists" "crontab -l" "managed block not installed and cron step skipped"
+      fi
+    else
+      if [[ "$user_cron_exists" == "true" ]]; then
+        record_adoption_target "user-crontab" "merge" "$user_cron_exists" "crontab -l" "managed block insertion/update preserves unrelated user entries"
+      else
+        record_adoption_target "user-crontab" "create" "$user_cron_exists" "crontab -l" "initialize crontab with VentureOS managed block"
+      fi
+      if [[ "$managed_cron_exists" == "true" ]]; then
+        record_adoption_target "ventureos-managed-cron-block" "merge" "$managed_cron_exists" "crontab -l" "refresh existing managed cron block"
+      else
+        record_adoption_target "ventureos-managed-cron-block" "create" "$managed_cron_exists" "crontab -l" "install managed cron block"
+      fi
+    fi
+  fi
+
+  local path_target path_subject path_exists
+  for path_target in \
+    "openclaw-config-openclaw-json:$OPENCLAW_DIR/openclaw.json" \
+    "openclaw-config-cron-jobs-json:$OPENCLAW_DIR/cron/jobs.json" \
+    "openclaw-config-discord-webhooks-json:$OPENCLAW_DIR/credentials/discord/webhooks.json"; do
+    path_subject="${path_target#*:}"
+    path_target="${path_target%%:*}"
+    path_exists="false"
+    [[ -f "$path_subject" ]] && path_exists="true"
+    if [[ "$path_exists" == "true" ]]; then
+      record_adoption_target "$path_target" "adopt" "$path_exists" "$path_subject" "existing OpenClaw runtime config retained (additive integration only)"
+    else
+      record_adoption_target "$path_target" "skip" "$path_exists" "$path_subject" "file absent; installer avoids destructive bootstrap writes"
+    fi
+  done
+
+  local readiness_exists="false"
+  [[ -f "$READINESS_STATUS_JSON" ]] && readiness_exists="true"
+  if [[ "$SKIP_READINESS" == "1" ]]; then
+    if [[ "$readiness_exists" == "true" ]]; then
+      record_adoption_target "readiness-status-artifact" "adopt" "$readiness_exists" "$READINESS_STATUS_JSON" "latest readiness snapshot retained"
+    else
+      record_adoption_target "readiness-status-artifact" "skip" "$readiness_exists" "$READINESS_STATUS_JSON" "readiness refresh skipped"
+    fi
+  else
+    if [[ "$readiness_exists" == "true" ]]; then
+      record_adoption_target "readiness-status-artifact" "merge" "$readiness_exists" "$READINESS_STATUS_JSON" "refresh readiness snapshot with latest smoke evidence"
+    else
+      record_adoption_target "readiness-status-artifact" "create" "$readiness_exists" "$READINESS_STATUS_JSON" "create first readiness snapshot"
+    fi
+  fi
+}
+
+render_integration_adoption_plan() {
+  echo "Integration adoption decisions:"
+  while IFS=$'\t' read -r target decision exists_before subject reason; do
+    [[ -z "${target:-}" ]] && continue
+    echo "  - $target => $decision (exists_before=$exists_before) :: $subject :: $reason"
+  done < "$ADOPTION_PLAN_TSV"
+}
+
+collect_install_target_fingerprints() {
+  local output_json="$1"
+  python3 - "$output_json" "$BRIDGE_ENV" "$OPENCLAW_DIR/openclaw.json" "$OPENCLAW_DIR/cron/jobs.json" "$OPENCLAW_DIR/credentials/discord/webhooks.json" "$READINESS_STATUS_JSON" <<'PY'
+from __future__ import annotations
+
+import hashlib
+import json
+import pathlib
+import shutil
+import subprocess
+import sys
+
+output_path = pathlib.Path(sys.argv[1])
+bridge_env = pathlib.Path(sys.argv[2])
+openclaw_json = pathlib.Path(sys.argv[3])
+openclaw_jobs = pathlib.Path(sys.argv[4])
+openclaw_webhooks = pathlib.Path(sys.argv[5])
+readiness_json = pathlib.Path(sys.argv[6])
+
+targets = [
+    ("bridge-env-auth-source", bridge_env),
+    ("openclaw-config-openclaw-json", openclaw_json),
+    ("openclaw-config-cron-jobs-json", openclaw_jobs),
+    ("openclaw-config-discord-webhooks-json", openclaw_webhooks),
+    ("readiness-status-artifact", readiness_json),
+]
+
+def fingerprint_path(target_id: str, path: pathlib.Path) -> dict:
+    entry = {
+        "id": target_id,
+        "subject": str(path),
+        "exists": False,
+        "kind": "missing",
+        "size": 0,
+        "sha256": None,
+        "lineCount": 0,
+        "mode": None,
+    }
+    if not path.exists():
+        return entry
+    if not path.is_file():
+        entry["exists"] = True
+        entry["kind"] = "non-file"
+        return entry
+
+    raw = path.read_bytes()
+    entry["exists"] = True
+    entry["kind"] = "file"
+    entry["size"] = len(raw)
+    entry["sha256"] = hashlib.sha256(raw).hexdigest()
+    entry["mode"] = oct(path.stat().st_mode & 0o777)
+    try:
+        text = raw.decode("utf-8", errors="ignore")
+    except Exception:
+        text = ""
+    entry["lineCount"] = len(text.splitlines()) if text else 0
+    return entry
+
+entries = [fingerprint_path(target_id, path) for target_id, path in targets]
+
+crontab_entry = {
+    "id": "user-crontab",
+    "subject": "crontab -l",
+    "exists": False,
+    "kind": "unavailable",
+    "size": 0,
+    "sha256": None,
+    "lineCount": 0,
+    "managedCronPresent": False,
+}
+managed_block_entry = {
+    "id": "ventureos-managed-cron-block",
+    "subject": "crontab -l",
+    "exists": False,
+    "kind": "derived",
+    "size": 0,
+    "sha256": None,
+    "lineCount": 0,
+    "managedCronPresent": False,
+}
+
+if shutil.which("crontab") is not None:
+    proc = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+    if proc.returncode == 0:
+        text = proc.stdout or ""
+        encoded = text.encode("utf-8")
+        managed = "VentureOS Managed Cron" in text
+        crontab_entry.update({
+            "exists": bool(text.strip()),
+            "kind": "crontab",
+            "size": len(encoded),
+            "sha256": hashlib.sha256(encoded).hexdigest(),
+            "lineCount": len(text.splitlines()),
+            "managedCronPresent": managed,
+        })
+        managed_block_entry.update({
+            "exists": managed,
+            "size": len(encoded),
+            "sha256": hashlib.sha256(encoded).hexdigest(),
+            "lineCount": len(text.splitlines()),
+            "managedCronPresent": managed,
+        })
+    else:
+        crontab_entry["kind"] = "empty"
+        managed_block_entry["kind"] = "empty"
+
+entries.append(crontab_entry)
+entries.append(managed_block_entry)
+
+output_path.write_text(json.dumps(entries, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
+generate_install_adoption_evidence() {
+  local output_json="$1"
+  local status="$2"
+  local mode="$3"
+  local rollback_command="$4"
+  python3 - "$output_json" "$ADOPTION_PLAN_TSV" "$FINGERPRINT_BEFORE_JSON" "$FINGERPRINT_AFTER_JSON" "$status" "$mode" "$rollback_command" <<'PY'
+from __future__ import annotations
+
+import csv
+import json
+import pathlib
+import sys
+from datetime import datetime, timezone
+
+output_path = pathlib.Path(sys.argv[1])
+plan_path = pathlib.Path(sys.argv[2])
+before_path = pathlib.Path(sys.argv[3])
+after_path = pathlib.Path(sys.argv[4])
+status = sys.argv[5]
+mode = sys.argv[6]
+rollback_command = sys.argv[7]
+
+plans = []
+with plan_path.open("r", encoding="utf-8") as fh:
+    reader = csv.reader(fh, delimiter="\t")
+    for row in reader:
+        if len(row) != 5:
+            continue
+        plans.append({
+            "target": row[0],
+            "decision": row[1],
+            "existsBefore": row[2] == "true",
+            "subject": row[3],
+            "reason": row[4],
+        })
+
+before_items = json.loads(before_path.read_text(encoding="utf-8"))
+after_items = json.loads(after_path.read_text(encoding="utf-8"))
+before = {str(item.get("id", "")): item for item in before_items if isinstance(item, dict)}
+after = {str(item.get("id", "")): item for item in after_items if isinstance(item, dict)}
+
+def signature(item: dict | None) -> tuple:
+    if not isinstance(item, dict):
+        return ("missing",)
+    return (
+        item.get("exists"),
+        item.get("kind"),
+        item.get("size"),
+        item.get("sha256"),
+        item.get("lineCount"),
+        item.get("managedCronPresent"),
+    )
+
+changed_targets = []
+for target_id in sorted(set(before.keys()) | set(after.keys())):
+    b = before.get(target_id)
+    a = after.get(target_id)
+    if signature(b) == signature(a):
+        continue
+    changed_targets.append({
+        "id": target_id,
+        "before": {
+            "exists": (b or {}).get("exists"),
+            "kind": (b or {}).get("kind"),
+            "size": (b or {}).get("size"),
+            "lineCount": (b or {}).get("lineCount"),
+            "managedCronPresent": (b or {}).get("managedCronPresent"),
+        },
+        "after": {
+            "exists": (a or {}).get("exists"),
+            "kind": (a or {}).get("kind"),
+            "size": (a or {}).get("size"),
+            "lineCount": (a or {}).get("lineCount"),
+            "managedCronPresent": (a or {}).get("managedCronPresent"),
+        },
+    })
+
+payload = {
+    "generatedAtUtc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "status": status,
+    "mode": mode,
+    "rollbackCommand": rollback_command if rollback_command else None,
+    "plan": plans,
+    "fingerprints": {
+        "before": before_items,
+        "after": after_items,
+    },
+    "changedTargets": changed_targets,
+}
+
+output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --non-interactive)
@@ -949,6 +1300,23 @@ if [[ "$DRY_RUN" == "1" ]]; then
 fi
 discover_existing_state "$dashboard_url"
 
+ui_section "Integration Adoption Plan"
+generate_integration_adoption_plan "$dashboard_url"
+render_integration_adoption_plan
+adoption_target_count="$(wc -l < "$ADOPTION_PLAN_TSV" | tr -d ' ')"
+if [[ "$DRY_RUN" == "1" ]]; then
+  record_step "adoption-plan" "planned" "generated adoption/merge plan for $adoption_target_count targets" "Inspect installer report adoption plan section"
+else
+  record_step "adoption-plan" "pass" "generated adoption/merge plan for $adoption_target_count targets" "Inspect installer report adoption plan section"
+fi
+
+if collect_install_target_fingerprints "$FINGERPRINT_BEFORE_JSON"; then
+  record_step "adoption-fingerprint-before" "pass" "captured pre-apply fingerprints for integration targets" "Inspect installer adoption evidence json artifact"
+else
+  record_step "adoption-fingerprint-before" "fail" "unable to capture pre-apply fingerprints" "Ensure local filesystem and crontab are accessible, then rerun installer"
+  INSTALL_FAILED=1
+fi
+
 ui_section "Preflight Safety"
 if [[ "$CAPTURE_RESTORE_POINT" == "1" ]]; then
   if [[ "$DRY_RUN" == "1" ]]; then
@@ -1130,9 +1498,40 @@ fi
 mkdir -p "$REPORT_DIR"
 timestamp_utc="$(date -u +%Y%m%dT%H%M%SZ)"
 report_file="$REPORT_DIR/ventureos-install-${timestamp_utc}.md"
+adoption_evidence_file="$REPORT_DIR/ventureos-install-adoption-${timestamp_utc}.json"
 
-python3 - "$SUMMARY_TSV" "$report_file" "$timestamp_utc" "$OS_NAME" "$DASHBOARD_PORT" "$PROFILE" "$dashboard_url" "$DRY_RUN" "$INSTALL_PRESET" "$VERIFY_POST_INSTALL" <<'PY'
+if collect_install_target_fingerprints "$FINGERPRINT_AFTER_JSON"; then
+  record_step "adoption-fingerprint-after" "pass" "captured post-apply fingerprints for integration targets" "Inspect installer adoption evidence json artifact"
+else
+  record_step "adoption-fingerprint-after" "fail" "unable to capture post-apply fingerprints" "Ensure local filesystem and crontab are accessible, then rerun installer"
+  INSTALL_FAILED=1
+fi
+
+adoption_status="pass"
+if [[ "$INSTALL_FAILED" != "0" ]]; then
+  adoption_status="fail"
+elif [[ "$DRY_RUN" == "1" ]]; then
+  adoption_status="planned"
+fi
+adoption_mode="execute"
+if [[ "$DRY_RUN" == "1" ]]; then
+  adoption_mode="dry-run"
+fi
+rollback_command=""
+if [[ -n "$RESTORE_POINT_DIR" ]]; then
+  rollback_command="bash scripts/ventureos-install.sh --revert $RESTORE_POINT_DIR"
+fi
+
+if generate_install_adoption_evidence "$adoption_evidence_file" "$adoption_status" "$adoption_mode" "$rollback_command"; then
+  record_step "adoption-evidence" "pass" "wrote adoption evidence artifact to $adoption_evidence_file" "cat $adoption_evidence_file"
+else
+  record_step "adoption-evidence" "fail" "unable to write adoption evidence artifact" "Check filesystem permissions for $REPORT_DIR and rerun installer"
+  INSTALL_FAILED=1
+fi
+
+python3 - "$SUMMARY_TSV" "$report_file" "$timestamp_utc" "$OS_NAME" "$DASHBOARD_PORT" "$PROFILE" "$dashboard_url" "$DRY_RUN" "$INSTALL_PRESET" "$VERIFY_POST_INSTALL" "$ADOPTION_PLAN_TSV" "$adoption_evidence_file" <<'PY'
 import csv
+import json
 import pathlib
 import sys
 
@@ -1146,6 +1545,8 @@ dashboard_url = sys.argv[7]
 dry_run = sys.argv[8] == "1"
 preset = sys.argv[9]
 verify_enabled = sys.argv[10] == "1"
+adoption_plan_path = pathlib.Path(sys.argv[11])
+adoption_evidence_path = pathlib.Path(sys.argv[12])
 
 rows = []
 with summary_tsv.open("r", encoding="utf-8") as fh:
@@ -1154,6 +1555,27 @@ with summary_tsv.open("r", encoding="utf-8") as fh:
         if len(row) != 4:
             continue
         rows.append({"step": row[0], "status": row[1], "detail": row[2], "next": row[3]})
+
+adoption_plan_rows = []
+with adoption_plan_path.open("r", encoding="utf-8") as fh:
+    reader = csv.reader(fh, delimiter="\t")
+    for row in reader:
+        if len(row) != 5:
+            continue
+        adoption_plan_rows.append({
+            "target": row[0],
+            "decision": row[1],
+            "exists_before": row[2],
+            "subject": row[3],
+            "reason": row[4],
+        })
+
+adoption_evidence = {}
+if adoption_evidence_path.exists():
+    try:
+        adoption_evidence = json.loads(adoption_evidence_path.read_text(encoding="utf-8"))
+    except Exception:
+        adoption_evidence = {}
 
 pass_count = sum(1 for r in rows if r["status"] == "pass")
 fail_count = sum(1 for r in rows if r["status"] == "fail")
@@ -1190,6 +1612,45 @@ lines = [
 for row in rows:
     lines.append(f"| `{row['step']}` | `{row['status']}` | {row['detail']} | `{row['next']}` |")
 
+lines.extend([
+    "",
+    "## Integration Adoption Plan",
+    "| Target | Decision | Exists Before | Subject | Reason |",
+    "|---|---|---|---|---|",
+])
+if adoption_plan_rows:
+    for row in adoption_plan_rows:
+        lines.append(
+            f"| `{row['target']}` | `{row['decision']}` | `{row['exists_before']}` | `{row['subject']}` | {row['reason']} |"
+        )
+else:
+    lines.append("| `(none)` | `skip` | `false` | `n/a` | no adoption targets were generated |")
+
+changed_targets = adoption_evidence.get("changedTargets", []) if isinstance(adoption_evidence, dict) else []
+rollback_command = adoption_evidence.get("rollbackCommand", "n/a") if isinstance(adoption_evidence, dict) else "n/a"
+if not rollback_command:
+    rollback_command = "n/a"
+lines.extend([
+    "",
+    "## Config Change Evidence",
+    f"- Evidence JSON: `{adoption_evidence_path}`",
+    f"- Changed targets: `{len(changed_targets) if isinstance(changed_targets, list) else 0}`",
+    f"- Rollback command: `{rollback_command}`",
+])
+if isinstance(changed_targets, list) and changed_targets:
+    lines.append("")
+    lines.append("| Changed Target | Before Exists | After Exists | Before Kind | After Kind |")
+    lines.append("|---|---|---|---|---|")
+    for changed in changed_targets:
+        if not isinstance(changed, dict):
+            continue
+        before = changed.get("before", {}) if isinstance(changed.get("before"), dict) else {}
+        after = changed.get("after", {}) if isinstance(changed.get("after"), dict) else {}
+        lines.append(
+            f"| `{changed.get('id', 'unknown')}` | `{before.get('exists', 'n/a')}` | `{after.get('exists', 'n/a')}` | "
+            f"`{before.get('kind', 'n/a')}` | `{after.get('kind', 'n/a')}` |"
+        )
+
 failed_rows = [row for row in rows if row["status"] == "fail"]
 if failed_rows:
     lines.extend([
@@ -1207,6 +1668,8 @@ PY
 echo ""
 echo "Install report written:"
 echo "  - $report_file"
+echo "Adoption evidence:"
+echo "  - $adoption_evidence_file"
 if [[ -n "$RESTORE_POINT_DIR" ]]; then
   echo "Restore point:"
   echo "  - $RESTORE_POINT_DIR"

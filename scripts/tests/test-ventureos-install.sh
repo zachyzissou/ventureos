@@ -70,11 +70,18 @@ cat > "$FAKE_CRON" <<'SH'
 #!/usr/bin/env bash
 set -euo pipefail
 echo "cron|$*" >> "$CALL_LOG"
-cat > "$CRONTAB_STATE" <<'EOF_CRON_INSTALLED'
+existing="$(cat "$CRONTAB_STATE" 2>/dev/null || true)"
+filtered="$(printf '%s\n' "$existing" | sed '/# === VentureOS Managed Cron/,/# === END VentureOS Managed Cron/d')"
+{
+  if [[ -n "$filtered" ]]; then
+    printf '%s\n' "$filtered"
+  fi
+  cat <<'EOF_CRON_INSTALLED'
 # === VentureOS Managed Cron ===
 */30 * * * * /tmp/fake cron
 # === END VentureOS Managed Cron ===
 EOF_CRON_INSTALLED
+} > "$CRONTAB_STATE"
 exit 0
 SH
 
@@ -166,6 +173,11 @@ latest_report() {
   ls -1 "$REPORT_BASE/${run_name}"/ventureos-install-*.md | tail -n 1
 }
 
+latest_adoption_evidence() {
+  local run_name="$1"
+  ls -1 "$REPORT_BASE/${run_name}"/ventureos-install-adoption-*.json | tail -n 1
+}
+
 export CALL_LOG
 export VENTUREOS_INSTALL_DASHBOARD_MACOS_SCRIPT="$FAKE_DASHBOARD_MACOS"
 export VENTUREOS_INSTALL_DASHBOARD_LINUX_SCRIPT="$FAKE_DASHBOARD_LINUX"
@@ -198,6 +210,20 @@ grep -q '| Step | Status | Detail | Next Command |' "$dry_run_report"
 grep -q -- '- Preset: `minimal`' "$dry_run_report"
 grep -q -- '- Post-install verify: `enabled`' "$dry_run_report"
 grep -q '`bridge-launchagent` | `skipped`' "$dry_run_report"
+grep -q '`adoption-plan` | `planned`' "$dry_run_report"
+grep -q '## Integration Adoption Plan' "$dry_run_report"
+dry_run_adoption_json="$(latest_adoption_evidence dry_run)"
+python3 - "$dry_run_adoption_json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert payload.get("status") == "planned", payload
+assert payload.get("mode") == "dry-run", payload
+assert payload.get("changedTargets") == [], payload
+print("VENTUREOS_INSTALL_DRY_RUN_ADOPTION_EVIDENCE_OK")
+PY
 echo "VENTUREOS_INSTALL_DRY_RUN_OK"
 
 # Executing mode with verification should run all install + verify primitives.
@@ -218,13 +244,40 @@ grep -q "cron|--force" "$CALL_LOG"
 grep -q "ready|--profile bridge --dashboard-url http://127.0.0.1:8124 --bridge-token-file $TMP_DIR/bridge-token|BRIDGE_TOKEN=test-bridge-token" "$CALL_LOG"
 grep -q "curl|-sSf --max-time 3 http://127.0.0.1:8124/api/health" "$CALL_LOG"
 grep -q "crontab|-l" "$CALL_LOG"
+grep -q "echo original" "$CRONTAB_STATE"
+grep -q "VentureOS Managed Cron" "$CRONTAB_STATE"
 grep -q "VENTUREOS_INSTALL_RESULT=PASS" "$OUT_DIR/verify_success.out"
 grep -q "VENTUREOS_INSTALL_RESTORE_POINT=" "$OUT_DIR/verify_success.out"
 verify_report="$(latest_report verify_success)"
 grep -q -- '- Status: `pass`' "$verify_report"
 grep -q -- '- Post-install verify: `enabled`' "$verify_report"
 grep -q '`restore-point` | `pass`' "$verify_report"
+grep -q '`adoption-plan` | `pass`' "$verify_report"
+grep -q '`adoption-fingerprint-before` | `pass`' "$verify_report"
+grep -q '`adoption-fingerprint-after` | `pass`' "$verify_report"
+grep -q '`adoption-evidence` | `pass`' "$verify_report"
+grep -q '## Integration Adoption Plan' "$verify_report"
+grep -q '## Config Change Evidence' "$verify_report"
+grep -q '`ventureos-managed-cron-block` | `create`' "$verify_report"
 grep -q '| Step | Status | Detail | Next Command |' "$verify_report"
+verify_adoption_json="$(latest_adoption_evidence verify_success)"
+python3 - "$verify_adoption_json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert payload.get("status") == "pass", payload
+assert payload.get("mode") == "execute", payload
+rollback = payload.get("rollbackCommand")
+assert isinstance(rollback, str) and "--revert" in rollback, payload
+changed = payload.get("changedTargets", [])
+assert isinstance(changed, list), payload
+ids = {row.get("id") for row in changed if isinstance(row, dict)}
+assert "user-crontab" in ids, ids
+assert "ventureos-managed-cron-block" in ids, ids
+print("VENTUREOS_INSTALL_ADOPTION_EVIDENCE_OK")
+PY
 echo "VENTUREOS_INSTALL_VERIFY_OK"
 
 # Minimal preset should skip bridge + cron by default while still running dashboard/readiness.
