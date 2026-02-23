@@ -359,6 +359,11 @@ Non-interactive example:
 bash scripts/ventureos-install.sh --non-interactive --profile bridge
 ```
 
+Verification-focused example:
+```bash
+bash scripts/ventureos-install.sh --non-interactive --verify --preset full
+```
+
 **Behavior:**
 - Coordinates existing install primitives in one flow:
   - dashboard installer (`dashboard/scripts/install-macos.sh` or `dashboard/scripts/install.sh`)
@@ -367,8 +372,11 @@ bash scripts/ventureos-install.sh --non-interactive --profile bridge
   - readiness refresh (`scripts/refresh-local-integration-ready.sh`)
 - Supports interactive onboarding prompts (default on TTY) and non-interactive mode (`--non-interactive`).
 - Supports dry-run planning (`--dry-run`) to print execution plan without changes.
+- Supports post-install verification mode (`--verify`) across dashboard health, bridge status, cron marker, and readiness status summary artifact.
+- Supports installation presets (`--preset full|bridge|minimal`) with explicit `--skip-*`/`--profile` overrides.
 - Allows selective skips (`--skip-*`) and readiness profile selection (`--profile quick|full|bridge`).
 - Writes timestamped install reports to `runtime/reports/ventureos-install/`.
+- Install report includes a per-step `Next Command` column and a `Failed Steps` section for operator follow-up.
 
 **Regression test:**
 ```bash
