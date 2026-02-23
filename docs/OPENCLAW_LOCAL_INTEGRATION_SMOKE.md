@@ -39,6 +39,11 @@ Cron-safe wrapper for unattended cadence:
 bash scripts/openclaw-local-ready-cron.sh
 ```
 
+Status-only stale guard check (no new smoke run):
+```bash
+bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360
+```
+
 Bridge-mode prerequisite (when `DASHBOARD_DATA_MODE=bridge`):
 ```bash
 npm run openclaw:bridge:launchagent
@@ -84,6 +89,10 @@ Each run writes timestamped artifacts under:
 - `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-<UTC timestamp>.md`
 - `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-<UTC timestamp>.svg`
 
+Readiness refresh also writes rolling status artifacts:
+- `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
+- `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
+
 The JSON report includes machine-readable check metadata and readiness summary fields:
 - `summary.verdict`: `go|hold|blocked`
 - `summary.readinessScore`: `0..100`
@@ -97,11 +106,13 @@ Use `--prune-keep <n>` if you want refresh to keep only the newest `n` timestamp
 `scripts/openclaw-local-ready-cron.sh` defaults:
 - `--history-limit 7`
 - `--prune-keep 14`
+- `--max-age-min 360`
 - `--profile full`
 
 Optional env overrides for cron wrapper:
 - `OPENCLAW_LOCAL_READY_HISTORY_LIMIT`
 - `OPENCLAW_LOCAL_READY_PRUNE_KEEP`
+- `OPENCLAW_LOCAL_READY_MAX_AGE_MIN`
 - `OPENCLAW_LOCAL_READY_PROFILE` (`quick|full|bridge`)
 
 Mission Control API note (dashboard route):
@@ -119,12 +130,16 @@ bash scripts/install-cron.sh --force
 ```bash
 bash scripts/openclaw-local-ready-cron.sh
 ```
-3. Verify Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
-4. If bridge direct-check coverage is expected, configure `BRIDGE_TOKEN_FILE` and rerun bridge profile smoke:
+3. Validate stale guardrail status from latest artifact age:
+```bash
+bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360
+```
+4. Verify Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
+5. If bridge direct-check coverage is expected, configure `BRIDGE_TOKEN_FILE` and rerun bridge profile smoke:
 ```bash
 bash scripts/openclaw-local-smoke.sh --profile bridge
 ```
-5. Keep bridge startup + readiness artifact wiring persistent across restarts.
+6. Keep bridge startup + readiness artifact wiring persistent across restarts.
 
 ## Regression Test
 Run the mock-server regression test:

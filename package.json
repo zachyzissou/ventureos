@@ -34,6 +34,7 @@
     "openclaw:install": "bash scripts/ventureos-install.sh",
     "openclaw:local-ready": "bash scripts/refresh-local-integration-ready.sh",
     "openclaw:local-ready:cron": "bash scripts/openclaw-local-ready-cron.sh",
+    "openclaw:local-ready:status": "bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360",
     "openclaw:bridge:launchagent": "bash scripts/install-bridge-launchagent.sh",
     "test:openclaw:local-smoke": "bash scripts/tests/test-openclaw-local-smoke.sh",
     "test:openclaw:local-ready": "bash scripts/tests/test-refresh-local-integration-ready.sh",
