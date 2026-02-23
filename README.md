@@ -67,7 +67,7 @@ ventureos/
 
 ### In Progress
 
-- 🔄 **Next.js Hybrid Phase 3:** migrate authenticated interactive surfaces incrementally (#457)
+- 🔄 **Roadmap Execution:** track active implementation in issue #138
 
 ### Next Up
 
@@ -108,7 +108,6 @@ Implementation milestones (visible incremental rollout):
 
 ### Now (active)
 
-- Next.js hybrid phase 3 migration workstream (#457)
 - Living roadmap stewardship in issue #138
 
 ### Next
