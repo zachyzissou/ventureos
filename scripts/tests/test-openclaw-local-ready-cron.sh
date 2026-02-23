@@ -49,7 +49,8 @@ OPENCLAW_LOCAL_READY_HISTORY_LIMIT=3 \
 OPENCLAW_LOCAL_READY_PRUNE_KEEP=5 \
 OPENCLAW_LOCAL_READY_MAX_AGE_MIN=120 \
 OPENCLAW_LOCAL_READY_PROFILE=quick \
-bash "$CRON_SCRIPT" --profile bridge --history-limit 9 --max-age-min 240 >/tmp/openclaw-local-ready-cron-test-2.out
+OPENCLAW_LOCAL_READY_DASHBOARD_URL=http://127.0.0.1:7000 \
+bash "$CRON_SCRIPT" --profile bridge --history-limit 9 --max-age-min 240 --dashboard-url http://127.0.0.1:8123 >/tmp/openclaw-local-ready-cron-test-2.out
 
 python3 - "$CAPTURE_2" <<'PY'
 from pathlib import Path
@@ -69,6 +70,7 @@ assert pairs.get('--history-limit') == '9', pairs
 assert pairs.get('--prune-keep') == '5', pairs
 assert pairs.get('--max-age-min') == '240', pairs
 assert pairs.get('--profile') == 'bridge', pairs
+assert pairs.get('--dashboard-url') == 'http://127.0.0.1:8123', pairs
 print('OPENCLAW_LOCAL_READY_CRON_OVERRIDES_OK')
 PY
 
@@ -97,3 +99,16 @@ if [[ "$rc" -ne 2 ]]; then
 fi
 
 echo "OPENCLAW_LOCAL_READY_CRON_MAX_AGE_VALIDATION_OK"
+
+set +e
+OPENCLAW_LOCAL_READY_REFRESH_SCRIPT="$STUB_REFRESH" \
+OPENCLAW_LOCAL_READY_DASHBOARD_URL=127.0.0.1:7000 \
+bash "$CRON_SCRIPT" >/tmp/openclaw-local-ready-cron-test-bad-url.out 2>&1
+rc=$?
+set -e
+if [[ "$rc" -ne 2 ]]; then
+  echo "expected invalid dashboard URL to fail with exit 2, got $rc" >&2
+  exit 1
+fi
+
+echo "OPENCLAW_LOCAL_READY_CRON_DASHBOARD_URL_VALIDATION_OK"
