@@ -472,11 +472,13 @@ bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<re
 - Reads current local state (OpenClaw directory, bridge env, dashboard health, cron marker) before apply and surfaces that in onboarding/plan output.
 - Generates a deterministic integration adoption plan before apply, classifying targets as `adopt|merge|create|skip` (dashboard service, bridge auth/env, launchagent, cron surfaces, OpenClaw runtime config files, readiness artifact).
 - Interactive TTY mode uses staged onboarding sections with guided recommendations (for example: adopt existing healthy dashboard, skip bridge when bridge env is missing) before executing changes.
+- Interactive mode requires explicit action-matrix confirmation after the `adopt|merge|create|skip` plan is rendered; declining exits cleanly with `VENTUREOS_INSTALL_RESULT=CANCELLED` before preflight/apply mutations.
 - Captures a pre-install restore point by default under `runtime/backups/ventureos-install/<restore-point-id>/`:
   - user crontab snapshot
   - bridge env snapshot
   - OpenClaw config snapshots (`openclaw.json`, `cron/jobs.json`, Discord webhook map)
   - macOS bridge LaunchAgent plist snapshot (when applicable)
+- Validates restore-point manifest integrity before apply (required backup payloads + crontab backup presence).
 - Supports interactive onboarding prompts (default on TTY) and non-interactive mode (`--non-interactive`).
 - Supports dry-run planning (`--dry-run`) to print execution plan without changes.
 - Supports post-install verification mode (`--verify`) across dashboard health, bridge status, cron marker, and readiness status summary artifact.
@@ -489,6 +491,7 @@ bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<re
   - `--no-restore-point` (explicitly disables snapshot safety capture)
 - Writes timestamped install reports to `runtime/reports/ventureos-install/`.
 - Writes timestamped adoption evidence artifacts to `runtime/reports/ventureos-install/ventureos-install-adoption-<timestamp>.json` with before/after non-secret fingerprints + changed-target list + rollback command reference.
+- Writes timestamped onboarding transcript artifacts to `runtime/reports/ventureos-install/ventureos-onboarding-<timestamp>.md` (decision summary, discovery snapshot, action matrix, rollback metadata).
 - Install report includes:
   - per-step `Next Command` column
   - `Integration Adoption Plan` section

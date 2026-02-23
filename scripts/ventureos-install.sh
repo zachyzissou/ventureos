@@ -51,6 +51,7 @@ RESTORE_POINT_DIR=""
 RESTORE_MANIFEST_PATH=""
 NO_ANIMATION="${VENTUREOS_INSTALL_NO_ANIMATION:-0}"
 UI_ENABLED=0
+ASSUME_TTY="${VENTUREOS_INSTALL_ASSUME_TTY:-0}"
 
 DISCOVER_DASHBOARD_STATE="unknown"
 DISCOVER_OPENCLAW_STATE="unknown"
@@ -58,6 +59,14 @@ DISCOVER_BRIDGE_ENV_STATE="unknown"
 DISCOVER_BRIDGE_LAUNCHAGENT_STATE="unknown"
 DISCOVER_CRON_STATE="unknown"
 DISCOVER_VENTURE_CRON_STATE="unknown"
+dashboard_url=""
+report_file=""
+adoption_evidence_file=""
+ONBOARDING_MODE="non-interactive"
+ONBOARDING_APPROVAL="auto-non-interactive"
+ONBOARDING_ABORT_REASON=""
+ONBOARDING_TRANSCRIPT_FILE=""
+RESTORE_POINT_VALIDATED=0
 
 REPORT_DIR="${VENTUREOS_INSTALL_REPORT_DIR:-$REPO_ROOT/runtime/reports/ventureos-install}"
 SUMMARY_TSV="$(mktemp)"
@@ -107,6 +116,10 @@ Options:
   --skip-readiness          Skip readiness refresh step
   --no-force-cron           Do not pass --force to install-cron.sh
   -h, --help                Show help
+
+Env overrides:
+  VENTUREOS_INSTALL_ASSUME_TTY=1
+                            Treat stdin as interactive for automation/testing.
 EOF_USAGE
 }
 
@@ -117,8 +130,15 @@ need_value() {
   fi
 }
 
+stdin_is_tty() {
+  if [[ -t 0 ]]; then
+    return 0
+  fi
+  [[ "$ASSUME_TTY" == "1" ]]
+}
+
 ui_init() {
-  if [[ "$NON_INTERACTIVE" == "0" && -t 1 && "${TERM:-}" != "dumb" ]]; then
+  if [[ "$NON_INTERACTIVE" == "0" && stdin_is_tty && -t 1 && "${TERM:-}" != "dumb" ]]; then
     UI_ENABLED=1
   else
     UI_ENABLED=0
@@ -403,6 +423,42 @@ manifest_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 PY
 }
 
+validate_restore_point_integrity() {
+  local manifest_path="$1"
+  python3 - "$manifest_path" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest_path = pathlib.Path(sys.argv[1])
+if not manifest_path.exists():
+    raise SystemExit(1)
+
+payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+snapshots = payload.get("snapshots")
+if not isinstance(snapshots, list):
+    raise SystemExit(1)
+
+for snap in snapshots:
+    if not isinstance(snap, dict):
+        raise SystemExit(1)
+    existed_before = bool(snap.get("existed_before"))
+    backup_path = snap.get("backup_path")
+    if existed_before:
+        if not backup_path:
+            raise SystemExit(1)
+        if not pathlib.Path(backup_path).exists():
+            raise SystemExit(1)
+
+crontab = payload.get("crontab")
+if not isinstance(crontab, dict):
+    raise SystemExit(1)
+backup = crontab.get("backup_path")
+if not backup or not pathlib.Path(str(backup)).exists():
+    raise SystemExit(1)
+PY
+}
+
 resolve_revert_manifest_path() {
   local input_path="$1"
   if [[ -d "$input_path" ]]; then
@@ -422,7 +478,7 @@ revert_restore_point() {
     return 2
   fi
 
-  if [[ "$NON_INTERACTIVE" == "0" && -t 0 && "$YES" != "1" ]]; then
+  if [[ "$NON_INTERACTIVE" == "0" && stdin_is_tty && "$YES" != "1" ]]; then
     if [[ "$(prompt_yes_no "Revert configs from restore point '$manifest_path'?" "n")" != "y" ]]; then
       echo "Revert cancelled."
       return 0
@@ -615,6 +671,146 @@ prompt_value() {
   fi
   read -r -p "$prompt [$default_value]: " answer || answer=""
   echo "${answer:-$default_value}"
+}
+
+write_onboarding_transcript() {
+  local final_status="$1"
+  local notes="${2:-}"
+  local rollback_command="n/a"
+  local report_ref="n/a"
+  local adoption_ref="n/a"
+
+  mkdir -p "$REPORT_DIR"
+  if [[ -z "$ONBOARDING_TRANSCRIPT_FILE" ]]; then
+    local transcript_ts
+    transcript_ts="$(date -u +%Y%m%dT%H%M%SZ)"
+    ONBOARDING_TRANSCRIPT_FILE="$REPORT_DIR/ventureos-onboarding-${transcript_ts}.md"
+  fi
+  if [[ -n "$RESTORE_POINT_DIR" ]]; then
+    rollback_command="bash scripts/ventureos-install.sh --revert $RESTORE_POINT_DIR"
+  fi
+  if [[ -n "$report_file" ]]; then
+    report_ref="$report_file"
+  fi
+  if [[ -n "$adoption_evidence_file" ]]; then
+    adoption_ref="$adoption_evidence_file"
+  fi
+
+  python3 - "$ONBOARDING_TRANSCRIPT_FILE" "$final_status" "$ONBOARDING_MODE" "$ONBOARDING_APPROVAL" "$ONBOARDING_ABORT_REASON" "$notes" "$OS_NAME" "$INSTALL_PRESET" "$DASHBOARD_PORT" "$dashboard_url" "$PROFILE" "$SKIP_DASHBOARD_INSTALL" "$SKIP_BRIDGE_LAUNCHAGENT" "$SKIP_CRON_INSTALL" "$SKIP_READINESS" "$VERIFY_POST_INSTALL" "$CAPTURE_RESTORE_POINT" "$DRY_RUN" "$RESTORE_POINT_DIR" "$RESTORE_POINT_VALIDATED" "$rollback_command" "$DISCOVER_OPENCLAW_STATE" "$DISCOVER_BRIDGE_ENV_STATE" "$DISCOVER_BRIDGE_LAUNCHAGENT_STATE" "$DISCOVER_DASHBOARD_STATE" "$DISCOVER_CRON_STATE" "$DISCOVER_VENTURE_CRON_STATE" "$ADOPTION_PLAN_TSV" "$report_ref" "$adoption_ref" <<'PY'
+import csv
+import pathlib
+import sys
+from datetime import datetime, timezone
+
+path = pathlib.Path(sys.argv[1])
+final_status = sys.argv[2]
+mode = sys.argv[3]
+approval = sys.argv[4]
+abort_reason = sys.argv[5]
+notes = sys.argv[6]
+os_name = sys.argv[7]
+preset = sys.argv[8]
+dashboard_port = sys.argv[9]
+dashboard_url = sys.argv[10] or "n/a"
+profile = sys.argv[11]
+skip_dashboard = sys.argv[12] == "1"
+skip_bridge = sys.argv[13] == "1"
+skip_cron = sys.argv[14] == "1"
+skip_readiness = sys.argv[15] == "1"
+verify_enabled = sys.argv[16] == "1"
+restore_capture = sys.argv[17] == "1"
+dry_run = sys.argv[18] == "1"
+restore_point_dir = sys.argv[19] or "n/a"
+restore_validated = sys.argv[20] == "1"
+rollback_command = sys.argv[21]
+discover_openclaw = sys.argv[22]
+discover_bridge_env = sys.argv[23]
+discover_bridge_launchagent = sys.argv[24]
+discover_dashboard = sys.argv[25]
+discover_cron = sys.argv[26]
+discover_venture_cron = sys.argv[27]
+adoption_plan_tsv = pathlib.Path(sys.argv[28])
+report_ref = sys.argv[29]
+adoption_ref = sys.argv[30]
+
+plan_rows = []
+if adoption_plan_tsv.exists():
+    with adoption_plan_tsv.open("r", encoding="utf-8") as fh:
+        reader = csv.reader(fh, delimiter="\t")
+        for row in reader:
+            if len(row) != 5:
+                continue
+            plan_rows.append({
+                "target": row[0],
+                "decision": row[1],
+                "subject": row[3],
+                "reason": row[4],
+            })
+
+decision_counts = {}
+for row in plan_rows:
+    decision = row["decision"]
+    decision_counts[decision] = decision_counts.get(decision, 0) + 1
+
+lines = [
+    "# VentureOS Onboarding Transcript",
+    "",
+    f"- Generated: `{datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}`",
+    f"- Final status: `{final_status}`",
+    f"- Mode: `{mode}`",
+    f"- Approval: `{approval}`",
+    f"- Abort reason: `{abort_reason or 'n/a'}`",
+    f"- Notes: `{notes or 'n/a'}`",
+    "",
+    "## Selected Configuration",
+    f"- Platform: `{os_name}`",
+    f"- Preset: `{preset}`",
+    f"- Dashboard URL: `{dashboard_url}`",
+    f"- Dashboard port: `{dashboard_port}`",
+    f"- Readiness profile: `{profile}`",
+    f"- Dashboard install: `{'skip' if skip_dashboard else 'run'}`",
+    f"- Bridge launchagent: `{'skip' if skip_bridge else 'run'}`",
+    f"- Cron install: `{'skip' if skip_cron else 'run'}`",
+    f"- Readiness refresh: `{'skip' if skip_readiness else 'run'}`",
+    f"- Post-install verify: `{'enabled' if verify_enabled else 'disabled'}`",
+    f"- Mode: `{'dry-run' if dry_run else 'execute'}`",
+    f"- Restore point capture: `{'enabled' if restore_capture else 'disabled'}`",
+    f"- Restore point validated: `{'yes' if restore_validated else 'no'}`",
+    f"- Restore point directory: `{restore_point_dir}`",
+    f"- Rollback command: `{rollback_command}`",
+    f"- Installer report: `{report_ref or 'n/a'}`",
+    f"- Adoption evidence: `{adoption_ref or 'n/a'}`",
+    "",
+    "## Discovery Snapshot",
+    f"- OpenClaw dir: `{discover_openclaw}`",
+    f"- Bridge env: `{discover_bridge_env}`",
+    f"- Bridge launchagent: `{discover_bridge_launchagent}`",
+    f"- Dashboard health: `{discover_dashboard}`",
+    f"- User crontab: `{discover_cron}`",
+    f"- VentureOS managed cron block: `{discover_venture_cron}`",
+    "",
+    "## Action Matrix Summary",
+]
+
+if decision_counts:
+    ordered = ", ".join(f"{k}={decision_counts[k]}" for k in sorted(decision_counts))
+    lines.append(f"- Decisions: `{ordered}`")
+else:
+    lines.append("- Decisions: `n/a`")
+
+lines.extend([
+    "",
+    "| Target | Decision | Subject | Reason |",
+    "|---|---|---|---|",
+])
+if plan_rows:
+    for row in plan_rows:
+        lines.append(f"| `{row['target']}` | `{row['decision']}` | `{row['subject']}` | {row['reason']} |")
+else:
+    lines.append("| `(none)` | `n/a` | `n/a` | action matrix unavailable |")
+
+path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+PY
 }
 
 validate_profile() {
@@ -1181,7 +1377,9 @@ if [[ "$OS_NAME" != "Darwin" && "$OS_NAME" != "Linux" ]]; then
   exit 2
 fi
 
-if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
+if [[ "$NON_INTERACTIVE" == "0" && stdin_is_tty ]]; then
+  ONBOARDING_MODE="interactive"
+  ONBOARDING_APPROVAL="pending"
   discovery_dashboard_url="$(resolve_dashboard_url)"
   if ! openclaw_local_validate_dashboard_url "$discovery_dashboard_url"; then
     echo "Invalid dashboard URL: $discovery_dashboard_url" >&2
@@ -1209,7 +1407,14 @@ if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
   fi
 
   if [[ "$(prompt_yes_no "Continue with onboarding plan?" "y")" != "y" ]]; then
+    ONBOARDING_APPROVAL="declined"
+    ONBOARDING_ABORT_REASON="operator cancelled before applying onboarding preferences"
+    dashboard_url="$discovery_dashboard_url"
+    write_onboarding_transcript "cancelled" "cancelled before onboarding selections"
+    echo "Onboarding transcript:"
+    echo "  - $ONBOARDING_TRANSCRIPT_FILE"
     echo "Install cancelled."
+    echo "VENTUREOS_INSTALL_RESULT=CANCELLED"
     exit 0
   fi
 
@@ -1327,6 +1532,21 @@ else
   record_step "adoption-plan" "pass" "generated adoption/merge plan for $adoption_target_count targets" "Inspect installer report adoption plan section"
 fi
 
+if [[ "$ONBOARDING_MODE" == "interactive" ]]; then
+  ui_section "Action Matrix Confirmation"
+  if [[ "$(prompt_yes_no "Apply this action matrix now?" "y")" != "y" ]]; then
+    ONBOARDING_APPROVAL="declined"
+    ONBOARDING_ABORT_REASON="operator declined action matrix confirmation"
+    write_onboarding_transcript "cancelled" "cancelled after reviewing action matrix"
+    echo "Onboarding transcript:"
+    echo "  - $ONBOARDING_TRANSCRIPT_FILE"
+    echo "Install cancelled before applying changes."
+    echo "VENTUREOS_INSTALL_RESULT=CANCELLED"
+    exit 0
+  fi
+  ONBOARDING_APPROVAL="approved"
+fi
+
 if collect_install_target_fingerprints "$FINGERPRINT_BEFORE_JSON"; then
   record_step "adoption-fingerprint-before" "pass" "captured pre-apply fingerprints for integration targets" "Inspect installer adoption evidence json artifact"
 else
@@ -1338,19 +1558,31 @@ ui_section "Preflight Safety"
 if [[ "$CAPTURE_RESTORE_POINT" == "1" ]]; then
   if [[ "$DRY_RUN" == "1" ]]; then
     record_step "restore-point" "planned" "would snapshot user config before install" "bash scripts/ventureos-install.sh --list-restore-points"
+    record_step "restore-point-validate" "planned" "would validate restore-point manifest integrity" "python3 -m json.tool runtime/backups/ventureos-install/<id>/restore-point.json"
   else
     if create_restore_point; then
       echo "PASS  restore-point :: $RESTORE_POINT_DIR"
       record_step "restore-point" "pass" "restore point created at $RESTORE_POINT_DIR" "bash scripts/ventureos-install.sh --revert $RESTORE_POINT_DIR"
+      if validate_restore_point_integrity "$RESTORE_MANIFEST_PATH"; then
+        echo "PASS  restore-point-validate :: $RESTORE_MANIFEST_PATH"
+        RESTORE_POINT_VALIDATED=1
+        record_step "restore-point-validate" "pass" "restore point manifest integrity validated" "python3 -m json.tool $RESTORE_MANIFEST_PATH >/dev/null"
+      else
+        echo "FAIL  restore-point-validate :: restore point manifest integrity validation failed" >&2
+        record_step "restore-point-validate" "fail" "restore point manifest integrity validation failed" "Remove bad restore point and rerun installer"
+        INSTALL_FAILED=1
+      fi
     else
       echo "FAIL  restore-point :: unable to capture pre-install snapshot" >&2
       record_step "restore-point" "fail" "unable to capture pre-install snapshot" "Re-run with --no-restore-point only if you accept no rollback safety"
+      record_step "restore-point-validate" "skipped" "restore point creation failed; validation skipped" "Fix restore point creation failure and rerun"
       INSTALL_FAILED=1
     fi
   fi
 else
   echo "WARN  restore-point :: disabled by --no-restore-point"
   record_step "restore-point" "skipped" "restore point capture disabled by flag" "Re-run without --no-restore-point"
+  record_step "restore-point-validate" "skipped" "restore point capture disabled by flag" "Re-run without --no-restore-point"
 fi
 echo ""
 
@@ -1551,7 +1783,20 @@ else
   INSTALL_FAILED=1
 fi
 
-python3 - "$SUMMARY_TSV" "$report_file" "$timestamp_utc" "$OS_NAME" "$DASHBOARD_PORT" "$PROFILE" "$dashboard_url" "$DRY_RUN" "$INSTALL_PRESET" "$VERIFY_POST_INSTALL" "$ADOPTION_PLAN_TSV" "$adoption_evidence_file" <<'PY'
+onboarding_status="pass"
+if [[ "$INSTALL_FAILED" != "0" ]]; then
+  onboarding_status="fail"
+elif [[ "$DRY_RUN" == "1" ]]; then
+  onboarding_status="planned"
+fi
+if write_onboarding_transcript "$onboarding_status" "installer execution completed"; then
+  record_step "onboarding-transcript" "pass" "wrote onboarding transcript artifact to $ONBOARDING_TRANSCRIPT_FILE" "cat $ONBOARDING_TRANSCRIPT_FILE"
+else
+  record_step "onboarding-transcript" "fail" "unable to write onboarding transcript artifact" "Check filesystem permissions for $REPORT_DIR and rerun installer"
+  INSTALL_FAILED=1
+fi
+
+python3 - "$SUMMARY_TSV" "$report_file" "$timestamp_utc" "$OS_NAME" "$DASHBOARD_PORT" "$PROFILE" "$dashboard_url" "$DRY_RUN" "$INSTALL_PRESET" "$VERIFY_POST_INSTALL" "$ADOPTION_PLAN_TSV" "$adoption_evidence_file" "$ONBOARDING_TRANSCRIPT_FILE" <<'PY'
 import csv
 import json
 import pathlib
@@ -1569,6 +1814,7 @@ preset = sys.argv[9]
 verify_enabled = sys.argv[10] == "1"
 adoption_plan_path = pathlib.Path(sys.argv[11])
 adoption_evidence_path = pathlib.Path(sys.argv[12])
+onboarding_transcript_path = pathlib.Path(sys.argv[13])
 
 rows = []
 with summary_tsv.open("r", encoding="utf-8") as fh:
@@ -1656,6 +1902,7 @@ lines.extend([
     "",
     "## Config Change Evidence",
     f"- Evidence JSON: `{adoption_evidence_path}`",
+    f"- Onboarding transcript: `{onboarding_transcript_path}`",
     f"- Changed targets: `{len(changed_targets) if isinstance(changed_targets, list) else 0}`",
     f"- Rollback command: `{rollback_command}`",
 ])
@@ -1692,6 +1939,10 @@ echo "Install report written:"
 echo "  - $report_file"
 echo "Adoption evidence:"
 echo "  - $adoption_evidence_file"
+if [[ -n "$ONBOARDING_TRANSCRIPT_FILE" ]]; then
+  echo "Onboarding transcript:"
+  echo "  - $ONBOARDING_TRANSCRIPT_FILE"
+fi
 if [[ -n "$RESTORE_POINT_DIR" ]]; then
   echo "Restore point:"
   echo "  - $RESTORE_POINT_DIR"
