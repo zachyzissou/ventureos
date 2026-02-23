@@ -5,7 +5,8 @@
   "type": "commonjs",
   "description": "VentureOS core libraries (role cards, enforcement, handoff validation)",
   "workspaces": [
-    "dashboard"
+    "dashboard",
+    "dashboard-next"
   ],
   "scripts": {
     "postinstall": "bash scripts/ensure-native-modules.sh",
@@ -22,7 +23,15 @@
     "dashboard:dev": "npm run dev --workspace=dashboard",
     "dashboard:start": "npm run start --workspace=dashboard",
     "dashboard:build": "npm run build --workspace=dashboard",
+    "dashboard:next:dev": "npm run dev --workspace=dashboard-next",
+    "dashboard:next:build": "npm run build --workspace=dashboard-next",
+    "dashboard:next:start": "npm run start --workspace=dashboard-next",
+    "dashboard:next:parity": "npm run parity:all --workspace=dashboard-next",
+    "pr:queue:sweep": "bash scripts/pr-queue-sweep.sh",
+    "docs:lint": "python3 scripts/docs-lint.py",
+    "roadmap:sync:check": "python3 scripts/roadmap-status-sync.py",
     "openclaw:local-smoke": "bash scripts/openclaw-local-smoke.sh",
+    "openclaw:install": "bash scripts/ventureos-install.sh",
     "openclaw:local-ready": "bash scripts/refresh-local-integration-ready.sh",
     "openclaw:local-ready:cron": "bash scripts/openclaw-local-ready-cron.sh",
     "openclaw:bridge:launchagent": "bash scripts/install-bridge-launchagent.sh",
@@ -30,6 +39,10 @@
     "test:openclaw:local-ready": "bash scripts/tests/test-refresh-local-integration-ready.sh",
     "test:openclaw:local-ready-cron": "bash scripts/tests/test-openclaw-local-ready-cron.sh",
     "test:openclaw:bridge-launchagent": "bash scripts/tests/test-install-bridge-launchagent.sh",
+    "test:openclaw:install": "bash scripts/tests/test-ventureos-install.sh",
+    "test:pr:queue:sweep": "bash scripts/tests/test-pr-queue-sweep.sh",
+    "test:docs:lint": "python3 -m unittest scripts/tests/test_docs_lint.py",
+    "test:roadmap:sync:check": "bash scripts/tests/test-roadmap-status-sync.sh",
     "test:perf": "cd tactical-map && PERF=1 npx playwright test tests/performance/",
     "test:perf:render": "cd tactical-map && PERF=1 npx playwright test tests/performance/render-performance.test.ts",
     "test:perf:load": "cd tactical-map && PERF=1 npx playwright test tests/performance/load-testing.test.ts",

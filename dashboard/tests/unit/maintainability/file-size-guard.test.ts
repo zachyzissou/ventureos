@@ -8,7 +8,7 @@ const DASHBOARD_ROOT = path.resolve(import.meta.dirname, '..', '..', '..');
 const FILE_SIZE_BUDGETS = [
   {
     relativePath: 'server/server.ts',
-    maxLines: 4200,
+    maxLines: 3600,
   },
   {
     relativePath: 'server/routes/task-board.ts',
@@ -17,6 +17,14 @@ const FILE_SIZE_BUDGETS = [
   {
     relativePath: 'server/bridge.ts',
     maxLines: 1700,
+  },
+  {
+    relativePath: 'server/routes/action-routes.ts',
+    maxLines: 350,
+  },
+  {
+    relativePath: 'server/routes/rpg-compat.ts',
+    maxLines: 140,
   },
 ] as const;
 

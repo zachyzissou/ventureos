@@ -5,11 +5,11 @@ from pathlib import Path
 
 LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 INLINE_CODE_RE = re.compile(r"`[^`]*`")
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 DIRECTIVE_RE = re.compile(
     r"^\s*(?:[-*+]\s+)?(?:\[[ xX]\]\s+)?(?:>+\s*)?(TODO|TBD|FIXME)\b(?:\s*[:\-].*|\s+.+|\s*)$",
     re.IGNORECASE,
 )
-INLINE_LABEL_RE = re.compile(r"\b(TODO|TBD|FIXME)\b\s*:", re.IGNORECASE)
 HTML_COMMENT_RE = re.compile(r"<!--\s*(TODO|TBD|FIXME)\b", re.IGNORECASE)
 
 
@@ -25,7 +25,7 @@ def has_placeholder(line: str) -> bool:
         return True
     if DIRECTIVE_RE.match(scan_line):
         return True
-    return bool(INLINE_LABEL_RE.search(scan_line))
+    return False
 
 
 def collect_markdown_paths(root: Path) -> list[Path]:
@@ -54,7 +54,27 @@ def validate_docs(root: Path) -> tuple[list[tuple[str, str]], list[tuple[str, in
 
     for path in paths:
         text = path.read_text(encoding="utf-8")
+        in_fence = False
+        fence_marker = ""
         for i, line in enumerate(text.splitlines(), start=1):
+            fence_match = FENCE_RE.match(line)
+            if fence_match:
+                marker = fence_match.group(1)
+                marker_char = marker[0]
+                marker_len = len(marker)
+                if not in_fence:
+                    in_fence = True
+                    fence_marker = marker_char * marker_len
+                else:
+                    # Close when marker type matches and closing marker is long enough.
+                    if marker_char == fence_marker[0] and marker_len >= len(fence_marker):
+                        in_fence = False
+                        fence_marker = ""
+                continue
+
+            if in_fence:
+                continue
+
             if has_placeholder(line):
                 placeholders.append((path.name, i, line.strip()))
         for _, target in LINK_RE.findall(text):

@@ -2,6 +2,11 @@
 
 Use `scripts/openclaw-local-smoke.sh` to validate local dashboard + control-plane readiness before enabling a full local OpenClaw integration workflow.
 
+For first-time/local machine setup, run unified onboarding first:
+```bash
+bash scripts/ventureos-install.sh
+```
+
 ## What It Checks
 - Required:
   - OpenClaw CLI is available (`openclaw`) and gateway status command succeeds (`openclaw gateway status`), unless skipped.

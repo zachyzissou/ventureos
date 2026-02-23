@@ -335,3 +335,131 @@ bash scripts/install-bridge-launchagent.sh
 ```bash
 bash scripts/tests/test-install-bridge-launchagent.sh
 ```
+
+---
+
+## 17) ventureos-install.sh
+**Purpose:** Unified OpenClaw-style installer + onboarding wrapper for local VentureOS setup.
+
+**Usage:**
+```bash
+bash scripts/ventureos-install.sh
+```
+
+Non-interactive example:
+```bash
+bash scripts/ventureos-install.sh --non-interactive --profile bridge
+```
+
+**Behavior:**
+- Coordinates existing install primitives in one flow:
+  - dashboard installer (`dashboard/scripts/install-macos.sh` or `dashboard/scripts/install.sh`)
+  - bridge LaunchAgent installer (`scripts/install-bridge-launchagent.sh`, macOS)
+  - cron installer (`scripts/install-cron.sh`)
+  - readiness refresh (`scripts/refresh-local-integration-ready.sh`)
+- Supports interactive onboarding prompts (default on TTY) and non-interactive mode (`--non-interactive`).
+- Supports dry-run planning (`--dry-run`) to print execution plan without changes.
+- Allows selective skips (`--skip-*`) and readiness profile selection (`--profile quick|full|bridge`).
+- Writes timestamped install reports to `runtime/reports/ventureos-install/`.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-ventureos-install.sh
+```
+
+---
+
+## 18) pr-queue-sweep.sh
+**Purpose:** Classify open GitHub PR queue state and optionally merge approved+ready PRs.
+
+**Usage:**
+```bash
+bash scripts/pr-queue-sweep.sh
+```
+
+Dry-run merge simulation:
+```bash
+bash scripts/pr-queue-sweep.sh --merge-approved --dry-run
+```
+
+**Behavior:**
+- Reads open PRs from `gh pr list` and classifies each as:
+  - `draft`
+  - `review-needed`
+  - `approved-merge-ready`
+  - `approved-blocked`
+- Prints queue summary + per-PR rows.
+- Optionally writes JSON report with `--json-out <path>`.
+- Optional merge mode (`--merge-approved`) merges only `approved-merge-ready` PRs.
+- Supports deterministic fixture mode for tests via `PR_QUEUE_FIXTURE_JSON`.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-pr-queue-sweep.sh
+```
+
+---
+
+## 19) roadmap-status-sync.py
+**Purpose:** Detect status drift between `README.md` active work and roadmap anchor issue `#138`.
+
+**Usage:**
+```bash
+python3 scripts/roadmap-status-sync.py
+```
+
+Fixture/test mode:
+```bash
+python3 scripts/roadmap-status-sync.py \
+  --readme /tmp/README.md \
+  --roadmap-body-file /tmp/issue-138.md \
+  --issues-json /tmp/issues.json
+```
+
+**Behavior:**
+- Enforces authoritative mapping rules:
+  - `README.md` section `### Now (active)` issue IDs must match issue `#138` section `## Now (Active)` issue IDs.
+  - Active `Now` issue IDs must all be `OPEN`.
+  - `README.md` must reference issue `#138`.
+- Prints a structured report including:
+  - `readme_now_ids`
+  - `roadmap_now_ids`
+  - `only_in_readme_now`
+  - `only_in_roadmap_now`
+  - `now_not_open`
+  - `missing_issue_rows`
+- Exits non-zero when drift is detected (`ROADMAP_STATUS_SYNC_FAIL`).
+
+**Regression test:**
+```bash
+bash scripts/tests/test-roadmap-status-sync.sh
+```
+
+---
+
+## 20) docs-lint.py
+**Purpose:** Lint core documentation links/placeholders while minimizing false positives in instructional prose.
+
+**Usage:**
+```bash
+python3 scripts/docs-lint.py
+```
+
+**Behavior:**
+- Scans:
+  - `docs/*.md`
+  - `docs/templates/*.md`
+  - `README.md`
+- Validates:
+  - relative markdown links resolve to existing files
+  - unresolved placeholders (`TODO`, `TBD`, `FIXME`, `???`) are flagged
+  - JSON templates in `docs/templates/*.json` parse successfully
+- False-positive tuning:
+  - ignores placeholder tokens inside inline code spans
+  - ignores placeholder tokens inside fenced code blocks (``` / ~~~)
+  - ignores instructional inline literal mentions like `TODO:` in prose
+
+**Regression test:**
+```bash
+python3 -m unittest scripts/tests/test_docs_lint.py
+```
