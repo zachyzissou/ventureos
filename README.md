@@ -67,9 +67,9 @@ ventureos/
 
 ### In Progress
 
-- 🔄 **Tracker Hygiene + Docs Accuracy:** status/docs parity and roadmap cleanup (#364)
-- 🔄 **Docs Tooling Improvements:** reduce docs-lint false positives in instructional prose (#365)
-- 🔄 **Server Maintainability:** decompose oversized dashboard server modules (#366)
+- 🔄 **Next.js Hybrid Phase 3:** migrate authenticated interactive surfaces incrementally (#457)
+- 🔄 **Readiness Cadence v3:** add stale-state guardrails and operator summary artifacts (#458)
+- 🔄 **Installer Onboarding Phase 2:** add post-install verification mode and clearer reports (#459)
 
 ### Next Up
 
@@ -110,9 +110,9 @@ Implementation milestones (visible incremental rollout):
 
 ### Now (active)
 
-- Docs/status reconciliation and roadmap archival cleanup (#364)
-- Docs-lint signal quality improvements for instructional content (#365)
-- Dashboard server module decomposition and maintainability cleanup (#366)
+- Next.js hybrid phase 3 migration workstream (#457)
+- Local integration readiness cadence v3 hardening (#458)
+- Installer onboarding phase 2 verification/reporting improvements (#459)
 - Living roadmap stewardship in issue #138
 
 ### Next
@@ -151,6 +151,16 @@ npm test  # Vitest
 ```
 
 ### Local OpenClaw Readiness
+Run unified local install + onboarding (dashboard, bridge, cron, readiness):
+```bash
+npm run openclaw:install
+```
+
+Non-interactive automation example:
+```bash
+npm run openclaw:install -- --non-interactive --profile bridge
+```
+
 Run deterministic local OpenClaw integration smoke checks:
 ```bash
 npm run openclaw:local-smoke
@@ -177,11 +187,20 @@ Reference docs and artifacts:
 - `runtime/reports/openclaw-local-smoke/`
 
 Current next steps (as of February 22, 2026):
-1. `bash scripts/install-cron.sh --force`
-2. `npm run openclaw:local-ready:cron`
+1. Run one command onboarding: `npm run openclaw:install`
+2. Keep cadence active: `npm run openclaw:local-ready:cron`
 3. Confirm Mission Control shows the latest `/api/openclaw-local-readiness` snapshot.
 4. If bridge checks should pass, set `BRIDGE_TOKEN_FILE` and rerun `npm run openclaw:local-smoke -- --profile bridge`.
-5. Ensure host bridge LaunchAgent is installed and healthy (`bash scripts/install-bridge-launchagent.sh --status`).
+
+### Next.js Hybrid Frontend (Incremental)
+Launch the new Next.js migration surface:
+```bash
+npm run dashboard:next:dev
+```
+
+Reference:
+- `dashboard-next/README.md`
+- `dashboard-next/docs/MIGRATION_CHECKLIST.md`
 
 ### Production Dashboard
 Tactical map integrates with the VentureOS dashboard on port 8001:
@@ -199,6 +218,24 @@ All implementation work is tracked and merged via GitHub issues + PRs:
 3. **Verification** (actual testing, not just code review)
 4. **Copilot review addressed** (if comments are generated)
 5. **Merge** (only after checks pass)
+
+Queue sweep helper:
+```bash
+npm run pr:queue:sweep
+```
+
+Dry-run merge of approved+ready PRs:
+```bash
+npm run pr:queue:sweep -- --merge-approved --dry-run
+```
+
+Roadmap/readme drift check:
+```bash
+npm run roadmap:sync:check
+```
+
+Workflow details:
+- `docs/ROADMAP_STATUS_SYNC.md`
 
 Legacy GitLab process notes remain in [docs/GITLAB_PROCESS.md](docs/GITLAB_PROCESS.md).
 

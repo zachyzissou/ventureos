@@ -135,6 +135,8 @@ import { handleWebMcp } from './routes/webmcp.js';
 import { handleVisualExplainer } from './routes/visual-explainer.js';
 import { handleProposalLifecycle, handleProposalLifecycleUpgrade } from './routes/proposal-lifecycle.js';
 import { handleLivingFiles } from './routes/living-files.js';
+import { handleActionRoutes } from './routes/action-routes.js';
+import { handleRpgCompat } from './routes/rpg-compat.js';
 import {
   handleOpenclawLocalReadiness,
   resolveOpenclawLocalReadinessReportDir,
@@ -2613,154 +2615,29 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
     }
   }
 
-  // Action endpoints — use shared error handler (Issue #79) for safe responses
-  if (req.url === '/api/action/restart-openclaw' && req.method === 'POST') {
-    try {
-      logInfo('dashboard', 'action_invoked', 'restart-openclaw requested', { action: 'restart-openclaw' });
-      const plan = resolveRestartActionCommand('restart-openclaw');
-      if (plan.unsupportedReason) {
-        sendJson(res, { success: false, error: plan.unsupportedReason }, 400);
-        return;
-      }
-      const result = await runShellCommand(plan.command, plan.timeoutMs);
-      if (!result.ok) {
-        sendJson(res, { success: false, error: result.error, output: result.output }, 502);
-        return;
-      }
-      sendJson(res, { success: true, output: result.output });
-    } catch (e: unknown) {
-      const safe = toSafeError(e, { action: 'restart-openclaw' });
-      slogError('dashboard', 'action_failed', 'restart-openclaw failed', { action: 'restart-openclaw', errorRef: safe.errorRef });
-      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
-    }
-    return;
-  }
-  if (req.url === '/api/action/restart-dashboard' && req.method === 'POST') {
-    try {
-      const plan = resolveRestartActionCommand('restart-dashboard');
-      if (plan.unsupportedReason) {
-        sendJson(res, { success: false, error: plan.unsupportedReason }, 400);
-        return;
-      }
-      const result = await runShellCommand(plan.command, plan.timeoutMs);
-      if (!result.ok) {
-        sendJson(res, { success: false, error: result.error, output: result.output }, 502);
-        return;
-      }
-      sendJson(res, { success: true, message: 'Dashboard restart command completed.', output: result.output });
-    } catch (e: unknown) {
-      const safe = toSafeError(e, { action: 'restart-dashboard' });
-      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
-    }
-    return;
-  }
-  if (req.url === '/api/action/clear-cache' && req.method === 'POST') {
-    try {
-      costCache = null;
-      usageCache = null;
-      costCacheTime = 0;
-      usageCacheTime = 0;
-      sendJson(res, { success: true });
-    } catch (e: unknown) {
-      const safe = toSafeError(e, { action: 'clear-cache' });
-      sendJson(res, { ok: false, error: safe.error, errorRef: safe.errorRef }, safe.status);
-    }
-    return;
-  }
-  if (req.url === '/api/action/restart-tailscale' && req.method === 'POST') {
-    const plan = resolveRestartActionCommand('restart-tailscale');
-    if (plan.unsupportedReason) {
-      sendJson(res, { success: false, error: plan.unsupportedReason }, 400);
-      return;
-    }
-    const result = await runShellCommand(plan.command, plan.timeoutMs);
-    sendJson(res, { success: result.ok, output: result.output, error: result.error });
-    return;
-  }
-  if (req.url === '/api/action/update-openclaw' && req.method === 'POST') {
-    exec('npm update -g openclaw', { timeout: 120000 }, (err, stdout) => {
-      sendJson(res, { success: !err, output: stdout?.trim(), error: err?.message });
-    });
-    return;
-  }
-  if (req.url === '/api/action/kill-tmux' && req.method === 'POST') {
-    exec('tmux kill-server 2>/dev/null; echo ok', () => {
-      sendJson(res, { success: true });
-    });
-    return;
-  }
-  if (req.url === '/api/action/gc' && req.method === 'POST') {
-    const projDir: string = path.join(WORKSPACE_DIR, 'projects');
-    exec(
-      `if [ -d "${projDir}" ]; then for d in ${projDir}/*/; do cd "$d" && git gc --quiet 2>/dev/null; done; fi; cd ${WORKSPACE_DIR} && git gc --quiet 2>/dev/null; echo ok`,
-      () => {
-        sendJson(res, { success: true });
+  // Action endpoints — extracted for maintainability (Issue #450)
+  if (
+    await handleActionRoutes(req, res, {
+      sendJson,
+      runShellCommand,
+      resolveRestartActionCommand,
+      toSafeError,
+      logInfo,
+      logError: slogError,
+      clearCaches: () => {
+        costCache = null;
+        usageCache = null;
+        costCacheTime = 0;
+        usageCacheTime = 0;
       },
-    );
+      workspaceDir: WORKSPACE_DIR,
+      execCommand: exec,
+    })
+  )
     return;
-  }
-  if (req.url === '/api/action/check-update' && req.method === 'POST') {
-    exec('npm outdated -g openclaw 2>/dev/null || echo "up to date"', { timeout: 30000 }, (_err, stdout) => {
-      sendJson(res, { success: true, output: (stdout ?? '').trim() || 'All packages up to date' });
-    });
-    return;
-  }
-  if (req.url === '/api/action/sys-update' && req.method === 'POST') {
-    exec('apt update -qq && apt upgrade -y -qq 2>&1 | tail -5', { timeout: 300000 }, (err, stdout) => {
-      sendJson(res, { success: !err, output: (stdout ?? '').trim(), error: err?.message });
-    });
-    return;
-  }
-  if (req.url === '/api/action/disk-cleanup' && req.method === 'POST') {
-    exec(
-      'apt autoremove -y -qq 2>/dev/null; apt clean 2>/dev/null; journalctl --vacuum-time=7d 2>/dev/null; echo "Cleanup done"',
-      { timeout: 60000 },
-      (_err, stdout) => {
-        sendJson(res, { success: true, output: (stdout ?? '').trim() });
-      },
-    );
-    return;
-  }
-  if (req.url === '/api/action/restart-claude' && req.method === 'POST') {
-    exec(
-      `tmux kill-session -t claude-persistent 2>/dev/null; sleep 1; tmux new-session -d -s claude-persistent -x 200 -y 60 && tmux send-keys -t claude-persistent "cd ${WORKSPACE_DIR} && claude" Enter && echo "Claude session started"`,
-      { timeout: 20000 },
-      (err, stdout) => {
-        sendJson(res, { success: !err, output: (stdout ?? '').trim() });
-      },
-    );
-    return;
-  }
 
-  // RPG API compatibility routes (legacy non-prefixed aliases → canonical /api/rpg/*)
-  if (req.url === '/api/psionic-stats') {
-    (req as { url: string }).url = '/api/rpg/stats';
-    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
-  }
-  if (req.url && req.url.startsWith('/api/psionic-stats/')) {
-    (req as { url: string }).url = req.url.replace('/api/psionic-stats/', '/api/rpg/stats/');
-    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
-  }
-  if (req.url === '/api/khala-network' || (req.url && req.url.startsWith('/api/khala-network?'))) {
-    (req as { url: string }).url = (req.url ?? '').replace('/api/khala-network', '/api/rpg/khala-network');
-    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
-  }
-  if (req.url && req.url.startsWith('/api/khala-network/')) {
-    (req as { url: string }).url = req.url.replace('/api/khala-network/', '/api/rpg/khala-network/');
-    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
-  }
-  if (req.url && req.url.startsWith('/api/tactical-overlay/')) {
-    (req as { url: string }).url = req.url.replace('/api/tactical-overlay/', '/api/rpg/tactical-overlay/');
-    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
-  }
-  if (req.url && req.url.startsWith('/api/protocols/')) {
-    (req as { url: string }).url = req.url.replace('/api/protocols/', '/api/rpg/protocols/');
-    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
-  }
-  if (req.url && req.url.startsWith('/api/escalations/')) {
-    (req as { url: string }).url = req.url.replace('/api/escalations/', '/api/rpg/escalations/');
-    if (handleRpgApi(req, res, { dbPath: RPG_DB_PATH })) return;
-  }
+  // RPG API compatibility routes (legacy aliases → canonical /api/rpg/*)
+  if (handleRpgCompat(req, res, { dbPath: RPG_DB_PATH, handleRpgApi })) return;
 
   if (req.url === '/api/tailscale') {
     try {

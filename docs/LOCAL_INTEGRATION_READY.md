@@ -7,15 +7,15 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - Verdict: `GO`
 - Readiness score: `100`
 - Confidence: `high`
-- Profile: `full`
+- Profile: `bridge`
 - Required failures: `0`
 - Required skipped: `0`
 - Warnings: `0`
 
 ## Latest Evidence Artifacts
-- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T212745Z.json`
-- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T212745Z.md`
-- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T212745Z.svg`
+- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T231659Z.json`
+- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T231659Z.md`
+- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260222T231659Z.svg`
 
 ## Top 3 Blockers
 - No blockers in latest run.
@@ -23,13 +23,13 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 ## Trend (Last 7 Runs)
 | Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |
 |---|---|---:|---:|---:|---|
-| `20260222T205446Z` | `GO` | 100 | 0 | 0 | `pass` |
-| `20260222T205623Z` | `BLOCKED` | 63 | 3 | 1 | `fail` |
-| `20260222T205731Z` | `HOLD` | 92 | 0 | 1 | `fail` |
 | `20260222T205733Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260222T211046Z` | `GO` | 93 | 0 | 1 | `fail` |
 | `20260222T211244Z` | `GO` | 93 | 0 | 1 | `fail` |
 | `20260222T212745Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260222T221513Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260222T231635Z` | `GO` | 100 | 0 | 0 | `pass` |
+| `20260222T231659Z` | `GO` | 100 | 0 | 0 | `pass` |
 
 ## Required Checks
 - [x] `openclaw-cli` — `pass` group=`core` severity=`critical` (openclaw CLI found)
@@ -44,7 +44,7 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 
 ## Optional Checks
 - [x] `dashboard-map-route` — `pass` group=`apis` severity=`info` (map route reachable)
-- [x] `bridge-scheduler-jobs` — `pass` group=`bridge` severity=`warn` (bridge scheduler endpoint reachable)
+- [x] `bridge-scheduler-jobs` — `pass` group=`bridge` severity=`critical-optional` (bridge scheduler endpoint reachable)
 
 ## Bridge Token Setup Note
 - Direct bridge checks support `--bridge-token-file`, `BRIDGE_TOKEN`, `BRIDGE_TOKEN_FILE`, or default `OPENCLAW_DIR/bridge/bridge-token`.

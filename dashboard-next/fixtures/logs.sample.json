@@ -1,0 +1,43 @@
+{
+  "sourcesPayload": {
+    "sources": [
+      {
+        "id": "dashboard-server",
+        "name": "Dashboard Server",
+        "format": "text",
+        "size": 8912,
+        "modified": "2026-02-22T23:40:00.000Z",
+        "lines": 128
+      },
+      {
+        "id": "cron-openclaw-local-ready",
+        "name": "Cron Openclaw Local Ready",
+        "format": "jsonl",
+        "size": 22144,
+        "modified": "2026-02-22T22:00:00.000Z",
+        "lines": 421
+      }
+    ]
+  },
+  "entriesPayload": {
+    "source": "dashboard-server",
+    "total": 2,
+    "limit": 100,
+    "entries": [
+      {
+        "ts": "2026-02-22T23:40:00.000Z",
+        "level": "info",
+        "source": "dashboard-server",
+        "message": "GET /api/health -> 200",
+        "raw": "{\"event\":\"request_completed\",\"statusCode\":200}"
+      },
+      {
+        "ts": "2026-02-22T23:41:12.000Z",
+        "level": "warn",
+        "source": "dashboard-server",
+        "message": "Overview freshness stale state reported",
+        "raw": "{\"event\":\"overview_freshness_stale\"}"
+      }
+    ]
+  }
+}
