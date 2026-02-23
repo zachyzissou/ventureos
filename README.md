@@ -67,7 +67,9 @@ ventureos/
 
 ### In Progress
 
-- 🔄 **Roadmap Anchor Stewardship:** maintain issue #138 and define next execution-phase tracked issues (#138)
+- 🔄 **Next.js Hybrid Phase 3:** migrate authenticated interactive surfaces incrementally (#457)
+- 🔄 **Readiness Cadence v3:** add stale-state guardrails and operator summary artifacts (#458)
+- 🔄 **Installer Onboarding Phase 2:** add post-install verification mode and clearer reports (#459)
 
 ### Next Up
 
@@ -108,6 +110,9 @@ Implementation milestones (visible incremental rollout):
 
 ### Now (active)
 
+- Next.js hybrid phase 3 migration workstream (#457)
+- Local integration readiness cadence v3 hardening (#458)
+- Installer onboarding phase 2 verification/reporting improvements (#459)
 - Living roadmap stewardship in issue #138
 
 ### Next
