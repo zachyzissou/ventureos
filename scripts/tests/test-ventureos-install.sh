@@ -62,7 +62,32 @@ SH
 cat > "$FAKE_BRIDGE" <<'SH'
 #!/usr/bin/env bash
 set -euo pipefail
-echo "bridge|$*" >> "$CALL_LOG"
+original_args="$*"
+bridge_env_path=""
+status_mode=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --bridge-env)
+      bridge_env_path="${2:-}"
+      shift 2
+      ;;
+    --status)
+      status_mode=1
+      shift
+      ;;
+    *)
+      shift
+      ;;
+    esac
+done
+
+echo "bridge|$original_args" >> "$CALL_LOG"
+if [[ "$status_mode" == "1" ]]; then
+  exit "${FAKE_BRIDGE_STATUS_RC:-0}"
+fi
+if [[ -n "$bridge_env_path" && ! -f "$bridge_env_path" ]]; then
+  exit 2
+fi
 exit 0
 SH
 
@@ -187,6 +212,7 @@ export VENTUREOS_INSTALL_READINESS_SCRIPT="$FAKE_READY"
 export VENTUREOS_INSTALL_OS="Darwin"
 export CRONTAB_STATE
 export VENTUREOS_INSTALL_RESTORE_BASE_DIR="$RESTORE_BASE"
+export FAKE_BRIDGE_STATUS_RC=0
 
 # Dry-run should plan actions without executing scripts.
 : > "$CALL_LOG"
@@ -199,9 +225,15 @@ run_install dry_run \
   --bridge-env "$BRIDGE_ENV" \
   --bridge-token-file "$TMP_DIR/bridge-token"
 
-if grep -E -q '^(dashboard-macos|dashboard-linux|bridge\||cron\||ready\|)' "$CALL_LOG"; then
+if grep -E -q '^(dashboard-macos|dashboard-linux|cron\||ready\|)' "$CALL_LOG"; then
   echo "Expected dry-run mode to avoid executing installer primitives" >&2
   exit 1
+fi
+if grep -E '^bridge\|' "$CALL_LOG" >/dev/null 2>&1; then
+  if grep -E '^bridge\|' "$CALL_LOG" | grep -vq -- '--status'; then
+    echo "Expected dry-run mode to avoid bridge install execution (status checks are allowed)" >&2
+    exit 1
+  fi
 fi
 
 grep -q "VENTUREOS_INSTALL_RESULT=PLANNED" "$OUT_DIR/dry_run.out"
@@ -290,9 +322,11 @@ run_install minimal_preset \
   --bridge-env "$BRIDGE_ENV"
 
 grep -q "dashboard-macos|" "$CALL_LOG"
-if grep -q 'bridge|' "$CALL_LOG"; then
-  echo "Minimal preset should not run bridge installer" >&2
-  exit 1
+if grep -E '^bridge\|' "$CALL_LOG" >/dev/null 2>&1; then
+  if grep -E '^bridge\|' "$CALL_LOG" | grep -vq -- '--status'; then
+    echo "Minimal preset should not run bridge installer" >&2
+    exit 1
+  fi
 fi
 if grep -q 'cron|' "$CALL_LOG"; then
   echo "Minimal preset should not run cron installer" >&2
@@ -304,9 +338,9 @@ minimal_report="$(latest_report minimal_preset)"
 grep -q -- '- Preset: `minimal`' "$minimal_report"
 echo "VENTUREOS_INSTALL_PRESET_OK"
 
-# Missing bridge env should fail with actionable failed-step report content.
+# Missing bridge env should adopt existing healthy launchagent state (non-destructive mode).
 : > "$CALL_LOG"
-run_install_expect_fail missing_bridge_env \
+run_install missing_bridge_env_adopt \
   --non-interactive \
   --verify \
   --dashboard-port 8126 \
@@ -314,9 +348,28 @@ run_install_expect_fail missing_bridge_env \
   --bridge-env "$TMP_DIR/missing-bridge.env" \
   --skip-readiness
 
-grep -q "VENTUREOS_INSTALL_RESULT=FAIL" "$OUT_DIR/missing_bridge_env.out"
-fail_report="$(latest_report missing_bridge_env)"
+grep -q "VENTUREOS_INSTALL_RESULT=PASS" "$OUT_DIR/missing_bridge_env_adopt.out"
+adopt_report="$(latest_report missing_bridge_env_adopt)"
+grep -q "bridge env missing; adopted existing healthy launchagent" "$adopt_report"
+grep -q '`bridge-launchagent` | `pass`' "$adopt_report"
+echo "VENTUREOS_INSTALL_MISSING_BRIDGE_ENV_ADOPT_OK"
+
+# Missing bridge env should still fail when existing launchagent status is unhealthy.
+export FAKE_BRIDGE_STATUS_RC=1
+: > "$CALL_LOG"
+run_install_expect_fail missing_bridge_env_unhealthy \
+  --non-interactive \
+  --verify \
+  --dashboard-port 8127 \
+  --openclaw-dir "$OPENCLAW_FIXTURE_DIR" \
+  --bridge-env "$TMP_DIR/missing-bridge.env" \
+  --skip-readiness
+export FAKE_BRIDGE_STATUS_RC=0
+
+grep -q "VENTUREOS_INSTALL_RESULT=FAIL" "$OUT_DIR/missing_bridge_env_unhealthy.out"
+fail_report="$(latest_report missing_bridge_env_unhealthy)"
 grep -q '## Failed Steps' "$fail_report"
+grep -q "missing bridge env file and no healthy launchagent to adopt" "$fail_report"
 grep -q "Create bridge env file or pass --skip-bridge-launchagent" "$fail_report"
 grep -q '| Step | Status | Detail | Next Command |' "$fail_report"
 echo "VENTUREOS_INSTALL_FAILURE_REPORT_OK"
