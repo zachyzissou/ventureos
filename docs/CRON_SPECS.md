@@ -95,8 +95,22 @@
 - **Goal:** maintain a rolling 7-day evidence trail for VB-003 closure decisions.
 - **Added:** 2026-02-22
 
+## 14) VB-003 Watchdog
+- **Schedule:** `45 */3 * * *`
+- **Session:** isolated
+- **Agent:** main
+- **Payload:** run `scripts/vb003-watchdog.sh`
+- **Outputs:**
+  - `runtime/reports/model-orchestration/vb003-watchdog-<timestamp>.json`
+  - `runtime/reports/model-orchestration/vb003-watchdog-<timestamp>.md`
+  - `runtime/reports/model-orchestration/vb003-watchdog-latest.json`
+  - `runtime/reports/model-orchestration/vb003-watchdog-latest.md`
+- **Goal:** detect telemetry staleness or short-window job regressions while VB-003 7-day evidence accrues.
+- **Added:** 2026-02-22
+
 ## Current Next Steps (February 23, 2026)
 1. Roll this schedule onto the host with `bash scripts/install-cron.sh --force`.
 2. Validate first run via `runtime/logs/cron-runs/vb003-telemetry-synthesis.jsonl`.
 3. Validate latest synthesis artifacts under `runtime/reports/model-orchestration/`.
-4. Confirm `docs/LOCAL_INTEGRATION_READY.md` and Mission Control readiness card continue moving on cadence.
+4. Validate watchdog run via `runtime/logs/cron-runs/vb003-watchdog.jsonl` and latest watchdog artifacts.
+5. Confirm `docs/LOCAL_INTEGRATION_READY.md` and Mission Control readiness card continue moving on cadence.

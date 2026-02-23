@@ -13,6 +13,7 @@ VERIFY_TIMEOUT_SEC="${VENTUREOS_INSTALL_VERIFY_TIMEOUT_SEC:-3}"
 REVERT_FROM=""
 LIST_RESTORE_POINTS=0
 CAPTURE_RESTORE_POINT=1
+EXPLICIT_RESTORE_POINT=""
 
 SKIP_DASHBOARD_INSTALL=0
 SKIP_BRIDGE_LAUNCHAGENT=0
@@ -47,6 +48,14 @@ RESTORE_BASE_DIR="${VENTUREOS_INSTALL_RESTORE_BASE_DIR:-$REPO_ROOT/runtime/backu
 RESTORE_POINT_ID=""
 RESTORE_POINT_DIR=""
 RESTORE_MANIFEST_PATH=""
+NO_ANIMATION="${VENTUREOS_INSTALL_NO_ANIMATION:-0}"
+UI_ENABLED=0
+
+DISCOVER_DASHBOARD_STATE="unknown"
+DISCOVER_OPENCLAW_STATE="unknown"
+DISCOVER_BRIDGE_ENV_STATE="unknown"
+DISCOVER_CRON_STATE="unknown"
+DISCOVER_VENTURE_CRON_STATE="unknown"
 
 REPORT_DIR="${VENTUREOS_INSTALL_REPORT_DIR:-$REPO_ROOT/runtime/reports/ventureos-install}"
 SUMMARY_TSV="$(mktemp)"
@@ -102,6 +111,68 @@ need_value() {
   fi
 }
 
+ui_init() {
+  if [[ "$NON_INTERACTIVE" == "0" && -t 1 && "${TERM:-}" != "dumb" ]]; then
+    UI_ENABLED=1
+  else
+    UI_ENABLED=0
+  fi
+}
+
+ui_sleep() {
+  local seconds="${1:-0.06}"
+  if [[ "$UI_ENABLED" == "1" && "$NO_ANIMATION" != "1" ]]; then
+    sleep "$seconds"
+  fi
+}
+
+ui_section() {
+  local title="$1"
+  if [[ "$UI_ENABLED" == "1" ]]; then
+    printf '\n\033[1;36m[%s]\033[0m\n' "$title"
+  else
+    printf '\n[%s]\n' "$title"
+  fi
+}
+
+ui_step() {
+  local marker="$1"
+  local label="$2"
+  if [[ "$UI_ENABLED" == "1" ]]; then
+    printf '\033[1;34m%s\033[0m %s\n' "$marker" "$label"
+  else
+    printf '%s %s\n' "$marker" "$label"
+  fi
+  ui_sleep 0.04
+}
+
+ui_state_line() {
+  local key="$1"
+  local value="$2"
+  local detail="${3:-}"
+  local rendered="$value"
+  if [[ "$UI_ENABLED" == "1" ]]; then
+    case "$value" in
+      healthy|present|installed)
+        rendered="$(printf '\033[32m%s\033[0m' "$value")"
+        ;;
+      missing|unreachable|unavailable|not-installed)
+        rendered="$(printf '\033[33m%s\033[0m' "$value")"
+        ;;
+      *)
+        rendered="$(printf '\033[36m%s\033[0m' "$value")"
+        ;;
+    esac
+  fi
+
+  if [[ -n "$detail" ]]; then
+    echo "  $key: $rendered ($detail)"
+  else
+    echo "  $key: $rendered"
+  fi
+  ui_sleep 0.03
+}
+
 record_step() {
   local step="$1"
   local status="$2"
@@ -133,6 +204,11 @@ run_step() {
   if [[ -z "$next_command" ]]; then
     next_command="$command_text"
   fi
+
+  if [[ "$UI_ENABLED" == "1" ]]; then
+    ui_step "→" "$step :: $detail"
+  fi
+
   if [[ "$DRY_RUN" == "1" ]]; then
     echo "[dry-run] $step :: $detail"
     echo "          cmd: $command_text"
@@ -440,43 +516,49 @@ PY
 
 discover_existing_state() {
   local dashboard_url="$1"
-  local dashboard_state="unreachable"
-  local openclaw_state="missing"
-  local bridge_env_state="missing"
-  local cron_state="empty"
-  local venture_cron_state="not-installed"
+  local print_mode="${2:-print}"
+
+  DISCOVER_DASHBOARD_STATE="unreachable"
+  DISCOVER_OPENCLAW_STATE="missing"
+  DISCOVER_BRIDGE_ENV_STATE="missing"
+  DISCOVER_CRON_STATE="empty"
+  DISCOVER_VENTURE_CRON_STATE="not-installed"
 
   if verify_dashboard_health "$dashboard_url"; then
-    dashboard_state="healthy"
+    DISCOVER_DASHBOARD_STATE="healthy"
   fi
 
   if [[ -d "$OPENCLAW_DIR" ]]; then
-    openclaw_state="present"
+    DISCOVER_OPENCLAW_STATE="present"
   fi
 
   if [[ -f "$BRIDGE_ENV" ]]; then
-    bridge_env_state="present"
+    DISCOVER_BRIDGE_ENV_STATE="present"
   fi
 
   if command -v crontab >/dev/null 2>&1; then
     local existing_cron
     existing_cron="$(crontab -l 2>/dev/null || true)"
     if [[ -n "$existing_cron" ]]; then
-      cron_state="present"
+      DISCOVER_CRON_STATE="present"
       if printf '%s\n' "$existing_cron" | grep -Fq "VentureOS Managed Cron"; then
-        venture_cron_state="installed"
+        DISCOVER_VENTURE_CRON_STATE="installed"
       fi
     fi
   else
-    cron_state="unavailable"
+    DISCOVER_CRON_STATE="unavailable"
   fi
 
-  echo "Discovered existing configuration:"
-  echo "  openclaw dir: $openclaw_state ($OPENCLAW_DIR)"
-  echo "  bridge env: $bridge_env_state ($BRIDGE_ENV)"
-  echo "  dashboard health: $dashboard_state ($dashboard_url)"
-  echo "  user crontab: $cron_state"
-  echo "  ventureos managed cron block: $venture_cron_state"
+  if [[ "$print_mode" == "quiet" ]]; then
+    return 0
+  fi
+
+  ui_section "Discovery"
+  ui_state_line "openclaw dir" "$DISCOVER_OPENCLAW_STATE" "$OPENCLAW_DIR"
+  ui_state_line "bridge env" "$DISCOVER_BRIDGE_ENV_STATE" "$BRIDGE_ENV"
+  ui_state_line "dashboard health" "$DISCOVER_DASHBOARD_STATE" "$dashboard_url"
+  ui_state_line "user crontab" "$DISCOVER_CRON_STATE"
+  ui_state_line "ventureos managed cron block" "$DISCOVER_VENTURE_CRON_STATE"
 }
 
 prompt_yes_no() {
@@ -615,6 +697,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-restore-point)
       CAPTURE_RESTORE_POINT=0
+      EXPLICIT_RESTORE_POINT=0
       shift
       ;;
     --list-restore-points)
@@ -695,6 +778,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+ui_init
+
 if [[ "$LIST_RESTORE_POINTS" == "1" && -n "$REVERT_FROM" ]]; then
   echo "Cannot combine --list-restore-points and --revert" >&2
   exit 2
@@ -729,12 +814,26 @@ fi
 
 if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
   discovery_dashboard_url="$(resolve_dashboard_url)"
-  echo "VentureOS Installer Onboarding"
+  ui_section "VentureOS Onboarding"
   echo "Repo: $REPO_ROOT"
   echo "Platform: $OS_NAME"
-  echo ""
   discover_existing_state "$discovery_dashboard_url"
-  echo ""
+
+  ui_section "Recommendations"
+  if [[ "$DISCOVER_DASHBOARD_STATE" == "healthy" ]]; then
+    ui_step "•" "Dashboard is already healthy; adopting existing service is recommended."
+  else
+    ui_step "•" "Dashboard health is not confirmed; running dashboard install is recommended."
+  fi
+  if [[ "$DISCOVER_BRIDGE_ENV_STATE" != "present" ]]; then
+    ui_step "•" "Bridge env is missing; skip bridge install or provide --bridge-env first."
+  fi
+  if [[ "$DISCOVER_VENTURE_CRON_STATE" == "installed" ]]; then
+    ui_step "•" "Managed VentureOS cron block already exists; refresh is recommended."
+  fi
+  if [[ "$DISCOVER_OPENCLAW_STATE" != "present" ]]; then
+    ui_step "•" "OpenClaw directory missing; install can continue but readiness may fail."
+  fi
 
   if [[ "$(prompt_yes_no "Continue with onboarding plan?" "y")" != "y" ]]; then
     echo "Install cancelled."
@@ -742,10 +841,13 @@ if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
   fi
 
   if [[ -z "$EXPLICIT_PRESET" ]]; then
+    ui_step "1/7" "Choose install preset"
     INSTALL_PRESET="$(prompt_value "Install preset (full|bridge|minimal)" "$INSTALL_PRESET")"
   fi
   apply_install_preset
   apply_explicit_overrides
+
+  ui_step "2/7" "Confirm runtime endpoints"
   DASHBOARD_PORT="$(prompt_value "Dashboard port" "$DASHBOARD_PORT")"
   if [[ -z "$EXPLICIT_PROFILE" ]]; then
     PROFILE="$(prompt_value "Readiness profile (quick|full|bridge)" "$PROFILE")"
@@ -753,8 +855,9 @@ if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
   validate_dashboard_port
   validate_profile
 
+  ui_step "3/7" "Dashboard integration strategy"
   if [[ -z "$EXPLICIT_SKIP_DASHBOARD" ]]; then
-    if verify_dashboard_health "$(resolve_dashboard_url)"; then
+    if [[ "$DISCOVER_DASHBOARD_STATE" == "healthy" ]]; then
       if [[ "$(prompt_yes_no "Existing dashboard looks healthy. Adopt it and skip dashboard reinstall?" "y")" == "y" ]]; then
         SKIP_DASHBOARD_INSTALL=1
       else
@@ -764,12 +867,34 @@ if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
       SKIP_DASHBOARD_INSTALL="$(prompt_run_toggle "Run dashboard installer?" "$SKIP_DASHBOARD_INSTALL")"
     fi
   fi
+
+  ui_step "4/7" "Bridge integration"
   if [[ "$OS_NAME" == "Darwin" && -z "$EXPLICIT_SKIP_BRIDGE" ]]; then
-    SKIP_BRIDGE_LAUNCHAGENT="$(prompt_run_toggle "Install/refresh bridge LaunchAgent?" "$SKIP_BRIDGE_LAUNCHAGENT")"
+    if [[ "$DISCOVER_BRIDGE_ENV_STATE" != "present" ]]; then
+      if [[ "$(prompt_yes_no "Bridge env file is missing. Skip bridge LaunchAgent install for now?" "y")" == "y" ]]; then
+        SKIP_BRIDGE_LAUNCHAGENT=1
+      else
+        SKIP_BRIDGE_LAUNCHAGENT=0
+      fi
+    else
+      SKIP_BRIDGE_LAUNCHAGENT="$(prompt_run_toggle "Install/refresh bridge LaunchAgent?" "$SKIP_BRIDGE_LAUNCHAGENT")"
+    fi
   fi
+
+  ui_step "5/7" "Cron integration"
   if [[ -z "$EXPLICIT_SKIP_CRON" ]]; then
-    SKIP_CRON_INSTALL="$(prompt_run_toggle "Install/refresh managed cron entries?" "$SKIP_CRON_INSTALL")"
+    if [[ "$DISCOVER_VENTURE_CRON_STATE" == "installed" ]]; then
+      if [[ "$(prompt_yes_no "Managed VentureOS cron block exists. Refresh it now?" "y")" == "y" ]]; then
+        SKIP_CRON_INSTALL=0
+      else
+        SKIP_CRON_INSTALL=1
+      fi
+    else
+      SKIP_CRON_INSTALL="$(prompt_run_toggle "Install/refresh managed cron entries?" "$SKIP_CRON_INSTALL")"
+    fi
   fi
+
+  ui_step "6/7" "Readiness and verification"
   if [[ -z "$EXPLICIT_SKIP_READINESS" ]]; then
     SKIP_READINESS="$(prompt_run_toggle "Run readiness refresh smoke now?" "$SKIP_READINESS")"
   fi
@@ -784,11 +909,20 @@ if [[ "$NON_INTERACTIVE" == "0" && -t 0 ]]; then
       VERIFY_POST_INSTALL=0
     fi
   fi
-  echo ""
+
+  ui_step "7/7" "Safety controls"
+  if [[ -z "$EXPLICIT_RESTORE_POINT" ]]; then
+    if [[ "$(prompt_yes_no "Capture a restore point before making changes?" "y")" == "y" ]]; then
+      CAPTURE_RESTORE_POINT=1
+    else
+      CAPTURE_RESTORE_POINT=0
+    fi
+  fi
 fi
 
 dashboard_url="$(resolve_dashboard_url)"
 
+ui_section "Execution Plan"
 echo "Install plan:"
 echo "  preset: $INSTALL_PRESET"
 echo "  dashboard port: $DASHBOARD_PORT"
@@ -804,11 +938,9 @@ echo "  restore base dir: $RESTORE_BASE_DIR"
 if [[ "$DRY_RUN" == "1" ]]; then
   echo "  mode: dry-run"
 fi
-echo ""
-
 discover_existing_state "$dashboard_url"
-echo ""
 
+ui_section "Preflight Safety"
 if [[ "$CAPTURE_RESTORE_POINT" == "1" ]]; then
   if [[ "$DRY_RUN" == "1" ]]; then
     record_step "restore-point" "planned" "would snapshot user config before install" "bash scripts/ventureos-install.sh --list-restore-points"

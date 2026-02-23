@@ -319,7 +319,40 @@ bash scripts/tests/test-openclaw-local-ready-cron.sh
 
 ---
 
-## 16) vb003-telemetry-synthesis.sh
+## 16) vb003-watchdog.sh
+**Purpose:** Validate VB-003 telemetry freshness and recent cron health while 7-day evidence accumulates.
+
+**Usage:**
+```bash
+bash scripts/vb003-watchdog.sh
+```
+
+**Behavior:**
+- Reads latest synthesis artifact:
+  - `runtime/reports/model-orchestration/vb003-telemetry-latest.json`
+- Checks freshness (`VB003_WATCHDOG_MAX_TELEMETRY_AGE_MINUTES`, default `480`).
+- Evaluates recent cron health window (`VB003_WATCHDOG_LOOKBACK_MINUTES`, default `360`) across:
+  - `budget-check`
+  - `routing-healthcheck`
+  - `monitoring`
+- Emits timestamped + latest watchdog artifacts:
+  - `runtime/reports/model-orchestration/vb003-watchdog-<timestamp>.json`
+  - `runtime/reports/model-orchestration/vb003-watchdog-<timestamp>.md`
+  - `runtime/reports/model-orchestration/vb003-watchdog-latest.json`
+  - `runtime/reports/model-orchestration/vb003-watchdog-latest.md`
+- Returns non-zero when freshness or recent-failure checks detect degraded state.
+
+**Config env vars:**
+- `VB003_WATCHDOG_REPORT_DIR`
+- `VB003_TELEMETRY_LATEST_JSON`
+- `VB003_CRON_RUN_DIR`
+- `VB003_TARGET_HOURS` (default `168`)
+- `VB003_WATCHDOG_LOOKBACK_MINUTES` (default `360`)
+- `VB003_WATCHDOG_MAX_TELEMETRY_AGE_MINUTES` (default `480`)
+
+---
+
+## 17) vb003-telemetry-synthesis.sh
 **Purpose:** Generate a rolling telemetry synthesis artifact for VB-003 model-orchestration verification.
 
 **Usage:**
@@ -362,7 +395,7 @@ bash scripts/vb003-telemetry-synthesis.sh
 
 ---
 
-## 16) install-bridge-launchagent.sh
+## 18) install-bridge-launchagent.sh
 **Purpose:** Install/manage a persistent macOS LaunchAgent for the host Bridge API.
 
 **Usage:**
@@ -388,7 +421,7 @@ bash scripts/tests/test-install-bridge-launchagent.sh
 
 ---
 
-## 17) ventureos-install.sh
+## 19) ventureos-install.sh
 **Purpose:** Unified OpenClaw-style installer + onboarding wrapper for local VentureOS setup.
 
 **Usage:**
@@ -418,6 +451,7 @@ bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<re
   - cron installer (`scripts/install-cron.sh`)
   - readiness refresh (`scripts/refresh-local-integration-ready.sh`)
 - Reads current local state (OpenClaw directory, bridge env, dashboard health, cron marker) before apply and surfaces that in onboarding/plan output.
+- Interactive TTY mode uses staged onboarding sections with guided recommendations (for example: adopt existing healthy dashboard, skip bridge when bridge env is missing) before executing changes.
 - Captures a pre-install restore point by default under `runtime/backups/ventureos-install/<restore-point-id>/`:
   - user crontab snapshot
   - bridge env snapshot
@@ -444,7 +478,7 @@ bash scripts/tests/test-ventureos-install.sh
 
 ---
 
-## 18) pr-queue-sweep.sh
+## 20) pr-queue-sweep.sh
 **Purpose:** Classify open GitHub PR queue state and optionally merge approved+ready PRs.
 
 **Usage:**
@@ -475,7 +509,7 @@ bash scripts/tests/test-pr-queue-sweep.sh
 
 ---
 
-## 19) roadmap-status-sync.py
+## 21) roadmap-status-sync.py
 **Purpose:** Detect status drift between `README.md` active work and roadmap anchor issue `#138`.
 
 **Usage:**
@@ -512,7 +546,7 @@ bash scripts/tests/test-roadmap-status-sync.sh
 
 ---
 
-## 20) docs-lint.py
+## 22) docs-lint.py
 **Purpose:** Lint core documentation links/placeholders while minimizing false positives in instructional prose.
 
 **Usage:**
