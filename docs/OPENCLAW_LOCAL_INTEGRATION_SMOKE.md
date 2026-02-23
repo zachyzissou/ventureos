@@ -34,6 +34,13 @@ Single command to run smoke and refresh the readiness summary doc:
 bash scripts/refresh-local-integration-ready.sh
 ```
 
+Installer preflight evidence bundle command (required after onboarding/install execution changes):
+```bash
+bash scripts/run-install-preflight-evidence.sh \
+  -- --openclaw-dir "$HOME/.openclaw" \
+  --bridge-env "$PWD/config/bridge.env"
+```
+
 Cron-safe wrapper for unattended cadence:
 ```bash
 bash scripts/openclaw-local-ready-cron.sh
@@ -133,28 +140,34 @@ Mission Control API note (dashboard route):
 - In hybrid Docker mode, ensure the report directory is bind-mounted into the dashboard container and wired via `OPENCLAW_LOCAL_READINESS_REPORT_DIR`.
 
 ## Current Next Steps (February 22, 2026)
-1. Install or refresh managed cron entries:
+1. Run installer preflight evidence bundle after onboarding/install execution changes:
+```bash
+bash scripts/run-install-preflight-evidence.sh \
+  -- --openclaw-dir "$HOME/.openclaw" \
+  --bridge-env "$PWD/config/bridge.env"
+```
+2. Install or refresh managed cron entries:
 ```bash
 bash scripts/install-cron.sh --force
 ```
-2. Run one manual cadence cycle and confirm doc/artifact refresh:
+3. Run one manual cadence cycle and confirm doc/artifact refresh:
 ```bash
 bash scripts/openclaw-local-ready-cron.sh
 ```
-3. Validate stale guardrail status from latest artifact age:
+4. Validate stale guardrail status from latest artifact age:
 ```bash
 bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360
 ```
-4. Generate cadence evidence bundle for issue/PR status updates:
+5. Generate cadence evidence bundle for issue/PR status updates:
 ```bash
 bash scripts/openclaw-local-ready-cadence.sh
 ```
-5. Verify Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
-6. If bridge direct-check coverage is expected, configure `BRIDGE_TOKEN_FILE` and rerun bridge profile smoke:
+6. Verify Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
+7. If bridge direct-check coverage is expected, configure `BRIDGE_TOKEN_FILE` and rerun bridge profile smoke:
 ```bash
 bash scripts/openclaw-local-smoke.sh --profile bridge
 ```
-7. Keep bridge startup + readiness artifact wiring persistent across restarts.
+8. Keep bridge startup + readiness artifact wiring persistent across restarts.
 
 ## Regression Test
 Run the mock-server regression test:

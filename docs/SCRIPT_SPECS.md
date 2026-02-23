@@ -551,6 +551,49 @@ bash scripts/tests/test-ventureos-install.sh
 
 ---
 
+## 19a) run-install-preflight-evidence.sh
+**Purpose:** Run the required local-host installer `--preflight-only` flow and emit a deterministic evidence bundle for onboarding/install execution changes.
+
+**Usage:**
+```bash
+bash scripts/run-install-preflight-evidence.sh
+```
+
+Forward installer args:
+```bash
+bash scripts/run-install-preflight-evidence.sh \
+  -- --openclaw-dir "$HOME/.openclaw" \
+  --bridge-env "$PWD/config/bridge.env"
+```
+
+**Behavior:**
+- Executes:
+  - `bash scripts/ventureos-install.sh --non-interactive --preflight-only --verify`
+  - plus any forwarded installer args.
+- Captures installer stdout/stderr log at:
+  - `runtime/reports/ventureos-install/ventureos-install-preflight-<timestamp>.log`
+- Records required evidence references in:
+  - `ventureos-install-preflight-evidence-<timestamp>.json`
+  - `ventureos-install-preflight-evidence-<timestamp>.md`
+  - rolling latest aliases:
+    - `ventureos-install-preflight-evidence-latest.json`
+    - `ventureos-install-preflight-evidence-latest.md`
+- Evidence bundle includes:
+  - command invocation
+  - install exit/result markers
+  - installer report path
+  - adoption evidence path
+  - onboarding transcript path
+  - readiness status JSON reference + existence flag
+- Exits with the underlying installer exit code so CI/operator flows can gate on failures.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-run-install-preflight-evidence.sh
+```
+
+---
+
 ## 20) pr-queue-sweep.sh
 **Purpose:** Classify open GitHub PR queue state and optionally merge approved+ready PRs.
 

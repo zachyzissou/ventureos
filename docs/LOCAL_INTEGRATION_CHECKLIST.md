@@ -12,6 +12,36 @@ Owner: VentureOS installer execution
 - [x] Revert summary reports `errors=0`
 - [x] Current readiness doc reflects latest local evidence
 
+## Preflight Evidence Cadence (Issue #503)
+
+Run this after onboarding/install execution changes are merged, especially when modifying:
+- `scripts/ventureos-install.sh`
+- `scripts/install-cron.sh`
+- `scripts/refresh-local-integration-ready.sh`
+- `scripts/openclaw-local-smoke.sh`
+
+Required command:
+
+```bash
+bash scripts/run-install-preflight-evidence.sh \
+  -- --openclaw-dir "$HOME/.openclaw" \
+  --bridge-env "$PWD/config/bridge.env"
+```
+
+Required artifacts for issue/PR evidence:
+- `runtime/reports/ventureos-install/ventureos-install-preflight-<timestamp>.log`
+- `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-<timestamp>.json`
+- `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-<timestamp>.md`
+- `runtime/reports/ventureos-install/ventureos-install-<timestamp>.md`
+- `runtime/reports/ventureos-install/ventureos-install-adoption-<timestamp>.json`
+- `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json` (reference/existence recorded)
+
+Cadence checklist:
+- [ ] Real-host preflight evidence command executed after latest onboarding/install merge
+- [ ] Evidence JSON + Markdown attached/linked in tracking issue or PR
+- [ ] Installer report + adoption evidence paths included in evidence bundle
+- [ ] Readiness status JSON reference present in evidence bundle
+
 ## Latest Result
 
 - Date (UTC): `2026-02-23`
