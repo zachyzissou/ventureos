@@ -18,4 +18,5 @@ As of 2026-02-22, planning/status updates are maintained directly in GitHub issu
 - Operate and verify local readiness cadence using:
   - `bash scripts/install-cron.sh --force`
   - `bash scripts/openclaw-local-ready-cron.sh`
+  - `bash scripts/openclaw-local-ready-cadence.sh`
 - Track active work and follow-up priorities in issue #138.

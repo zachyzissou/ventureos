@@ -330,6 +330,45 @@ bash scripts/tests/test-openclaw-local-ready-cron.sh
 
 ---
 
+## 15a) openclaw-local-ready-cadence.sh
+**Purpose:** Generate an issue/PR-ready local readiness cadence evidence bundle from latest readiness artifacts.
+
+**Usage:**
+```bash
+bash scripts/openclaw-local-ready-cadence.sh
+```
+
+**Behavior:**
+- Runs status-only readiness refresh by default:
+  - `refresh-local-integration-ready.sh --skip-smoke --max-age-min <threshold>`
+- Emits timestamped cadence report artifacts:
+  - `runtime/reports/openclaw-local-smoke/openclaw-local-ready-cadence-<timestamp>.json`
+  - `runtime/reports/openclaw-local-smoke/openclaw-local-ready-cadence-<timestamp>.md`
+  - rolling latest copies:
+    - `openclaw-local-ready-cadence-latest.json`
+    - `openclaw-local-ready-cadence-latest.md`
+- Cadence artifacts include:
+  - consolidated status (`ok|alert|stale`)
+  - stale guardrail verdict and exit semantics
+  - latest smoke/readiness artifact references (evidence bundle)
+  - top blockers (up to 3) and deduplicated next-command guidance
+- Exit behavior:
+  - `0`: cadence status `ok`
+  - `3`: stale guardrail violation
+  - `4`: readiness status `alert` (non-stale)
+  - `2`: invalid inputs or missing required status artifact
+- Supports:
+  - `--report-dir <path>`
+  - `--max-age-min <n>`
+  - `--skip-refresh` (read existing latest status without running refresh)
+
+**Regression test:**
+```bash
+bash scripts/tests/test-openclaw-local-ready-cadence.sh
+```
+
+---
+
 ## 16) vb003-watchdog.sh
 **Purpose:** Validate VB-003 telemetry freshness and recent cron health while 7-day evidence accumulates.
 
