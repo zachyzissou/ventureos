@@ -67,7 +67,7 @@ ventureos/
 
 ### In Progress
 
-- 🔄 **Roadmap Execution:** track active implementation in issue #138
+- 🔄 **Installer Automation Phase 3:** one-command bootstrap + first-run verification report (#466)
 
 ### Next Up
 
@@ -108,6 +108,7 @@ Implementation milestones (visible incremental rollout):
 
 ### Now (active)
 
+- Installer automation phase 3 one-command bootstrap and verification workstream (#466)
 - Living roadmap stewardship in issue #138
 
 ### Next
