@@ -118,6 +118,15 @@
       "has_network": false,
       "degradation_tier": "D1",
       "notes": "Regenerates local readiness report + mission card artifacts with retention controls"
+    },
+    "vb003-telemetry-synthesis": {
+      "script": "scripts/vb003-telemetry-synthesis.sh",
+      "timeout_seconds": 120,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D1",
+      "notes": "Builds rolling model-orchestration telemetry synthesis artifacts for VB-003 closure"
     }
   }
 }
