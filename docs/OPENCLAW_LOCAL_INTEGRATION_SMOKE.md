@@ -44,6 +44,11 @@ Status-only stale guard check (no new smoke run):
 bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360
 ```
 
+Cadence evidence bundle command (issue/PR-ready summary + blockers/next-commands):
+```bash
+bash scripts/openclaw-local-ready-cadence.sh
+```
+
 Bridge-mode prerequisite (when `DASHBOARD_DATA_MODE=bridge`):
 ```bash
 npm run openclaw:bridge:launchagent
@@ -140,12 +145,16 @@ bash scripts/openclaw-local-ready-cron.sh
 ```bash
 bash scripts/refresh-local-integration-ready.sh --skip-smoke --max-age-min 360
 ```
-4. Verify Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
-5. If bridge direct-check coverage is expected, configure `BRIDGE_TOKEN_FILE` and rerun bridge profile smoke:
+4. Generate cadence evidence bundle for issue/PR status updates:
+```bash
+bash scripts/openclaw-local-ready-cadence.sh
+```
+5. Verify Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
+6. If bridge direct-check coverage is expected, configure `BRIDGE_TOKEN_FILE` and rerun bridge profile smoke:
 ```bash
 bash scripts/openclaw-local-smoke.sh --profile bridge
 ```
-6. Keep bridge startup + readiness artifact wiring persistent across restarts.
+7. Keep bridge startup + readiness artifact wiring persistent across restarts.
 
 ## Regression Test
 Run the mock-server regression test:
@@ -156,4 +165,9 @@ bash scripts/tests/test-openclaw-local-smoke.sh
 Run the readiness-refresh regression test:
 ```bash
 bash scripts/tests/test-refresh-local-integration-ready.sh
+```
+
+Run the cadence-report regression test:
+```bash
+bash scripts/tests/test-openclaw-local-ready-cadence.sh
 ```
