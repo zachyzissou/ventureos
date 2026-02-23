@@ -470,6 +470,7 @@ bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<re
   - cron installer (`scripts/install-cron.sh`)
   - readiness refresh (`scripts/refresh-local-integration-ready.sh`)
 - Reads current local state (OpenClaw directory, bridge env, dashboard health, cron marker) before apply and surfaces that in onboarding/plan output.
+- Generates a deterministic integration adoption plan before apply, classifying targets as `adopt|merge|create|skip` (dashboard service, bridge auth/env, launchagent, cron surfaces, OpenClaw runtime config files, readiness artifact).
 - Interactive TTY mode uses staged onboarding sections with guided recommendations (for example: adopt existing healthy dashboard, skip bridge when bridge env is missing) before executing changes.
 - Captures a pre-install restore point by default under `runtime/backups/ventureos-install/<restore-point-id>/`:
   - user crontab snapshot
@@ -487,7 +488,12 @@ bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<re
   - `--restore-base-dir <path>`
   - `--no-restore-point` (explicitly disables snapshot safety capture)
 - Writes timestamped install reports to `runtime/reports/ventureos-install/`.
-- Install report includes a per-step `Next Command` column and a `Failed Steps` section for operator follow-up.
+- Writes timestamped adoption evidence artifacts to `runtime/reports/ventureos-install/ventureos-install-adoption-<timestamp>.json` with before/after non-secret fingerprints + changed-target list + rollback command reference.
+- Install report includes:
+  - per-step `Next Command` column
+  - `Integration Adoption Plan` section
+  - `Config Change Evidence` section
+  - `Failed Steps` section for operator follow-up
 - Successful installs emit `VENTUREOS_INSTALL_RESTORE_POINT=<path>` for deterministic rollback reference.
 
 **Regression test:**
