@@ -3,8 +3,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib/openclaw-local-defaults.sh"
 
-DASHBOARD_URL="${DASHBOARD_URL:-http://127.0.0.1:8001}"
+LEGACY_DASHBOARD_URL="${DASHBOARD_URL:-}"
+DASHBOARD_URL_OVERRIDE=""
+DASHBOARD_URL="$(openclaw_local_resolve_dashboard_url "" "${OPENCLAW_LOCAL_READY_DASHBOARD_URL:-}" "$LEGACY_DASHBOARD_URL" "${DASHBOARD_PORT:-7000}")"
 TOKEN_FILE="${DASHBOARD_TOKEN_FILE:-$REPO_ROOT/dashboard/data/.api-token}"
 REPORT_DIR="${SMOKE_REPORT_DIR:-$REPO_ROOT/runtime/reports/openclaw-local-smoke}"
 HTTP_TIMEOUT_SEC="${SMOKE_HTTP_TIMEOUT_SEC:-5}"
@@ -45,7 +48,11 @@ Options:
   -h, --help                 Show help
 
 Env overrides:
+  OPENCLAW_LOCAL_READY_DASHBOARD_URL
+                         Canonical dashboard URL override (default: http://127.0.0.1:7000)
+  DASHBOARD_PORT         Fallback dashboard port when URL is not provided (default: 7000)
   DASHBOARD_TOKEN         Inline dashboard token (if set, token file check is optional)
+  DASHBOARD_URL           Legacy dashboard URL env override (lower precedence than OPENCLAW_LOCAL_READY_DASHBOARD_URL)
   BRIDGE_URL              Direct bridge URL for optional check (default: http://127.0.0.1:18790)
   BRIDGE_TOKEN            Direct bridge token override
   BRIDGE_TOKEN_FILE       Optional bridge token file (fallback: \$OPENCLAW_DIR/bridge/bridge-token)
@@ -88,7 +95,7 @@ apply_profile() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dashboard-url)
-      DASHBOARD_URL="$2"
+      DASHBOARD_URL_OVERRIDE="$2"
       shift 2
       ;;
     --token-file)
@@ -145,6 +152,12 @@ if [[ "$CLI_SKIP_MAP" -eq 1 ]]; then
 fi
 if [[ "$CLI_SKIP_BRIDGE" -eq 1 ]]; then
   SKIP_BRIDGE=1
+fi
+
+DASHBOARD_URL="$(openclaw_local_resolve_dashboard_url "$DASHBOARD_URL_OVERRIDE" "${OPENCLAW_LOCAL_READY_DASHBOARD_URL:-}" "$LEGACY_DASHBOARD_URL" "${DASHBOARD_PORT:-7000}")"
+if ! openclaw_local_validate_dashboard_url "$DASHBOARD_URL"; then
+  echo "Invalid --dashboard-url/OPENCLAW_LOCAL_READY_DASHBOARD_URL: $DASHBOARD_URL" >&2
+  exit 2
 fi
 
 if ! [[ "$HTTP_TIMEOUT_SEC" =~ ^[0-9]+$ ]] || [[ "$HTTP_TIMEOUT_SEC" -lt 1 ]]; then
@@ -242,6 +255,15 @@ run_skipped() {
 DASHBOARD_TOKEN="${DASHBOARD_TOKEN:-}"
 BRIDGE_TOKEN="${BRIDGE_TOKEN:-}"
 BRIDGE_TOKEN_FILE="${BRIDGE_TOKEN_FILE:-}"
+DASHBOARD_TOKEN_SOURCE="unknown"
+DASHBOARD_TOKEN_HEALTH="unknown"
+DASHBOARD_TOKEN_REPAIR_ACTION="none"
+DASHBOARD_TOKEN_FILE_STATE="unchecked"
+
+token_guardrail_log() {
+  local message="$1"
+  echo "[openclaw-token-guardrail] $message" >&2
+}
 
 check_openclaw_cli() {
   if ! command -v openclaw >/dev/null 2>&1; then
@@ -275,19 +297,104 @@ check_openclaw_gateway_status() {
 }
 
 check_dashboard_token() {
+  DASHBOARD_TOKEN_SOURCE="token-file"
+  DASHBOARD_TOKEN_HEALTH="unknown"
+  DASHBOARD_TOKEN_REPAIR_ACTION="none"
+  DASHBOARD_TOKEN_FILE_STATE="unchecked"
+
   if [[ -n "$DASHBOARD_TOKEN" ]]; then
+    DASHBOARD_TOKEN_SOURCE="env-token"
+    DASHBOARD_TOKEN_HEALTH="ok"
+    DASHBOARD_TOKEN_FILE_STATE="bypassed"
     CHECK_DETAIL="using DASHBOARD_TOKEN env override"
     return 0
   fi
   if [[ ! -f "$TOKEN_FILE" ]]; then
+    DASHBOARD_TOKEN_HEALTH="missing"
+    DASHBOARD_TOKEN_FILE_STATE="missing"
     CHECK_DETAIL="dashboard token file not found"
     return 1
   fi
-  DASHBOARD_TOKEN="$(tr -d ' \r\n' < "$TOKEN_FILE")"
-  if [[ -z "$DASHBOARD_TOKEN" ]]; then
-    CHECK_DETAIL="dashboard token file is empty"
+
+  local parsed result_code value_a value_b
+  if ! parsed="$(python3 - "$TOKEN_FILE" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+raw = path.read_text(encoding='utf-8', errors='ignore')
+trimmed = raw.strip()
+
+def is_token_like(token: str) -> bool:
+    if not token:
+        return False
+    if any(ch.isspace() for ch in token):
+        return False
+    return all(33 <= ord(ch) <= 126 for ch in token)
+
+if not trimmed:
+    print("err\tempty\ttoken file is empty")
+    raise SystemExit(0)
+
+if any(ch in trimmed for ch in ("\n", "\r", "\t")):
+    lines = [line.strip() for line in raw.splitlines() if line.strip()]
+    unique = []
+    for line in lines:
+        if line not in unique:
+            unique.append(line)
+    if len(unique) == 1 and is_token_like(unique[0]):
+        print(f"ok\t{unique[0]}\t1\tcollapsed-duplicate-lines")
+        raise SystemExit(0)
+    print("err\tmultiline\tmultiple non-empty token lines detected")
+    raise SystemExit(0)
+
+if not is_token_like(trimmed):
+    print("err\tinvalid-characters\ttoken contains whitespace or non-printable characters")
+    raise SystemExit(0)
+
+if raw == f"{trimmed}\n":
+    print(f"ok\t{trimmed}\t0\tclean")
+else:
+    print(f"ok\t{trimmed}\t1\tnormalized-single-line")
+PY
+)"; then
+    DASHBOARD_TOKEN_HEALTH="invalid"
+    DASHBOARD_TOKEN_FILE_STATE="parse-failed"
+    CHECK_DETAIL="failed to parse dashboard token file"
     return 1
   fi
+
+  IFS=$'\t' read -r result_code value_a value_b DASHBOARD_TOKEN_REPAIR_ACTION <<< "$parsed"
+  if [[ "$result_code" != "ok" ]]; then
+    DASHBOARD_TOKEN_HEALTH="invalid"
+    DASHBOARD_TOKEN_FILE_STATE="$value_a"
+    CHECK_DETAIL="dashboard token malformed: $value_b"
+    token_guardrail_log "detected malformed token file ($value_a): $value_b"
+    return 1
+  fi
+
+  DASHBOARD_TOKEN="$value_a"
+  DASHBOARD_TOKEN_FILE_STATE="present"
+  if [[ "$value_b" == "1" ]]; then
+    local tmp_token_file
+    tmp_token_file="$(mktemp "$TMP_DIR/token-repair.XXXXXX")"
+    if (umask 077 && printf '%s\n' "$DASHBOARD_TOKEN" > "$tmp_token_file") && mv "$tmp_token_file" "$TOKEN_FILE"; then
+      chmod 600 "$TOKEN_FILE" 2>/dev/null || true
+      DASHBOARD_TOKEN_HEALTH="repaired"
+      CHECK_DETAIL="dashboard token loaded from token file (repaired: $DASHBOARD_TOKEN_REPAIR_ACTION)"
+      token_guardrail_log "repaired token file at $TOKEN_FILE (action=$DASHBOARD_TOKEN_REPAIR_ACTION)"
+      return 0
+    fi
+    rm -f "$tmp_token_file" 2>/dev/null || true
+    DASHBOARD_TOKEN_HEALTH="repair-failed"
+    DASHBOARD_TOKEN_REPAIR_ACTION="repair-write-failed"
+    CHECK_DETAIL="dashboard token parsed but repair write failed"
+    token_guardrail_log "token repair failed at $TOKEN_FILE (write failure)"
+    return 1
+  fi
+
+  DASHBOARD_TOKEN_HEALTH="ok"
+  DASHBOARD_TOKEN_REPAIR_ACTION="none"
   CHECK_DETAIL="dashboard token loaded from token file"
   return 0
 }
@@ -743,7 +850,7 @@ REPORT_JSON="$REPORT_DIR/openclaw-local-smoke-${timestamp_utc}.json"
 REPORT_MD="$REPORT_DIR/openclaw-local-smoke-${timestamp_utc}.md"
 REPORT_SVG="$REPORT_DIR/openclaw-local-smoke-${timestamp_utc}.svg"
 
-python3 - "$RESULTS_TSV" "$REPORT_JSON" "$REPORT_MD" "$REPORT_SVG" "$SUMMARY_TSV" "$timestamp_utc" "$DASHBOARD_URL" "$required_failures" "$warnings" "$PROFILE" "$BRIDGE_CHECK_SEVERITY" <<'PY'
+python3 - "$RESULTS_TSV" "$REPORT_JSON" "$REPORT_MD" "$REPORT_SVG" "$SUMMARY_TSV" "$timestamp_utc" "$DASHBOARD_URL" "$required_failures" "$warnings" "$PROFILE" "$BRIDGE_CHECK_SEVERITY" "$DASHBOARD_TOKEN_SOURCE" "$DASHBOARD_TOKEN_HEALTH" "$DASHBOARD_TOKEN_REPAIR_ACTION" "$TOKEN_FILE" <<'PY'
 import csv
 import json
 import pathlib
@@ -761,6 +868,10 @@ required_failures = int(sys.argv[8])
 warnings = int(sys.argv[9])
 profile = sys.argv[10]
 bridge_severity = sys.argv[11]
+token_source = sys.argv[12]
+token_health = sys.argv[13]
+token_repair_action = sys.argv[14]
+token_file = sys.argv[15]
 
 check_meta = {
     'openclaw-cli': {
@@ -922,10 +1033,18 @@ else:
     confidence = 'high'
 
 status = 'fail' if required_failures > 0 else 'pass'
+required_status_map = {c['id']: c['status'] for c in required_checks}
+auth_payload = {
+    'tokenSource': token_source,
+    'tokenHealth': token_health,
+    'tokenRepairAction': token_repair_action,
+    'tokenFile': token_file,
+}
 
 report = {
     'generatedAt': generated_at,
     'dashboardUrl': dashboard_url,
+    'auth': auth_payload,
     'summary': {
         'profile': profile,
         'requiredFailures': required_failures,
@@ -939,6 +1058,7 @@ report = {
         'verdict': verdict,
         'readinessScore': readiness_score,
         'confidence': confidence,
+        'requiredCheckStatusMap': required_status_map,
     },
     'checks': checks,
 }
@@ -951,6 +1071,10 @@ lines = [
     f'- Generated: `{generated_at}`',
     f'- Profile: `{profile}`',
     f'- Dashboard URL: `{dashboard_url}`',
+    f'- Token source: `{token_source}`',
+    f'- Token health: `{token_health}`',
+    f'- Token repair action: `{token_repair_action}`',
+    f'- Token file: `{token_file}`',
     f'- Status: `{status}`',
     f'- Verdict: `{verdict}`',
     f'- Readiness score: `{readiness_score}`',
@@ -966,6 +1090,17 @@ for c in checks:
     lines.append(
         f"| `{c['id']}` | `{c['group']}` | `{c['severity']}` | {req} | `{c['status']}` | {c['durationMs']} | {c['detail']} |"
     )
+
+lines.extend([
+    '',
+    '## Required Check Status Map',
+])
+if required_status_map:
+    for check_id in sorted(required_status_map.keys()):
+        lines.append(f"- `{check_id}`: `{required_status_map[check_id]}`")
+else:
+    lines.append('- (none)')
+
 md_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 bar_colors = {
