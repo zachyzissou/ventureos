@@ -1,0 +1,67 @@
+name: Core Lib CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'scripts/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'jest.config.cjs'
+      - 'tsconfig.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/core-lib-ci.yml'
+  pull_request:
+    paths:
+      - 'lib/**'
+      - 'scripts/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'jest.config.cjs'
+      - 'tsconfig.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/core-lib-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild native modules for runner architecture
+        run: npm rebuild better-sqlite3 --build-from-source
+
+      - name: Verify better-sqlite3 runtime ABI
+        run: |
+          node -e "const Database=require('better-sqlite3');const db=new Database(':memory:');db.prepare('SELECT 1').get();db.close();console.log('better-sqlite3 ABI ok for Node', process.versions.node)"
+
+      - name: TypeScript compile (core)
+        run: npx tsc -p tsconfig.json --noEmit
+
+      - name: Run core lib regression suites
+        run: |
+          npx jest lib/__tests__/conversation-body-limits.test.ts --runInBand --forceExit
+          npx jest lib/__tests__/conversation-http.test.ts --runInBand --forceExit
+          npx jest lib/__tests__/kpi-registry.test.ts --runInBand --forceExit
+          npx jest lib/__tests__/shared-context-watcher.test.ts --runInBand --forceExit
+          npx jest lib/__tests__/bridge-token-resolver.test.ts --runInBand --forceExit
+
+      - name: Run OpenClaw local readiness mock regressions
+        run: |
+          npm run test:openclaw:local-smoke
+          npm run test:openclaw:local-ready
+          npm run test:openclaw:local-ready-cron
