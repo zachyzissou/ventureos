@@ -106,6 +106,9 @@ NEW_CRON=$(cat <<EOF
 # 13) VB-003 telemetry synthesis — every 6 hours
 30 */6 * * * $RUNNER vb003-telemetry-synthesis >> $LOG_BASE/cron-vb003-telemetry.log 2>&1
 
+# 14) VB-003 watchdog — every 3 hours
+45 */3 * * * $RUNNER vb003-watchdog >> $LOG_BASE/cron-vb003-watchdog.log 2>&1
+
 # === END $CRON_MARKER ===
 EOF
 )
