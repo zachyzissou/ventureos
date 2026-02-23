@@ -27,6 +27,7 @@
     "dashboard:next:build": "npm run build --workspace=dashboard-next",
     "dashboard:next:start": "npm run start --workspace=dashboard-next",
     "dashboard:next:parity": "npm run parity:all --workspace=dashboard-next",
+    "dashboard:next:smoke": "npm run smoke:task-board-write --workspace=dashboard-next",
     "pr:queue:sweep": "bash scripts/pr-queue-sweep.sh",
     "pr:merge:readiness": "bash scripts/pr-merge-readiness.sh",
     "pr:required-checks:audit": "bash scripts/required-check-contexts.sh",

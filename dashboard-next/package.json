@@ -12,7 +12,8 @@
     "parity:overview": "node scripts/parity-check-overview.mjs",
     "parity:logs": "node scripts/parity-check-logs.mjs",
     "parity:task-board": "node scripts/parity-check-task-board.mjs",
-    "parity:all": "npm run parity:readiness && npm run parity:overview && npm run parity:logs && npm run parity:task-board"
+    "parity:all": "npm run parity:readiness && npm run parity:overview && npm run parity:logs && npm run parity:task-board",
+    "smoke:task-board-write": "node scripts/smoke-check-task-board-write.mjs"
   },
   "dependencies": {
     "next": "^16.1.6",

@@ -4,10 +4,7 @@ import { useMemo, useState } from "react";
 
 import { DashboardShell } from "@/components/dashboard-shell";
 import { useDashboardSession } from "@/components/dashboard-session-context";
-import {
-  fetchDashboardJson,
-  requestDashboardJson,
-} from "@/lib/dashboard-api";
+import { requestLocalJson } from "@/lib/dashboard-api";
 import {
   allowedTransitions,
   normalizeTaskBoardPayload,
@@ -25,7 +22,6 @@ function formatTs(epochMs) {
 
 export default function TaskBoardPage() {
   const {
-    normalizedApiBase,
     token,
     authenticateIfNeeded,
   } = useDashboardSession();
@@ -58,8 +54,8 @@ export default function TaskBoardPage() {
       if (!normalizedApiBase) throw new Error("API base URL is required");
       if (includeLogin) await authenticateIfNeeded();
       const [listPayload, summaryPayload] = await Promise.all([
-        fetchDashboardJson(normalizedApiBase, "/api/task-board", token),
-        fetchDashboardJson(normalizedApiBase, "/api/task-board/summary", token),
+        requestLocalJson("/api/task-board", { token }),
+        requestLocalJson("/api/task-board/summary", { token }),
       ]);
       const normalized = normalizeTaskBoardPayload(listPayload, summaryPayload);
       const nextTargets = {};
@@ -82,10 +78,9 @@ export default function TaskBoardPage() {
     setCreating(true);
     setError("");
     try {
-      if (!normalizedApiBase) throw new Error("API base URL is required");
       if (!draft.title.trim()) throw new Error("Task title is required");
       await authenticateIfNeeded();
-      await requestDashboardJson(normalizedApiBase, "/api/task-board", {
+      await requestLocalJson("/api/task-board", {
         method: "POST",
         token,
         body: {
@@ -116,9 +111,8 @@ export default function TaskBoardPage() {
     setTransitioningId(taskId);
     setError("");
     try {
-      if (!normalizedApiBase) throw new Error("API base URL is required");
       await authenticateIfNeeded();
-      await requestDashboardJson(normalizedApiBase, `/api/task-board/${taskId}`, {
+      await requestLocalJson(`/api/task-board/${taskId}`, {
         method: "PATCH",
         token,
         body: { status: target },
@@ -134,7 +128,7 @@ export default function TaskBoardPage() {
   return (
     <DashboardShell
       title="Task Board (Next Hybrid, Interactive)"
-      subtitle="Interactive operational surface backed by existing /api/task-board contracts (create + transition)."
+      subtitle="Interactive operational surface backed by Next API parity routes that proxy existing /api/task-board contracts."
       loadedAt={loadedAt}
       actionButtons={(
         <>
