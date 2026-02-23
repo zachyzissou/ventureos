@@ -511,6 +511,7 @@ bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<re
 - Reads current local state (OpenClaw directory, bridge env, dashboard health, cron marker) before apply and surfaces that in onboarding/plan output.
 - Generates a deterministic integration adoption plan before apply, classifying targets as `adopt|merge|create|skip` (dashboard service, bridge auth/env, launchagent, cron surfaces, OpenClaw runtime config files, readiness artifact).
 - Interactive TTY mode uses staged onboarding sections with guided recommendations (for example: adopt existing healthy dashboard, skip bridge when bridge env is missing) before executing changes.
+- Interactive mode emits explicit phase banners (`[Phase x/6]`) and `RUN/PASS/FAIL` step lines with elapsed seconds so operators can follow live execution progress without losing auditability.
 - Interactive mode requires explicit action-matrix confirmation after the `adopt|merge|create|skip` plan is rendered; declining exits cleanly with `VENTUREOS_INSTALL_RESULT=CANCELLED` before preflight/apply mutations.
 - Captures a pre-install restore point by default under `runtime/backups/ventureos-install/<restore-point-id>/`:
   - user crontab snapshot

@@ -425,6 +425,9 @@ run_install_interactive interactive_apply \
   --bridge-token-file "$TMP_DIR/bridge-token"
 
 grep -q "VENTUREOS_INSTALL_RESULT=PASS" "$OUT_DIR/interactive_apply.out"
+grep -q "\\[Phase 2/6\\] Preference selection" "$OUT_DIR/interactive_apply.out"
+grep -q "\\[Phase 5/6\\] Installer execution" "$OUT_DIR/interactive_apply.out"
+grep -q "RUN   dashboard-install :: dashboard/scripts/install-macos.sh" "$OUT_DIR/interactive_apply.out"
 grep -q "dashboard-macos|" "$CALL_LOG"
 grep -q "cron|--force" "$CALL_LOG"
 grep -q "ready|--profile full --dashboard-url http://127.0.0.1:8128 --bridge-token-file $TMP_DIR/bridge-token|BRIDGE_TOKEN=test-bridge-token" "$CALL_LOG"
@@ -449,6 +452,7 @@ run_install_interactive interactive_abort \
   --bridge-token-file "$TMP_DIR/bridge-token"
 
 grep -q "VENTUREOS_INSTALL_RESULT=CANCELLED" "$OUT_DIR/interactive_abort.out"
+grep -q "\\[Phase 3/6\\] Plan + compatibility review" "$OUT_DIR/interactive_abort.out"
 if grep -E -q '^(dashboard-macos|dashboard-linux|cron\||ready\|)' "$CALL_LOG"; then
   echo "Interactive cancel should not execute installer primitives" >&2
   exit 1
