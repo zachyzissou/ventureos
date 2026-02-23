@@ -406,19 +406,36 @@ Verification-focused example:
 bash scripts/ventureos-install.sh --non-interactive --verify --preset full
 ```
 
+Rollback example:
+```bash
+bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<restore-point-id>
+```
+
 **Behavior:**
 - Coordinates existing install primitives in one flow:
   - dashboard installer (`dashboard/scripts/install-macos.sh` or `dashboard/scripts/install.sh`)
   - bridge LaunchAgent installer (`scripts/install-bridge-launchagent.sh`, macOS)
   - cron installer (`scripts/install-cron.sh`)
   - readiness refresh (`scripts/refresh-local-integration-ready.sh`)
+- Reads current local state (OpenClaw directory, bridge env, dashboard health, cron marker) before apply and surfaces that in onboarding/plan output.
+- Captures a pre-install restore point by default under `runtime/backups/ventureos-install/<restore-point-id>/`:
+  - user crontab snapshot
+  - bridge env snapshot
+  - OpenClaw config snapshots (`openclaw.json`, `cron/jobs.json`, Discord webhook map)
+  - macOS bridge LaunchAgent plist snapshot (when applicable)
 - Supports interactive onboarding prompts (default on TTY) and non-interactive mode (`--non-interactive`).
 - Supports dry-run planning (`--dry-run`) to print execution plan without changes.
 - Supports post-install verification mode (`--verify`) across dashboard health, bridge status, cron marker, and readiness status summary artifact.
 - Supports installation presets (`--preset full|bridge|minimal`) with explicit `--skip-*`/`--profile` overrides.
 - Allows selective skips (`--skip-*`) and readiness profile selection (`--profile quick|full|bridge`).
+- Supports restore-point operations:
+  - `--list-restore-points`
+  - `--revert <restore-point-dir-or-manifest>`
+  - `--restore-base-dir <path>`
+  - `--no-restore-point` (explicitly disables snapshot safety capture)
 - Writes timestamped install reports to `runtime/reports/ventureos-install/`.
 - Install report includes a per-step `Next Command` column and a `Failed Steps` section for operator follow-up.
+- Successful installs emit `VENTUREOS_INSTALL_RESTORE_POINT=<path>` for deterministic rollback reference.
 
 **Regression test:**
 ```bash
