@@ -520,6 +520,10 @@ bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<re
 - Validates restore-point manifest integrity before apply (required backup payloads + crontab backup presence).
 - Supports interactive onboarding prompts (default on TTY) and non-interactive mode (`--non-interactive`).
 - Supports dry-run planning (`--dry-run`) to print execution plan without changes.
+- Supports compatibility rehearsal mode (`--preflight-only`) to:
+  - generate adoption plan + compatibility matrix
+  - capture/validate restore-point safety artifacts
+  - skip all installer apply steps while emitting deterministic next commands
 - Supports post-install verification mode (`--verify`) across dashboard health, bridge status, cron marker, and readiness status summary artifact.
 - Supports installation presets (`--preset full|bridge|minimal`) with explicit `--skip-*`/`--profile` overrides.
 - Allows selective skips (`--skip-*`) and readiness profile selection (`--profile quick|full|bridge`).
@@ -534,6 +538,7 @@ bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<re
 - Install report includes:
   - per-step `Next Command` column
   - `Integration Adoption Plan` section
+  - `Compatibility Rehearsal` section with pass/fail status per target
   - `Config Change Evidence` section
   - `Failed Steps` section for operator follow-up
 - Successful installs emit `VENTUREOS_INSTALL_RESTORE_POINT=<path>` for deterministic rollback reference.

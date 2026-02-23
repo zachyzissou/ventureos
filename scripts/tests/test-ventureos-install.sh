@@ -286,6 +286,49 @@ print("VENTUREOS_INSTALL_DRY_RUN_ADOPTION_EVIDENCE_OK")
 PY
 echo "VENTUREOS_INSTALL_DRY_RUN_OK"
 
+# Preflight-only should run compatibility + rollback rehearsal without apply steps.
+: > "$CALL_LOG"
+run_install preflight_only \
+  --non-interactive \
+  --preflight-only \
+  --verify \
+  --dashboard-port 8131 \
+  --openclaw-dir "$OPENCLAW_FIXTURE_DIR" \
+  --bridge-env "$BRIDGE_ENV"
+
+if grep -E -q '^(dashboard-macos|dashboard-linux|cron\||ready\|)' "$CALL_LOG"; then
+  echo "Expected preflight-only mode to avoid executing installer primitives" >&2
+  exit 1
+fi
+if grep -E '^bridge\|' "$CALL_LOG" >/dev/null 2>&1; then
+  if grep -E '^bridge\|' "$CALL_LOG" | grep -vq -- '--status'; then
+    echo "Expected preflight-only mode to avoid bridge install execution (status checks are allowed)" >&2
+    exit 1
+  fi
+fi
+
+grep -q "VENTUREOS_INSTALL_RESULT=PREFLIGHT" "$OUT_DIR/preflight_only.out"
+grep -q "VENTUREOS_INSTALL_RESTORE_POINT=" "$OUT_DIR/preflight_only.out"
+preflight_report="$(latest_report preflight_only)"
+grep -q -- '- Mode: `preflight`' "$preflight_report"
+grep -q '## Compatibility Rehearsal' "$preflight_report"
+grep -q '`compatibility-check` | `pass`' "$preflight_report"
+grep -q '`dashboard-install` | `planned`' "$preflight_report"
+preflight_adoption_json="$(latest_adoption_evidence preflight_only)"
+python3 - "$preflight_adoption_json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert payload.get("status") == "planned", payload
+assert payload.get("mode") == "preflight", payload
+rollback = payload.get("rollbackCommand")
+assert isinstance(rollback, str) and "--revert" in rollback, payload
+print("VENTUREOS_INSTALL_PREFLIGHT_ADOPTION_EVIDENCE_OK")
+PY
+echo "VENTUREOS_INSTALL_PREFLIGHT_ONLY_OK"
+
 # Executing mode with verification should run all install + verify primitives.
 : > "$CALL_LOG"
 run_install verify_success \
