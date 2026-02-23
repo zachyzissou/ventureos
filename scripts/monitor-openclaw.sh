@@ -35,7 +35,7 @@ mkdir -p "$(dirname "$STATE")"
 [[ -f "$STATE" ]] || echo '{"last_check":0,"last_alert":0,"last_issue_hash":"","gateway_err_pos":0,"gateway_err_inode":""}' > "$STATE"
 
 NOW=$(date +%s)
-ISSUES=()
+declare -a ISSUES=()
 GATEWAY_OK=true
 
 if ! openclaw gateway status >/dev/null 2>&1; then
@@ -97,12 +97,12 @@ LAST_ALERT=$(jq -r '.last_alert // 0' "$STATE" 2>/dev/null || echo 0)
 LAST_HASH=$(jq -r '.last_issue_hash // ""' "$STATE" 2>/dev/null || echo "")
 
 # Fingerprint current issue state + (small) evidence so we can dedupe repeats.
-ISSUE_KEY=$(printf '%s;' "${ISSUES[@]}")
+ISSUE_KEY=$(printf '%s;' "${ISSUES[@]-}")
 CUR_HASH=$(printf '%s\n%s' "$ISSUE_KEY" "$MATCH_SNIPPET" | shasum -a 256 | awk '{print $1}')
 
 # Always emit P0 immediately; only dedupe repeated P1-only alerts.
 HAS_P0=false
-for i in "${ISSUES[@]}"; do
+for i in "${ISSUES[@]-}"; do
   if [[ "$i" == P0:* ]]; then
     HAS_P0=true
     break
