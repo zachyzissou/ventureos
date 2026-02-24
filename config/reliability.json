@@ -119,6 +119,15 @@
       "degradation_tier": "D1",
       "notes": "Regenerates local readiness report + mission card artifacts with retention controls"
     },
+    "local-integration-cadence": {
+      "script": "scripts/local-integration-cadence-cron.sh",
+      "timeout_seconds": 300,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D1",
+      "notes": "Runs bundled local integration cadence sweep (installer preflight evidence + queue snapshot + checklist refresh)"
+    },
     "vb003-telemetry-synthesis": {
       "script": "scripts/vb003-telemetry-synthesis.sh",
       "timeout_seconds": 120,
