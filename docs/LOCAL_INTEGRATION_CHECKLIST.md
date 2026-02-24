@@ -1,6 +1,6 @@
 # Local Integration Checklist (Installer + OpenClaw)
 
-Last verified: 2026-02-23
+Last verified: 2026-02-24
 Owner: VentureOS installer execution
 
 ## Checklist
@@ -37,10 +37,29 @@ Required artifacts for issue/PR evidence:
 - `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json` (reference/existence recorded)
 
 Cadence checklist:
-- [ ] Real-host preflight evidence command executed after latest onboarding/install merge
-- [ ] Evidence JSON + Markdown attached/linked in tracking issue or PR
-- [ ] Installer report + adoption evidence paths included in evidence bundle
-- [ ] Readiness status JSON reference present in evidence bundle
+- [x] Real-host preflight evidence command executed after latest onboarding/install merge
+- [x] Evidence JSON + Markdown attached/linked in tracking issue or PR
+- [x] Installer report + adoption evidence paths included in evidence bundle
+- [x] Readiness status JSON reference present in evidence bundle
+
+## Latest Preflight Evidence Result (Issue #520)
+
+- Date (UTC): `2026-02-24`
+- Generated: `2026-02-24T20:33:42Z`
+- Install result marker: `PREFLIGHT`
+- Preflight evidence status: `PASS`
+- Command:
+  - `bash scripts/run-install-preflight-evidence.sh -- --openclaw-dir "$HOME/.openclaw" --bridge-env "$PWD/config/bridge.env"`
+
+Evidence artifacts:
+- `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-latest.json`
+- `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-latest.md`
+- `runtime/reports/ventureos-install/ventureos-install-preflight-20260224T203341Z.log`
+- `runtime/reports/ventureos-install/ventureos-install-20260224T203342Z.md`
+- `runtime/reports/ventureos-install/ventureos-install-adoption-20260224T203342Z.json`
+- `runtime/reports/ventureos-install/ventureos-onboarding-20260224T203342Z.md`
+- `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
+- Restore point: `runtime/backups/ventureos-install/20260224T203342Z-58040/restore-point.json`
 
 ## PR Queue Execution Cadence (Issue #504)
 
@@ -61,7 +80,7 @@ Queue cadence checklist:
 - [ ] Merge mode output linked when merges are executed
 - [ ] Candidate PRs have readiness + required-check evidence artifacts before merge
 
-## Latest Result
+## Latest Installer Drill Result
 
 - Date (UTC): `2026-02-23`
 - Installer run start: `20260223T212912Z`
@@ -99,4 +118,5 @@ bash scripts/ventureos-install.sh --non-interactive --revert <restore-point-dir>
 
 - Issue: `#489`
 - Related hygiene issue: `#490`
+- Cadence issue: `#520`
 - Related PR: `#491`
