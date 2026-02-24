@@ -643,6 +643,44 @@ bash scripts/tests/test-refresh-local-integration-checklist.sh
 
 ---
 
+## 19c) run-local-integration-cadence.sh
+**Purpose:** Run local integration cadence end-to-end in one command (preflight evidence + queue snapshot + checklist refresh) and emit a cadence summary artifact.
+
+**Usage:**
+```bash
+bash scripts/run-local-integration-cadence.sh
+```
+
+Forward preflight args:
+```bash
+bash scripts/run-local-integration-cadence.sh \
+  -- --openclaw-dir "$HOME/.openclaw" --bridge-env "$PWD/config/bridge.env"
+```
+
+**Behavior:**
+- Executes, in order:
+  - `scripts/run-install-preflight-evidence.sh`
+  - `scripts/pr-queue-sweep.sh --json-out runtime/reports/pr-queue/queue-latest.json`
+  - `scripts/refresh-local-integration-checklist.sh`
+- Writes cadence summary artifacts:
+  - `runtime/reports/local-integration-cadence/local-integration-cadence-<timestamp>.json`
+  - `runtime/reports/local-integration-cadence/local-integration-cadence-<timestamp>.md`
+  - rolling latest aliases:
+    - `local-integration-cadence-latest.json`
+    - `local-integration-cadence-latest.md`
+- Emits status markers:
+  - `LOCAL_INTEGRATION_CADENCE_STATUS=PASS|FAIL`
+  - `LOCAL_INTEGRATION_CADENCE_JSON=<path>`
+  - `LOCAL_INTEGRATION_CADENCE_MD=<path>`
+- Exits non-zero when any required step fails.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-run-local-integration-cadence.sh
+```
+
+---
+
 ## 20) pr-queue-sweep.sh
 **Purpose:** Classify open GitHub PR queue state and optionally merge approved+ready PRs.
 
