@@ -166,6 +166,61 @@ ui_section() {
   fi
 }
 
+ui_progress_bar() {
+  local index="$1"
+  local total="$2"
+  local width="${3:-18}"
+  local filled=0
+  local i=0
+  local bar=""
+
+  if ! [[ "$index" =~ ^[0-9]+$ && "$total" =~ ^[0-9]+$ && "$width" =~ ^[0-9]+$ ]]; then
+    printf '%s' "------------------"
+    return 0
+  fi
+  if [[ "$total" -le 0 ]]; then
+    total=1
+  fi
+
+  filled=$((index * width / total))
+  if [[ "$filled" -lt 0 ]]; then
+    filled=0
+  elif [[ "$filled" -gt "$width" ]]; then
+    filled="$width"
+  fi
+
+  for ((i = 0; i < width; i++)); do
+    if [[ "$i" -lt "$filled" ]]; then
+      bar+="#"
+    else
+      bar+="-"
+    fi
+  done
+  printf '%s' "$bar"
+}
+
+ui_phase_progress() {
+  local index="$1"
+  local total="$2"
+  local width=18
+  local percent=0
+  local bar
+  bar="$(ui_progress_bar "$index" "$total" "$width")"
+  if [[ "$total" -gt 0 ]]; then
+    percent=$((index * 100 / total))
+  fi
+
+  if [[ "$UI_ENABLED" == "1" && "$NO_ANIMATION" != "1" ]]; then
+    local pulse=""
+    for pulse in "." ".." "..."; do
+      printf '\r\033[2K  Phase progress [%s] %s%%%s' "$bar" "$percent" "$pulse"
+      sleep 0.04
+    done
+    printf '\r\033[2K'
+  fi
+  printf '  Phase progress [%s] %s%%\n' "$bar" "$percent"
+}
+
 ui_phase() {
   local index="$1"
   local total="$2"
@@ -178,6 +233,7 @@ ui_phase() {
   else
     printf '\n[Phase %s/%s] %s\n' "$index" "$total" "$title"
   fi
+  ui_phase_progress "$index" "$total"
   ui_sleep 0.05
 }
 
