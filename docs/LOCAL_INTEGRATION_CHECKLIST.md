@@ -28,6 +28,15 @@ bash scripts/run-install-preflight-evidence.sh \
   --bridge-env "$PWD/config/bridge.env"
 ```
 
+Merge-diff trigger command (runs preflight only when onboarding/install surfaces changed):
+
+```bash
+bash scripts/post-merge-preflight-trigger.sh \
+  --base-ref HEAD~1 \
+  --head-ref HEAD \
+  -- --openclaw-dir "$HOME/.openclaw" --bridge-env "$PWD/config/bridge.env"
+```
+
 Then refresh this checklist from latest evidence:
 
 ```bash
@@ -158,4 +167,6 @@ bash scripts/ventureos-install.sh --non-interactive --revert <restore-point-dir>
 - Queue cadence issue: `#522`
 - Checklist refresh automation issue: `#526`
 - Unified cadence automation issue: `#528`
+- Cron integration issue: `#530`
+- Post-merge trigger automation issue: `#532`
 - Related PR: `#491`

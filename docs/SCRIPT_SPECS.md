@@ -713,6 +713,50 @@ bash scripts/tests/test-local-integration-cadence-cron.sh
 
 ---
 
+## 19e) post-merge-preflight-trigger.sh
+**Purpose:** Decide whether real-host installer preflight evidence is required for a merged diff, then run `run-install-preflight-evidence.sh` only when onboarding/install surfaces were touched.
+
+**Usage:**
+```bash
+bash scripts/post-merge-preflight-trigger.sh \
+  --base-ref HEAD~1 \
+  --head-ref HEAD \
+  -- --openclaw-dir "$HOME/.openclaw" --bridge-env "$PWD/config/bridge.env"
+```
+
+Deterministic fixture input (test/automation):
+```bash
+bash scripts/post-merge-preflight-trigger.sh \
+  --changed-paths-file /tmp/changed-paths.txt \
+  --preflight-script scripts/run-install-preflight-evidence.sh
+```
+
+**Behavior:**
+- Computes changed paths from `git diff --name-only --diff-filter=ACMR <base>..<head>` unless `--changed-paths-file` is provided.
+- Matches changed paths against onboarding/install execution surfaces via configurable regex:
+  - default covers installer + bridge/cron + local cadence execution scripts and `config/bridge.env.example`.
+- When no matching paths are found:
+  - exits `0`
+  - emits `POST_MERGE_PREFLIGHT_STATUS=SKIPPED`
+- When matching paths are found:
+  - emits `POST_MERGE_PREFLIGHT_STATUS=REQUIRED`
+  - runs `scripts/run-install-preflight-evidence.sh` (or `--preflight-script`)
+  - forwards args after `--` to the preflight script
+  - exits with underlying preflight exit code
+- Emits machine-readable markers:
+  - `POST_MERGE_PREFLIGHT_STATUS=SKIPPED|REQUIRED`
+  - `POST_MERGE_PREFLIGHT_REASON=<reason>`
+  - `POST_MERGE_PREFLIGHT_MATCH_COUNT=<n>`
+  - `POST_MERGE_PREFLIGHT_MATCHED_PATHS=<comma-delimited>`
+  - `POST_MERGE_PREFLIGHT_EVIDENCE_JSON=<path>` (when preflight outputs marker)
+
+**Regression test:**
+```bash
+bash scripts/tests/test-post-merge-preflight-trigger.sh
+```
+
+---
+
 ## 20) pr-queue-sweep.sh
 **Purpose:** Classify open GitHub PR queue state and optionally merge approved+ready PRs.
 
