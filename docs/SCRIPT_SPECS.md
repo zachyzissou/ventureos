@@ -1009,6 +1009,46 @@ bash scripts/tests/test-install-post-merge-hook.sh
 
 ---
 
+## 20f) post-merge-hook-health.sh
+**Purpose:** Report whether post-merge hook automation is installed and producing fresh cadence evidence artifacts.
+
+**Usage:**
+```bash
+bash scripts/post-merge-hook-health.sh
+```
+
+Custom freshness threshold:
+```bash
+bash scripts/post-merge-hook-health.sh --max-age-min 360
+```
+
+**Behavior:**
+- Reads hook install state from `scripts/install-post-merge-hook.sh --status`.
+- Reads latest cadence summary from:
+  - `runtime/reports/post-merge-cadence/post-merge-cadence-latest.json`
+- Reads latest hook log from:
+  - `runtime/logs/git-hooks/post-merge-cadence-*.log`
+- Emits machine-readable markers:
+  - `POST_MERGE_HOOK_HEALTH_STATUS=PASS|FAIL`
+  - `POST_MERGE_HOOK_HEALTH_REASON=<reason>`
+  - `POST_MERGE_HOOK_STATUS=<managed|missing|unmanaged|unknown>`
+  - `POST_MERGE_HOOK_CADENCE_AGE_SEC=<n|-1>`
+  - `POST_MERGE_HOOK_LOG_AGE_SEC=<n|-1>`
+- Exit behavior:
+  - `0`: managed hook + cadence summary exists/fresh + hook log exists/fresh
+  - `3`: hook not managed
+  - `4`: cadence summary missing
+  - `5`: cadence summary stale
+  - `6`: hook log missing
+  - `7`: hook log stale
+
+**Regression test:**
+```bash
+bash scripts/tests/test-post-merge-hook-health.sh
+```
+
+---
+
 ## 21) roadmap-status-sync.py
 **Purpose:** Detect status drift between `README.md` active work and roadmap anchor issue `#138`.
 

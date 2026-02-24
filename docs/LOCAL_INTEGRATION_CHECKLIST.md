@@ -49,6 +49,12 @@ Optional auto-run on local merges/pulls (installs git post-merge hook):
 bash scripts/install-post-merge-hook.sh
 ```
 
+Hook health check:
+
+```bash
+bash scripts/post-merge-hook-health.sh --max-age-min 360
+```
+
 Then refresh this checklist from latest evidence:
 
 ```bash
@@ -190,4 +196,5 @@ bash scripts/ventureos-install.sh --non-interactive --revert <restore-point-dir>
 - Post-merge queue snapshot issue: `#534`
 - Unified post-merge cadence issue: `#536`
 - Post-merge hook automation issue: `#539`
+- Post-merge hook health issue: `#546`
 - Related PR: `#491`
