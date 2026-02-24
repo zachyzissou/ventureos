@@ -7,34 +7,32 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - Verdict: `BLOCKED`
 - Readiness score: `30`
 - Confidence: `low`
-- Profile: `full`
+- Profile: `quick`
 - Dashboard URL: `http://127.0.0.1:7000`
 - Token source: `token-file`
 - Token health: `ok`
 - Token repair action: `none`
-- Required failures: `6`
-- Required skipped: `0`
-- Warnings: `2`
+- Required failures: `1`
+- Required skipped: `5`
+- Warnings: `0`
 
 ## Latest Evidence Artifacts
-- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T181509Z.json`
-- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T181509Z.md`
-- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T181509Z.svg`
+- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T193634Z.json`
+- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T193634Z.md`
+- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T193634Z.svg`
 - Status summary JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - Status summary Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
 
 ## Top 3 Blockers
-- `dashboard-agent-health` owner=`Dashboard Ops`; cause: Agent health endpoint is unavailable or response format changed.; next: `curl -sS -H 'Authorization: Bearer <token>' http://127.0.0.1:7000/api/agent-health`
-- `dashboard-config-auth` owner=`Dashboard Ops`; cause: Dashboard auth token is invalid or auth middleware blocked access.; next: `curl -sS -H 'Authorization: Bearer <token>' http://127.0.0.1:7000/api/config`
-- `dashboard-health` owner=`Dashboard Ops`; cause: Dashboard process is not healthy or not reachable.; next: `curl -sS http://127.0.0.1:7000/api/health`
+- `dashboard-health` owner=`Dashboard Ops`; cause: Dashboard URL points to a different local service (port collision or stale URL).; next: `export OPENCLAW_LOCAL_READY_DASHBOARD_URL=http://127.0.0.1:<dashboard-port> && bash scripts/openclaw-local-smoke.sh --profile quick`
 
 ## Required Check Status Map
-- `dashboard-agent-health`: `fail`
-- `dashboard-config-auth`: `fail`
+- `dashboard-agent-health`: `skipped`
+- `dashboard-config-auth`: `skipped`
 - `dashboard-health`: `fail`
-- `dashboard-live-telemetry-sse`: `fail`
-- `dashboard-scheduler-jobs`: `fail`
-- `dashboard-services`: `fail`
+- `dashboard-live-telemetry-sse`: `skipped`
+- `dashboard-scheduler-jobs`: `skipped`
+- `dashboard-services`: `skipped`
 - `dashboard-token`: `pass`
 - `openclaw-cli`: `pass`
 - `openclaw-gateway-status`: `pass`
@@ -42,45 +40,40 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 ## Trend (Last 7 Runs)
 | Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |
 |---|---|---:|---:|---:|---|
-| `20260223T181511Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260223T221510Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T021511Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T061509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T101509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T141509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T181509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
+| `20260224T193634Z` | `BLOCKED` | 30 | 1 | 0 | `skipped` |
 
 ## Required Checks
 - [x] `openclaw-cli` — `pass` group=`core` severity=`critical` (openclaw CLI found)
 - [x] `openclaw-gateway-status` — `pass` group=`core` severity=`critical` (Service: LaunchAgent (loaded))
 - [x] `dashboard-token` — `pass` group=`core` severity=`critical` (dashboard token loaded from token file)
-- [ ] `dashboard-health` — `fail` group=`apis` severity=`critical` (expected 200, got 403); cause: Dashboard process is not healthy or not reachable.; next: `curl -sS http://127.0.0.1:7000/api/health`
-- [ ] `dashboard-config-auth` — `fail` group=`apis` severity=`critical` (expected 200, got 403); cause: Dashboard auth token is invalid or auth middleware blocked access.; next: `curl -sS -H 'Authorization: Bearer <token>' http://127.0.0.1:7000/api/config`
-- [ ] `dashboard-services` — `fail` group=`apis` severity=`critical` (expected 200, got 403); cause: Service aggregation is incomplete or API contract changed.; next: `curl -sS -H 'Authorization: Bearer <token>' http://127.0.0.1:7000/api/services`
-- [ ] `dashboard-scheduler-jobs` — `fail` group=`apis` severity=`critical` (expected 200, got 403); cause: Scheduler jobs API is unavailable or returning invalid payload.; next: `curl -sS -H 'Authorization: Bearer <token>' http://127.0.0.1:7000/api/scheduler-jobs`
-- [ ] `dashboard-agent-health` — `fail` group=`apis` severity=`critical` (expected 200, got 403); cause: Agent health endpoint is unavailable or response format changed.; next: `curl -sS -H 'Authorization: Bearer <token>' http://127.0.0.1:7000/api/agent-health`
-- [ ] `dashboard-live-telemetry-sse` — `fail` group=`realtime` severity=`critical` (missing SSE 200/text-event-stream headers); cause: SSE channel is blocked or headers are incorrect.; next: `curl -N -H 'Authorization: Bearer <token>' http://127.0.0.1:7000/api/live-telemetry`
+- [ ] `dashboard-health` — `fail` group=`apis` severity=`critical` (non-dashboard target detected (server: AirTunes/935.7.1, status: 403)); cause: Dashboard URL points to a different local service (port collision or stale URL).; next: `export OPENCLAW_LOCAL_READY_DASHBOARD_URL=http://127.0.0.1:<dashboard-port> && bash scripts/openclaw-local-smoke.sh --profile quick`
+- [-] `dashboard-config-auth` — `skipped` group=`apis` severity=`critical` (skipped due to dashboard-health failure)
+- [-] `dashboard-services` — `skipped` group=`apis` severity=`critical` (skipped due to dashboard-health failure)
+- [-] `dashboard-scheduler-jobs` — `skipped` group=`apis` severity=`critical` (skipped due to dashboard-health failure)
+- [-] `dashboard-agent-health` — `skipped` group=`apis` severity=`critical` (skipped due to dashboard-health failure)
+- [-] `dashboard-live-telemetry-sse` — `skipped` group=`realtime` severity=`critical` (skipped due to dashboard-health failure)
 
 ## Optional Checks
-- [ ] `dashboard-map-route` — `fail` group=`apis` severity=`info` (expected 200, got 403); cause: Map route assets or auth path is misconfigured.; next: `curl -I -H 'Authorization: Bearer <token>' http://127.0.0.1:7000/map/`
-- [ ] `bridge-scheduler-jobs` — `fail` group=`bridge` severity=`warn` (bridge request failed); cause: Bridge token/source is not configured or bridge API is unreachable.; next: `export BRIDGE_TOKEN_FILE=~/.openclaw/bridge/bridge-token && bash scripts/openclaw-local-smoke.sh --profile bridge`
+- [-] `dashboard-map-route` — `skipped` group=`apis` severity=`info` (skipped due to dashboard-health failure)
+- [-] `bridge-scheduler-jobs` — `skipped` group=`bridge` severity=`warn` (skipped by profile/flag)
 
 ## Bridge Token Setup Note
 - Direct bridge checks support `--bridge-token-file`, `BRIDGE_TOKEN`, `BRIDGE_TOKEN_FILE`, or default `OPENCLAW_DIR/bridge/bridge-token`.
-- Latest bridge check: `fail: bridge request failed`
+- Latest bridge check: `skipped: skipped by profile/flag`
 
 ## Current Next Steps
 1. Install or refresh managed cron entries: `bash scripts/install-cron.sh --force`
 2. Run one manual cadence cycle and verify artifact generation: `bash scripts/openclaw-local-ready-cron.sh`
 3. Resolve required check failures before relying on automated readiness cadence.
-4. If bridge coverage is expected, configure bridge token and rerun bridge profile: `export BRIDGE_TOKEN_FILE=~/.openclaw/bridge/bridge-token && bash scripts/openclaw-local-smoke.sh --profile bridge`
-5. Confirm Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
-6. Capture PR queue status before merge windows: `bash scripts/pr-queue-sweep.sh --json-out runtime/reports/pr-queue/queue-latest.json`
+4. Confirm Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
 
 ## Refresh Command
 ```bash
 bash scripts/refresh-local-integration-ready.sh
 ```
-
-## Run Exit Note
-- The smoke command exited non-zero (`2`). This document still reflects the latest generated report.

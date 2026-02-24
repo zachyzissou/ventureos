@@ -403,6 +403,72 @@ HTTP_STATUS=""
 HTTP_BODY_FILE=""
 HTTP_HEADER_FILE=""
 
+extract_header_value() {
+  local header_file="$1"
+  local header_name="$2"
+  python3 - "$header_file" "$header_name" <<'PY'
+import pathlib
+import sys
+
+header_file = pathlib.Path(sys.argv[1])
+needle = sys.argv[2].strip().lower()
+value = ''
+
+for raw in header_file.read_text(encoding='utf-8', errors='ignore').splitlines():
+    if ':' not in raw:
+        continue
+    name, remainder = raw.split(':', 1)
+    if name.strip().lower() != needle:
+        continue
+    value = remainder.strip()
+    break
+
+print(value)
+PY
+}
+
+dashboard_health_failure_detail() {
+  local status="$1"
+  local header_file="$2"
+  local body_file="$3"
+  local server_header content_type server_lc
+  local body_preview
+
+  server_header="$(extract_header_value "$header_file" "server")"
+  content_type="$(extract_header_value "$header_file" "content-type")"
+  server_lc="$(printf '%s' "$server_header" | tr '[:upper:]' '[:lower:]')"
+
+  body_preview="$(python3 - "$body_file" <<'PY'
+import pathlib
+import sys
+
+body = pathlib.Path(sys.argv[1]).read_text(encoding='utf-8', errors='ignore').strip()
+if len(body) > 80:
+    body = body[:80]
+print(body.replace('\n', ' ').replace('\r', ' ').replace('\t', ' '))
+PY
+)"
+
+  if [[ -n "$server_lc" ]] && [[ "$server_lc" == *"airtunes"* || "$server_lc" == *"airplay"* ]]; then
+    echo "non-dashboard target detected (server: ${server_header}, status: ${status})"
+    return 0
+  fi
+
+  if [[ "$status" =~ ^(401|403|404)$ ]] && [[ -n "$server_header" ]] && [[ "$server_lc" != *"openclaw"* ]] && [[ "$server_lc" != *"ventureos"* ]] && [[ "$server_lc" != *"node"* ]]; then
+    echo "possible non-dashboard target (server: ${server_header}, status: ${status})"
+    return 0
+  fi
+
+  if [[ -n "$content_type" ]] && [[ "$status" != "200" ]]; then
+    if [[ -n "$body_preview" ]]; then
+      echo "expected 200, got ${status} (content-type: ${content_type})"
+      return 0
+    fi
+  fi
+
+  echo "expected 200, got ${status}"
+}
+
 extract_retry_after_seconds() {
   local header_file="$1"
   python3 - "$header_file" <<'PY'
@@ -506,7 +572,7 @@ check_dashboard_health() {
     return 1
   fi
   if [[ "$HTTP_STATUS" != "200" ]]; then
-    CHECK_DETAIL="expected 200, got $HTTP_STATUS"
+    CHECK_DETAIL="$(dashboard_health_failure_detail "$HTTP_STATUS" "$HTTP_HEADER_FILE" "$HTTP_BODY_FILE")"
     return 1
   fi
   if ! python3 - "$HTTP_BODY_FILE" <<'PY'
@@ -816,18 +882,27 @@ fi
 run_check "dashboard-token" "true" "Dashboard token is available" check_dashboard_token
 if [[ "$required_failures" -eq 0 ]]; then
   run_check "dashboard-health" "true" "Dashboard /api/health responds with ok=true" check_dashboard_health
-  run_check "dashboard-config-auth" "true" "Dashboard /api/config is reachable with auth" check_dashboard_config_auth
-  run_check "dashboard-services" "true" "Dashboard /api/services returns required service rows" check_dashboard_services
-  run_check "dashboard-scheduler-jobs" "true" "Dashboard /api/scheduler-jobs is reachable" check_dashboard_scheduler_jobs
-  run_check "dashboard-agent-health" "true" "Dashboard /api/agent-health is reachable" check_dashboard_agent_health
+  if [[ "$required_failures" -eq 0 ]]; then
+    run_check "dashboard-config-auth" "true" "Dashboard /api/config is reachable with auth" check_dashboard_config_auth
+    run_check "dashboard-services" "true" "Dashboard /api/services returns required service rows" check_dashboard_services
+    run_check "dashboard-scheduler-jobs" "true" "Dashboard /api/scheduler-jobs is reachable" check_dashboard_scheduler_jobs
+    run_check "dashboard-agent-health" "true" "Dashboard /api/agent-health is reachable" check_dashboard_agent_health
 
-  if [[ "$SKIP_MAP" == "1" ]]; then
-    run_skipped "dashboard-map-route" "false" "Dashboard /map route is reachable" "skipped by profile/flag"
+    if [[ "$SKIP_MAP" == "1" ]]; then
+      run_skipped "dashboard-map-route" "false" "Dashboard /map route is reachable" "skipped by profile/flag"
+    else
+      run_check "dashboard-map-route" "false" "Dashboard /map route is reachable" check_tactical_map_route
+    fi
+
+    run_check "dashboard-live-telemetry-sse" "true" "Dashboard /api/live-telemetry SSE handshake succeeds" check_live_telemetry_handshake
   else
-    run_check "dashboard-map-route" "false" "Dashboard /map route is reachable" check_tactical_map_route
+    run_skipped "dashboard-config-auth" "true" "Dashboard /api/config is reachable with auth" "skipped due to dashboard-health failure"
+    run_skipped "dashboard-services" "true" "Dashboard /api/services returns required service rows" "skipped due to dashboard-health failure"
+    run_skipped "dashboard-scheduler-jobs" "true" "Dashboard /api/scheduler-jobs is reachable" "skipped due to dashboard-health failure"
+    run_skipped "dashboard-agent-health" "true" "Dashboard /api/agent-health is reachable" "skipped due to dashboard-health failure"
+    run_skipped "dashboard-map-route" "false" "Dashboard /map route is reachable" "skipped due to dashboard-health failure"
+    run_skipped "dashboard-live-telemetry-sse" "true" "Dashboard /api/live-telemetry SSE handshake succeeds" "skipped due to dashboard-health failure"
   fi
-
-  run_check "dashboard-live-telemetry-sse" "true" "Dashboard /api/live-telemetry SSE handshake succeeds" check_live_telemetry_handshake
 else
   run_skipped "dashboard-health" "true" "Dashboard /api/health responds with ok=true" "skipped due to prior required failure"
   run_skipped "dashboard-config-auth" "true" "Dashboard /api/config is reachable with auth" "skipped due to prior required failure"
@@ -987,6 +1062,14 @@ for check in checks:
     detail = str(check.get('detail', '')).lower()
     if check.get('status') != 'fail':
         continue
+    if check.get('id') == 'dashboard-health':
+        if 'non-dashboard target detected' in detail or 'possible non-dashboard target' in detail:
+            check['likelyCause'] = 'Dashboard URL points to a different local service (port collision or stale URL).'
+            check['nextCommand'] = (
+                "export OPENCLAW_LOCAL_READY_DASHBOARD_URL=http://127.0.0.1:<dashboard-port> && "
+                "bash scripts/openclaw-local-smoke.sh --profile quick"
+            )
+            continue
     if 'got 429' not in detail:
         continue
     check['likelyCause'] = 'API rate limit window was exhausted by concurrent local requests.'

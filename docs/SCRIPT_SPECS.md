@@ -242,6 +242,8 @@ bash scripts/openclaw-local-smoke.sh \
   - Retries HTTP `429` responses (dashboard + bridge checks) using `Retry-After` when present.
   - Retry controls: `SMOKE_HTTP_RETRY_MAX` (default `2`), `SMOKE_HTTP_RETRY_BASE_SEC` (default `1`), `SMOKE_HTTP_RETRY_MAX_DELAY_SEC` (default `60`).
 - Gateway status check requires a healthy runtime signal (`RPC probe: ok` or `Listening:`) to pass.
+- Detects non-dashboard target collisions on `/api/health` (for example AirTunes on port `7000`) and emits explicit root-cause detail instead of generic auth failure noise.
+- If `dashboard-health` fails, dependent dashboard API checks are marked `skipped` to keep blocker output actionable.
 - Emits timestamped JSON + markdown + SVG reports to `runtime/reports/openclaw-local-smoke/`.
 - Uses canonical dashboard URL resolution policy:
   - `--dashboard-url`
@@ -322,6 +324,7 @@ bash scripts/openclaw-local-ready-cron.sh
   - `OPENCLAW_LOCAL_READY_DASHBOARD_URL` (must start with `http://` or `https://`)
 - Validates env inputs and exits `2` on invalid values before running refresh.
 - Forwards any additional CLI flags to the underlying refresh script (last flag wins).
+- Managed cron installation now resolves and persists the local readiness dashboard URL at install time (`scripts/install-cron.sh`) rather than hardcoding port `7000`.
 
 **Regression test:**
 ```bash

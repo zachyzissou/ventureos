@@ -7,6 +7,7 @@ TMP_DIR="$(mktemp -d)"
 SERVER_PID=""
 BRIDGE_SERVER_PID=""
 RATE_LIMIT_SERVER_PID=""
+NON_DASHBOARD_SERVER_PID=""
 
 cleanup() {
   if [[ -n "$SERVER_PID" ]]; then
@@ -20,6 +21,10 @@ cleanup() {
   if [[ -n "$RATE_LIMIT_SERVER_PID" ]]; then
     kill "$RATE_LIMIT_SERVER_PID" 2>/dev/null || true
     wait "$RATE_LIMIT_SERVER_PID" 2>/dev/null || true
+  fi
+  if [[ -n "$NON_DASHBOARD_SERVER_PID" ]]; then
+    kill "$NON_DASHBOARD_SERVER_PID" 2>/dev/null || true
+    wait "$NON_DASHBOARD_SERVER_PID" 2>/dev/null || true
   fi
   rm -rf "$TMP_DIR"
 }
@@ -224,12 +229,44 @@ s.close()
 PY
 )"
 
+NON_DASHBOARD_PORT="$(python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(('127.0.0.1', 0))
+print(s.getsockname()[1])
+s.close()
+PY
+)"
+
+cat > "$TMP_DIR/mock-non-dashboard.py" <<'PY'
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import sys
+
+PORT = int(sys.argv[1])
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "AirTunes/935.7.1"
+    sys_version = ""
+
+    def log_message(self, format, *args):
+        pass
+
+    def do_GET(self):
+        self.send_response(403)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+HTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+PY
+
 python3 "$TMP_DIR/mock-dashboard.py" "$PORT" >/dev/null 2>&1 &
 SERVER_PID=$!
 python3 "$TMP_DIR/mock-bridge.py" "$BRIDGE_PORT" >/dev/null 2>&1 &
 BRIDGE_SERVER_PID=$!
 python3 "$TMP_DIR/mock-dashboard.py" "$RATE_LIMIT_PORT" "/api/services" >/dev/null 2>&1 &
 RATE_LIMIT_SERVER_PID=$!
+python3 "$TMP_DIR/mock-non-dashboard.py" "$NON_DASHBOARD_PORT" >/dev/null 2>&1 &
+NON_DASHBOARD_SERVER_PID=$!
 sleep 0.3
 
 REPORT_DIR_BASELINE="$TMP_DIR/reports-baseline"
@@ -444,6 +481,41 @@ assert summary.get("status") == "pass", summary
 checks = {c["id"]: c for c in payload.get("checks", [])}
 assert checks["dashboard-services"]["status"] == "pass", checks["dashboard-services"]
 print("OPENCLAW_LOCAL_SMOKE_RETRY_429_OK")
+PY
+
+REPORT_DIR_NON_DASHBOARD="$TMP_DIR/reports-non-dashboard"
+set +e
+bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$NON_DASHBOARD_PORT" \
+  --token-file "$TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_NON_DASHBOARD" \
+  --profile quick \
+  --skip-openclaw-cli \
+  --skip-bridge \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-non-dashboard.out
+NON_DASHBOARD_RC=$?
+set -e
+
+if [[ "$NON_DASHBOARD_RC" -ne 2 ]]; then
+  echo "Expected non-dashboard smoke run to fail with exit 2, got $NON_DASHBOARD_RC" >&2
+  exit 1
+fi
+
+python3 - "$REPORT_DIR_NON_DASHBOARD" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing non-dashboard json report"
+payload = json.loads(json_reports[-1].read_text())
+checks = {c["id"]: c for c in payload.get("checks", [])}
+health = checks["dashboard-health"]
+assert health["status"] == "fail", health
+assert "non-dashboard target detected" in health.get("detail", "").lower(), health
+assert checks["dashboard-config-auth"]["status"] == "skipped", checks["dashboard-config-auth"]
+print("OPENCLAW_LOCAL_SMOKE_NON_DASHBOARD_DETECTION_OK")
 PY
 
 REPORT_DIR_URL_POLICY="$TMP_DIR/reports-url-policy"
