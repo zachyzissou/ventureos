@@ -53,6 +53,7 @@ LATEST_LOG="$(ls -1t "$LOG_DIR"/post-merge-cadence-*.log | head -n 1)"
 grep -q "non-blocking" "$LATEST_LOG"
 
 UNMANAGED_HOOK="$REPO/.git/hooks/post-merge"
+BACKUP_META="$UNMANAGED_HOOK.ventureos-backup"
 echo "#!/usr/bin/env bash" > "$UNMANAGED_HOOK"
 echo "echo unmanaged" >> "$UNMANAGED_HOOK"
 chmod +x "$UNMANAGED_HOOK"
@@ -72,21 +73,19 @@ grep -q "^POST_MERGE_HOOK_INSTALL=PASS" "$FORCE_OUT"
 BACKUP_PATH="$(grep -E '^POST_MERGE_HOOK_BACKUP=' "$FORCE_OUT" | tail -n 1 | cut -d= -f2-)"
 [[ -f "$BACKUP_PATH" ]]
 grep -q "unmanaged" "$BACKUP_PATH"
+[[ -f "$BACKUP_META" ]]
 
 UNINSTALL_OUT="$TMP_DIR/uninstall.out"
 bash "$SCRIPT" --repo-root "$REPO" --uninstall > "$UNINSTALL_OUT" 2>&1
 grep -q "^POST_MERGE_HOOK_UNINSTALL=PASS" "$UNINSTALL_OUT"
-if [[ -f "$UNMANAGED_HOOK" ]]; then
-  echo "managed hook should be removed after uninstall" >&2
-  exit 1
-fi
+grep -q "^POST_MERGE_HOOK_RESTORED_BACKUP=$BACKUP_PATH" "$UNINSTALL_OUT"
+[[ -f "$UNMANAGED_HOOK" ]]
+grep -q "unmanaged" "$UNMANAGED_HOOK"
+[[ ! -f "$BACKUP_META" ]]
 
 DRY_RUN_OUT="$TMP_DIR/dry-run.out"
-bash "$SCRIPT" --repo-root "$REPO" --dry-run > "$DRY_RUN_OUT" 2>&1
+bash "$SCRIPT" --repo-root "$REPO" --dry-run --force > "$DRY_RUN_OUT" 2>&1
 grep -q "^POST_MERGE_HOOK_INSTALL=DRY_RUN" "$DRY_RUN_OUT"
-if [[ -f "$UNMANAGED_HOOK" ]]; then
-  echo "dry-run should not create hook file" >&2
-  exit 1
-fi
+grep -q "unmanaged" "$UNMANAGED_HOOK"
 
 echo "INSTALL_POST_MERGE_HOOK_TEST_OK"
