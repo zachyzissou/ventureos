@@ -120,6 +120,7 @@ Options:
   --skip-cron               Skip cron installer step
   --skip-readiness          Skip readiness refresh step
   --no-force-cron           Do not pass --force to install-cron.sh
+  --no-animation            Disable onboarding animation effects
   -h, --help                Show help
 
 Env overrides:
@@ -1665,6 +1666,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-force-cron)
       EXPLICIT_FORCE_CRON=0
+      shift
+      ;;
+    --no-animation)
+      NO_ANIMATION=1
       shift
       ;;
     -h|--help)

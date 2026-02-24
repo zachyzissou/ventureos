@@ -254,6 +254,10 @@ export CRONTAB_STATE
 export VENTUREOS_INSTALL_RESTORE_BASE_DIR="$RESTORE_BASE"
 export FAKE_BRIDGE_STATUS_RC=0
 
+bash "$SCRIPT" --help > "$OUT_DIR/help.out" 2>&1
+grep -q -- '--no-animation' "$OUT_DIR/help.out"
+echo "VENTUREOS_INSTALL_HELP_NO_ANIMATION_FLAG_OK"
+
 # Dry-run should plan actions without executing scripts.
 : > "$CALL_LOG"
 run_install dry_run \
@@ -470,6 +474,20 @@ grep -q -- '- Mode: `interactive`' "$interactive_apply_transcript"
 grep -q -- '- Approval: `approved`' "$interactive_apply_transcript"
 grep -q '## Action Matrix Summary' "$interactive_apply_transcript"
 echo "VENTUREOS_INSTALL_INTERACTIVE_APPLY_OK"
+
+# Interactive onboarding should accept explicit animation disable flag.
+: > "$CALL_LOG"
+run_install_interactive interactive_no_animation \
+  "$interactive_apply_input" \
+  --dashboard-port 8130 \
+  --openclaw-dir "$OPENCLAW_FIXTURE_DIR" \
+  --bridge-env "$BRIDGE_ENV" \
+  --bridge-token-file "$TMP_DIR/bridge-token" \
+  --no-animation
+
+grep -q "VENTUREOS_INSTALL_RESULT=PASS" "$OUT_DIR/interactive_no_animation.out"
+grep -q "\\[Phase 2/6\\] Preference selection" "$OUT_DIR/interactive_no_animation.out"
+echo "VENTUREOS_INSTALL_INTERACTIVE_NO_ANIMATION_OK"
 
 # Interactive onboarding abort path should stop before apply and emit cancel transcript.
 : > "$CALL_LOG"
