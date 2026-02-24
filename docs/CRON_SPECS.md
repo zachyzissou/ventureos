@@ -109,9 +109,21 @@
 - **Goal:** detect telemetry staleness or short-window job regressions while VB-003 7-day evidence accrues.
 - **Added:** 2026-02-22
 
-## Current Next Steps (February 23, 2026)
+## 15) Local Integration Cadence Sweep
+- **Schedule:** `20 */6 * * *`
+- **Session:** isolated
+- **Agent:** main
+- **Payload:** run `scripts/local-integration-cadence-cron.sh`
+- **Output:** refreshes installer preflight + queue + checklist evidence bundle through one command
+- **Cadence status artifact:** `runtime/reports/local-integration-cadence/local-integration-cadence-latest.json`
+- **Cadence markdown artifact:** `runtime/reports/local-integration-cadence/local-integration-cadence-latest.md`
+- **Cron run log:** `runtime/logs/cron-runs/local-integration-cadence.jsonl`
+- **Added:** 2026-02-24
+
+## Current Next Steps (February 24, 2026)
 1. Roll this schedule onto the host with `bash scripts/install-cron.sh --force`.
 2. Validate first run via `runtime/logs/cron-runs/vb003-telemetry-synthesis.jsonl`.
 3. Validate latest synthesis artifacts under `runtime/reports/model-orchestration/`.
 4. Validate watchdog run via `runtime/logs/cron-runs/vb003-watchdog.jsonl` and latest watchdog artifacts.
 5. Confirm `docs/LOCAL_INTEGRATION_READY.md` and Mission Control readiness card continue moving on cadence.
+6. Validate local integration cadence run via `runtime/logs/cron-runs/local-integration-cadence.jsonl` and latest cadence artifacts.

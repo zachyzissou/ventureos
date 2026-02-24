@@ -116,6 +116,9 @@ NEW_CRON=$(cat <<EOF
 # 14) VB-003 watchdog — every 3 hours
 45 */3 * * * $RUNNER vb003-watchdog >> $LOG_BASE/cron-vb003-watchdog.log 2>&1
 
+# 15) Local integration cadence sweep — every 6 hours
+20 */6 * * * $RUNNER local-integration-cadence >> $LOG_BASE/cron-local-integration-cadence.log 2>&1
+
 # === END $CRON_MARKER ===
 EOF
 )

@@ -681,6 +681,38 @@ bash scripts/tests/test-run-local-integration-cadence.sh
 
 ---
 
+## 19d) local-integration-cadence-cron.sh
+**Purpose:** Cron-oriented wrapper for `run-local-integration-cadence.sh` that forwards stable OpenClaw/bridge defaults and optional extra installer args.
+
+**Usage:**
+```bash
+bash scripts/local-integration-cadence-cron.sh
+```
+
+Forward extra installer/preflight args:
+```bash
+bash scripts/local-integration-cadence-cron.sh \
+  --dashboard-url "http://127.0.0.1:7000"
+```
+
+**Behavior:**
+- Invokes:
+  - `bash scripts/run-local-integration-cadence.sh -- --openclaw-dir <path> [--bridge-env <path>]`
+- Default forwarded values:
+  - `--openclaw-dir` from `VENTUREOS_LOCAL_INTEGRATION_CADENCE_OPENCLAW_DIR`, else `OPENCLAW_DIR`, else `$HOME/.openclaw`
+  - `--bridge-env` from `VENTUREOS_LOCAL_INTEGRATION_CADENCE_BRIDGE_ENV` (default `config/bridge.env`) when file exists
+- Bridge env handling:
+  - Missing bridge env is tolerated by default (wrapper logs skip and continues without `--bridge-env`)
+  - Set `VENTUREOS_LOCAL_INTEGRATION_CADENCE_REQUIRE_BRIDGE_ENV=1` to fail fast when bridge env is absent
+- Exits with the wrapped cadence command exit code for deterministic cron alerting.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-local-integration-cadence-cron.sh
+```
+
+---
+
 ## 20) pr-queue-sweep.sh
 **Purpose:** Classify open GitHub PR queue state and optionally merge approved+ready PRs.
 
