@@ -76,9 +76,20 @@ bash scripts/pr-queue-sweep.sh --merge-approved --report-dir runtime/reports/pr-
 ```
 
 Queue cadence checklist:
-- [ ] Queue status JSON captured after approvals land
-- [ ] Merge mode output linked when merges are executed
-- [ ] Candidate PRs have readiness + required-check evidence artifacts before merge
+- [x] Queue status JSON captured after approvals land
+- [x] Merge mode output linked when merges are executed (N/A this run: no approved PRs)
+- [x] Candidate PRs have readiness + required-check evidence artifacts before merge (N/A this run: queue empty)
+
+## Latest Queue Cadence Result (Issue #522)
+
+- Date (UTC): `2026-02-24`
+- Queue status: `empty`
+- Command:
+  - `bash scripts/pr-queue-sweep.sh --json-out runtime/reports/pr-queue/queue-latest.json`
+- Artifact:
+  - `runtime/reports/pr-queue/queue-latest.json`
+- Queue hygiene action:
+  - Closed stale draft checkpoint PR `#518` (source issue `#294` was already closed), then reran queue sweep.
 
 ## Latest Installer Drill Result
 
@@ -118,5 +129,6 @@ bash scripts/ventureos-install.sh --non-interactive --revert <restore-point-dir>
 
 - Issue: `#489`
 - Related hygiene issue: `#490`
-- Cadence issue: `#520`
+- Preflight cadence issue: `#520`
+- Queue cadence issue: `#522`
 - Related PR: `#491`
