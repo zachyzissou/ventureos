@@ -330,6 +330,9 @@ grep -q -- '- Mode: `preflight`' "$preflight_report"
 grep -q '## Compatibility Rehearsal' "$preflight_report"
 grep -q '`compatibility-check` | `pass`' "$preflight_report"
 grep -q '`dashboard-install` | `planned`' "$preflight_report"
+preflight_onboarding="$(latest_onboarding_transcript preflight_only)"
+grep -q -- '- Execution mode: `preflight`' "$preflight_onboarding"
+grep -q -- '- Animation: `enabled`' "$preflight_onboarding"
 preflight_adoption_json="$(latest_adoption_evidence preflight_only)"
 python3 - "$preflight_adoption_json" <<'PY'
 import json
@@ -490,6 +493,8 @@ run_install_interactive interactive_no_animation \
 
 grep -q "VENTUREOS_INSTALL_RESULT=PASS" "$OUT_DIR/interactive_no_animation.out"
 grep -q "\\[Phase 2/6\\] Preference selection" "$OUT_DIR/interactive_no_animation.out"
+interactive_no_animation_transcript="$(latest_onboarding_transcript interactive_no_animation)"
+grep -q -- '- Animation: `disabled`' "$interactive_no_animation_transcript"
 echo "VENTUREOS_INSTALL_INTERACTIVE_NO_ANIMATION_OK"
 
 # Interactive onboarding abort path should stop before apply and emit cancel transcript.
