@@ -90,6 +90,12 @@ Queue status command (single-command health snapshot):
 bash scripts/pr-queue-sweep.sh --json-out runtime/reports/pr-queue/queue-latest.json
 ```
 
+Post-merge queue trigger command:
+
+```bash
+bash scripts/post-merge-queue-snapshot.sh
+```
+
 Refresh checklist after queue snapshot:
 
 ```bash
@@ -169,4 +175,5 @@ bash scripts/ventureos-install.sh --non-interactive --revert <restore-point-dir>
 - Unified cadence automation issue: `#528`
 - Cron integration issue: `#530`
 - Post-merge trigger automation issue: `#532`
+- Post-merge queue snapshot issue: `#534`
 - Related PR: `#491`

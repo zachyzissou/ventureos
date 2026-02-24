@@ -885,6 +885,43 @@ bash scripts/tests/test-required-check-contexts.sh
 
 ---
 
+## 20c) post-merge-queue-snapshot.sh
+**Purpose:** Capture a deterministic post-merge PR queue snapshot by wrapping `pr-queue-sweep.sh` and emitting machine-readable status markers.
+
+**Usage:**
+```bash
+bash scripts/post-merge-queue-snapshot.sh
+```
+
+Custom queue JSON output:
+```bash
+bash scripts/post-merge-queue-snapshot.sh \
+  --queue-json runtime/reports/pr-queue/queue-latest.json
+```
+
+Forward extra queue args (for example merge execution mode):
+```bash
+bash scripts/post-merge-queue-snapshot.sh \
+  -- --merge-approved
+```
+
+**Behavior:**
+- Invokes `scripts/pr-queue-sweep.sh --json-out <queue-json>`.
+- Forwards args after `--` to `pr-queue-sweep.sh`.
+- Emits machine-readable markers:
+  - `POST_MERGE_QUEUE_STATUS=PASS|FAIL`
+  - `POST_MERGE_QUEUE_JSON=<path>`
+  - `POST_MERGE_QUEUE_SWEEP_STATUS=<PR_QUEUE_STATUS|unknown>`
+  - `POST_MERGE_QUEUE_EXIT_CODE=<rc>`
+- Exits with underlying queue sweep exit code.
+
+**Regression test:**
+```bash
+bash scripts/tests/test-post-merge-queue-snapshot.sh
+```
+
+---
+
 ## 21) roadmap-status-sync.py
 **Purpose:** Detect status drift between `README.md` active work and roadmap anchor issue `#138`.
 
