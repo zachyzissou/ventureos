@@ -28,6 +28,12 @@ bash scripts/run-install-preflight-evidence.sh \
   --bridge-env "$PWD/config/bridge.env"
 ```
 
+Then refresh this checklist from latest evidence:
+
+```bash
+bash scripts/refresh-local-integration-checklist.sh
+```
+
 Required artifacts for issue/PR evidence:
 - `runtime/reports/ventureos-install/ventureos-install-preflight-<timestamp>.log`
 - `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-<timestamp>.json`
@@ -45,21 +51,21 @@ Cadence checklist:
 ## Latest Preflight Evidence Result (Issue #520)
 
 - Date (UTC): `2026-02-24`
-- Generated: `2026-02-24T20:33:42Z`
+- Generated: `2026-02-24T20:55:20Z`
 - Install result marker: `PREFLIGHT`
 - Preflight evidence status: `PASS`
 - Command:
-  - `bash scripts/run-install-preflight-evidence.sh -- --openclaw-dir "$HOME/.openclaw" --bridge-env "$PWD/config/bridge.env"`
+  - `bash scripts/run-install-preflight-evidence.sh -- --openclaw-dir $HOME/.openclaw --bridge-env $PWD/config/bridge.env`
 
 Evidence artifacts:
 - `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-latest.json`
 - `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-latest.md`
-- `runtime/reports/ventureos-install/ventureos-install-preflight-20260224T203341Z.log`
-- `runtime/reports/ventureos-install/ventureos-install-20260224T203342Z.md`
-- `runtime/reports/ventureos-install/ventureos-install-adoption-20260224T203342Z.json`
-- `runtime/reports/ventureos-install/ventureos-onboarding-20260224T203342Z.md`
+- `runtime/reports/ventureos-install/ventureos-install-preflight-20260224T205519Z.log`
+- `runtime/reports/ventureos-install/ventureos-install-20260224T205520Z.md`
+- `runtime/reports/ventureos-install/ventureos-install-adoption-20260224T205520Z.json`
+- `runtime/reports/ventureos-install/ventureos-onboarding-20260224T205520Z.md`
 - `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
-- Restore point: `runtime/backups/ventureos-install/20260224T203342Z-58040/restore-point.json`
+- Restore point: `runtime/backups/ventureos-install/20260224T205520Z-70533/restore-point.json`
 
 ## PR Queue Execution Cadence (Issue #504)
 
@@ -67,6 +73,12 @@ Queue status command (single-command health snapshot):
 
 ```bash
 bash scripts/pr-queue-sweep.sh --json-out runtime/reports/pr-queue/queue-latest.json
+```
+
+Refresh checklist after queue snapshot:
+
+```bash
+bash scripts/refresh-local-integration-checklist.sh
 ```
 
 Optional merge execution (with automatic readiness evidence capture):
@@ -84,12 +96,13 @@ Queue cadence checklist:
 
 - Date (UTC): `2026-02-24`
 - Queue status: `empty`
+- Recommended action: `No open PRs in queue.`
+- Queue summary counts:
+  - total_open=`0` draft=`0` review_needed=`0` approved_merge_ready=`0` approved_blocked=`0`
 - Command:
   - `bash scripts/pr-queue-sweep.sh --json-out runtime/reports/pr-queue/queue-latest.json`
 - Artifact:
   - `runtime/reports/pr-queue/queue-latest.json`
-- Queue hygiene action:
-  - Closed stale draft checkpoint PR `#518` (source issue `#294` was already closed), then reran queue sweep.
 
 ## Latest Installer Drill Result
 
@@ -131,4 +144,5 @@ bash scripts/ventureos-install.sh --non-interactive --revert <restore-point-dir>
 - Related hygiene issue: `#490`
 - Preflight cadence issue: `#520`
 - Queue cadence issue: `#522`
+- Checklist refresh automation issue: `#526`
 - Related PR: `#491`

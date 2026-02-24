@@ -604,6 +604,45 @@ bash scripts/tests/test-run-install-preflight-evidence.sh
 
 ---
 
+## 19b) refresh-local-integration-checklist.sh
+**Purpose:** Refresh `docs/LOCAL_INTEGRATION_CHECKLIST.md` latest evidence sections from the most recent preflight + queue JSON artifacts.
+
+**Usage:**
+```bash
+bash scripts/refresh-local-integration-checklist.sh
+```
+
+Custom artifact paths:
+```bash
+bash scripts/refresh-local-integration-checklist.sh \
+  --preflight-json runtime/reports/ventureos-install/ventureos-install-preflight-evidence-latest.json \
+  --queue-json runtime/reports/pr-queue/queue-latest.json
+```
+
+Dry run (print refreshed markdown without writing file):
+```bash
+bash scripts/refresh-local-integration-checklist.sh --dry-run
+```
+
+**Behavior:**
+- Reads:
+  - `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-latest.json`
+  - `runtime/reports/pr-queue/queue-latest.json`
+- Rewrites:
+  - checklist `Last verified` date
+  - `Latest Preflight Evidence Result` section
+  - `Latest Queue Cadence Result` section
+- Fails fast when required files/keys are missing.
+- Emits status marker:
+  - `LOCAL_INTEGRATION_CHECKLIST_REFRESH_RESULT=PASS|DRY_RUN`
+
+**Regression test:**
+```bash
+bash scripts/tests/test-refresh-local-integration-checklist.sh
+```
+
+---
+
 ## 20) pr-queue-sweep.sh
 **Purpose:** Classify open GitHub PR queue state and optionally merge approved+ready PRs.
 
