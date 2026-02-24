@@ -161,6 +161,7 @@ cat > "$BRIDGE_ENV" <<'EOF_ENV'
 BRIDGE_TOKEN=test-bridge-token
 BRIDGE_PORT=18790
 EOF_ENV
+MISSING_BRIDGE_ENV="$TMP_DIR/missing-bridge.env"
 
 run_install() {
   local run_name="$1"
@@ -238,6 +239,7 @@ export VENTUREOS_INSTALL_BRIDGE_SCRIPT="$FAKE_BRIDGE"
 export VENTUREOS_INSTALL_CRON_SCRIPT="$FAKE_CRON"
 export VENTUREOS_INSTALL_READINESS_SCRIPT="$FAKE_READY"
 export VENTUREOS_INSTALL_OS="Darwin"
+export OPENCLAW_LOCAL_READY_AUTO_DISCOVER=0
 export CRONTAB_STATE
 export VENTUREOS_INSTALL_RESTORE_BASE_DIR="$RESTORE_BASE"
 export FAKE_BRIDGE_STATUS_RC=0
@@ -469,31 +471,56 @@ grep -q -- '- Approval: `declined`' "$interactive_abort_transcript"
 grep -q -- 'operator declined action matrix confirmation' "$interactive_abort_transcript"
 echo "VENTUREOS_INSTALL_INTERACTIVE_ABORT_OK"
 
-# Missing bridge env should adopt existing healthy launchagent state (non-destructive mode).
+# Missing bridge env should adopt healthy launchagent state and materialize bridge env.
 : > "$CALL_LOG"
 run_install missing_bridge_env_adopt \
   --non-interactive \
   --verify \
   --dashboard-port 8126 \
   --openclaw-dir "$OPENCLAW_FIXTURE_DIR" \
-  --bridge-env "$TMP_DIR/missing-bridge.env" \
+  --bridge-env "$MISSING_BRIDGE_ENV" \
   --skip-readiness
 
 grep -q "VENTUREOS_INSTALL_RESULT=PASS" "$OUT_DIR/missing_bridge_env_adopt.out"
 adopt_report="$(latest_report missing_bridge_env_adopt)"
-grep -q "bridge env missing; adopted existing healthy launchagent" "$adopt_report"
+grep -q "bridge env missing; materialized bridge env from adopted healthy launchagent" "$adopt_report"
 grep -q '`bridge-launchagent` | `pass`' "$adopt_report"
+[[ -f "$MISSING_BRIDGE_ENV" ]]
+grep -q "BRIDGE_TOKEN_FILE=\"$OPENCLAW_FIXTURE_DIR/bridge/bridge-token\"" "$MISSING_BRIDGE_ENV"
+grep -q "OPENCLAW_DIR=\"$OPENCLAW_FIXTURE_DIR\"" "$MISSING_BRIDGE_ENV"
+if grep -E '^bridge\|' "$CALL_LOG" >/dev/null 2>&1; then
+  if grep -E '^bridge\|' "$CALL_LOG" | grep -vq -- '--status'; then
+    echo "Expected adopt/materialize path to avoid bridge install execution (status checks are allowed)" >&2
+    exit 1
+  fi
+fi
+adopt_adoption_json="$(latest_adoption_evidence missing_bridge_env_adopt)"
+python3 - "$adopt_adoption_json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+plan = {row.get("target"): row for row in payload.get("plan", []) if isinstance(row, dict)}
+bridge_env_plan = plan.get("bridge-env-auth-source")
+assert isinstance(bridge_env_plan, dict), payload
+assert bridge_env_plan.get("decision") == "create", bridge_env_plan
+changed_ids = {row.get("id") for row in payload.get("changedTargets", []) if isinstance(row, dict)}
+assert "bridge-env-auth-source" in changed_ids, changed_ids
+print("VENTUREOS_INSTALL_MISSING_BRIDGE_ENV_ADOPTION_EVIDENCE_OK")
+PY
 echo "VENTUREOS_INSTALL_MISSING_BRIDGE_ENV_ADOPT_OK"
 
 # Missing bridge env should still fail when existing launchagent status is unhealthy.
 export FAKE_BRIDGE_STATUS_RC=1
 : > "$CALL_LOG"
+rm -f "$MISSING_BRIDGE_ENV"
 run_install_expect_fail missing_bridge_env_unhealthy \
   --non-interactive \
   --verify \
   --dashboard-port 8127 \
   --openclaw-dir "$OPENCLAW_FIXTURE_DIR" \
-  --bridge-env "$TMP_DIR/missing-bridge.env" \
+  --bridge-env "$MISSING_BRIDGE_ENV" \
   --skip-readiness
 export FAKE_BRIDGE_STATUS_RC=0
 
