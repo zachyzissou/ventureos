@@ -16,6 +16,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib/openclaw-local-defaults.sh"
 RUNNER="$SCRIPT_DIR/cron-runner.sh"
 LOG_BASE="$HOME/.openclaw/logs"
 
@@ -41,6 +42,12 @@ if [[ "$LIST_ONLY" == "true" ]]; then
   echo "Current crontab:"
   crontab -l 2>/dev/null || echo "(empty)"
   exit 0
+fi
+
+LOCAL_READY_DASHBOARD_URL="$(openclaw_local_resolve_dashboard_url "" "${OPENCLAW_LOCAL_READY_DASHBOARD_URL:-}" "${DASHBOARD_URL:-}" "${DASHBOARD_PORT:-7000}")"
+if ! openclaw_local_validate_dashboard_url "$LOCAL_READY_DASHBOARD_URL"; then
+  echo "Invalid local readiness dashboard URL: $LOCAL_READY_DASHBOARD_URL" >&2
+  exit 1
 fi
 
 # Check for existing installation
@@ -101,7 +108,7 @@ NEW_CRON=$(cat <<EOF
 */30 * * * * $RUNNER routing-healthcheck >> $LOG_BASE/cron-routing-healthcheck.log 2>&1
 
 # 12) Local OpenClaw readiness refresh — every 4 hours
-15 */4 * * * OPENCLAW_LOCAL_READY_DASHBOARD_URL=http://127.0.0.1:7000 $RUNNER openclaw-local-ready >> $LOG_BASE/cron-openclaw-local-ready.log 2>&1
+15 */4 * * * OPENCLAW_LOCAL_READY_DASHBOARD_URL=$LOCAL_READY_DASHBOARD_URL $RUNNER openclaw-local-ready >> $LOG_BASE/cron-openclaw-local-ready.log 2>&1
 
 # 13) VB-003 telemetry synthesis — every 6 hours
 30 */6 * * * $RUNNER vb003-telemetry-synthesis >> $LOG_BASE/cron-vb003-telemetry.log 2>&1
@@ -130,3 +137,4 @@ echo ""
 echo "Configuration: $REPO_ROOT/config/reliability.json"
 echo "Runner: $RUNNER"
 echo "Logs: $LOG_BASE/cron-*.log"
+echo "Local readiness dashboard URL: $LOCAL_READY_DASHBOARD_URL"

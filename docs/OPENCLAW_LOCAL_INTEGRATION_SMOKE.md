@@ -117,6 +117,7 @@ The JSON report includes machine-readable check metadata and readiness summary f
 - `auth.tokenSource|tokenHealth|tokenRepairAction`: non-secret auth readiness diagnostics
 - Per-check metadata: `group`, `severity`, `likelyCause`, `nextCommand`
 - If a check fails with HTTP `429`, smoke classifies it as rate-limit pressure and emits a `sleep 60 && bash scripts/openclaw-local-smoke.sh --profile <profile>` next-command hint.
+- If `/api/health` indicates the URL is targeting a non-dashboard service (for example `Server: AirTunes/...`), smoke emits an explicit non-dashboard collision detail and skips dependent dashboard API checks.
 
 `scripts/refresh-local-integration-ready.sh` now enforces strict latest JSON/MD/SVG timestamp pairing and schema validation before regenerating `docs/LOCAL_INTEGRATION_READY.md`.
 Use `--prune-keep <n>` if you want refresh to keep only the newest `n` timestamp groups of smoke artifacts after regeneration.
@@ -138,6 +139,12 @@ Mission Control API note (dashboard route):
   - `OPENCLAW_LOCAL_READINESS_REPORT_DIR` when set
   - otherwise `VENTUREOS_ROOT/runtime/reports/openclaw-local-smoke`
 - In hybrid Docker mode, ensure the report directory is bind-mounted into the dashboard container and wired via `OPENCLAW_LOCAL_READINESS_REPORT_DIR`.
+
+Managed cron note:
+- `scripts/install-cron.sh` now resolves and pins `OPENCLAW_LOCAL_READY_DASHBOARD_URL` during install using this precedence:
+  1. `OPENCLAW_LOCAL_READY_DASHBOARD_URL`
+  2. `DASHBOARD_URL` (legacy)
+  3. `http://127.0.0.1:${DASHBOARD_PORT:-7000}`
 
 ## Current Next Steps (February 22, 2026)
 1. Run installer preflight evidence bundle after onboarding/install execution changes:
