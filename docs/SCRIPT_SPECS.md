@@ -244,17 +244,20 @@ bash scripts/openclaw-local-smoke.sh \
 - Gateway status check requires a healthy runtime signal (`RPC probe: ok` or `Listening:`) to pass.
 - Detects non-dashboard target collisions on `/api/health` (for example AirTunes on port `7000`) and emits explicit root-cause detail instead of generic auth failure noise.
 - If `dashboard-health` fails, dependent dashboard API checks are marked `skipped` to keep blocker output actionable.
+- When the target serves OpenClaw Control HTML instead of VentureOS JSON APIs, smoke switches to OpenClaw CLI-backed checks (`gateway health`, `cron list`, `gateway probe`) for required readiness surfaces.
 - Emits timestamped JSON + markdown + SVG reports to `runtime/reports/openclaw-local-smoke/`.
 - Uses canonical dashboard URL resolution policy:
   - `--dashboard-url`
   - `OPENCLAW_LOCAL_READY_DASHBOARD_URL`
   - `DASHBOARD_URL` (legacy)
+  - auto-discovered `openclaw dashboard --no-open` URL (unless `OPENCLAW_LOCAL_READY_AUTO_DISCOVER=0|false|no|off`)
   - fallback `http://127.0.0.1:${DASHBOARD_PORT:-7000}`
 - Token guardrails:
   - validates `.api-token` format
   - auto-repairs safe malformed states with explicit logging
+  - falls back to tokenized OpenClaw dashboard URL when token file is missing/malformed and origins match
   - emits non-secret auth diagnostics (`tokenSource`, `tokenHealth`, `tokenRepairAction`)
-- JSON summary includes `verdict`, `readinessScore`, `confidence`, and `requiredCheckStatusMap`; each check includes `group`, `severity`, `likelyCause`, and `nextCommand`.
+- JSON summary includes `verdict`, `readinessScore`, `confidence`, `dashboardSurface`, and `requiredCheckStatusMap`; each check includes `group`, `severity`, `likelyCause`, and `nextCommand`.
 - Exits with code `2` when any required check fails.
 
 **Regression test:**
@@ -322,6 +325,7 @@ bash scripts/openclaw-local-ready-cron.sh
   - `OPENCLAW_LOCAL_READY_MAX_AGE_MIN`
   - `OPENCLAW_LOCAL_READY_PROFILE` (`quick|full|bridge`)
   - `OPENCLAW_LOCAL_READY_DASHBOARD_URL` (must start with `http://` or `https://`)
+  - `OPENCLAW_LOCAL_READY_AUTO_DISCOVER` (`0|false|no|off` disables OpenClaw URL auto-discovery)
 - Validates env inputs and exits `2` on invalid values before running refresh.
 - Forwards any additional CLI flags to the underlying refresh script (last flag wins).
 - Managed cron installation now resolves and persists the local readiness dashboard URL at install time (`scripts/install-cron.sh`) rather than hardcoding port `7000`.

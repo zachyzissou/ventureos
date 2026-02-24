@@ -84,6 +84,7 @@ Profiles:
 - `OPENCLAW_LOCAL_READY_DASHBOARD_URL`: canonical dashboard URL override
 - `DASHBOARD_PORT`: fallback port when no dashboard URL override is provided (default: `7000`)
 - `DASHBOARD_URL`: legacy dashboard URL override (lower precedence than `OPENCLAW_LOCAL_READY_DASHBOARD_URL`)
+- `OPENCLAW_LOCAL_READY_AUTO_DISCOVER`: enable/disable OpenClaw URL auto-discovery (`1` default; set `0|false|no|off` to disable)
 - `SMOKE_REPORT_DIR`: output directory for smoke reports
 - `SMOKE_HTTP_TIMEOUT_SEC`: per-request timeout
 - `SMOKE_HTTP_RETRY_MAX`: retry count for transient HTTP failures (default: `2`)
@@ -114,10 +115,12 @@ The JSON report includes machine-readable check metadata and readiness summary f
 - `summary.confidence`: `high|medium|low`
 - `summary.requiredCheckStatusMap`: required check id -> `pass|fail|skipped`
 - `dashboardUrl`: resolved URL used for this run
+- `dashboardSurface`: detected contract path (`legacy-api` or `openclaw-control`)
 - `auth.tokenSource|tokenHealth|tokenRepairAction`: non-secret auth readiness diagnostics
 - Per-check metadata: `group`, `severity`, `likelyCause`, `nextCommand`
 - If a check fails with HTTP `429`, smoke classifies it as rate-limit pressure and emits a `sleep 60 && bash scripts/openclaw-local-smoke.sh --profile <profile>` next-command hint.
 - If `/api/health` indicates the URL is targeting a non-dashboard service (for example `Server: AirTunes/...`), smoke emits an explicit non-dashboard collision detail and skips dependent dashboard API checks.
+- If `/api/health` resolves to OpenClaw Control HTML, smoke pivots to OpenClaw CLI-backed checks (`openclaw gateway health --json`, `openclaw cron list --json`, `openclaw gateway probe --json`) so real host readiness can still be evaluated.
 
 `scripts/refresh-local-integration-ready.sh` now enforces strict latest JSON/MD/SVG timestamp pairing and schema validation before regenerating `docs/LOCAL_INTEGRATION_READY.md`.
 Use `--prune-keep <n>` if you want refresh to keep only the newest `n` timestamp groups of smoke artifacts after regeneration.
@@ -144,7 +147,8 @@ Managed cron note:
 - `scripts/install-cron.sh` now resolves and pins `OPENCLAW_LOCAL_READY_DASHBOARD_URL` during install using this precedence:
   1. `OPENCLAW_LOCAL_READY_DASHBOARD_URL`
   2. `DASHBOARD_URL` (legacy)
-  3. `http://127.0.0.1:${DASHBOARD_PORT:-7000}`
+  3. auto-discovered `openclaw dashboard --no-open` URL (unless `OPENCLAW_LOCAL_READY_AUTO_DISCOVER=0|false|no|off`)
+  4. `http://127.0.0.1:${DASHBOARD_PORT:-7000}`
 
 ## Current Next Steps (February 22, 2026)
 1. Run installer preflight evidence bundle after onboarding/install execution changes:

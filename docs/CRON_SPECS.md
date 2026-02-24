@@ -76,7 +76,7 @@
 - **Session:** isolated
 - **Agent:** nexus
 - **Payload:** run `scripts/openclaw-local-ready-cron.sh`
-- **Dashboard URL in managed cron:** resolved at install time via `openclaw_local_resolve_dashboard_url` (honors `OPENCLAW_LOCAL_READY_DASHBOARD_URL`, then `DASHBOARD_URL`, then `DASHBOARD_PORT`)
+- **Dashboard URL in managed cron:** resolved at install time via `openclaw_local_resolve_dashboard_url` (honors `OPENCLAW_LOCAL_READY_DASHBOARD_URL`, then `DASHBOARD_URL`, then auto-discovered `openclaw dashboard --no-open` URL, then `DASHBOARD_PORT`; disable discovery with `OPENCLAW_LOCAL_READY_AUTO_DISCOVER=0`)
 - **Output:** refreshed `docs/LOCAL_INTEGRATION_READY.md` and paired JSON/MD/SVG artifacts
 - **Status artifact:** `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - **Retention:** defaults to keep newest 14 artifact sets (configurable via env)
