@@ -232,6 +232,16 @@ latest_onboarding_transcript() {
   ls -1 "$REPORT_BASE/${run_name}"/ventureos-onboarding-*.md | tail -n 1
 }
 
+latest_reconciliation_json() {
+  local run_name="$1"
+  ls -1 "$REPORT_BASE/${run_name}"/ventureos-openclaw-config-reconciliation-*.json | tail -n 1
+}
+
+latest_reconciliation_md() {
+  local run_name="$1"
+  ls -1 "$REPORT_BASE/${run_name}"/ventureos-openclaw-config-reconciliation-*.md | tail -n 1
+}
+
 export CALL_LOG
 export VENTUREOS_INSTALL_DASHBOARD_MACOS_SCRIPT="$FAKE_DASHBOARD_MACOS"
 export VENTUREOS_INSTALL_DASHBOARD_LINUX_SCRIPT="$FAKE_DASHBOARD_LINUX"
@@ -363,6 +373,7 @@ grep -q '`adoption-fingerprint-after` | `pass`' "$verify_report"
 grep -q '`adoption-evidence` | `pass`' "$verify_report"
 grep -q '## Integration Adoption Plan' "$verify_report"
 grep -q '## Config Change Evidence' "$verify_report"
+grep -q '## OpenClaw Config Reconciliation' "$verify_report"
 grep -q '`ventureos-managed-cron-block` | `create`' "$verify_report"
 grep -q '| Step | Status | Detail | Next Command |' "$verify_report"
 verify_adoption_json="$(latest_adoption_evidence verify_success)"
@@ -382,6 +393,22 @@ ids = {row.get("id") for row in changed if isinstance(row, dict)}
 assert "user-crontab" in ids, ids
 assert "ventureos-managed-cron-block" in ids, ids
 print("VENTUREOS_INSTALL_ADOPTION_EVIDENCE_OK")
+PY
+verify_reconcile_json="$(latest_reconciliation_json verify_success)"
+verify_reconcile_md="$(latest_reconciliation_md verify_success)"
+[[ -f "$verify_reconcile_json" ]]
+[[ -f "$verify_reconcile_md" ]]
+python3 - "$verify_reconcile_json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert payload.get("status") == "pass", payload
+assert payload.get("mode") == "execute", payload
+targets = payload.get("targets", [])
+assert isinstance(targets, list) and len(targets) == 3, payload
+print("VENTUREOS_INSTALL_RECONCILIATION_EVIDENCE_OK")
 PY
 verify_onboarding="$(latest_onboarding_transcript verify_success)"
 grep -q -- '- Final status: `pass`' "$verify_onboarding"
@@ -418,7 +445,7 @@ echo "VENTUREOS_INSTALL_PRESET_OK"
 
 # Interactive onboarding apply path should require action-matrix confirmation and then execute.
 : > "$CALL_LOG"
-interactive_apply_input=$'y\n\n\n\nn\ny\ny\ny\ny\ny\ny\n'
+interactive_apply_input=$'y\n\n\n\nn\ny\ny\ny\ny\ny\ny\ny\n'
 run_install_interactive interactive_apply \
   "$interactive_apply_input" \
   --dashboard-port 8128 \
@@ -445,7 +472,7 @@ echo "VENTUREOS_INSTALL_INTERACTIVE_APPLY_OK"
 
 # Interactive onboarding abort path should stop before apply and emit cancel transcript.
 : > "$CALL_LOG"
-interactive_abort_input=$'y\n\n\n\nn\ny\ny\ny\ny\ny\nn\n'
+interactive_abort_input=$'y\n\n\n\nn\ny\ny\ny\ny\ny\ny\nn\n'
 run_install_interactive interactive_abort \
   "$interactive_abort_input" \
   --dashboard-port 8129 \

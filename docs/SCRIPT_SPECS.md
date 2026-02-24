@@ -519,6 +519,8 @@ bash scripts/ventureos-install.sh --revert runtime/backups/ventureos-install/<re
 - Generates a deterministic integration adoption plan before apply, classifying targets as `adopt|merge|create|skip` (dashboard service, bridge auth/env, launchagent, cron surfaces, OpenClaw runtime config files, readiness artifact).
 - Interactive TTY mode uses staged onboarding sections with guided recommendations (for example: adopt existing healthy dashboard, materialize bridge env when a healthy bridge LaunchAgent already exists) before executing changes.
 - When `--bridge-env` is missing on macOS but `install-bridge-launchagent.sh --status` confirms a healthy existing LaunchAgent, the installer materializes a repo-local bridge env file using safe defaults (token-file based auth, OpenClaw paths) instead of leaving bridge auth source implicit.
+- Interactive mode includes an explicit OpenClaw config reconciliation confirmation gate before action-matrix apply.
+- Installer emits OpenClaw config reconciliation evidence artifacts (`ventureos-openclaw-config-reconciliation-<timestamp>.json/.md`) summarizing before/after fingerprint diffs for OpenClaw runtime config files and linking rollback command/restore-point context.
 - Interactive mode emits explicit phase banners (`[Phase x/6]`) and `RUN/PASS/FAIL` step lines with elapsed seconds so operators can follow live execution progress without losing auditability.
 - Interactive mode requires explicit action-matrix confirmation after the `adopt|merge|create|skip` plan is rendered; declining exits cleanly with `VENTUREOS_INSTALL_RESULT=CANCELLED` before preflight/apply mutations.
 - Captures a pre-install restore point by default under `runtime/backups/ventureos-install/<restore-point-id>/`:

@@ -63,6 +63,8 @@ DISCOVER_VENTURE_CRON_STATE="unknown"
 dashboard_url=""
 report_file=""
 adoption_evidence_file=""
+reconciliation_evidence_json_file=""
+reconciliation_evidence_md_file=""
 ONBOARDING_MODE="non-interactive"
 ONBOARDING_APPROVAL="auto-non-interactive"
 ONBOARDING_ABORT_REASON=""
@@ -1106,6 +1108,22 @@ render_integration_adoption_plan() {
   done < "$ADOPTION_PLAN_TSV"
 }
 
+render_openclaw_config_reconciliation_preview() {
+  local config_target_count=0
+  echo "OpenClaw config reconciliation targets:"
+  while IFS=$'\t' read -r target decision exists_before subject reason; do
+    [[ -z "${target:-}" ]] && continue
+    if [[ "$target" != openclaw-config-* ]]; then
+      continue
+    fi
+    config_target_count=$((config_target_count + 1))
+    echo "  - $target => $decision (exists_before=$exists_before) :: $subject :: $reason"
+  done < "$ADOPTION_PLAN_TSV"
+  if [[ "$config_target_count" -eq 0 ]]; then
+    echo "  - none"
+  fi
+}
+
 generate_compatibility_matrix() {
   local output_tsv="$1"
   python3 - "$ADOPTION_PLAN_TSV" "$output_tsv" <<'PY'
@@ -1273,6 +1291,125 @@ entries.append(crontab_entry)
 entries.append(managed_block_entry)
 
 output_path.write_text(json.dumps(entries, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
+generate_openclaw_config_reconciliation_artifacts() {
+  local output_json="$1"
+  local output_md="$2"
+  local rollback_command="$3"
+  local restore_point_dir="$4"
+  local status="$5"
+  local mode="$6"
+  python3 - "$FINGERPRINT_BEFORE_JSON" "$FINGERPRINT_AFTER_JSON" "$output_json" "$output_md" "$rollback_command" "$restore_point_dir" "$status" "$mode" <<'PY'
+from __future__ import annotations
+
+import json
+import pathlib
+import sys
+from datetime import datetime, timezone
+
+before_path = pathlib.Path(sys.argv[1])
+after_path = pathlib.Path(sys.argv[2])
+output_json_path = pathlib.Path(sys.argv[3])
+output_md_path = pathlib.Path(sys.argv[4])
+rollback_command = sys.argv[5] or "n/a"
+restore_point_dir = sys.argv[6] or "n/a"
+status = sys.argv[7]
+mode = sys.argv[8]
+
+targets = [
+    ("openclaw-config-openclaw-json", "openclaw.json"),
+    ("openclaw-config-cron-jobs-json", "cron/jobs.json"),
+    ("openclaw-config-discord-webhooks-json", "credentials/discord/webhooks.json"),
+]
+
+before_items = json.loads(before_path.read_text(encoding="utf-8"))
+after_items = json.loads(after_path.read_text(encoding="utf-8"))
+before = {str(item.get("id", "")): item for item in before_items if isinstance(item, dict)}
+after = {str(item.get("id", "")): item for item in after_items if isinstance(item, dict)}
+
+def normalize(item: dict | None) -> dict:
+    if not isinstance(item, dict):
+        return {
+            "exists": False,
+            "kind": "missing",
+            "size": 0,
+            "lineCount": 0,
+            "sha256": None,
+            "subject": "n/a",
+        }
+    return {
+        "exists": bool(item.get("exists")),
+        "kind": str(item.get("kind") or "unknown"),
+        "size": int(item.get("size") or 0),
+        "lineCount": int(item.get("lineCount") or 0),
+        "sha256": item.get("sha256"),
+        "subject": str(item.get("subject") or "n/a"),
+    }
+
+def classify(before_row: dict, after_row: dict) -> str:
+    if not before_row["exists"] and not after_row["exists"]:
+        return "absent"
+    if not before_row["exists"] and after_row["exists"]:
+        return "created"
+    if before_row["exists"] and not after_row["exists"]:
+        return "removed"
+    if before_row["sha256"] == after_row["sha256"] and before_row["kind"] == after_row["kind"]:
+        return "unchanged"
+    return "changed"
+
+rows = []
+changed = 0
+for target_id, relative_path in targets:
+    before_row = normalize(before.get(target_id))
+    after_row = normalize(after.get(target_id))
+    change_type = classify(before_row, after_row)
+    if change_type in {"created", "removed", "changed"}:
+        changed += 1
+    rows.append({
+        "id": target_id,
+        "path": relative_path,
+        "changeType": change_type,
+        "before": before_row,
+        "after": after_row,
+    })
+
+payload = {
+    "generatedAtUtc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "status": status,
+    "mode": mode,
+    "rollbackCommand": rollback_command,
+    "restorePointDir": restore_point_dir,
+    "changedTargets": changed,
+    "targets": rows,
+}
+output_json_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+lines = [
+    "# OpenClaw Config Reconciliation Evidence",
+    "",
+    f"- Generated: `{payload['generatedAtUtc']}`",
+    f"- Status: `{status}`",
+    f"- Mode: `{mode}`",
+    f"- Changed targets: `{changed}`",
+    f"- Rollback command: `{rollback_command}`",
+    f"- Restore point directory: `{restore_point_dir}`",
+    "",
+    "| Target | Path | Change Type | Before Exists | After Exists | Before SHA | After SHA |",
+    "|---|---|---|---|---|---|---|",
+]
+for row in rows:
+    before_sha = (row["before"].get("sha256") or "n/a")
+    after_sha = (row["after"].get("sha256") or "n/a")
+    lines.append(
+        f"| `{row['id']}` | `{row['path']}` | `{row['changeType']}` | "
+        f"`{row['before']['exists']}` | `{row['after']['exists']}` | "
+        f"`{before_sha[:12] if before_sha != 'n/a' else 'n/a'}` | "
+        f"`{after_sha[:12] if after_sha != 'n/a' else 'n/a'}` |"
+    )
+
+output_md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
 }
 
@@ -1707,6 +1844,19 @@ else
 fi
 
 if [[ "$ONBOARDING_MODE" == "interactive" ]]; then
+  ui_section "OpenClaw Config Reconciliation"
+  render_openclaw_config_reconciliation_preview
+  if [[ "$(prompt_yes_no "Approve OpenClaw config reconciliation plan?" "y")" != "y" ]]; then
+    ONBOARDING_APPROVAL="declined"
+    ONBOARDING_ABORT_REASON="operator declined OpenClaw config reconciliation confirmation"
+    write_onboarding_transcript "cancelled" "cancelled after reviewing OpenClaw config reconciliation plan"
+    echo "Onboarding transcript:"
+    echo "  - $ONBOARDING_TRANSCRIPT_FILE"
+    echo "Install cancelled before applying changes."
+    echo "VENTUREOS_INSTALL_RESULT=CANCELLED"
+    exit 0
+  fi
+
   ui_section "Action Matrix Confirmation"
   if [[ "$(prompt_yes_no "Apply this action matrix now?" "y")" != "y" ]]; then
     ONBOARDING_APPROVAL="declined"
@@ -1948,6 +2098,8 @@ mkdir -p "$REPORT_DIR"
 timestamp_utc="$(date -u +%Y%m%dT%H%M%SZ)"
 report_file="$REPORT_DIR/ventureos-install-${timestamp_utc}.md"
 adoption_evidence_file="$REPORT_DIR/ventureos-install-adoption-${timestamp_utc}.json"
+reconciliation_evidence_json_file="$REPORT_DIR/ventureos-openclaw-config-reconciliation-${timestamp_utc}.json"
+reconciliation_evidence_md_file="$REPORT_DIR/ventureos-openclaw-config-reconciliation-${timestamp_utc}.md"
 
 if collect_install_target_fingerprints "$FINGERPRINT_AFTER_JSON"; then
   record_step "adoption-fingerprint-after" "pass" "captured post-apply fingerprints for integration targets" "Inspect installer adoption evidence json artifact"
@@ -1980,6 +2132,28 @@ else
   INSTALL_FAILED=1
 fi
 
+if generate_openclaw_config_reconciliation_artifacts \
+  "$reconciliation_evidence_json_file" \
+  "$reconciliation_evidence_md_file" \
+  "$rollback_command" \
+  "$RESTORE_POINT_DIR" \
+  "$adoption_status" \
+  "$adoption_mode"; then
+  reconciliation_changed_targets="$(python3 - "$reconciliation_evidence_json_file" <<'PY'
+import json
+import pathlib
+import sys
+
+payload = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(int(payload.get("changedTargets", 0)))
+PY
+)"
+  record_step "openclaw-config-reconciliation" "pass" "wrote OpenClaw config reconciliation evidence (changed_targets=$reconciliation_changed_targets)" "cat $reconciliation_evidence_md_file"
+else
+  record_step "openclaw-config-reconciliation" "fail" "unable to write OpenClaw config reconciliation evidence" "Check filesystem permissions for $REPORT_DIR and rerun installer"
+  INSTALL_FAILED=1
+fi
+
 onboarding_status="pass"
 if [[ "$INSTALL_FAILED" != "0" ]]; then
   onboarding_status="fail"
@@ -1993,7 +2167,7 @@ else
   INSTALL_FAILED=1
 fi
 
-python3 - "$SUMMARY_TSV" "$report_file" "$timestamp_utc" "$OS_NAME" "$DASHBOARD_PORT" "$PROFILE" "$dashboard_url" "$DRY_RUN" "$PREFLIGHT_ONLY" "$INSTALL_PRESET" "$VERIFY_POST_INSTALL" "$ADOPTION_PLAN_TSV" "$COMPATIBILITY_TSV" "$adoption_evidence_file" "$ONBOARDING_TRANSCRIPT_FILE" <<'PY'
+python3 - "$SUMMARY_TSV" "$report_file" "$timestamp_utc" "$OS_NAME" "$DASHBOARD_PORT" "$PROFILE" "$dashboard_url" "$DRY_RUN" "$PREFLIGHT_ONLY" "$INSTALL_PRESET" "$VERIFY_POST_INSTALL" "$ADOPTION_PLAN_TSV" "$COMPATIBILITY_TSV" "$adoption_evidence_file" "$ONBOARDING_TRANSCRIPT_FILE" "$reconciliation_evidence_json_file" "$reconciliation_evidence_md_file" <<'PY'
 import csv
 import json
 import pathlib
@@ -2014,6 +2188,8 @@ adoption_plan_path = pathlib.Path(sys.argv[12])
 compatibility_path = pathlib.Path(sys.argv[13])
 adoption_evidence_path = pathlib.Path(sys.argv[14])
 onboarding_transcript_path = pathlib.Path(sys.argv[15])
+reconciliation_json_path = pathlib.Path(sys.argv[16])
+reconciliation_md_path = pathlib.Path(sys.argv[17])
 
 rows = []
 with summary_tsv.open("r", encoding="utf-8") as fh:
@@ -2043,6 +2219,13 @@ if adoption_evidence_path.exists():
         adoption_evidence = json.loads(adoption_evidence_path.read_text(encoding="utf-8"))
     except Exception:
         adoption_evidence = {}
+
+reconciliation_evidence = {}
+if reconciliation_json_path.exists():
+    try:
+        reconciliation_evidence = json.loads(reconciliation_json_path.read_text(encoding="utf-8"))
+    except Exception:
+        reconciliation_evidence = {}
 
 pass_count = sum(1 for r in rows if r["status"] == "pass")
 fail_count = sum(1 for r in rows if r["status"] == "fail")
@@ -2145,6 +2328,38 @@ if isinstance(changed_targets, list) and changed_targets:
             f"`{before.get('kind', 'n/a')}` | `{after.get('kind', 'n/a')}` |"
         )
 
+reconciliation_targets = reconciliation_evidence.get("targets", []) if isinstance(reconciliation_evidence, dict) else []
+reconciliation_changed = reconciliation_evidence.get("changedTargets", 0) if isinstance(reconciliation_evidence, dict) else 0
+reconciliation_rollback = reconciliation_evidence.get("rollbackCommand", "n/a") if isinstance(reconciliation_evidence, dict) else "n/a"
+reconciliation_restore_point = reconciliation_evidence.get("restorePointDir", "n/a") if isinstance(reconciliation_evidence, dict) else "n/a"
+if not reconciliation_rollback:
+    reconciliation_rollback = "n/a"
+if not reconciliation_restore_point:
+    reconciliation_restore_point = "n/a"
+lines.extend([
+    "",
+    "## OpenClaw Config Reconciliation",
+    f"- Evidence JSON: `{reconciliation_json_path}`",
+    f"- Evidence Markdown: `{reconciliation_md_path}`",
+    f"- Changed targets: `{reconciliation_changed}`",
+    f"- Rollback command: `{reconciliation_rollback}`",
+    f"- Restore point directory: `{reconciliation_restore_point}`",
+])
+if isinstance(reconciliation_targets, list) and reconciliation_targets:
+    lines.append("")
+    lines.append("| Target | Path | Change Type | Before Exists | After Exists | Before Kind | After Kind |")
+    lines.append("|---|---|---|---|---|---|---|")
+    for row in reconciliation_targets:
+        if not isinstance(row, dict):
+            continue
+        before = row.get("before", {}) if isinstance(row.get("before"), dict) else {}
+        after = row.get("after", {}) if isinstance(row.get("after"), dict) else {}
+        lines.append(
+            f"| `{row.get('id', 'unknown')}` | `{row.get('path', 'n/a')}` | `{row.get('changeType', 'unknown')}` | "
+            f"`{before.get('exists', 'n/a')}` | `{after.get('exists', 'n/a')}` | "
+            f"`{before.get('kind', 'n/a')}` | `{after.get('kind', 'n/a')}` |"
+        )
+
 failed_rows = [row for row in rows if row["status"] == "fail"]
 if failed_rows:
     lines.extend([
@@ -2164,6 +2379,9 @@ echo "Install report written:"
 echo "  - $report_file"
 echo "Adoption evidence:"
 echo "  - $adoption_evidence_file"
+echo "OpenClaw reconciliation evidence:"
+echo "  - $reconciliation_evidence_json_file"
+echo "  - $reconciliation_evidence_md_file"
 if [[ -n "$ONBOARDING_TRANSCRIPT_FILE" ]]; then
   echo "Onboarding transcript:"
   echo "  - $ONBOARDING_TRANSCRIPT_FILE"
