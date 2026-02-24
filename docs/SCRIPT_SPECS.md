@@ -922,6 +922,51 @@ bash scripts/tests/test-post-merge-queue-snapshot.sh
 
 ---
 
+## 20d) post-merge-cadence.sh
+**Purpose:** Run both post-merge automation triggers in one command (preflight trigger + queue snapshot) and emit a combined cadence summary artifact.
+
+**Usage:**
+```bash
+bash scripts/post-merge-cadence.sh
+```
+
+Stop immediately when preflight trigger fails:
+```bash
+bash scripts/post-merge-cadence.sh --stop-on-failure
+```
+
+Custom summary + queue output paths:
+```bash
+bash scripts/post-merge-cadence.sh \
+  --report-dir runtime/reports/post-merge-cadence \
+  --queue-json runtime/reports/pr-queue/queue-latest.json
+```
+
+**Behavior:**
+- Executes, in order:
+  - `scripts/post-merge-preflight-trigger.sh`
+  - `scripts/post-merge-queue-snapshot.sh`
+- Default policy continues to queue snapshot even if preflight trigger fails (so queue evidence is still refreshed).
+- Optional `--stop-on-failure` skips queue trigger when preflight trigger fails.
+- Writes cadence summary artifacts:
+  - `runtime/reports/post-merge-cadence/post-merge-cadence-<timestamp>.json`
+  - `runtime/reports/post-merge-cadence/post-merge-cadence-<timestamp>.md`
+  - rolling latest aliases:
+    - `post-merge-cadence-latest.json`
+    - `post-merge-cadence-latest.md`
+- Emits machine-readable markers:
+  - `POST_MERGE_CADENCE_STATUS=PASS|FAIL`
+  - `POST_MERGE_CADENCE_JSON=<path>`
+  - `POST_MERGE_CADENCE_MD=<path>`
+  - `POST_MERGE_CADENCE_EXIT_CODE=<rc>`
+
+**Regression test:**
+```bash
+bash scripts/tests/test-post-merge-cadence.sh
+```
+
+---
+
 ## 21) roadmap-status-sync.py
 **Purpose:** Detect status drift between `README.md` active work and roadmap anchor issue `#138`.
 
