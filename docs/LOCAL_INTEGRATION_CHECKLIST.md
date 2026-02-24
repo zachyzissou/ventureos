@@ -42,6 +42,25 @@ Cadence checklist:
 - [ ] Installer report + adoption evidence paths included in evidence bundle
 - [ ] Readiness status JSON reference present in evidence bundle
 
+## PR Queue Execution Cadence (Issue #504)
+
+Queue status command (single-command health snapshot):
+
+```bash
+bash scripts/pr-queue-sweep.sh --json-out runtime/reports/pr-queue/queue-latest.json
+```
+
+Optional merge execution (with automatic readiness evidence capture):
+
+```bash
+bash scripts/pr-queue-sweep.sh --merge-approved --report-dir runtime/reports/pr-queue
+```
+
+Queue cadence checklist:
+- [ ] Queue status JSON captured after approvals land
+- [ ] Merge mode output linked when merges are executed
+- [ ] Candidate PRs have readiness + required-check evidence artifacts before merge
+
 ## Latest Result
 
 - Date (UTC): `2026-02-23`
