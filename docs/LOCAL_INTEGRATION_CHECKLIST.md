@@ -34,6 +34,12 @@ Then refresh this checklist from latest evidence:
 bash scripts/refresh-local-integration-checklist.sh
 ```
 
+Single-command cadence alternative:
+
+```bash
+bash scripts/run-local-integration-cadence.sh -- --openclaw-dir "$HOME/.openclaw" --bridge-env "$PWD/config/bridge.env"
+```
+
 Required artifacts for issue/PR evidence:
 - `runtime/reports/ventureos-install/ventureos-install-preflight-<timestamp>.log`
 - `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-<timestamp>.json`
@@ -51,7 +57,7 @@ Cadence checklist:
 ## Latest Preflight Evidence Result (Issue #520)
 
 - Date (UTC): `2026-02-24`
-- Generated: `2026-02-24T20:55:20Z`
+- Generated: `2026-02-24T21:41:27Z`
 - Install result marker: `PREFLIGHT`
 - Preflight evidence status: `PASS`
 - Command:
@@ -60,12 +66,12 @@ Cadence checklist:
 Evidence artifacts:
 - `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-latest.json`
 - `runtime/reports/ventureos-install/ventureos-install-preflight-evidence-latest.md`
-- `runtime/reports/ventureos-install/ventureos-install-preflight-20260224T205519Z.log`
-- `runtime/reports/ventureos-install/ventureos-install-20260224T205520Z.md`
-- `runtime/reports/ventureos-install/ventureos-install-adoption-20260224T205520Z.json`
-- `runtime/reports/ventureos-install/ventureos-onboarding-20260224T205520Z.md`
+- `runtime/reports/ventureos-install/ventureos-install-preflight-20260224T214126Z.log`
+- `runtime/reports/ventureos-install/ventureos-install-20260224T214127Z.md`
+- `runtime/reports/ventureos-install/ventureos-install-adoption-20260224T214127Z.json`
+- `runtime/reports/ventureos-install/ventureos-onboarding-20260224T214127Z.md`
 - `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
-- Restore point: `runtime/backups/ventureos-install/20260224T205520Z-70533/restore-point.json`
+- Restore point: `runtime/backups/ventureos-install/20260224T214127Z-93713/restore-point.json`
 
 ## PR Queue Execution Cadence (Issue #504)
 
@@ -79,6 +85,12 @@ Refresh checklist after queue snapshot:
 
 ```bash
 bash scripts/refresh-local-integration-checklist.sh
+```
+
+Or run the unified cadence sweep (preflight + queue + checklist):
+
+```bash
+bash scripts/run-local-integration-cadence.sh -- --openclaw-dir "$HOME/.openclaw" --bridge-env "$PWD/config/bridge.env"
 ```
 
 Optional merge execution (with automatic readiness evidence capture):
@@ -145,4 +157,5 @@ bash scripts/ventureos-install.sh --non-interactive --revert <restore-point-dir>
 - Preflight cadence issue: `#520`
 - Queue cadence issue: `#522`
 - Checklist refresh automation issue: `#526`
+- Unified cadence automation issue: `#528`
 - Related PR: `#491`
