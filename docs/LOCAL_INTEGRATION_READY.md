@@ -5,9 +5,9 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 
 ## Mission Control Card
 - Verdict: `GO`
-- Readiness score: `90`
+- Readiness score: `97`
 - Confidence: `high`
-- Profile: `quick`
+- Profile: `full`
 - Dashboard URL: `http://127.0.0.1:18789/`
 - Token source: `token-file`
 - Token health: `ok`
@@ -17,9 +17,9 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - Warnings: `0`
 
 ## Latest Evidence Artifacts
-- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T201555Z.json`
-- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T201555Z.md`
-- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T201555Z.svg`
+- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T224522Z.json`
+- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T224522Z.md`
+- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T224522Z.svg`
 - Status summary JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - Status summary Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
 
@@ -40,13 +40,13 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 ## Trend (Last 7 Runs)
 | Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |
 |---|---|---:|---:|---:|---|
-| `20260224T061509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
-| `20260224T101509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T141509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T181509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T193634Z` | `BLOCKED` | 30 | 1 | 0 | `skipped` |
 | `20260224T194228Z` | `BLOCKED` | 30 | 1 | 0 | `skipped` |
 | `20260224T201555Z` | `GO` | 90 | 0 | 0 | `skipped` |
+| `20260224T221519Z` | `GO` | 97 | 0 | 0 | `pass` |
+| `20260224T224522Z` | `GO` | 97 | 0 | 0 | `pass` |
 
 ## Required Checks
 - [x] `openclaw-cli` — `pass` group=`core` severity=`critical` (openclaw CLI found)
@@ -60,12 +60,12 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - [x] `dashboard-live-telemetry-sse` — `pass` group=`realtime` severity=`critical` (openclaw gateway probe connect target ok)
 
 ## Optional Checks
-- [-] `dashboard-map-route` — `skipped` group=`apis` severity=`info` (skipped by profile/flag)
-- [-] `bridge-scheduler-jobs` — `skipped` group=`bridge` severity=`warn` (skipped by profile/flag)
+- [-] `dashboard-map-route` — `skipped` group=`apis` severity=`info` (skipped for openclaw control surface)
+- [x] `bridge-scheduler-jobs` — `pass` group=`bridge` severity=`warn` (bridge scheduler endpoint reachable)
 
 ## Bridge Token Setup Note
 - Direct bridge checks support `--bridge-token-file`, `BRIDGE_TOKEN`, `BRIDGE_TOKEN_FILE`, or default `OPENCLAW_DIR/bridge/bridge-token`.
-- Latest bridge check: `skipped: skipped by profile/flag`
+- Latest bridge check: `pass: bridge scheduler endpoint reachable`
 
 ## Current Next Steps
 1. Install or refresh managed cron entries: `bash scripts/install-cron.sh --force`
