@@ -837,7 +837,7 @@ write_onboarding_transcript() {
     adoption_ref="$adoption_evidence_file"
   fi
 
-  python3 - "$ONBOARDING_TRANSCRIPT_FILE" "$final_status" "$ONBOARDING_MODE" "$ONBOARDING_APPROVAL" "$ONBOARDING_ABORT_REASON" "$notes" "$OS_NAME" "$INSTALL_PRESET" "$DASHBOARD_PORT" "$dashboard_url" "$PROFILE" "$SKIP_DASHBOARD_INSTALL" "$SKIP_BRIDGE_LAUNCHAGENT" "$SKIP_CRON_INSTALL" "$SKIP_READINESS" "$VERIFY_POST_INSTALL" "$CAPTURE_RESTORE_POINT" "$DRY_RUN" "$RESTORE_POINT_DIR" "$RESTORE_POINT_VALIDATED" "$rollback_command" "$DISCOVER_OPENCLAW_STATE" "$DISCOVER_BRIDGE_ENV_STATE" "$DISCOVER_BRIDGE_LAUNCHAGENT_STATE" "$DISCOVER_DASHBOARD_STATE" "$DISCOVER_CRON_STATE" "$DISCOVER_VENTURE_CRON_STATE" "$ADOPTION_PLAN_TSV" "$report_ref" "$adoption_ref" <<'PY'
+  python3 - "$ONBOARDING_TRANSCRIPT_FILE" "$final_status" "$ONBOARDING_MODE" "$ONBOARDING_APPROVAL" "$ONBOARDING_ABORT_REASON" "$notes" "$OS_NAME" "$INSTALL_PRESET" "$DASHBOARD_PORT" "$dashboard_url" "$PROFILE" "$SKIP_DASHBOARD_INSTALL" "$SKIP_BRIDGE_LAUNCHAGENT" "$SKIP_CRON_INSTALL" "$SKIP_READINESS" "$VERIFY_POST_INSTALL" "$CAPTURE_RESTORE_POINT" "$DRY_RUN" "$PREFLIGHT_ONLY" "$NO_ANIMATION" "$RESTORE_POINT_DIR" "$RESTORE_POINT_VALIDATED" "$rollback_command" "$DISCOVER_OPENCLAW_STATE" "$DISCOVER_BRIDGE_ENV_STATE" "$DISCOVER_BRIDGE_LAUNCHAGENT_STATE" "$DISCOVER_DASHBOARD_STATE" "$DISCOVER_CRON_STATE" "$DISCOVER_VENTURE_CRON_STATE" "$ADOPTION_PLAN_TSV" "$report_ref" "$adoption_ref" <<'PY'
 import csv
 import pathlib
 import sys
@@ -861,18 +861,20 @@ skip_readiness = sys.argv[15] == "1"
 verify_enabled = sys.argv[16] == "1"
 restore_capture = sys.argv[17] == "1"
 dry_run = sys.argv[18] == "1"
-restore_point_dir = sys.argv[19] or "n/a"
-restore_validated = sys.argv[20] == "1"
-rollback_command = sys.argv[21]
-discover_openclaw = sys.argv[22]
-discover_bridge_env = sys.argv[23]
-discover_bridge_launchagent = sys.argv[24]
-discover_dashboard = sys.argv[25]
-discover_cron = sys.argv[26]
-discover_venture_cron = sys.argv[27]
-adoption_plan_tsv = pathlib.Path(sys.argv[28])
-report_ref = sys.argv[29]
-adoption_ref = sys.argv[30]
+preflight_only = sys.argv[19] == "1"
+no_animation = sys.argv[20] == "1"
+restore_point_dir = sys.argv[21] or "n/a"
+restore_validated = sys.argv[22] == "1"
+rollback_command = sys.argv[23]
+discover_openclaw = sys.argv[24]
+discover_bridge_env = sys.argv[25]
+discover_bridge_launchagent = sys.argv[26]
+discover_dashboard = sys.argv[27]
+discover_cron = sys.argv[28]
+discover_venture_cron = sys.argv[29]
+adoption_plan_tsv = pathlib.Path(sys.argv[30])
+report_ref = sys.argv[31]
+adoption_ref = sys.argv[32]
 
 plan_rows = []
 if adoption_plan_tsv.exists():
@@ -914,7 +916,8 @@ lines = [
     f"- Cron install: `{'skip' if skip_cron else 'run'}`",
     f"- Readiness refresh: `{'skip' if skip_readiness else 'run'}`",
     f"- Post-install verify: `{'enabled' if verify_enabled else 'disabled'}`",
-    f"- Mode: `{'dry-run' if dry_run else 'execute'}`",
+    f"- Execution mode: `{'dry-run' if dry_run else ('preflight' if preflight_only else 'execute')}`",
+    f"- Animation: `{'disabled' if no_animation else 'enabled'}`",
     f"- Restore point capture: `{'enabled' if restore_capture else 'disabled'}`",
     f"- Restore point validated: `{'yes' if restore_validated else 'no'}`",
     f"- Restore point directory: `{restore_point_dir}`",
