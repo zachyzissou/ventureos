@@ -37,6 +37,12 @@ bash scripts/post-merge-preflight-trigger.sh \
   -- --openclaw-dir "$HOME/.openclaw" --bridge-env "$PWD/config/bridge.env"
 ```
 
+Combined post-merge cadence command (preflight trigger + queue snapshot trigger):
+
+```bash
+bash scripts/post-merge-cadence.sh
+```
+
 Then refresh this checklist from latest evidence:
 
 ```bash
@@ -176,4 +182,5 @@ bash scripts/ventureos-install.sh --non-interactive --revert <restore-point-dir>
 - Cron integration issue: `#530`
 - Post-merge trigger automation issue: `#532`
 - Post-merge queue snapshot issue: `#534`
+- Unified post-merge cadence issue: `#536`
 - Related PR: `#491`
