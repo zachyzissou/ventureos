@@ -967,6 +967,47 @@ bash scripts/tests/test-post-merge-cadence.sh
 
 ---
 
+## 20e) install-post-merge-hook.sh
+**Purpose:** Install or remove an opt-in, local git `post-merge` hook that runs `post-merge-cadence.sh` automatically after merge/pull.
+
+**Usage:**
+```bash
+bash scripts/install-post-merge-hook.sh
+```
+
+Status:
+```bash
+bash scripts/install-post-merge-hook.sh --status
+```
+
+Uninstall/disable:
+```bash
+bash scripts/install-post-merge-hook.sh --uninstall
+```
+
+**Behavior:**
+- Installs a managed hook at `.git/hooks/post-merge` for the current clone.
+- Hook behavior:
+  - invokes `scripts/post-merge-cadence.sh --base-ref HEAD~1 --head-ref HEAD`
+  - writes hook execution logs under `runtime/logs/git-hooks/`
+  - is non-blocking (hook always exits `0`, even if cadence runner fails)
+- Safety guardrails:
+  - refuses to replace unmanaged existing hook unless `--force` is provided
+  - when `--force` is used, creates backup `post-merge.pre-ventureos.<timestamp>.bak`
+  - `--dry-run` prints intended action without mutating hook files
+- Supports explicit path overrides for automation/testing:
+  - `--repo-root`
+  - `--hook-path`
+  - `--runner-script`
+  - `--log-dir`
+
+**Regression test:**
+```bash
+bash scripts/tests/test-install-post-merge-hook.sh
+```
+
+---
+
 ## 21) roadmap-status-sync.py
 **Purpose:** Detect status drift between `README.md` active work and roadmap anchor issue `#138`.
 

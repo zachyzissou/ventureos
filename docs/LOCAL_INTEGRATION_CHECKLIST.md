@@ -43,6 +43,12 @@ Combined post-merge cadence command (preflight trigger + queue snapshot trigger)
 bash scripts/post-merge-cadence.sh
 ```
 
+Optional auto-run on local merges/pulls (installs git post-merge hook):
+
+```bash
+bash scripts/install-post-merge-hook.sh
+```
+
 Then refresh this checklist from latest evidence:
 
 ```bash
@@ -183,4 +189,5 @@ bash scripts/ventureos-install.sh --non-interactive --revert <restore-point-dir>
 - Post-merge trigger automation issue: `#532`
 - Post-merge queue snapshot issue: `#534`
 - Unified post-merge cadence issue: `#536`
+- Post-merge hook automation issue: `#539`
 - Related PR: `#491`
