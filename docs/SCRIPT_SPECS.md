@@ -607,6 +607,11 @@ Dry-run merge simulation:
 bash scripts/pr-queue-sweep.sh --merge-approved --dry-run
 ```
 
+Queue status report output:
+```bash
+bash scripts/pr-queue-sweep.sh --json-out runtime/reports/pr-queue/queue-latest.json
+```
+
 **Behavior:**
 - Reads open PRs from `gh pr list` and classifies each as:
   - `draft`
@@ -614,9 +619,21 @@ bash scripts/pr-queue-sweep.sh --merge-approved --dry-run
   - `approved-merge-ready`
   - `approved-blocked`
 - Prints queue summary + per-PR rows.
+- Emits machine-readable status marker:
+  - `PR_QUEUE_STATUS=empty|quiet|review-needed|blocked|merge-ready`
 - Optionally writes JSON report with `--json-out <path>`.
-- Optional merge mode (`--merge-approved`) merges only `approved-merge-ready` PRs.
+- Supports `--report-dir <path>` to store merge-evidence artifacts.
+- Optional merge mode (`--merge-approved`) now:
+  - captures readiness evidence for each merge candidate via:
+    - `scripts/pr-merge-readiness.sh --json-out ...`
+    - `scripts/required-check-contexts.sh --json-out ...`
+  - skips candidates with non-ready evidence status
+  - merges only candidates with both checks ready/aligned
+  - emits `PR_QUEUE_MERGE_EXECUTION_STATUS=ready-executed|blocked|no-candidates`
 - Supports deterministic fixture mode for tests via `PR_QUEUE_FIXTURE_JSON`.
+  - Readiness/required-check scripts can be overridden for tests via:
+    - `PR_QUEUE_READINESS_SCRIPT`
+    - `PR_QUEUE_REQUIRED_CHECKS_SCRIPT`
 
 **Regression test:**
 ```bash

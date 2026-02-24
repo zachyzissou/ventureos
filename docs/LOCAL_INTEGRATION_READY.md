@@ -1,6 +1,6 @@
 # Local Integration Ready Checklist
 
-Date: 2026-02-23 (UTC)
+Date: 2026-02-24 (UTC)
 Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 
 ## Mission Control Card
@@ -17,9 +17,9 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - Warnings: `2`
 
 ## Latest Evidence Artifacts
-- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T221510Z.json`
-- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T221510Z.md`
-- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260223T221510Z.svg`
+- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T181509Z.json`
+- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T181509Z.md`
+- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T181509Z.svg`
 - Status summary JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - Status summary Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
 
@@ -42,13 +42,13 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 ## Trend (Last 7 Runs)
 | Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |
 |---|---|---:|---:|---:|---|
-| `20260223T064406Z` | `GO` | 100 | 0 | 0 | `pass` |
-| `20260223T065224Z` | `GO` | 100 | 0 | 0 | `pass` |
-| `20260223T070058Z` | `GO` | 100 | 0 | 0 | `pass` |
-| `20260223T101512Z` | `GO` | 100 | 0 | 0 | `pass` |
-| `20260223T141510Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260223T181511Z` | `GO` | 100 | 0 | 0 | `pass` |
 | `20260223T221510Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
+| `20260224T021511Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
+| `20260224T061509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
+| `20260224T101509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
+| `20260224T141509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
+| `20260224T181509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 
 ## Required Checks
 - [x] `openclaw-cli` — `pass` group=`core` severity=`critical` (openclaw CLI found)
@@ -75,6 +75,7 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 3. Resolve required check failures before relying on automated readiness cadence.
 4. If bridge coverage is expected, configure bridge token and rerun bridge profile: `export BRIDGE_TOKEN_FILE=~/.openclaw/bridge/bridge-token && bash scripts/openclaw-local-smoke.sh --profile bridge`
 5. Confirm Mission Control shows the latest readiness payload from `/api/openclaw-local-readiness`.
+6. Capture PR queue status before merge windows: `bash scripts/pr-queue-sweep.sh --json-out runtime/reports/pr-queue/queue-latest.json`
 
 ## Refresh Command
 ```bash
