@@ -1905,6 +1905,19 @@ else
 fi
 
 if [[ "$ONBOARDING_MODE" == "interactive" ]]; then
+  execution_mode="apply"
+  if [[ "$DRY_RUN" == "1" ]]; then
+    execution_mode="dry-run"
+  elif [[ "$PREFLIGHT_ONLY" == "1" ]]; then
+    execution_mode="preflight-only"
+  fi
+  ui_section "Safety posture"
+  echo "  execution mode: $execution_mode"
+  echo "  restore point: $([[ "$CAPTURE_RESTORE_POINT" == "1" ]] && echo enabled || echo disabled)"
+  echo "  post-install verify: $([[ "$VERIFY_POST_INSTALL" == "1" ]] && echo enabled || echo disabled)"
+  echo "  animation: $([[ "$NO_ANIMATION" == "1" ]] && echo disabled || echo enabled)"
+  echo "  approval gates: OpenClaw config reconciliation + action matrix confirmation"
+
   ui_section "OpenClaw Config Reconciliation"
   render_openclaw_config_reconciliation_preview
   if [[ "$(prompt_yes_no "Approve OpenClaw config reconciliation plan?" "y")" != "y" ]]; then
