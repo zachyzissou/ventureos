@@ -259,10 +259,216 @@ DASHBOARD_TOKEN_SOURCE="unknown"
 DASHBOARD_TOKEN_HEALTH="unknown"
 DASHBOARD_TOKEN_REPAIR_ACTION="none"
 DASHBOARD_TOKEN_FILE_STATE="unchecked"
+DASHBOARD_SURFACE="legacy-api"
+OPENCLAW_DASHBOARD_URL_CLI=""
+OPENCLAW_GATEWAY_HEALTH_JSON=""
+OPENCLAW_GATEWAY_PROBE_JSON=""
+OPENCLAW_CRON_LIST_JSON=""
 
 token_guardrail_log() {
   local message="$1"
   echo "[openclaw-token-guardrail] $message" >&2
+}
+
+url_origin() {
+  local value="$1"
+  python3 - "$value" <<'PY'
+import sys
+from urllib.parse import urlparse
+
+value = sys.argv[1]
+parsed = urlparse(value)
+if not parsed.scheme or not parsed.hostname:
+    print("")
+    raise SystemExit(0)
+port = parsed.port
+if port is None:
+    port = 443 if parsed.scheme == "https" else 80
+print(f"{parsed.scheme.lower()}://{parsed.hostname.lower()}:{port}")
+PY
+}
+
+same_url_origin() {
+  local left="$1"
+  local right="$2"
+  local left_origin right_origin
+  left_origin="$(url_origin "$left")"
+  right_origin="$(url_origin "$right")"
+  [[ -n "$left_origin" && -n "$right_origin" && "$left_origin" == "$right_origin" ]]
+}
+
+parse_dashboard_url_token_parts() {
+  local url="$1"
+  python3 - "$url" <<'PY'
+import sys
+from urllib.parse import urlparse
+
+url = sys.argv[1].strip()
+parsed = urlparse(url)
+base = f"{parsed.scheme}://{parsed.netloc}{parsed.path or '/'}"
+if not base.endswith('/'):
+    base = base + '/'
+token = ''
+fragment = parsed.fragment or ''
+if fragment.startswith('token='):
+    token = fragment.split('token=', 1)[1].split('&', 1)[0]
+elif '#token=' in url:
+    token = url.split('#token=', 1)[1].split('&', 1)[0]
+print(f"{base}\t{token}")
+PY
+}
+
+resolve_openclaw_dashboard_url_from_cli() {
+  if [[ -n "$OPENCLAW_DASHBOARD_URL_CLI" ]]; then
+    printf '%s\n' "$OPENCLAW_DASHBOARD_URL_CLI"
+    return 0
+  fi
+  if ! command -v openclaw >/dev/null 2>&1; then
+    CHECK_DETAIL="openclaw CLI not available for dashboard URL discovery"
+    return 1
+  fi
+  local output url
+  if ! output="$(openclaw dashboard --no-open 2>/dev/null)"; then
+    CHECK_DETAIL="openclaw dashboard --no-open failed"
+    return 1
+  fi
+  url="$(echo "$output" | awk -F'Dashboard URL: ' '/Dashboard URL: /{print $2; exit}')"
+  if [[ -z "$url" ]]; then
+    CHECK_DETAIL="openclaw dashboard URL was not found in CLI output"
+    return 1
+  fi
+  OPENCLAW_DASHBOARD_URL_CLI="$url"
+  printf '%s\n' "$OPENCLAW_DASHBOARD_URL_CLI"
+  return 0
+}
+
+try_dashboard_token_from_openclaw_dashboard_url() {
+  local dashboard_url_cli parsed base token
+  if ! dashboard_url_cli="$(resolve_openclaw_dashboard_url_from_cli)"; then
+    return 1
+  fi
+  if ! parsed="$(parse_dashboard_url_token_parts "$dashboard_url_cli")"; then
+    CHECK_DETAIL="failed to parse token from openclaw dashboard URL"
+    return 1
+  fi
+  IFS=$'\t' read -r base token <<< "$parsed"
+  if [[ -z "$token" ]]; then
+    CHECK_DETAIL="openclaw dashboard URL is missing #token fragment"
+    return 1
+  fi
+  if ! same_url_origin "$base" "$DASHBOARD_URL"; then
+    CHECK_DETAIL="openclaw dashboard URL origin mismatch for token source"
+    return 1
+  fi
+  DASHBOARD_TOKEN="$token"
+  DASHBOARD_TOKEN_SOURCE="openclaw-dashboard-url"
+  DASHBOARD_TOKEN_HEALTH="ok"
+  DASHBOARD_TOKEN_REPAIR_ACTION="none"
+  DASHBOARD_TOKEN_FILE_STATE="bypassed"
+  CHECK_DETAIL="dashboard token sourced from openclaw dashboard URL"
+  return 0
+}
+
+load_openclaw_gateway_health_json() {
+  if [[ -n "$OPENCLAW_GATEWAY_HEALTH_JSON" ]]; then
+    return 0
+  fi
+  if ! command -v openclaw >/dev/null 2>&1; then
+    CHECK_DETAIL="openclaw CLI not available for gateway health"
+    return 1
+  fi
+  local output
+  if ! output="$(openclaw gateway health --json 2>/dev/null)"; then
+    CHECK_DETAIL="openclaw gateway health command failed"
+    return 1
+  fi
+  if ! python3 - "$output" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+assert isinstance(payload, dict)
+assert 'ok' in payload
+PY
+  then
+    CHECK_DETAIL="invalid JSON from openclaw gateway health"
+    return 1
+  fi
+  OPENCLAW_GATEWAY_HEALTH_JSON="$output"
+  return 0
+}
+
+load_openclaw_gateway_probe_json() {
+  if [[ -n "$OPENCLAW_GATEWAY_PROBE_JSON" ]]; then
+    return 0
+  fi
+  if ! command -v openclaw >/dev/null 2>&1; then
+    CHECK_DETAIL="openclaw CLI not available for gateway probe"
+    return 1
+  fi
+  local output
+  if ! output="$(openclaw gateway probe --json 2>/dev/null)"; then
+    CHECK_DETAIL="openclaw gateway probe command failed"
+    return 1
+  fi
+  if ! python3 - "$output" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+assert isinstance(payload, dict)
+assert 'targets' in payload
+PY
+  then
+    CHECK_DETAIL="invalid JSON from openclaw gateway probe"
+    return 1
+  fi
+  OPENCLAW_GATEWAY_PROBE_JSON="$output"
+  return 0
+}
+
+load_openclaw_cron_list_json() {
+  if [[ -n "$OPENCLAW_CRON_LIST_JSON" ]]; then
+    return 0
+  fi
+  if ! command -v openclaw >/dev/null 2>&1; then
+    CHECK_DETAIL="openclaw CLI not available for cron list"
+    return 1
+  fi
+  local output
+  if ! output="$(openclaw cron list --json 2>/dev/null)"; then
+    CHECK_DETAIL="openclaw cron list command failed"
+    return 1
+  fi
+  if ! python3 - "$output" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+assert isinstance(payload, dict)
+assert isinstance(payload.get('jobs'), list)
+PY
+  then
+    CHECK_DETAIL="invalid JSON from openclaw cron list"
+    return 1
+  fi
+  OPENCLAW_CRON_LIST_JSON="$output"
+  return 0
+}
+
+response_is_openclaw_control_html() {
+  local body_file="$1"
+  local header_file="$2"
+  python3 - "$body_file" "$header_file" <<'PY'
+import pathlib
+import sys
+
+body = pathlib.Path(sys.argv[1]).read_text(encoding='utf-8', errors='ignore').lower()
+headers = pathlib.Path(sys.argv[2]).read_text(encoding='utf-8', errors='ignore').lower()
+looks_html = 'content-type:' in headers and 'text/html' in headers
+looks_control = '<openclaw-app' in body or 'openclaw control' in body
+print('yes' if looks_html and looks_control else 'no')
+PY
 }
 
 check_openclaw_cli() {
@@ -313,6 +519,9 @@ check_dashboard_token() {
     DASHBOARD_TOKEN_HEALTH="missing"
     DASHBOARD_TOKEN_FILE_STATE="missing"
     CHECK_DETAIL="dashboard token file not found"
+    if try_dashboard_token_from_openclaw_dashboard_url; then
+      return 0
+    fi
     return 1
   fi
 
@@ -370,6 +579,9 @@ PY
     DASHBOARD_TOKEN_FILE_STATE="$value_a"
     CHECK_DETAIL="dashboard token malformed: $value_b"
     token_guardrail_log "detected malformed token file ($value_a): $value_b"
+    if try_dashboard_token_from_openclaw_dashboard_url; then
+      return 0
+    fi
     return 1
   fi
 
@@ -390,6 +602,9 @@ PY
     DASHBOARD_TOKEN_REPAIR_ACTION="repair-write-failed"
     CHECK_DETAIL="dashboard token parsed but repair write failed"
     token_guardrail_log "token repair failed at $TOKEN_FILE (write failure)"
+    if try_dashboard_token_from_openclaw_dashboard_url; then
+      return 0
+    fi
     return 1
   fi
 
@@ -575,20 +790,64 @@ check_dashboard_health() {
     CHECK_DETAIL="$(dashboard_health_failure_detail "$HTTP_STATUS" "$HTTP_HEADER_FILE" "$HTTP_BODY_FILE")"
     return 1
   fi
-  if ! python3 - "$HTTP_BODY_FILE" <<'PY'
+  if ! python3 - "$HTTP_BODY_FILE" <<'PY' 2>/dev/null
 import json, sys
 body = json.load(open(sys.argv[1], 'r', encoding='utf-8'))
 assert body.get('ok') is True
 PY
   then
+    if [[ "$(response_is_openclaw_control_html "$HTTP_BODY_FILE" "$HTTP_HEADER_FILE")" == "yes" ]]; then
+      DASHBOARD_SURFACE="openclaw-control"
+      if ! load_openclaw_gateway_health_json; then
+        CHECK_DETAIL="openclaw control surface detected but gateway health command failed"
+        return 1
+      fi
+      if ! python3 - "$OPENCLAW_GATEWAY_HEALTH_JSON" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+assert payload.get('ok') is True
+PY
+      then
+        CHECK_DETAIL="openclaw control surface detected but gateway health was not ok"
+        return 1
+      fi
+      CHECK_DETAIL="openclaw control surface detected; gateway health ok via CLI"
+      return 0
+    fi
     CHECK_DETAIL="invalid /api/health payload"
     return 1
   fi
+  DASHBOARD_SURFACE="legacy-api"
   CHECK_DETAIL="health endpoint reachable"
   return 0
 }
 
 check_dashboard_config_auth() {
+  if [[ "$DASHBOARD_SURFACE" == "openclaw-control" ]]; then
+    local dashboard_url_cli parsed base token
+    if ! dashboard_url_cli="$(resolve_openclaw_dashboard_url_from_cli)"; then
+      CHECK_DETAIL="openclaw dashboard URL discovery failed"
+      return 1
+    fi
+    if ! parsed="$(parse_dashboard_url_token_parts "$dashboard_url_cli")"; then
+      CHECK_DETAIL="failed to parse openclaw dashboard URL token"
+      return 1
+    fi
+    IFS=$'\t' read -r base token <<< "$parsed"
+    if [[ -z "$token" ]]; then
+      CHECK_DETAIL="openclaw dashboard URL missing #token fragment"
+      return 1
+    fi
+    if ! same_url_origin "$base" "$DASHBOARD_URL"; then
+      CHECK_DETAIL="openclaw dashboard URL origin mismatch for auth token"
+      return 1
+    fi
+    CHECK_DETAIL="openclaw dashboard URL/token discovery ok"
+    return 0
+  fi
+
   if ! http_get "/api/config" "1"; then
     return 1
   fi
@@ -611,6 +870,26 @@ PY
 }
 
 check_dashboard_services() {
+  if [[ "$DASHBOARD_SURFACE" == "openclaw-control" ]]; then
+    if ! load_openclaw_gateway_health_json; then
+      return 1
+    fi
+    if ! python3 - "$OPENCLAW_GATEWAY_HEALTH_JSON" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+channels = payload.get('channels')
+assert isinstance(channels, dict)
+PY
+    then
+      CHECK_DETAIL="invalid openclaw gateway health channels payload"
+      return 1
+    fi
+    CHECK_DETAIL="openclaw gateway channels summary reachable via CLI"
+    return 0
+  fi
+
   if ! http_get "/api/services" "1"; then
     return 1
   fi
@@ -635,6 +914,25 @@ PY
 }
 
 check_dashboard_scheduler_jobs() {
+  if [[ "$DASHBOARD_SURFACE" == "openclaw-control" ]]; then
+    if ! load_openclaw_cron_list_json; then
+      return 1
+    fi
+    if ! python3 - "$OPENCLAW_CRON_LIST_JSON" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+assert isinstance(payload.get('jobs'), list)
+PY
+    then
+      CHECK_DETAIL="invalid openclaw cron list payload"
+      return 1
+    fi
+    CHECK_DETAIL="openclaw cron jobs list reachable via CLI"
+    return 0
+  fi
+
   if ! http_get "/api/scheduler-jobs" "1"; then
     return 1
   fi
@@ -656,6 +954,25 @@ PY
 }
 
 check_dashboard_agent_health() {
+  if [[ "$DASHBOARD_SURFACE" == "openclaw-control" ]]; then
+    if ! load_openclaw_gateway_health_json; then
+      return 1
+    fi
+    if ! python3 - "$OPENCLAW_GATEWAY_HEALTH_JSON" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+assert isinstance(payload.get('agents'), list)
+PY
+    then
+      CHECK_DETAIL="invalid openclaw gateway agent summary payload"
+      return 1
+    fi
+    CHECK_DETAIL="openclaw agent summary reachable via CLI"
+    return 0
+  fi
+
   if ! http_get "/api/agent-health" "1"; then
     return 1
   fi
@@ -689,6 +1006,27 @@ check_tactical_map_route() {
 }
 
 check_live_telemetry_handshake() {
+  if [[ "$DASHBOARD_SURFACE" == "openclaw-control" ]]; then
+    if ! load_openclaw_gateway_probe_json; then
+      return 1
+    fi
+    if ! python3 - "$OPENCLAW_GATEWAY_PROBE_JSON" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+targets = payload.get('targets')
+assert isinstance(targets, list)
+assert any(isinstance(t, dict) and isinstance(t.get('connect'), dict) and t['connect'].get('ok') is True for t in targets)
+PY
+    then
+      CHECK_DETAIL="openclaw gateway probe did not report a healthy connect target"
+      return 1
+    fi
+    CHECK_DETAIL="openclaw gateway probe connect target ok"
+    return 0
+  fi
+
   local url="${DASHBOARD_URL}/api/live-telemetry"
   local header_file body_file err_file status delay_sec
   local rc=0
@@ -890,6 +1228,8 @@ if [[ "$required_failures" -eq 0 ]]; then
 
     if [[ "$SKIP_MAP" == "1" ]]; then
       run_skipped "dashboard-map-route" "false" "Dashboard /map route is reachable" "skipped by profile/flag"
+    elif [[ "$DASHBOARD_SURFACE" == "openclaw-control" ]]; then
+      run_skipped "dashboard-map-route" "false" "Dashboard /map route is reachable" "skipped for openclaw control surface"
     else
       run_check "dashboard-map-route" "false" "Dashboard /map route is reachable" check_tactical_map_route
     fi
@@ -925,7 +1265,7 @@ REPORT_JSON="$REPORT_DIR/openclaw-local-smoke-${timestamp_utc}.json"
 REPORT_MD="$REPORT_DIR/openclaw-local-smoke-${timestamp_utc}.md"
 REPORT_SVG="$REPORT_DIR/openclaw-local-smoke-${timestamp_utc}.svg"
 
-python3 - "$RESULTS_TSV" "$REPORT_JSON" "$REPORT_MD" "$REPORT_SVG" "$SUMMARY_TSV" "$timestamp_utc" "$DASHBOARD_URL" "$required_failures" "$warnings" "$PROFILE" "$BRIDGE_CHECK_SEVERITY" "$DASHBOARD_TOKEN_SOURCE" "$DASHBOARD_TOKEN_HEALTH" "$DASHBOARD_TOKEN_REPAIR_ACTION" "$TOKEN_FILE" <<'PY'
+python3 - "$RESULTS_TSV" "$REPORT_JSON" "$REPORT_MD" "$REPORT_SVG" "$SUMMARY_TSV" "$timestamp_utc" "$DASHBOARD_URL" "$required_failures" "$warnings" "$PROFILE" "$BRIDGE_CHECK_SEVERITY" "$DASHBOARD_TOKEN_SOURCE" "$DASHBOARD_TOKEN_HEALTH" "$DASHBOARD_TOKEN_REPAIR_ACTION" "$DASHBOARD_SURFACE" "$TOKEN_FILE" <<'PY'
 import csv
 import json
 import pathlib
@@ -946,7 +1286,8 @@ bridge_severity = sys.argv[11]
 token_source = sys.argv[12]
 token_health = sys.argv[13]
 token_repair_action = sys.argv[14]
-token_file = sys.argv[15]
+dashboard_surface = sys.argv[15]
+token_file = sys.argv[16]
 
 check_meta = {
     'openclaw-cli': {
@@ -1062,6 +1403,15 @@ for check in checks:
     detail = str(check.get('detail', '')).lower()
     if check.get('status') != 'fail':
         continue
+    if check.get('id') == 'dashboard-token':
+        if 'origin mismatch' in detail:
+            check['likelyCause'] = 'Dashboard URL and OpenClaw tokenized control URL point to different origins.'
+            check['nextCommand'] = "openclaw dashboard --no-open"
+            continue
+        if 'missing #token fragment' in detail:
+            check['likelyCause'] = 'OpenClaw dashboard tokenized URL is unavailable for auth bootstrap.'
+            check['nextCommand'] = "openclaw dashboard --no-open"
+            continue
     if check.get('id') == 'dashboard-health':
         if 'non-dashboard target detected' in detail or 'possible non-dashboard target' in detail:
             check['likelyCause'] = 'Dashboard URL points to a different local service (port collision or stale URL).'
@@ -1069,6 +1419,15 @@ for check in checks:
                 "export OPENCLAW_LOCAL_READY_DASHBOARD_URL=http://127.0.0.1:<dashboard-port> && "
                 "bash scripts/openclaw-local-smoke.sh --profile quick"
             )
+            continue
+        if 'openclaw control surface detected' in detail:
+            check['likelyCause'] = 'OpenClaw Control surface was detected, but gateway health via CLI was not healthy.'
+            check['nextCommand'] = "openclaw gateway health --json"
+            continue
+    if check.get('id') == 'dashboard-live-telemetry-sse':
+        if 'gateway probe' in detail:
+            check['likelyCause'] = 'OpenClaw gateway probe could not find a healthy connect target.'
+            check['nextCommand'] = "openclaw gateway probe --json"
             continue
     if 'got 429' not in detail:
         continue
@@ -1127,6 +1486,7 @@ auth_payload = {
 report = {
     'generatedAt': generated_at,
     'dashboardUrl': dashboard_url,
+    'dashboardSurface': dashboard_surface,
     'auth': auth_payload,
     'summary': {
         'profile': profile,
@@ -1154,6 +1514,7 @@ lines = [
     f'- Generated: `{generated_at}`',
     f'- Profile: `{profile}`',
     f'- Dashboard URL: `{dashboard_url}`',
+    f'- Dashboard surface: `{dashboard_surface}`',
     f'- Token source: `{token_source}`',
     f'- Token health: `{token_health}`',
     f'- Token repair action: `{token_repair_action}`',

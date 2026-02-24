@@ -8,6 +8,7 @@ SERVER_PID=""
 BRIDGE_SERVER_PID=""
 RATE_LIMIT_SERVER_PID=""
 NON_DASHBOARD_SERVER_PID=""
+CONTROL_SURFACE_SERVER_PID=""
 
 cleanup() {
   if [[ -n "$SERVER_PID" ]]; then
@@ -25,6 +26,10 @@ cleanup() {
   if [[ -n "$NON_DASHBOARD_SERVER_PID" ]]; then
     kill "$NON_DASHBOARD_SERVER_PID" 2>/dev/null || true
     wait "$NON_DASHBOARD_SERVER_PID" 2>/dev/null || true
+  fi
+  if [[ -n "$CONTROL_SURFACE_SERVER_PID" ]]; then
+    kill "$CONTROL_SURFACE_SERVER_PID" 2>/dev/null || true
+    wait "$CONTROL_SURFACE_SERVER_PID" 2>/dev/null || true
   fi
   rm -rf "$TMP_DIR"
 }
@@ -59,6 +64,12 @@ cat > "$FAKE_OPENCLAW_BIN_DIR/openclaw" <<'SH'
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${1:-}" == "dashboard" ]]; then
+  echo "Dashboard URL: ${OPENCLAW_FAKE_DASHBOARD_URL:-http://127.0.0.1:18789/#token=fake-dashboard-token}"
+  echo "Browser launch disabled (--no-open). Use the URL above."
+  exit 0
+fi
+
 if [[ "${1:-}" == "gateway" && "${2:-}" == "status" ]]; then
   mode="${OPENCLAW_FAKE_STATUS_MODE:-healthy}"
   if [[ "$mode" == "healthy" ]]; then
@@ -74,6 +85,27 @@ OUT
 Service: LaunchAgent (not loaded)
 Runtime: unknown
 Service unit not found.
+OUT
+  exit 0
+fi
+
+if [[ "${1:-}" == "gateway" && "${2:-}" == "health" && "${3:-}" == "--json" ]]; then
+  cat <<'OUT'
+{"ok":true,"channels":{"discord":{"configured":true}},"agents":[{"agentId":"main"}]}
+OUT
+  exit 0
+fi
+
+if [[ "${1:-}" == "gateway" && "${2:-}" == "probe" && "${3:-}" == "--json" ]]; then
+  cat <<'OUT'
+{"ok":true,"targets":[{"id":"localLoopback","connect":{"ok":true}}]}
+OUT
+  exit 0
+fi
+
+if [[ "${1:-}" == "cron" && "${2:-}" == "list" && "${3:-}" == "--json" ]]; then
+  cat <<'OUT'
+{"jobs":[]}
 OUT
   exit 0
 fi
@@ -238,6 +270,15 @@ s.close()
 PY
 )"
 
+CONTROL_SURFACE_PORT="$(python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(('127.0.0.1', 0))
+print(s.getsockname()[1])
+s.close()
+PY
+)"
+
 cat > "$TMP_DIR/mock-non-dashboard.py" <<'PY'
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import sys
@@ -259,6 +300,32 @@ class Handler(BaseHTTPRequestHandler):
 HTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
 PY
 
+cat > "$TMP_DIR/mock-control-surface.py" <<'PY'
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import sys
+
+PORT = int(sys.argv[1])
+
+HTML = b"""<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>OpenClaw Control</title></head>
+<body><openclaw-app></openclaw-app></body>
+</html>"""
+
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass
+
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(HTML)))
+        self.end_headers()
+        self.wfile.write(HTML)
+
+HTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+PY
+
 python3 "$TMP_DIR/mock-dashboard.py" "$PORT" >/dev/null 2>&1 &
 SERVER_PID=$!
 python3 "$TMP_DIR/mock-bridge.py" "$BRIDGE_PORT" >/dev/null 2>&1 &
@@ -267,6 +334,8 @@ python3 "$TMP_DIR/mock-dashboard.py" "$RATE_LIMIT_PORT" "/api/services" >/dev/nu
 RATE_LIMIT_SERVER_PID=$!
 python3 "$TMP_DIR/mock-non-dashboard.py" "$NON_DASHBOARD_PORT" >/dev/null 2>&1 &
 NON_DASHBOARD_SERVER_PID=$!
+python3 "$TMP_DIR/mock-control-surface.py" "$CONTROL_SURFACE_PORT" >/dev/null 2>&1 &
+CONTROL_SURFACE_SERVER_PID=$!
 sleep 0.3
 
 REPORT_DIR_BASELINE="$TMP_DIR/reports-baseline"
@@ -516,6 +585,51 @@ assert health["status"] == "fail", health
 assert "non-dashboard target detected" in health.get("detail", "").lower(), health
 assert checks["dashboard-config-auth"]["status"] == "skipped", checks["dashboard-config-auth"]
 print("OPENCLAW_LOCAL_SMOKE_NON_DASHBOARD_DETECTION_OK")
+PY
+
+REPORT_DIR_CONTROL_SURFACE="$TMP_DIR/reports-control-surface"
+CONTROL_MISSING_TOKEN_FILE="$TMP_DIR/missing-control-token.txt"
+set +e
+env PATH="$FAKE_OPENCLAW_BIN_DIR:$PATH" OPENCLAW_FAKE_DASHBOARD_URL="http://127.0.0.1:$CONTROL_SURFACE_PORT/#token=fake-dashboard-token" bash "$SMOKE_SCRIPT" \
+  --dashboard-url "http://127.0.0.1:$CONTROL_SURFACE_PORT" \
+  --token-file "$CONTROL_MISSING_TOKEN_FILE" \
+  --report-dir "$REPORT_DIR_CONTROL_SURFACE" \
+  --profile full \
+  --skip-openclaw-cli \
+  --skip-bridge \
+  --timeout-sec 3 >/tmp/openclaw-local-smoke-test-control-surface.out
+CONTROL_SURFACE_RC=$?
+set -e
+
+if [[ "$CONTROL_SURFACE_RC" -ne 0 ]]; then
+  echo "Expected OpenClaw control-surface smoke run to pass, got $CONTROL_SURFACE_RC" >&2
+  cat /tmp/openclaw-local-smoke-test-control-surface.out >&2
+  exit 1
+fi
+
+python3 - "$REPORT_DIR_CONTROL_SURFACE" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+report_dir = Path(sys.argv[1])
+json_reports = sorted(report_dir.glob("openclaw-local-smoke-*.json"))
+assert json_reports, "missing control-surface json report"
+payload = json.loads(json_reports[-1].read_text())
+summary = payload.get("summary", {})
+assert summary.get("status") == "pass", summary
+assert payload.get("dashboardSurface") == "openclaw-control", payload
+auth = payload.get("auth", {})
+assert auth.get("tokenSource") == "openclaw-dashboard-url", auth
+checks = {c["id"]: c for c in payload.get("checks", [])}
+assert checks["dashboard-health"]["status"] == "pass", checks["dashboard-health"]
+assert checks["dashboard-config-auth"]["status"] == "pass", checks["dashboard-config-auth"]
+assert checks["dashboard-services"]["status"] == "pass", checks["dashboard-services"]
+assert checks["dashboard-scheduler-jobs"]["status"] == "pass", checks["dashboard-scheduler-jobs"]
+assert checks["dashboard-agent-health"]["status"] == "pass", checks["dashboard-agent-health"]
+assert checks["dashboard-live-telemetry-sse"]["status"] == "pass", checks["dashboard-live-telemetry-sse"]
+assert checks["dashboard-map-route"]["status"] == "skipped", checks["dashboard-map-route"]
+print("OPENCLAW_LOCAL_SMOKE_CONTROL_SURFACE_OK")
 PY
 
 REPORT_DIR_URL_POLICY="$TMP_DIR/reports-url-policy"
