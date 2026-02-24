@@ -994,6 +994,7 @@ bash scripts/install-post-merge-hook.sh --uninstall
 - Safety guardrails:
   - refuses to replace unmanaged existing hook unless `--force` is provided
   - when `--force` is used, creates backup `post-merge.pre-ventureos.<timestamp>.bak`
+  - on `--uninstall`, restores the backed-up unmanaged hook when backup metadata is available
   - `--dry-run` prints intended action without mutating hook files
 - Supports explicit path overrides for automation/testing:
   - `--repo-root`

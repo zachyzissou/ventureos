@@ -8,6 +8,7 @@ REPO_ROOT=""
 HOOK_PATH=""
 RUNNER_SCRIPT="$DEFAULT_REPO_ROOT/scripts/post-merge-cadence.sh"
 LOG_DIR="$DEFAULT_REPO_ROOT/runtime/logs/git-hooks"
+BACKUP_META_PATH=""
 
 STATUS_ONLY=0
 UNINSTALL=0
@@ -137,6 +138,7 @@ REPO_ROOT="$(resolve_repo_root)"
 HOOK_PATH="$(resolve_hook_path "$REPO_ROOT")"
 RUNNER_SCRIPT="$(resolve_path "$REPO_ROOT" "$RUNNER_SCRIPT")"
 LOG_DIR="$(resolve_path "$REPO_ROOT" "$LOG_DIR")"
+BACKUP_META_PATH="$HOOK_PATH.ventureos-backup"
 
 is_managed=0
 if [[ -f "$HOOK_PATH" ]] && grep -qF "$HOOK_MARKER_START" "$HOOK_PATH"; then
@@ -156,6 +158,9 @@ if [[ "$STATUS_ONLY" -eq 1 ]]; then
   echo "POST_MERGE_HOOK_PATH=$HOOK_PATH"
   echo "POST_MERGE_HOOK_RUNNER=$RUNNER_SCRIPT"
   echo "POST_MERGE_HOOK_LOG_DIR=$LOG_DIR"
+  if [[ -f "$BACKUP_META_PATH" ]]; then
+    echo "POST_MERGE_HOOK_BACKUP_META=$BACKUP_META_PATH"
+  fi
   exit 0
 fi
 
@@ -168,14 +173,37 @@ if [[ "$UNINSTALL" -eq 1 ]]; then
   fi
   if [[ "$DRY_RUN" -eq 1 ]]; then
     echo "DRY RUN: would remove managed hook at $HOOK_PATH"
+    restore_backup=""
+    if [[ -f "$BACKUP_META_PATH" ]]; then
+      restore_backup="$(cat "$BACKUP_META_PATH" 2>/dev/null || true)"
+    fi
+    if [[ -n "$restore_backup" ]]; then
+      echo "DRY RUN: would restore prior unmanaged hook from $restore_backup"
+    fi
     echo "POST_MERGE_HOOK_UNINSTALL=DRY_RUN"
     echo "POST_MERGE_HOOK_PATH=$HOOK_PATH"
     exit 0
   fi
-  rm -f "$HOOK_PATH"
+  restored_backup=""
+  if [[ -f "$BACKUP_META_PATH" ]]; then
+    restore_candidate="$(cat "$BACKUP_META_PATH" 2>/dev/null || true)"
+    if [[ -n "$restore_candidate" && -f "$restore_candidate" ]]; then
+      cp "$restore_candidate" "$HOOK_PATH"
+      chmod +x "$HOOK_PATH"
+      restored_backup="$restore_candidate"
+    else
+      rm -f "$HOOK_PATH"
+    fi
+    rm -f "$BACKUP_META_PATH"
+  else
+    rm -f "$HOOK_PATH"
+  fi
   echo "Removed managed VentureOS post-merge hook."
   echo "POST_MERGE_HOOK_UNINSTALL=PASS"
   echo "POST_MERGE_HOOK_PATH=$HOOK_PATH"
+  if [[ -n "$restored_backup" ]]; then
+    echo "POST_MERGE_HOOK_RESTORED_BACKUP=$restored_backup"
+  fi
   exit 0
 fi
 
@@ -244,6 +272,7 @@ fi
 mkdir -p "$(dirname "$HOOK_PATH")"
 if [[ -n "$backup_path" ]]; then
   cp "$HOOK_PATH" "$backup_path"
+  printf '%s\n' "$backup_path" > "$BACKUP_META_PATH"
 fi
 printf '%s\n' "$hook_body" > "$HOOK_PATH"
 chmod +x "$HOOK_PATH"
