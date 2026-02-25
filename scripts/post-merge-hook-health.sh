@@ -8,6 +8,7 @@ HOOK_STATUS_SCRIPT="${POST_MERGE_HOOK_HEALTH_STATUS_SCRIPT:-$REPO_ROOT/scripts/i
 CADENCE_JSON="${POST_MERGE_HOOK_HEALTH_CADENCE_JSON:-$REPO_ROOT/runtime/reports/post-merge-cadence/post-merge-cadence-latest.json}"
 HOOK_LOG_DIR="${POST_MERGE_HOOK_HEALTH_LOG_DIR:-$REPO_ROOT/runtime/logs/git-hooks}"
 MAX_AGE_MIN="${POST_MERGE_HOOK_HEALTH_MAX_AGE_MIN:-1440}"
+REFRESH_STALE_LOG="${POST_MERGE_HOOK_HEALTH_REFRESH_STALE_LOG:-0}"
 
 usage() {
   cat <<'EOF_USAGE'
@@ -21,6 +22,7 @@ Options:
   --cadence-json <path>   Cadence summary JSON path
   --log-dir <path>        Hook logs directory
   --max-age-min <n>       Freshness threshold in minutes (default: 1440)
+  --refresh-stale-log     Attempt one hook invocation when log evidence is stale/missing
   -h, --help              Show help
 
 Markers:
@@ -31,6 +33,9 @@ Markers:
   POST_MERGE_HOOK_CADENCE_AGE_SEC=<n|-1>
   POST_MERGE_HOOK_LOG=<path|n/a>
   POST_MERGE_HOOK_LOG_AGE_SEC=<n|-1>
+  POST_MERGE_HOOK_REFRESH_ATTEMPTED=0|1
+  POST_MERGE_HOOK_REFRESH_RESULT=skipped|pass|fail
+  POST_MERGE_HOOK_REFRESH_RC=<n|n/a>
 EOF_USAGE
 }
 
@@ -63,6 +68,10 @@ while [[ $# -gt 0 ]]; do
       MAX_AGE_MIN="$2"
       shift 2
       ;;
+    --refresh-stale-log)
+      REFRESH_STALE_LOG=1
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -77,6 +86,10 @@ done
 
 if ! [[ "$MAX_AGE_MIN" =~ ^[0-9]+$ ]]; then
   echo "Invalid --max-age-min: $MAX_AGE_MIN" >&2
+  exit 2
+fi
+if [[ "$REFRESH_STALE_LOG" != "0" && "$REFRESH_STALE_LOG" != "1" ]]; then
+  echo "Invalid refresh setting: $REFRESH_STALE_LOG (expected 0 or 1)" >&2
   exit 2
 fi
 if [[ ! -f "$HOOK_STATUS_SCRIPT" ]]; then
@@ -96,9 +109,24 @@ if [[ -z "$hook_status" ]]; then
   hook_status="unknown"
 fi
 
-latest_log="$(ls -1t "$HOOK_LOG_DIR"/post-merge-cadence-*.log 2>/dev/null | head -n 1 || true)"
+latest_log=""
+metrics_json=""
+cadence_exists="False"
+cadence_age_sec="-1"
+cadence_fresh="False"
+log_exists="False"
+log_age_sec="-1"
+log_fresh="False"
+refresh_attempted=0
+refresh_result="skipped"
+refresh_rc="n/a"
 
-metrics_json="$(python3 - "$CADENCE_JSON" "$latest_log" "$MAX_AGE_MIN" <<'PY'
+select_latest_log() {
+  latest_log="$(ls -1t "$HOOK_LOG_DIR"/post-merge-cadence-*.log 2>/dev/null | head -n 1 || true)"
+}
+
+load_metrics() {
+  metrics_json="$(python3 - "$CADENCE_JSON" "$latest_log" "$MAX_AGE_MIN" <<'PY'
 from __future__ import annotations
 
 import json
@@ -160,12 +188,35 @@ print(json.dumps({
 PY
 )"
 
-cadence_exists="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['cadenceExists'])" "$metrics_json")"
-cadence_age_sec="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['cadenceAgeSec'])" "$metrics_json")"
-cadence_fresh="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['cadenceFresh'])" "$metrics_json")"
-log_exists="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['logExists'])" "$metrics_json")"
-log_age_sec="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['logAgeSec'])" "$metrics_json")"
-log_fresh="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['logFresh'])" "$metrics_json")"
+  cadence_exists="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['cadenceExists'])" "$metrics_json")"
+  cadence_age_sec="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['cadenceAgeSec'])" "$metrics_json")"
+  cadence_fresh="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['cadenceFresh'])" "$metrics_json")"
+  log_exists="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['logExists'])" "$metrics_json")"
+  log_age_sec="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['logAgeSec'])" "$metrics_json")"
+  log_fresh="$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['logFresh'])" "$metrics_json")"
+}
+
+select_latest_log
+load_metrics
+
+if [[ "$hook_status" == "managed" && "$cadence_exists" == "True" && "$cadence_fresh" == "True" && "$REFRESH_STALE_LOG" == "1" && "$log_fresh" != "True" ]]; then
+  refresh_attempted=1
+  if [[ -n "${hook_path:-}" && -f "$hook_path" ]]; then
+    set +e
+    bash "$hook_path" >/dev/null 2>&1
+    refresh_rc=$?
+    set -e
+  else
+    refresh_rc=127
+  fi
+  if [[ "$refresh_rc" -eq 0 ]]; then
+    refresh_result="pass"
+  else
+    refresh_result="fail"
+  fi
+  select_latest_log
+  load_metrics
+fi
 
 health_reason="ok"
 health_rc=0
@@ -194,6 +245,9 @@ echo "  cadence_age_sec:  $cadence_age_sec"
 echo "  hook_log:         ${latest_log:-n/a}"
 echo "  hook_log_age_sec: $log_age_sec"
 echo "  max_age_min:      $MAX_AGE_MIN"
+echo "  refresh_attempted:$refresh_attempted"
+echo "  refresh_result:   $refresh_result"
+echo "  refresh_rc:       $refresh_rc"
 echo "  reason:           $health_reason"
 
 if [[ "$health_rc" -eq 0 ]]; then
@@ -208,5 +262,8 @@ echo "POST_MERGE_HOOK_CADENCE_JSON=$CADENCE_JSON"
 echo "POST_MERGE_HOOK_CADENCE_AGE_SEC=$cadence_age_sec"
 echo "POST_MERGE_HOOK_LOG=${latest_log:-n/a}"
 echo "POST_MERGE_HOOK_LOG_AGE_SEC=$log_age_sec"
+echo "POST_MERGE_HOOK_REFRESH_ATTEMPTED=$refresh_attempted"
+echo "POST_MERGE_HOOK_REFRESH_RESULT=$refresh_result"
+echo "POST_MERGE_HOOK_REFRESH_RC=$refresh_rc"
 
 exit "$health_rc"
