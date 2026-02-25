@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "generated_at": "YYYY-MM-DD",
+  "units": [
+    {
+      "id": "stantontimes-network",
+      "name": "StantonTimes Network",
+      "category": "media",
+      "owner_role": "Helmsman",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": true
+      },
+      "kpis": [
+        { "name": "posts_per_day", "target": "1-3" },
+        { "name": "approval_latency_minutes", "target": "<60" }
+      ],
+      "canonical_notes": [
+        "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2FTheStantonTimes%2FREADME"
+      ],
+      "channels": {
+        "alerts": "discord:slurpnet-alerts",
+        "approvals": "discord:stantontimes-approvals"
+      },
+      "repos": [],
+      "services": [],
+      "automations": [
+        { "kind": "cron", "name": "P0 Monitor" },
+        { "kind": "cron", "name": "Approval Check" }
+      ]
+    }
+  ]
+}

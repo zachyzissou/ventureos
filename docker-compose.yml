@@ -1,0 +1,87 @@
+# VentureOS Hybrid Deployment — Production Docker Compose
+# Issue #191: Execute hybrid deployment production cutover
+#
+# Architecture: Host-native OpenClaw + Bridge API ↔ Containerized Dashboard + DB
+# Usage: docker compose --env-file .env.hybrid up -d
+#
+# Prerequisites:
+#   1. Copy .env.hybrid.example → .env.hybrid and fill secrets
+#   2. Start Bridge API on host (see scripts/hybrid-cutover.sh)
+#   3. Docker Desktop running
+
+name: ventureos
+
+services:
+  # ── Postgres (persistent cache / history) ──────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: ventureos-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ventureos}
+      POSTGRES_USER: ${POSTGRES_USER:-ventureos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.hybrid}
+    volumes:
+      - ventureos-db:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ventureos} -d ${POSTGRES_DB:-ventureos}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    labels:
+      com.ventureos.stack: ventureos
+      com.ventureos.service: db
+      com.ventureos.tier: data
+      com.ventureos.env: local-hybrid
+    restart: unless-stopped
+
+  # ── Dashboard (UI + API + tactical map) ────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    image: ventureos-dashboard:hybrid
+    container_name: ventureos-dashboard
+    env_file:
+      - .env.hybrid
+    environment:
+      VENTUREOS_ROOT: /opt/ventureos
+      DASHBOARD_HOST: 0.0.0.0
+      DASHBOARD_PORT: ${DASHBOARD_PORT:-8001}
+      DASHBOARD_API_TOKEN: ${DASHBOARD_API_TOKEN:?Set DASHBOARD_API_TOKEN in .env.hybrid}
+      DASHBOARD_ALLOW_LAN_BYPASS: "false"
+      DASHBOARD_TRUST_PROXY: "false"
+      DASHBOARD_ENABLE_ACTIONS: "false"
+      OPENCLAW_LOCAL_READINESS_REPORT_DIR: /var/ventureos-host/runtime/reports/openclaw-local-smoke
+      # Hybrid mode: data sourced from host Bridge API
+      DASHBOARD_DATA_MODE: bridge
+      BRIDGE_URL: ${BRIDGE_URL:-http://host.docker.internal:18790}
+      BRIDGE_TOKEN: ${BRIDGE_TOKEN:?Set BRIDGE_TOKEN in .env.hybrid}
+      # Postgres (cache/history)
+      DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-ventureos}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ventureos}}
+    ports:
+      - "${DASHBOARD_PORT:-8001}:8001"
+    volumes:
+      - ./runtime/reports/openclaw-local-smoke:/var/ventureos-host/runtime/reports/openclaw-local-smoke:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:8001/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      com.ventureos.stack: ventureos
+      com.ventureos.service: dashboard
+      com.ventureos.tier: app
+      com.ventureos.env: local-hybrid
+    restart: unless-stopped
+
+volumes:
+  ventureos-db:

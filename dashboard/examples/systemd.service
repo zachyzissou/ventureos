@@ -1,0 +1,46 @@
+# OpenClaw Dashboard — systemd service unit
+# ==========================================
+# VentureOS monorepo deployment (replaces standalone openclaw-dashboard).
+#
+# Install:  dashboard/scripts/install.sh
+# Manual:   sudo cp dashboard/examples/systemd.service /etc/systemd/system/openclaw-dashboard.service
+#           sudo systemctl daemon-reload && sudo systemctl enable --now openclaw-dashboard
+#
+# __PLACEHOLDER__ tokens are replaced by install.sh at install time.
+
+[Unit]
+Description=OpenClaw Dashboard (VentureOS Monorepo)
+Documentation=https://github.com/zachyzissou/ventureos/tree/main/dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=__USER__
+Group=__GROUP__
+
+WorkingDirectory=__VENTUREOS_ROOT__/dashboard
+ExecStartPre=/bin/mkdir -p __VENTUREOS_ROOT__/dashboard/logs
+ExecStartPre=__NODE_PATH__ __VENTUREOS_ROOT__/node_modules/.bin/tsc -p __VENTUREOS_ROOT__/dashboard/tsconfig.json --outDir __VENTUREOS_ROOT__/dashboard/dist
+ExecStart=__NODE_PATH__ __VENTUREOS_ROOT__/dashboard/dist/dashboard/server/server.js
+
+Environment=NODE_ENV=production
+Environment=DASHBOARD_PORT=__DASHBOARD_PORT__
+Environment=DASHBOARD_HOST=0.0.0.0
+Environment=VENTUREOS_ROOT=__VENTUREOS_ROOT__
+Environment=OPENCLAW_DIR=__OPENCLAW_DIR__
+Environment=VENTUREOS_LOG_DIR=__VENTUREOS_ROOT__/dashboard/logs
+
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=__VENTUREOS_ROOT__/dashboard/dist __VENTUREOS_ROOT__/dashboard/data __VENTUREOS_ROOT__/dashboard/logs __OPENCLAW_DIR__
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,28 @@
+stages:
+  - test
+
+docs_lint:
+  stage: test
+  image: python:3.12-slim
+  script:
+    - python3 scripts/docs-lint.py
+
+shellcheck:
+  stage: test
+  image: koalaman/shellcheck:stable
+  script:
+    - shellcheck -x scripts/*.sh scripts/lib/*.sh scripts/tests/*.sh
+
+export_cron_logs_test:
+  stage: test
+  image: python:3.12-slim
+  script:
+    - bash scripts/tests/test-export-cron-logs.sh
+
+spawn_tests:
+  stage: test
+  image: node:20-slim
+  script:
+    - node --version
+    - bash scripts/tests/test-spawn-with-retry.sh
+    - bash scripts/tests/test-spawn-with-verification.sh

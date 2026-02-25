@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "generated_at": "2026-02-15",
+  "items": [
+    {
+      "id": "28b9f7b8-1c2c-4e7b-8a2e-3d0e1c88f9f1",
+      "createdAt": "2026-02-08T00:20:00Z",
+      "tier": "P2",
+      "status": "queued",
+      "title": "Draft Stanton Times content calendar",
+      "businessUnit": "stantontimes-network",
+      "missionType": "content",
+      "role": "Comms",
+      "missionContext": {
+        "businessUnit": "stantontimes-network",
+        "missionType": "content",
+        "role": "Comms"
+      },
+      "jobId": "cron-stantontimes-weekly",
+      "nextRunAt": "2026-02-08T14:00:00Z",
+      "attempts": 0,
+      "maxAttempts": 3,
+      "timeoutSeconds": 900,
+      "dedupeKey": "stanton-times:content:calendar:2026-w06",
+      "expectedArtifacts": [
+        "/obsidian/StantonTimes/2026/02/mission-brief.md",
+        "/obsidian/StantonTimes/2026/02/content-calendar.md",
+        "/obsidian/StantonTimes/2026/02/draft-batch-01.md"
+      ],
+      "requiresApproval": true,
+      "links": [
+        "/obsidian/StantonTimes/2026/02/approval-checklist.md",
+        "https://example.com/brand-guidelines"
+      ],
+      "notes": "Include 7 post ideas with sources; route to Sentinel + Verifier before publish.",
+      "command": ["bash", "-lc", "python scripts/generate_calendar.py --unit stanton-times --week 6"]
+    }
+  ]
+}

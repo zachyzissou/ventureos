@@ -1,0 +1,52 @@
+{
+  "health": {
+    "ok": true,
+    "service": "ventureos-dashboard",
+    "version": "1.0.0",
+    "uptime": 1823.4,
+    "timestamp": "2026-02-22T23:40:00.000Z",
+    "dataMode": "filesystem"
+  },
+  "services": [
+    {
+      "name": "openclaw",
+      "active": true
+    },
+    {
+      "name": "agent-dashboard",
+      "active": true
+    },
+    {
+      "name": "tailscaled",
+      "active": false
+    }
+  ],
+  "system": {
+    "cpu": {
+      "usage": 13.2,
+      "temp": null
+    },
+    "disk": {
+      "percent": 52.5,
+      "used": "241G",
+      "total": "500G"
+    },
+    "crashCount": 4,
+    "crashesToday": 0,
+    "memory": {
+      "total": 34359738368,
+      "used": 17179869184,
+      "free": 17179869184,
+      "percent": 50,
+      "totalGB": "32.0",
+      "usedGB": "16.0",
+      "freeGB": "16.0"
+    },
+    "loadAvg": {
+      "1m": "2.10",
+      "5m": "1.74",
+      "15m": "1.22"
+    },
+    "uptime": 90812
+  }
+}

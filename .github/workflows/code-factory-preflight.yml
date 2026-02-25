@@ -1,0 +1,249 @@
+name: Code Factory Preflight
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  preflight:
+    name: preflight
+    runs-on: ubuntu-latest
+    outputs:
+      risk_tier: ${{ steps.preflight.outputs.risk_tier }}
+      required_checks: ${{ steps.preflight.outputs.required_checks }}
+      ui_affecting: ${{ steps.preflight.outputs.ui_affecting }}
+      evidence_path: ${{ steps.preflight.outputs.evidence_path }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Collect changed files
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...${{ github.event.pull_request.head.sha }}" > /tmp/changed-files.txt
+          echo "Changed files:"
+          cat /tmp/changed-files.txt
+
+      - name: Run preflight risk analysis
+        id: preflight
+        run: |
+          node -r ts-node/register ./scripts/code-factory-preflight.ts \
+            --changed-files /tmp/changed-files.txt \
+            --pr "${{ github.event.pull_request.number }}" \
+            --sha "${{ github.event.pull_request.head.sha }}" \
+            --out /tmp/code-factory-preflight.json
+
+      - name: Upload preflight evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-factory-preflight
+          path: |
+            /tmp/changed-files.txt
+            /tmp/code-factory-preflight.json
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    needs: preflight
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate risk policy JSON contract
+        run: |
+          node -e "const fs=require('fs');const path='.github/code-factory/risk-policy.json';const parsed=JSON.parse(fs.readFileSync(path,'utf8'));if(!parsed.required_checks||!parsed.risk_tier_rules){throw new Error('Invalid risk policy contract');}console.log('Risk policy contract valid.');"
+
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    needs: preflight
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run -s build
+
+  sha-discipline:
+    name: sha-discipline
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: ${{ needs.preflight.outputs.risk_tier != 'low' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: code-factory-preflight
+          path: /tmp
+      - name: Verify evidence SHA
+        run: |
+          node -r ts-node/register ./scripts/code-factory-verify-evidence.ts \
+            --evidence /tmp/code-factory-preflight.json \
+            --sha "${{ github.event.pull_request.head.sha }}"
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: ${{ needs.preflight.outputs.risk_tier != 'low' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx jest lib/__tests__/code-factory.test.ts --runInBand
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: ${{ needs.preflight.outputs.risk_tier != 'low' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run -s build
+
+  auto-remediation:
+    name: auto-remediation
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: ${{ needs.preflight.outputs.risk_tier == 'high' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: code-factory-preflight
+          path: /tmp
+      - name: Run auto-remediation
+        run: |
+          node -r ts-node/register ./scripts/code-factory-auto-remediate.ts \
+            --workspace "${{ github.workspace }}" \
+            --changed-files /tmp/changed-files.txt \
+            --out /tmp/auto-remediation-summary.json \
+            --patch-out /tmp/auto-remediation.patch \
+            --min-fix-rate 60
+      - name: Upload auto-remediation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-factory-auto-remediation
+          path: |
+            /tmp/auto-remediation-summary.json
+            /tmp/auto-remediation.patch
+
+  review-agent:
+    name: review-agent
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: ${{ needs.preflight.outputs.risk_tier != 'low' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: code-factory-preflight
+          path: /tmp
+      - name: Summarize review findings after remediation
+        run: |
+          node -r ts-node/register -e "const fs=require('fs');const {collectSimpleReviewFindings}=require('./lib/code-factory');const files=fs.readFileSync('/tmp/changed-files.txt','utf8').split('\n').filter(Boolean);const findings=collectSimpleReviewFindings(files,process.cwd());console.log('post_remediation_findings='+findings.length);"
+
+  browser-evidence:
+    name: browser-evidence
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: ${{ needs.preflight.outputs.risk_tier == 'high' && needs.preflight.outputs.ui_affecting == 'true' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: code-factory-preflight
+          path: /tmp
+      - name: Build assertion manifest
+        run: |
+          node -e "const fs=require('fs');const files=fs.readFileSync('/tmp/changed-files.txt','utf8').split('\n').filter(Boolean);const ui=files.filter(f=>/(^dashboard\\/client\\/|^tactical-map\\/|\\.(html|css|tsx|jsx)$)/i.test(f));if(ui.length===0){throw new Error('ui_affecting true but no UI files found');}const manifest={generatedAt:new Date().toISOString(),assertions:ui.map(f=>({file:f,assert:'visual-and-functional-regression'}))};fs.writeFileSync('/tmp/browser-evidence-manifest.json',JSON.stringify(manifest,null,2));"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: code-factory-browser-evidence
+          path: /tmp/browser-evidence-manifest.json
+
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    needs:
+      - preflight
+      - lint
+      - typecheck
+      - sha-discipline
+      - test
+      - build
+      - auto-remediation
+      - review-agent
+      - browser-evidence
+    if: ${{ always() }}
+    steps:
+      - name: Enforce required checks by risk tier
+        env:
+          REQUIRED_CHECKS: ${{ needs.preflight.outputs.required_checks }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          TYPECHECK_RESULT: ${{ needs.typecheck.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          REVIEW_AGENT_RESULT: ${{ needs.review-agent.result }}
+          SHA_DISCIPLINE_RESULT: ${{ needs.sha-discipline.result }}
+          AUTO_REMEDIATION_RESULT: ${{ needs.auto-remediation.result }}
+          BROWSER_EVIDENCE_RESULT: ${{ needs.browser-evidence.result }}
+        run: |
+          echo "Required checks: ${REQUIRED_CHECKS}"
+          IFS=',' read -ra checks <<< "${REQUIRED_CHECKS}"
+          for check in "${checks[@]}"; do
+            case "$check" in
+              lint) result="${LINT_RESULT}" ;;
+              typecheck) result="${TYPECHECK_RESULT}" ;;
+              test) result="${TEST_RESULT}" ;;
+              build) result="${BUILD_RESULT}" ;;
+              review-agent) result="${REVIEW_AGENT_RESULT}" ;;
+              sha-discipline) result="${SHA_DISCIPLINE_RESULT}" ;;
+              auto-remediation) result="${AUTO_REMEDIATION_RESULT}" ;;
+              browser-evidence) result="${BROWSER_EVIDENCE_RESULT}" ;;
+              *)
+                echo "Unknown required check: ${check}"
+                exit 1
+                ;;
+            esac
+            if [[ "${result}" != "success" ]]; then
+              echo "Required check '${check}' is not successful (result=${result})"
+              exit 1
+            fi
+          done
+          echo "Code Factory gate passed."

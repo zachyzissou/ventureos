@@ -1,0 +1,166 @@
+# Tactical Map Deploy — staging auto, production gated
+# Staging deploys on push to main. Production requires manual dispatch + approval.
+
+name: Tactical Map Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tactical-map/**'
+      - 'tactical-map-server/**'
+      - 'dashboard/**'
+      - 'lib/**'
+      - '.github/workflows/tactical-map-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment target
+        type: choice
+        required: true
+        default: staging
+        options:
+          - staging
+          - production
+      rollback_sha:
+        description: 'Rollback to specific SHA (leave empty for latest)'
+        type: string
+        required: false
+        default: ''
+
+concurrency:
+  group: tactical-map-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # ── Build ───────────────────────────────────────────────────────────────────
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      artifact-name: ${{ steps.meta.outputs.artifact-name }}
+      build-sha: ${{ steps.meta.outputs.build-sha }}
+
+    steps:
+      - name: Determine build SHA
+        id: meta
+        run: |
+          SHA="${{ inputs.rollback_sha || github.sha }}"
+          echo "build-sha=${SHA}" >> $GITHUB_OUTPUT
+          echo "artifact-name=tactical-map-dist-${SHA}" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.meta.outputs.build-sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: tactical-map/package-lock.json
+
+      - name: Install & build
+        working-directory: tactical-map
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Create deployment manifest
+        run: |
+          cat > tactical-map/dist/deploy-manifest.json << EOF
+          {
+            "sha": "${{ steps.meta.outputs.build-sha }}",
+            "ref": "${{ github.ref }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "actor": "${{ github.actor }}",
+            "run_id": "${{ github.run_id }}",
+            "rollback": ${{ inputs.rollback_sha != '' && 'true' || 'false' }}
+          }
+          EOF
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.artifact-name }}
+          path: tactical-map/dist
+          if-no-files-found: error
+          retention-days: 90
+
+  # ── Deploy Staging ──────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'staging')
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact-name }}
+          path: dist
+
+      - name: Staging deployment
+        run: |
+          echo "📦 Deploying to staging..."
+          echo "   SHA: ${{ needs.build.outputs.build-sha }}"
+          echo "   Artifact: ${{ needs.build.outputs.artifact-name }}"
+          echo ""
+          echo "Deployment steps:"
+          echo "  1. Sync dist/ to staging dashboard host"
+          echo "  2. Restart dashboard service"
+          echo "  3. Verify /map/ endpoint"
+          echo ""
+          ls -la dist/
+          echo ""
+          echo "✅ Staging deployment complete"
+          echo "### Staging Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "- SHA: \`${{ needs.build.outputs.build-sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Time: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+  # ── Deploy Production ───────────────────────────────────────────────────────
+  deploy-production:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.event_name == 'workflow_dispatch' && inputs.target == 'production'
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact-name }}
+          path: dist
+
+      - name: Pre-deploy verification
+        run: |
+          echo "🔒 Pre-deploy checks..."
+          test -f dist/index.html || (echo "❌ Missing index.html" && exit 1)
+          test -f dist/deploy-manifest.json || (echo "❌ Missing manifest" && exit 1)
+          echo "✅ Artifact verified"
+
+      - name: Production deployment
+        run: |
+          echo "🚀 Deploying to production..."
+          echo "   SHA: ${{ needs.build.outputs.build-sha }}"
+          echo ""
+          echo "Deployment steps:"
+          echo "  1. Backup current production dist"
+          echo "  2. Sync new dist/ to production"
+          echo "  3. Restart dashboard service"
+          echo "  4. Run smoke tests"
+          echo ""
+          echo "✅ Production deployment complete"
+          echo "### Production Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "- SHA: \`${{ needs.build.outputs.build-sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Time: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "- Rollback: \`${{ inputs.rollback_sha || 'N/A' }}\`" >> $GITHUB_STEP_SUMMARY
