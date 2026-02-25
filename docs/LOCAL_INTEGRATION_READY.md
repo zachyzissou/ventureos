@@ -1,6 +1,6 @@
 # Local Integration Ready Checklist
 
-Date: 2026-02-24 (UTC)
+Date: 2026-02-25 (UTC)
 Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 
 ## Mission Control Card
@@ -17,9 +17,9 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 - Warnings: `0`
 
 ## Latest Evidence Artifacts
-- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T224522Z.json`
-- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T224522Z.md`
-- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260224T224522Z.svg`
+- JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260225T021524Z.json`
+- Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260225T021524Z.md`
+- Status strip SVG: `runtime/reports/openclaw-local-smoke/openclaw-local-smoke-20260225T021524Z.svg`
 - Status summary JSON: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json`
 - Status summary Markdown: `runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.md`
 
@@ -40,13 +40,13 @@ Owner: automated refresh via `scripts/refresh-local-integration-ready.sh`
 ## Trend (Last 7 Runs)
 | Timestamp | Verdict | Score | Required Failures | Warnings | Bridge |
 |---|---|---:|---:|---:|---|
-| `20260224T141509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T181509Z` | `BLOCKED` | 30 | 6 | 2 | `fail` |
 | `20260224T193634Z` | `BLOCKED` | 30 | 1 | 0 | `skipped` |
 | `20260224T194228Z` | `BLOCKED` | 30 | 1 | 0 | `skipped` |
 | `20260224T201555Z` | `GO` | 90 | 0 | 0 | `skipped` |
 | `20260224T221519Z` | `GO` | 97 | 0 | 0 | `pass` |
 | `20260224T224522Z` | `GO` | 97 | 0 | 0 | `pass` |
+| `20260225T021524Z` | `GO` | 97 | 0 | 0 | `pass` |
 
 ## Required Checks
 - [x] `openclaw-cli` — `pass` group=`core` severity=`critical` (openclaw CLI found)
