@@ -1,0 +1,64 @@
+{
+  "listPayload": {
+    "tasks": [
+      {
+        "id": "task-001",
+        "title": "Verify bridge auth",
+        "description": "Confirm bridge scheduler endpoint auth parity",
+        "status": "queued",
+        "priority": "high",
+        "assigneeId": "oracle",
+        "missionId": "mc-310",
+        "createdAt": 1763863200000,
+        "updatedAt": 1763863500000
+      },
+      {
+        "id": "task-002",
+        "title": "Ship parity check",
+        "description": "Add Next parity fixture",
+        "status": "running",
+        "priority": "critical",
+        "assigneeId": "sherlock",
+        "missionId": "mc-310",
+        "createdAt": 1763863100000,
+        "updatedAt": 1763863600000
+      },
+      {
+        "id": "task-003",
+        "title": "Archive stale cards",
+        "description": "Cleanup done cards",
+        "status": "done",
+        "priority": "low",
+        "assigneeId": "",
+        "missionId": "",
+        "createdAt": 1763863000000,
+        "updatedAt": 1763863400000
+      }
+    ],
+    "total": 3
+  },
+  "summaryPayload": {
+    "updatedAt": 1763863700000,
+    "total": 3,
+    "columns": {
+      "backlog": 0,
+      "queued": 1,
+      "running": 1,
+      "blocked": 0,
+      "review": 0,
+      "done": 1,
+      "failed": 0
+    },
+    "byAgent": {
+      "oracle": {
+        "backlog": 0,
+        "queued": 1,
+        "running": 0,
+        "blocked": 0,
+        "review": 0,
+        "done": 0,
+        "failed": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "updatedAt": "2026-02-16T17:30:00.000Z",
+  "description": "Initial performance baselines for VentureOS Tactical Map. Update after verified stable runs on CI hardware.",
+  "regressionThresholdPct": 10,
+  "baselines": {
+    "idle state maintains ≥55 FPS": {
+      "avgFps": 60,
+      "p95FrameTimeMs": 18,
+      "memoryMB": 40
+    },
+    "all agents active maintains ≥55 FPS": {
+      "avgFps": 58,
+      "p95FrameTimeMs": 20,
+      "memoryMB": 55
+    },
+    "mixed states (active + overloaded + error) maintains ≥50 FPS": {
+      "avgFps": 55,
+      "p95FrameTimeMs": 25,
+      "memoryMB": 60
+    },
+    "baseline load (100 agents equiv) — ≥55 FPS, memory <100MB": {
+      "avgFps": 58,
+      "p95FrameTimeMs": 20,
+      "memoryMB": 50
+    },
+    "stress load (500 agents equiv) — ≥45 FPS, memory <200MB": {
+      "avgFps": 50,
+      "p95FrameTimeMs": 28,
+      "memoryMB": 80
+    },
+    "maximum load (1000 agents equiv) — ≥30 FPS, memory <300MB": {
+      "avgFps": 40,
+      "p95FrameTimeMs": 35,
+      "memoryMB": 120
+    }
+  }
+}

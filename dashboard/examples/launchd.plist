@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  OpenClaw Dashboard — macOS LaunchAgent
+  =======================================
+  VentureOS monorepo deployment (replaces standalone openclaw-dashboard).
+
+  Install:  dashboard/scripts/install-macos.sh
+  Manual:   cp dashboard/examples/launchd.plist ~/Library/LaunchAgents/com.openclaw.dashboard.monorepo.plist
+            launchctl load ~/Library/LaunchAgents/com.openclaw.dashboard.monorepo.plist
+
+  The __PLACEHOLDER__ tokens are replaced by install-macos.sh at install time.
+-->
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.openclaw.dashboard.monorepo</string>
+
+    <key>WorkingDirectory</key>
+    <string>__VENTUREOS_ROOT__/dashboard</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>__NODE_PATH__</string>
+      <string>__VENTUREOS_ROOT__/dashboard/dist/dashboard/server/server.js</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>DASHBOARD_PORT</key>
+      <string>__DASHBOARD_PORT__</string>
+      <key>DASHBOARD_HOST</key>
+      <string>0.0.0.0</string>
+      <key>VENTUREOS_ROOT</key>
+      <string>__VENTUREOS_ROOT__</string>
+      <key>OPENCLAW_DIR</key>
+      <string>__OPENCLAW_DIR__</string>
+      <key>DASHBOARD_DATA_DIR</key>
+      <string>__VENTUREOS_ROOT__/dashboard/data</string>
+      <key>VENTUREOS_LOG_DIR</key>
+      <string>__VENTUREOS_ROOT__/dashboard/logs</string>
+      <key>NODE_ENV</key>
+      <string>production</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+
+    <key>StandardOutPath</key>
+    <string>__LOG_DIR__/openclaw-dashboard.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>__LOG_DIR__/openclaw-dashboard.err.log</string>
+  </dict>
+</plist>

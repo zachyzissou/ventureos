@@ -1,0 +1,141 @@
+{
+  "_doc": "Centralized reliability config for VentureOS cron jobs and services. See docs/TIMEOUT_POLICY.md, docs/RETRY_POLICY.md.",
+  "version": "1.0.0",
+  "defaults": {
+    "timeout_seconds": 60,
+    "max_attempts": 3,
+    "base_sleep_seconds": 2,
+    "http_connect_timeout": 3,
+    "http_total_timeout": 20,
+    "webhook_connect_timeout": 2,
+    "webhook_total_timeout": 10
+  },
+  "cron_jobs": {
+    "nightly-backup": {
+      "script": "scripts/backup-clawd.sh",
+      "timeout_seconds": 120,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D1",
+      "notes": "Local filesystem only; no retry (non-idempotent tar)"
+    },
+    "weekly-backup-verify": {
+      "script": "scripts/verify-backup.sh",
+      "timeout_seconds": 60,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D1",
+      "notes": "Local filesystem only; verify is idempotent but no retry needed"
+    },
+    "monitoring": {
+      "script": "scripts/monitor-openclaw.sh",
+      "timeout_seconds": 30,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D2",
+      "notes": "Reads local logs + gateway status; no external network"
+    },
+    "budget-check": {
+      "script": "scripts/budget-check.sh",
+      "timeout_seconds": 60,
+      "max_attempts": 3,
+      "base_sleep_seconds": 2,
+      "has_network": true,
+      "degradation_tier": "D1",
+      "notes": "May call external API for quota tracking"
+    },
+    "export-cron-logs": {
+      "script": "scripts/export-cron-logs.sh",
+      "timeout_seconds": 60,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D1",
+      "notes": "Local filesystem only"
+    },
+    "archive-task-runs": {
+      "script": "scripts/archive-task-runs.sh",
+      "timeout_seconds": 120,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D1",
+      "notes": "Local filesystem move; monthly"
+    },
+    "workspace-health": {
+      "script": "scripts/check-workspace-health.sh",
+      "timeout_seconds": 120,
+      "max_attempts": 2,
+      "base_sleep_seconds": 2,
+      "has_network": true,
+      "degradation_tier": "D1",
+      "notes": "Local scan + optional webhook alert; webhook failure is non-critical"
+    },
+    "phantom-detector": {
+      "script": "scripts/detect-phantom-sessions.sh",
+      "timeout_seconds": 120,
+      "max_attempts": 2,
+      "base_sleep_seconds": 2,
+      "has_network": true,
+      "degradation_tier": "D1",
+      "notes": "Local scan + optional webhook alert"
+    },
+    "session-rotation": {
+      "script": "scripts/rotate-agent-sessions.sh",
+      "timeout_seconds": 180,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": true,
+      "degradation_tier": "D2",
+      "notes": "Local file moves + optional webhook; non-idempotent moves so no retry"
+    },
+    "session-monitor": {
+      "script": "scripts/check-session-counts.sh",
+      "timeout_seconds": 60,
+      "max_attempts": 2,
+      "base_sleep_seconds": 2,
+      "has_network": true,
+      "degradation_tier": "D1",
+      "notes": "Local scan + optional webhook + auto-rotation trigger"
+    },
+    "routing-healthcheck": {
+      "script": "scripts/routing-healthcheck.sh",
+      "timeout_seconds": 30,
+      "max_attempts": 2,
+      "base_sleep_seconds": 2,
+      "has_network": true,
+      "degradation_tier": "D2",
+      "notes": "Config validation + webhook send"
+    },
+    "openclaw-local-ready": {
+      "script": "scripts/openclaw-local-ready-cron.sh",
+      "timeout_seconds": 180,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D1",
+      "notes": "Regenerates local readiness report + mission card artifacts with retention controls"
+    },
+    "vb003-telemetry-synthesis": {
+      "script": "scripts/vb003-telemetry-synthesis.sh",
+      "timeout_seconds": 120,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D1",
+      "notes": "Builds rolling model-orchestration telemetry synthesis artifacts for VB-003 closure"
+    },
+    "vb003-watchdog": {
+      "script": "scripts/vb003-watchdog.sh",
+      "timeout_seconds": 60,
+      "max_attempts": 1,
+      "base_sleep_seconds": 0,
+      "has_network": false,
+      "degradation_tier": "D1",
+      "notes": "Checks VB-003 telemetry freshness and short-window cron health while 7-day evidence accumulates"
+    }
+  }
+}

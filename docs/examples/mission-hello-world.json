@@ -1,0 +1,17 @@
+{
+  "title": "Hello Mission",
+  "description": "Demonstrate the VentureOS mission runner end-to-end.",
+  "requirements": [
+    "Generate at least one artifact.",
+    "Run through all phases: brief → closed."
+  ],
+  "deliverables": [
+    "status-report.md",
+    "completion-summary.md",
+    "manifest.json"
+  ],
+  "constraints": {
+    "budget": "low",
+    "timeline": "short"
+  }
+}

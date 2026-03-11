@@ -1,0 +1,38 @@
+{
+  "name": "ventureos-tactical-map",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test tests/e2e/",
+    "test:e2e:ui": "playwright test tests/e2e/ --ui",
+    "test:perf": "PERF=1 playwright test tests/performance/",
+    "test:perf:render": "PERF=1 playwright test tests/performance/render-performance.test.ts",
+    "test:perf:load": "PERF=1 playwright test tests/performance/load-testing.test.ts",
+    "test:perf:memory": "PERF=1 playwright test tests/performance/memory-leak.test.ts",
+    "test:perf:network": "PERF=1 playwright test tests/performance/network-latency.test.ts",
+    "bench": "./scripts/run-benchmarks.sh",
+    "test:a11y": "playwright test tests/accessibility/",
+    "lint": "echo 'lint: not configured yet'"
+  },
+  "dependencies": {
+    "dompurify": "^3.0.11",
+    "pixi.js": "^8.2.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
+    "@playwright/test": "^1.50.1",
+    "@types/dompurify": "^3.0.5",
+    "@types/node": "^22.13.1",
+    "@vitest/coverage-v8": "^4.0.18",
+    "msw": "^2.7.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vitest": "^4.0.18"
+  }
+}

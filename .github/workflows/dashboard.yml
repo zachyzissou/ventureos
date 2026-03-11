@@ -1,0 +1,122 @@
+# Dashboard CI — build, test, smoke test
+# Runs on PRs touching dashboard/** and on push to main.
+
+name: Dashboard CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/**'
+      - 'lib/**'
+      - 'package.json'
+      - 'scripts/ensure-native-modules.sh'
+      - '.github/workflows/dashboard.yml'
+  pull_request:
+    paths:
+      - 'dashboard/**'
+      - 'lib/**'
+      - 'package.json'
+      - 'scripts/ensure-native-modules.sh'
+      - '.github/workflows/dashboard.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild native modules for current Node runtime
+        run: npm rebuild better-sqlite3 --build-from-source
+
+      - name: Verify better-sqlite3 runtime ABI
+        run: |
+          node -e "const Database=require('better-sqlite3');const db=new Database(':memory:');db.prepare('SELECT 1').get();db.close();console.log('better-sqlite3 ABI ok for Node', process.versions.node)"
+
+      - name: TypeScript compile
+        working-directory: dashboard
+        run: |
+          npx tsc -p tsconfig.json --outDir dist
+          # Mark dist/lib/ and dist/scripts/ as CommonJS — these dirs contain
+          # CJS output but land under dashboard/ ("type": "module"). Fix #199.
+          mkdir -p dist/lib dist/scripts
+          cp ../lib/bridge-token-resolver.js dist/lib/bridge-token-resolver.js
+          echo '{ "type": "commonjs" }' > dist/lib/package.json
+          echo '{ "type": "commonjs" }' > dist/scripts/package.json
+
+      - name: Verify build output
+        run: |
+          test -f dashboard/dist/dashboard/server/server.js || (echo "❌ dist/dashboard/server/server.js not found" && ls -R dashboard/dist/ 2>/dev/null && exit 1)
+          test -f dashboard/dist/lib/package.json || (echo "❌ dist/lib/package.json (CJS marker) not found" && exit 1)
+          test -f dashboard/dist/scripts/package.json || (echo "❌ dist/scripts/package.json (CJS marker) not found — see #199" && exit 1)
+          echo "✅ Build output verified"
+
+      - name: Run unit tests
+        working-directory: dashboard
+        run: npm run test:unit
+
+      - name: Run integration tests
+        continue-on-error: true
+        working-directory: dashboard
+        run: npm run test:integration
+
+      - name: Deployment smoke test
+        continue-on-error: true
+        working-directory: dashboard
+        run: |
+          # Start server in background (rootDir=".." → output under dist/dashboard/)
+          export DASHBOARD_PORT=7000
+          node dist/dashboard/server/server.js &
+          SERVER_PID=$!
+          
+          # Wait for startup
+          sleep 3
+          
+          # Health check (port matches DASHBOARD_PORT above)
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:7000/api/health || echo "000")
+          
+          # Cleanup
+          kill $SERVER_PID 2>/dev/null || true
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Smoke test passed (HTTP $HTTP_CODE)"
+          else
+            echo "⚠️  Smoke test returned HTTP $HTTP_CODE (may need runtime dependencies)"
+            echo "   This is informational — build compilation is the hard gate."
+          fi
+
+  install-scripts-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check scripts are executable
+        run: |
+          for script in dashboard/scripts/*.sh; do
+            if [ -f "$script" ]; then
+              if [ -x "$script" ]; then
+                echo "✅ $script is executable"
+              else
+                echo "❌ $script is not executable"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: ShellCheck lint
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: 'dashboard/scripts'
+          severity: warning

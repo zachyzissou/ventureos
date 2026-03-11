@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenClaw Dashboard — Login</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.12);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.65);
+      --danger: #ff4d4d;
+      --accent: #6aa6ff;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 900px at 20% 20%, rgba(106,166,255,0.18), transparent 50%),
+                  radial-gradient(1000px 700px at 80% 0%, rgba(255,255,255,0.08), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 70px rgba(0,0,0,0.35);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0.02em;
+    }
+    p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.4;
+      font-size: 13px;
+    }
+    label { display:block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.35);
+      color: var(--text);
+      outline: none;
+    }
+    input:focus { border-color: rgba(106,166,255,0.6); box-shadow: 0 0 0 4px rgba(106,166,255,0.15); }
+    button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(106,166,255,0.5);
+      background: rgba(106,166,255,0.15);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: rgba(106,166,255,0.22); }
+    .msg { margin-top: 12px; font-size: 12px; color: var(--muted); }
+    .msg.error { color: var(--danger); }
+    .hint {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>OpenClaw Dashboard</h1>
+    <p>This dashboard is protected by a pre-shared API token. Enter the token to start a browser session.</p>
+
+    <form id="loginForm">
+      <label for="token">API Token</label>
+      <input id="token" name="token" type="password" autocomplete="current-password" placeholder="Paste token…" />
+      <button type="submit" id="btn">Log in</button>
+      <div class="msg" id="msg"></div>
+    </form>
+
+    <div class="hint">
+      <div><strong>Where do I find the token?</strong></div>
+      <div>On the machine running the dashboard, the token is stored at <code>openclaw-dashboard/data/.api-token</code> (0600 permissions). You can also set <code>DASHBOARD_API_TOKEN</code> in the server environment.</div>
+      <div style="margin-top:8px;">The token is <strong>never</strong> embedded into dashboard HTML or exposed to JavaScript. The server sets an <code>HttpOnly</code> cookie after successful login.</div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const input = document.getElementById('token');
+    const btn = document.getElementById('btn');
+    const msg = document.getElementById('msg');
+
+    function setMsg(text, isError=false) {
+      msg.textContent = text || '';
+      msg.className = isError ? 'msg error' : 'msg';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setMsg('');
+
+      const token = (input.value || '').trim();
+      if (!token) {
+        setMsg('Token is required.', true);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Logging in…';
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ token })
+        });
+
+        if (!res.ok) {
+          let err = 'Login failed.';
+          try {
+            const body = await res.json();
+            if (body && body.error) err = body.error;
+          } catch {}
+          setMsg(err, true);
+          return;
+        }
+
+        window.location.href = '/';
+      } catch (e2) {
+        setMsg(e2?.message || 'Login error', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Log in';
+      }
+    });
+  </script>
+</body>
+</html>

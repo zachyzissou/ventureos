@@ -1,0 +1,250 @@
+{
+  "$schema": "https://ventureos.dev/schemas/business-units-v2.json",
+  "version": 2,
+  "generated_at": "2026-02-15T15:33:00-06:00",
+  "units": [
+    {
+      "id": "ventureos",
+      "name": "VentureOS",
+      "description": "Protoss Multi-Agent Operating System — orchestrates missions, agents, and business units across the portfolio.",
+      "category": "infra",
+      "priority": "critical",
+      "status": "active",
+      "obsidianPath": "🔧 Projects/VentureOS",
+      "obsidianUri": "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2FVentureOS%2FREADME",
+      "github": "zachyzissou/ventureos",
+      "repos": [
+        { "name": "ventureos", "url": "https://github.com/zachyzissou/ventureos", "visibility": "private" }
+      ],
+      "contacts": [],
+      "tags": ["infrastructure", "multi-agent", "orchestration", "openclaw"],
+      "owner_role": "Helmsman",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": true
+      },
+      "automations": [
+        { "kind": "cron", "name": "memory-observation-sync", "schedule": "hourly" },
+        { "kind": "monitor", "name": "gateway-health", "schedule": "continuous" }
+      ],
+      "missionTypes": ["build", "ops", "infra"],
+      "cadence": "weekly"
+    },
+    {
+      "id": "bloom",
+      "name": "Bloom",
+      "description": "Unity 6 tactical 8-10 player PvE co-op extraction shooter with 32km × 32km procedural world.",
+      "category": "game",
+      "priority": "high",
+      "status": "active",
+      "obsidianPath": "🔧 Projects/Bloom",
+      "obsidianUri": "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2FBloom%2F00%20-%20Bloom%20Dashboard",
+      "github": "zachyzissou/Bloom",
+      "repos": [
+        { "name": "Bloom", "url": "https://github.com/zachyzissou/Bloom", "visibility": "private" },
+        { "name": "bloom-website", "url": "https://github.com/zachyzissou/bloom-website", "visibility": "public" },
+        { "name": "unify-mcp", "url": "https://github.com/zachyzissou/unify-mcp", "visibility": "public", "note": "Unity MCP server" }
+      ],
+      "contacts": [],
+      "tags": ["unity", "game-dev", "rpg", "low-noise-studios", "pve", "extraction"],
+      "owner_role": "Producer",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": false
+      },
+      "automations": [
+        { "kind": "tbd", "name": "build-pipeline" },
+        { "kind": "tbd", "name": "asset-validation" }
+      ],
+      "missionTypes": ["build", "content", "research"],
+      "cadence": "weekly"
+    },
+    {
+      "id": "jav-library",
+      "name": "jav-library",
+      "description": "JAV metadata library and download manager — metadata management, library organization, and automation for media collections.",
+      "category": "app",
+      "priority": "medium",
+      "status": "active",
+      "obsidianPath": "🔧 Projects/jav-library",
+      "obsidianUri": "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2Fjav-library%2FREADME",
+      "github": "zachyzissou/jav-library",
+      "repos": [
+        { "name": "jav-library", "url": "https://github.com/zachyzissou/jav-library", "visibility": "private" }
+      ],
+      "contacts": [],
+      "tags": ["media", "tooling", "automation", "metadata"],
+      "owner_role": "Producer",
+      "risk": {
+        "external_publish_requires_approval": false,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": false
+      },
+      "automations": [],
+      "missionTypes": ["build", "ops"],
+      "cadence": "monthly"
+    },
+    {
+      "id": "home-automation",
+      "name": "Home Automation",
+      "description": "Smart home infrastructure — Home Assistant, HomeKit, IoT devices, dashboards, and scene management.",
+      "category": "infra",
+      "priority": "medium",
+      "status": "active",
+      "obsidianPath": "🔧 Projects/Home Automation",
+      "obsidianUri": "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2FHome%20Automation%2FREADME",
+      "github": null,
+      "repos": [],
+      "contacts": [],
+      "tags": ["homeassistant", "homekit", "iot", "smart-home", "dashboard"],
+      "owner_role": "Helmsman",
+      "risk": {
+        "external_publish_requires_approval": false,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": false
+      },
+      "automations": [
+        { "kind": "tbd", "name": "device-monitoring" }
+      ],
+      "missionTypes": ["ops", "build"],
+      "cadence": "monthly"
+    },
+    {
+      "id": "personal-productivity",
+      "name": "Personal Productivity",
+      "description": "Personal systems — task management, calendar, notes workflow, Obsidian vault maintenance, and daily routines.",
+      "category": "personal",
+      "priority": "medium",
+      "status": "active",
+      "obsidianPath": "🔧 Projects/Personal Productivity",
+      "obsidianUri": "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2FPersonal%20Productivity%2FREADME",
+      "github": null,
+      "repos": [],
+      "contacts": [],
+      "tags": ["productivity", "obsidian", "workflows", "gtd"],
+      "owner_role": "Helmsman",
+      "risk": {
+        "external_publish_requires_approval": false,
+        "destructive_actions_requires_approval": false,
+        "config_changes_requires_approval": false
+      },
+      "automations": [],
+      "missionTypes": ["ops", "research"],
+      "cadence": "weekly"
+    },
+    {
+      "id": "stantontimes-network",
+      "name": "StantonTimes Network",
+      "description": "Star Citizen newsroom pipeline — automated monitoring, drafting, approval workflow, and audience engagement.",
+      "category": "media",
+      "priority": "high",
+      "status": "active",
+      "obsidianPath": "🔧 Projects/TheStantonTimes",
+      "obsidianUri": "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2FTheStantonTimes%2FREADME",
+      "github": "zachyzissou/stanton-times",
+      "repos": [
+        { "name": "stanton-times", "url": "https://github.com/zachyzissou/stanton-times", "visibility": "public" }
+      ],
+      "contacts": [],
+      "tags": ["media", "content", "social", "star-citizen", "newsroom"],
+      "owner_role": "Helmsman",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": true
+      },
+      "automations": [
+        { "kind": "monitor", "name": "content-pipeline" },
+        { "kind": "cron", "name": "engagement-check" }
+      ],
+      "missionTypes": ["content", "research", "ops"],
+      "cadence": "weekly"
+    },
+    {
+      "id": "low-noise-studios",
+      "name": "Low Noise Studios",
+      "description": "Game studio umbrella — parent entity for Bloom and future game projects.",
+      "category": "game",
+      "priority": "medium",
+      "status": "active",
+      "obsidianPath": "🔧 Projects/Low Noise",
+      "obsidianUri": "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2FLow%20Noise%2FREADME",
+      "github": null,
+      "repos": [],
+      "contacts": [],
+      "tags": ["game-dev", "studio", "umbrella"],
+      "owner_role": "Producer",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": true,
+        "config_changes_requires_approval": true
+      },
+      "automations": [],
+      "missionTypes": ["build", "content"],
+      "cadence": "monthly"
+    },
+    {
+      "id": "fotopress",
+      "name": "FotoPress",
+      "description": "Photography portfolio and media publishing platform.",
+      "category": "app",
+      "priority": "low",
+      "status": "active",
+      "obsidianPath": "🔧 Projects/FotoPress",
+      "obsidianUri": "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2FFotoPress%2FREADME",
+      "github": "zachyzissou/fotopress-website",
+      "repos": [
+        { "name": "fotopress-website", "url": "https://github.com/zachyzissou/fotopress-website", "visibility": "private" }
+      ],
+      "contacts": [],
+      "tags": ["photography", "portfolio", "web"],
+      "owner_role": "Producer",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": false,
+        "config_changes_requires_approval": false
+      },
+      "automations": [],
+      "missionTypes": ["build", "content"],
+      "cadence": "monthly"
+    },
+    {
+      "id": "storyteller-suite",
+      "name": "StorytellerSuite",
+      "description": "Creative writing and storytelling tooling suite — templates, voice generation, narrative engines.",
+      "category": "app",
+      "priority": "low",
+      "status": "active",
+      "obsidianPath": "🔧 Projects/StorytellerSuite",
+      "obsidianUri": "obsidian://open?vault=VaultZap&file=%F0%9F%94%A7%20Projects%2FStorytellerSuite%2FREADME",
+      "github": null,
+      "repos": [],
+      "contacts": [],
+      "tags": ["creative", "storytelling", "tts", "templates"],
+      "owner_role": "Producer",
+      "risk": {
+        "external_publish_requires_approval": true,
+        "destructive_actions_requires_approval": false,
+        "config_changes_requires_approval": false
+      },
+      "automations": [],
+      "missionTypes": ["build", "content"],
+      "cadence": "monthly"
+    }
+  ],
+  "categories": {
+    "infra": "Infrastructure, DevOps, AI/ML pipelines",
+    "game": "Game development projects",
+    "app": "Applications and tooling",
+    "media": "Content creation and publishing",
+    "personal": "Personal systems and productivity"
+  },
+  "priorities": {
+    "critical": "Core infrastructure — failures block everything",
+    "high": "Active projects with regular deliverables",
+    "medium": "Important but lower urgency",
+    "low": "Nice-to-have, background work"
+  }
+}

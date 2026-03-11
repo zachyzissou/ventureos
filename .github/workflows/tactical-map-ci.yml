@@ -1,0 +1,175 @@
+# Tactical Map CI — lint, test, build, visual regression, e2e
+# Runs on PRs and push to main touching tactical-map or shared libs.
+
+name: Tactical Map CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tactical-map/**'
+      - 'tactical-map-server/**'
+      - 'dashboard/**'
+      - 'lib/**'
+      - '.github/workflows/tactical-map-ci.yml'
+  pull_request:
+    paths:
+      - 'tactical-map/**'
+      - 'tactical-map-server/**'
+      - 'dashboard/**'
+      - 'lib/**'
+      - '.github/workflows/tactical-map-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: tactical-map-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # ── Unit + Integration Tests ────────────────────────────────────────────────
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: tactical-map/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tactical-map
+        run: npm ci
+
+      - name: Run unit + integration tests with coverage
+        working-directory: tactical-map
+        run: npm test
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: tactical-map/coverage
+          retention-days: 14
+
+  # ── Build ───────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: tactical-map/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tactical-map
+        run: npm ci
+
+      - name: Build tactical map
+        working-directory: tactical-map
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          test -d tactical-map/dist || (echo "❌ dist/ not found" && exit 1)
+          test -f tactical-map/dist/index.html || (echo "❌ dist/index.html not found" && exit 1)
+          DIST_SIZE=$(du -sh tactical-map/dist | cut -f1)
+          echo "✅ Build output verified (${DIST_SIZE})"
+          echo "### Build Output" >> $GITHUB_STEP_SUMMARY
+          echo "- Size: ${DIST_SIZE}" >> $GITHUB_STEP_SUMMARY
+          echo "- Files: $(find tactical-map/dist -type f | wc -l)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tactical-map-dist-${{ github.sha }}
+          path: tactical-map/dist
+          if-no-files-found: error
+          retention-days: 30
+
+  # ── E2E + Visual Regression ─────────────────────────────────────────────────
+  e2e:
+    name: E2E & Visual Regression
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: tactical-map/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tactical-map
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: tactical-map
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        working-directory: tactical-map
+        run: npx playwright test tests/e2e/ --reporter=html
+
+      - name: Run visual regression tests
+        working-directory: tactical-map
+        run: npx playwright test tests/e2e/*.visual.spec.ts --update-snapshots || true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: tactical-map/playwright-report
+          retention-days: 14
+
+      - name: Upload visual snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots-${{ github.sha }}
+          path: tactical-map/tests/e2e/**/*-snapshots/
+          retention-days: 30
+
+  # ── Summary ─────────────────────────────────────────────────────────────────
+  ci-summary:
+    name: CI Summary
+    needs: [test, build, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job results
+        run: |
+          echo "### Tactical Map CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E | ${{ needs.e2e.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.test.result }}" == "failure" || "${{ needs.build.result }}" == "failure" ]]; then
+            echo ""
+            echo "❌ Critical jobs failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

@@ -1,0 +1,30 @@
+{
+  "name": "ventureos-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "OpenClaw operational dashboard — monitoring, session management, KPI tracking",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "compile": "tsc && mkdir -p dist/lib dist/scripts && cp ../lib/bridge-token-resolver.js dist/lib/bridge-token-resolver.js && echo '{\"type\":\"commonjs\"}' > dist/lib/package.json && echo '{\"type\":\"commonjs\"}' > dist/scripts/package.json && mkdir -p dist/dashboard/client && cp -R client/* dist/dashboard/client/",
+    "dev": "tsx watch server/server.ts",
+    "start": "node dist/dashboard/server/server.js",
+    "test": "vitest run --config vitest.config.ts",
+    "test:unit": "vitest run --config vitest.config.ts tests/unit",
+    "test:integration": "vitest run --config vitest.config.ts tests/integration",
+    "test:parity": "vitest run --config vitest.config.ts tests/parity",
+    "test:coverage": "vitest run --config vitest.config.ts --coverage",
+    "test:watch": "vitest --config vitest.config.ts"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "@vitest/coverage-v8": "^4.0.18",
+    "vitest": "^4.0.18"
+  }
+}

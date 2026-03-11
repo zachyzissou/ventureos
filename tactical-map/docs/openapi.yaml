@@ -1,0 +1,520 @@
+openapi: 3.1.0
+info:
+  title: VentureOS Tactical Map API
+  description: |
+    Real-time 2D command center API for the VentureOS multi-agent system.
+    Provides agent state, resource economy, and health monitoring endpoints.
+  version: 0.1.0
+  contact:
+    name: VentureOS Team
+  license:
+    name: Proprietary
+    identifier: LicenseRef-VentureOS
+
+servers:
+  - url: http://localhost:8001
+    description: Dashboard server (default port)
+  - url: http://localhost:5174
+    description: Vite dev server (proxied to dashboard)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Map State
+    description: Agent positions, states, and active sessions
+  - name: Resource Economy
+    description: Token budgets, costs, and real-time resource tracking
+  - name: Health
+    description: System health monitoring and diagnostics
+  - name: RPG
+    description: Protoss-themed RPG KPI statistics
+
+paths:
+  /api/tactical-map/state:
+    get:
+      tags: [Map State]
+      summary: Get current map state
+      description: Returns positions, building states, and active sessions for all agents (7 ring agents + 1 central Nexus).
+      operationId: getMapState
+      responses:
+        "200":
+          description: Current tactical map state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapState"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/tactical-map/resources:
+    get:
+      tags: [Resource Economy]
+      summary: Get resource economy snapshot
+      description: Returns token budgets, costs, burn rates, and history for all agents and the global pool.
+      operationId: getResourceSnapshot
+      responses:
+        "200":
+          description: Economy snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomySnapshot"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/tactical-map/health:
+    get:
+      tags: [Health]
+      summary: Get health snapshot (⚠️ IN DEVELOPMENT - Phase 5.6)
+      description: |
+        **NOTE:** This endpoint is part of Phase 5.6 (Health & Diagnostics) and is not yet implemented.
+        
+        Returns CPU, memory, latency, error rate, and connectivity for all agents plus system aggregates.
+      operationId: getHealthSnapshot
+      responses:
+        "200":
+          description: Health snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthSnapshot"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/rpg/stats:
+    get:
+      tags: [RPG]
+      summary: Get RPG KPI statistics
+      description: Returns Protoss-themed psionic attribute scores per agent for the HUD ticker.
+      operationId: getRpgStats
+      responses:
+        "200":
+          description: RPG stats map
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RpgStatsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >
+        Pre-shared API token passed via `Authorization: Bearer <token>` header.
+        WebSocket connections currently accept `?token=` as a query parameter for
+        backwards compatibility, but header-based authentication (e.g. via
+        Sec-WebSocket-Protocol sub-protocol or an initial auth message) is
+        recommended to avoid token exposure in server logs and proxy URLs.
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                examples:
+                  - "Missing or invalid Authorization header"
+                  - "Invalid API token"
+
+  schemas:
+    Point:
+      type: object
+      required: [x, y]
+      properties:
+        x:
+          type: number
+          description: X coordinate in world space (pixels)
+        y:
+          type: number
+          description: Y coordinate in world space (pixels)
+
+    BuildingState:
+      type: string
+      enum: [IDLE, ACTIVE, OVERLOADED, ERROR]
+      description: |
+        Visual state of an agent building:
+        - IDLE: No active sessions
+        - ACTIVE: Processing sessions
+        - OVERLOADED: Sessions ≥ 80% of max capacity
+        - ERROR: Agent experiencing errors
+
+    AgentId:
+      type: string
+      enum: [oracle, atlas, sentinel, verifier, archivist, synth, echo, nexus]
+
+    AgentSession:
+      type: object
+      required: [id, label, startedAt]
+      properties:
+        id:
+          type: string
+          description: Stable session identifier
+        label:
+          type: string
+          description: Human-readable session description (untrusted — sanitize before display)
+          maxLength: 200
+        startedAt:
+          type: string
+          format: date-time
+          description: Session start time (ISO 8601)
+        estimatedMs:
+          type: number
+          description: Estimated duration in milliseconds
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Completion ratio (0-1)
+
+    AgentNode:
+      type: object
+      required: [state]
+      properties:
+        state:
+          $ref: "#/components/schemas/BuildingState"
+        sessions:
+          type: integer
+          minimum: 0
+          description: Current number of active sessions
+        position:
+          $ref: "#/components/schemas/Point"
+        activeSessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentSession"
+
+    MapState:
+      type: object
+      properties:
+        updatedAt:
+          type: string
+          format: date-time
+        agents:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/AgentNode"
+          description: Keyed by AgentId
+
+    # ── Economy ──────────────────────────────
+
+    TrendPoint:
+      type: object
+      properties:
+        ts:
+          type: number
+          description: Epoch milliseconds
+        tokensUsed:
+          type: number
+        costUsd:
+          type: number
+
+    AgentEconomy:
+      type: object
+      properties:
+        agentId:
+          $ref: "#/components/schemas/AgentId"
+        tokenBudget:
+          type: number
+          description: Maximum token allocation
+        tokensUsed:
+          type: number
+        tokensRemaining:
+          type: number
+        quotaRemainingRatio:
+          type: number
+          minimum: 0
+          maximum: 1
+        costUsd:
+          type: number
+          description: Total cost incurred (USD)
+        burnRateUsdPerHour:
+          type: number
+          description: Current spend velocity
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendPoint"
+          description: Bounded time-series (max 64 points, max 6h age)
+
+    ResourcePool:
+      type: object
+      properties:
+        tokenQuotaTotal:
+          type: number
+        tokenQuotaUsed:
+          type: number
+        tokenQuotaRemaining:
+          type: number
+        tokenQuotaRemainingRatio:
+          type: number
+          minimum: 0
+          maximum: 1
+        costBudgetUsd:
+          type: number
+        costUsedUsd:
+          type: number
+        costRemainingUsd:
+          type: number
+        costRemainingRatio:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    EconomySnapshot:
+      type: object
+      properties:
+        updatedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: number
+              description: Epoch milliseconds
+        agents:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/AgentEconomy"
+        pool:
+          $ref: "#/components/schemas/ResourcePool"
+
+    # ── Health ───────────────────────────────
+
+    HealthStatus:
+      type: string
+      enum: [green, yellow, red]
+
+    ConnectivityStatus:
+      type: string
+      enum: [online, degraded, offline]
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        cpuUsage:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: CPU usage ratio
+        memoryUsage:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Memory usage ratio
+        latencyMs:
+          type: number
+          minimum: 0
+          description: Average response latency in ms
+        requestsPerSec:
+          type: number
+          minimum: 0
+        errorRate:
+          type: number
+          minimum: 0
+          maximum: 1
+        uptimeSec:
+          type: number
+          minimum: 0
+          description: Seconds since last restart
+
+    MetricsSample:
+      type: object
+      properties:
+        ts:
+          type: number
+          description: Epoch milliseconds
+        cpuUsage:
+          type: number
+        memoryUsage:
+          type: number
+        latencyMs:
+          type: number
+        requestsPerSec:
+          type: number
+        errorRate:
+          type: number
+
+    AgentHealth:
+      type: object
+      properties:
+        agentId:
+          $ref: "#/components/schemas/AgentId"
+        status:
+          $ref: "#/components/schemas/HealthStatus"
+        connectivity:
+          $ref: "#/components/schemas/ConnectivityStatus"
+        cpuUsage:
+          type: number
+        memoryUsage:
+          type: number
+        latencyMs:
+          type: number
+        requestsPerSec:
+          type: number
+        errorRate:
+          type: number
+        uptimeSec:
+          type: number
+        consecutiveFailures:
+          type: integer
+          minimum: 0
+        lastCheckAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: number
+        errorMessages:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricsSample"
+
+    SystemHealth:
+      type: object
+      properties:
+        overallStatus:
+          $ref: "#/components/schemas/HealthStatus"
+        aggregateMetrics:
+          $ref: "#/components/schemas/PerformanceMetrics"
+
+    HealthSnapshot:
+      type: object
+      properties:
+        updatedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: number
+        agents:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/AgentHealth"
+        system:
+          $ref: "#/components/schemas/SystemHealth"
+
+    # ── Alerts ───────────────────────────────
+
+    AlertSeverity:
+      type: string
+      enum: [P0, P1]
+
+    AlertState:
+      type: string
+      enum: [active, acknowledged, resolved]
+
+    HealthAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        severity:
+          $ref: "#/components/schemas/AlertSeverity"
+        state:
+          $ref: "#/components/schemas/AlertState"
+        agentId:
+          type: string
+          description: AgentId or "system"
+        title:
+          type: string
+        message:
+          type: string
+        metric:
+          type: string
+          description: "Triggering metric: cpu, memory, latency, errorRate, connectivity, status"
+        value:
+          type: number
+        threshold:
+          type: number
+        createdAt:
+          type: number
+          description: Epoch milliseconds
+        ttlMs:
+          type: number
+          description: Auto-dismiss timeout in ms (0 = never)
+
+    # ── RPG ──────────────────────────────────
+
+    RpgStatsResponse:
+      type: object
+      properties:
+        stats:
+          type: object
+          additionalProperties:
+            type: number
+          description: |
+            Psionic attribute scores keyed by "Agent ATTR" format.
+            Example keys: "Oracle WIS", "Atlas SPD", "Sentinel TRU"
+
+    # ── WebSocket Events ─────────────────────
+
+    EconomyWebSocketEvent:
+      oneOf:
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [snapshot, economy.snapshot]
+            snapshot:
+              $ref: "#/components/schemas/EconomySnapshot"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [agent_update, economy.agent]
+            agent:
+              $ref: "#/components/schemas/AgentEconomy"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [pool_update, economy.pool]
+            pool:
+              $ref: "#/components/schemas/ResourcePool"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [heartbeat, ping]
+            ts:
+              type: number
+
+    HealthWebSocketEvent:
+      oneOf:
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [health_snapshot, snapshot]
+            snapshot:
+              $ref: "#/components/schemas/HealthSnapshot"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [agent_health, agent_update]
+            agent:
+              $ref: "#/components/schemas/AgentHealth"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [health_alert, alert]
+            alert:
+              $ref: "#/components/schemas/HealthAlert"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [heartbeat, ping]
+            ts:
+              type: number

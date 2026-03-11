@@ -1,0 +1,72 @@
+# =============================================================================
+# Accessibility (WCAG 2.1 AA) CI
+# =============================================================================
+#
+# Runs automated accessibility checks on the Tactical Map and Dashboard.
+# Uses axe-core via Playwright to detect WCAG 2.1 AA violations.
+# =============================================================================
+
+name: Accessibility Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tactical-map/**'
+      - 'dashboard/client/**'
+  pull_request:
+    paths:
+      - 'tactical-map/**'
+      - 'dashboard/client/**'
+  workflow_dispatch:
+
+concurrency:
+  group: a11y-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  accessibility:
+    name: WCAG 2.1 AA Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tactical-map/package-lock.json
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install tactical-map dependencies
+        working-directory: tactical-map
+        run: npm install
+
+      - name: Install Playwright Chromium
+        working-directory: tactical-map
+        run: npx playwright install chromium --with-deps
+
+      - name: Build tactical-map
+        working-directory: tactical-map
+        run: npm run build
+
+      - name: Run accessibility tests
+        working-directory: tactical-map
+        run: |
+          npx playwright test tests/accessibility/ \
+            --reporter=list \
+            2>&1 | tee a11y-output.txt
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-report
+          path: tactical-map/a11y-output.txt
+          retention-days: 30
