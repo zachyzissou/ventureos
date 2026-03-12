@@ -32,8 +32,13 @@ jobs:
 
       - name: Collect changed files
         run: |
-          git fetch origin "${{ github.base_ref }}" --depth=1
-          git diff --name-only "origin/${{ github.base_ref }}...${{ github.event.pull_request.head.sha }}" > /tmp/changed-files.txt
+          git fetch origin "${{ github.base_ref }}"
+          if git merge-base "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}" >/dev/null; then
+            git diff --name-only "origin/${{ github.base_ref }}...${{ github.event.pull_request.head.sha }}" > /tmp/changed-files.txt
+          else
+            echo "No merge base for three-dot diff; falling back to two-dot diff."
+            git diff --name-only "origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }}" > /tmp/changed-files.txt
+          fi
           echo "Changed files:"
           cat /tmp/changed-files.txt
 
