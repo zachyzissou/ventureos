@@ -14,11 +14,14 @@ Activate and run these departments for one full cycle:
 4. Finance
 
 ## Must-produce artifacts (today)
-- `logs/daily/YYYY-MM-DD-agent-health.json`
-- `logs/daily/YYYY-MM-DD-spend.json`
-- `logs/daily/YYYY-MM-DD-kpi-snapshot.json`
-- `logs/daily/YYYY-MM-DD-handoff-ledger.json`
-- `logs/daily/YYYY-MM-DD-decision-log.md`
+
+> **Path correction (v1.1):** Changed from `logs/daily/` to `reports/daily/` to align with `VentureOS_30_Day_Operational_Cadence_v1.md` evidence storage conventions.
+
+- `reports/daily/YYYY-MM-DD-agent-health.json`
+- `reports/daily/YYYY-MM-DD-spend.json`
+- `reports/daily/YYYY-MM-DD-kpi-snapshot.json`
+- `reports/daily/YYYY-MM-DD-handoff-ledger.json`
+- `reports/daily/YYYY-MM-DD-decision-log.md`
 
 ## Execution checklist
 
