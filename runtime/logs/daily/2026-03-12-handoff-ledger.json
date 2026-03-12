@@ -1,0 +1,35 @@
+{
+  "date": "2026-03-12",
+  "captured_at": "2026-03-12T19:42:00Z",
+  "handoffs": [
+    {
+      "handoff_id": "h-001",
+      "producer": "Executive Office",
+      "consumer": "Operations",
+      "artifact": "Daily priorities packet",
+      "sent_at": "2026-03-12T14:35:00-05:00",
+      "accepted_at": "2026-03-12T14:36:00-05:00",
+      "sla_status": "on_time",
+      "exceptions": ""
+    },
+    {
+      "handoff_id": "h-002",
+      "producer": "Data/Analytics",
+      "consumer": "Finance",
+      "artifact": "Spend and forecast dataset",
+      "sent_at": "2026-03-12T14:37:00-05:00",
+      "accepted_at": "",
+      "sla_status": "late",
+      "exceptions": "Blocked: /api/costs and /api/kpis/latest unavailable",
+      "breach_owner": "Data/Analytics Director",
+      "breach_action": "Restore dashboard API and republish dataset by next cycle",
+      "breach_eta": "2026-03-13T16:30:00Z"
+    }
+  ],
+  "summary": {
+    "total_handoffs": 2,
+    "on_time": 1,
+    "late": 1,
+    "on_time_rate": 0.5
+  }
+}

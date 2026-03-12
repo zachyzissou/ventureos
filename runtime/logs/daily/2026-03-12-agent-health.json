@@ -1,0 +1,51 @@
+{
+  "date": "2026-03-12",
+  "captured_at": "2026-03-12T19:41:30Z",
+  "source": {
+    "system": "dashboard",
+    "endpoint": "/api/agent-health",
+    "dashboard_url": "http://127.0.0.1:8001",
+    "auth_token_path": "dashboard/data/.api-token",
+    "availability": "unavailable"
+  },
+  "summary": {
+    "total_agents": null,
+    "running": null,
+    "error": null,
+    "stalled": null
+  },
+  "agents": [],
+  "incidents": [
+    {
+      "incident_id": "INC-2026-03-12-001",
+      "severity": "P0",
+      "title": "Dashboard API unavailable for Day-1 ops sweep",
+      "owner": "Operations Director",
+      "status": "open",
+      "eta": "2026-03-13T15:00:00Z"
+    }
+  ],
+  "evidence": [
+    {
+      "command": "ls -l dashboard/data/.api-token",
+      "exit_code": 1,
+      "observed_at": "2026-03-12T19:40:38Z",
+      "output": "ls: dashboard/data/.api-token: No such file or directory"
+    },
+    {
+      "command": "curl -sS -m 5 -i http://127.0.0.1:8001/api/agent-health",
+      "exit_code": 7,
+      "observed_at": "2026-03-12T19:40:38Z",
+      "output": "curl: (7) Failed to connect to 127.0.0.1 port 8001 after 0 ms: Couldn't connect to server"
+    }
+  ],
+  "remediation": {
+    "owner": "Platform Engineering",
+    "eta": "2026-03-13T15:00:00Z",
+    "actions": [
+      "Start dashboard service on 127.0.0.1:8001",
+      "Generate/restore dashboard/data/.api-token",
+      "Re-run 09:00 Ops Sweep capture"
+    ]
+  }
+}

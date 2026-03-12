@@ -1,0 +1,43 @@
+{
+  "date": "2026-03-12",
+  "captured_at": "2026-03-12T19:41:40Z",
+  "source": {
+    "system": "dashboard",
+    "endpoint": "/api/costs",
+    "dashboard_url": "http://127.0.0.1:8001",
+    "availability": "unavailable"
+  },
+  "totals": {
+    "today_usd": null,
+    "week_usd": null,
+    "lifetime_usd": null
+  },
+  "categories": [],
+  "per_model": [],
+  "variance": {
+    "daily_budget_usd": 0,
+    "variance_usd": null,
+    "variance_pct": null
+  },
+  "notes": [
+    "Spend source unavailable: dashboard /api/costs endpoint unreachable.",
+    "Finance variance cannot be computed for Day-1 closeout."
+  ],
+  "evidence": [
+    {
+      "command": "curl -sS -m 5 -i http://127.0.0.1:8001/api/costs",
+      "exit_code": 7,
+      "observed_at": "2026-03-12T19:40:38Z",
+      "output": "curl: (7) Failed to connect to 127.0.0.1 port 8001 after 0 ms: Couldn't connect to server"
+    }
+  ],
+  "remediation": {
+    "owner": "Finance Operations",
+    "eta": "2026-03-13T16:00:00Z",
+    "actions": [
+      "Restore dashboard API availability",
+      "Re-capture spend snapshot",
+      "Post variance summary in standup"
+    ]
+  }
+}
