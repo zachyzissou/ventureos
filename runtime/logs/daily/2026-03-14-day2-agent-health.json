@@ -1,0 +1,88 @@
+{
+  "date": "2026-03-14",
+  "captured_at": "2026-03-14T23:14:00Z",
+  "source": {
+    "system": "dashboard",
+    "endpoint": "/api/agent-health"
+  },
+  "summary": {
+    "total_agents": 5,
+    "running": 4,
+    "error": 0,
+    "stalled": 1
+  },
+  "agents": [
+    {
+      "agent_id": "main",
+      "status": "running",
+      "session_count": 148,
+      "aborted_count": 0,
+      "success_rate": 1,
+      "last_updated_at": "2026-03-14T23:13:27Z",
+      "last_label": "Cron: checkpoint-watchdog",
+      "notes": ""
+    },
+    {
+      "agent_id": "cron-manager",
+      "status": "running",
+      "session_count": 12,
+      "aborted_count": 0,
+      "success_rate": 1,
+      "last_updated_at": "2026-03-14T23:12:59Z",
+      "last_label": "Cron: Cron Manager Orchestrator (local-coder, 5m)",
+      "notes": "Recovered after watchdog restart."
+    },
+    {
+      "agent_id": "codex",
+      "status": "running",
+      "session_count": 22,
+      "aborted_count": 0,
+      "success_rate": 1,
+      "last_updated_at": "2026-03-14T23:12:17Z",
+      "last_label": "day2-cycle-live",
+      "notes": "Heartbeat stable within 5-minute monitor window."
+    },
+    {
+      "agent_id": "claude",
+      "status": "running",
+      "session_count": 11,
+      "aborted_count": 0,
+      "success_rate": 1,
+      "last_updated_at": "2026-03-14T23:11:44Z",
+      "last_label": "day2-review-lane",
+      "notes": ""
+    },
+    {
+      "agent_id": "claude-code",
+      "status": "stalled",
+      "session_count": 1,
+      "aborted_count": 0,
+      "success_rate": 1,
+      "last_updated_at": "2026-03-14T22:59:00Z",
+      "last_label": "triage-legacy",
+      "notes": "Escalated with owner acknowledgement; does not block day2 SLA target (<=1 stale)."
+    }
+  ],
+  "remediation_events": [
+    {
+      "event_id": "REM-D2-HEARTBEAT-001",
+      "agent_id": "cron-manager",
+      "detected_at": "2026-03-14T15:05:00Z",
+      "remediation_started_at": "2026-03-14T15:09:00Z",
+      "resolved_at": "2026-03-14T15:18:00Z",
+      "started_within_minutes": 4,
+      "owner": "Operations Operator lane",
+      "status": "closed"
+    }
+  ],
+  "incidents": [
+    {
+      "incident_id": "INC-D2-CLAUDECODE-HEARTBEAT",
+      "severity": "P2",
+      "owner": "Operations Operator lane",
+      "eta": "2026-03-15T16:00:00Z",
+      "status": "open",
+      "summary": "claude-code heartbeat stale; non-blocking under <=1 stale threshold"
+    }
+  ]
+}
