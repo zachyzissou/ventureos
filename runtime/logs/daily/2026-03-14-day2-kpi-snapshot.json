@@ -1,0 +1,93 @@
+{
+  "date": "2026-03-14",
+  "captured_at": "2026-03-14T23:12:00Z",
+  "source": {
+    "system": "dashboard",
+    "endpoint": "/api/kpis/latest"
+  },
+  "standup_probe": {
+    "probe_at": "2026-03-14T13:30:00Z",
+    "required_by": "2026-03-14T13:30:00Z",
+    "latest_payload_present": true,
+    "latest_payload_timestamp": "2026-03-14T13:27:00Z",
+    "freshness_lag_minutes": 3
+  },
+  "latest_dashboard_snapshot": {
+    "snapshot_id": "kpi-2026-03-14-0830",
+    "published_at": "2026-03-14T13:27:00Z",
+    "status": "non_null"
+  },
+  "fallback_export": {
+    "required": false,
+    "reason": "Primary feed restored and non-null before standup."
+  },
+  "departments": {
+    "executive_office": [
+      {
+        "kpi_id": "executive.pr_merges_completed_today",
+        "period_start": "2026-03-14",
+        "period_end": "2026-03-14",
+        "value": 1,
+        "target": 1,
+        "owner": "Executive Office Operator lane",
+        "source_refs": [
+          "https://github.com/zachyzissou/ventureos/pulls"
+        ],
+        "entered_at": "2026-03-14T23:12:00Z",
+        "approved_at": "2026-03-14T23:12:00Z"
+      }
+    ],
+    "operations": [
+      {
+        "kpi_id": "operations.agent_heartbeat_freshness_rate",
+        "period_start": "2026-03-14",
+        "period_end": "2026-03-14",
+        "value": 0.99,
+        "target": 0.98,
+        "owner": "Operations Operator lane",
+        "source_refs": [
+          "/api/agent-health"
+        ],
+        "entered_at": "2026-03-14T23:12:00Z",
+        "approved_at": "2026-03-14T23:12:00Z"
+      }
+    ],
+    "data_analytics": [
+      {
+        "kpi_id": "data_analytics.kpi_feed_availability",
+        "period_start": "2026-03-14",
+        "period_end": "2026-03-14",
+        "value": 1,
+        "target": 1,
+        "owner": "Data/Analytics Operator lane",
+        "source_refs": [
+          "/api/kpis/latest"
+        ],
+        "entered_at": "2026-03-14T23:12:00Z",
+        "approved_at": "2026-03-14T23:12:00Z"
+      }
+    ],
+    "finance": [
+      {
+        "kpi_id": "finance.daily_budget_variance_pct",
+        "period_start": "2026-03-14",
+        "period_end": "2026-03-14",
+        "value": 0.04,
+        "target": 0.1,
+        "owner": "Finance Operator lane",
+        "source_refs": [
+          "/api/costs"
+        ],
+        "entered_at": "2026-03-14T23:12:00Z",
+        "approved_at": "2026-03-14T23:12:00Z"
+      }
+    ]
+  },
+  "rollup": {
+    "overall_status": "green",
+    "notes": [
+      "Primary /api/kpis/latest payload restored before standup probe.",
+      "Freshness lag at first probe was 3 minutes (<=5 minute requirement)."
+    ]
+  }
+}
