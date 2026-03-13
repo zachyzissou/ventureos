@@ -1,0 +1,76 @@
+{
+  "date": "2026-03-13",
+  "generated_at": "2026-03-13T04:04:48Z",
+  "reason": "/api/kpis/latest returned null latest payload during remediation cycle",
+  "source": {
+    "endpoint": "/api/kpis/latest",
+    "latest_payload_present": false
+  },
+  "fallback_kpis": {
+    "executive_office": [
+      {
+        "kpi_id": "executive.pr_merges_completed_today",
+        "period_start": "2026-03-13",
+        "period_end": "2026-03-13",
+        "value": 1,
+        "target": 1,
+        "owner": "Executive Office Operator lane",
+        "source_refs": [
+          "https://github.com/zachyzissou/ventureos/pull/594"
+        ],
+        "entered_at": "2026-03-13T04:04:48Z",
+        "approved_at": "2026-03-13T04:04:48Z"
+      }
+    ],
+    "operations": [
+      {
+        "kpi_id": "operations.agent_heartbeat_freshness_rate",
+        "period_start": "2026-03-13",
+        "period_end": "2026-03-13",
+        "value": 0.2,
+        "target": 0.98,
+        "owner": "Operations Operator lane",
+        "source_refs": [
+          "/api/agent-health"
+        ],
+        "entered_at": "2026-03-13T04:04:48Z",
+        "approved_at": "2026-03-13T04:04:48Z"
+      }
+    ],
+    "data_analytics": [
+      {
+        "kpi_id": "data_analytics.kpi_feed_availability",
+        "period_start": "2026-03-13",
+        "period_end": "2026-03-13",
+        "value": 1,
+        "target": 1,
+        "owner": "Data/Analytics Operator lane",
+        "source_refs": [
+          "logs/daily/2026-03-13-kpi-fallback-export-cycle2.json"
+        ],
+        "entered_at": "2026-03-13T04:04:48Z",
+        "approved_at": "2026-03-13T04:04:48Z"
+      }
+    ],
+    "finance": [
+      {
+        "kpi_id": "finance.daily_budget_variance_pct",
+        "period_start": "2026-03-13",
+        "period_end": "2026-03-13",
+        "value": -0.10999999999999995,
+        "target": 0.1,
+        "owner": "Finance Operator lane",
+        "source_refs": [
+          "/api/costs"
+        ],
+        "entered_at": "2026-03-13T04:04:48Z",
+        "approved_at": "2026-03-13T04:04:48Z"
+      }
+    ]
+  },
+  "completion": {
+    "completed_at": "2026-03-13T04:04:48Z",
+    "completed_within_minutes": 12,
+    "completed_within_sla": true
+  }
+}
