@@ -1,0 +1,42 @@
+{
+  "date": "2026-03-12",
+  "captured_at": "2026-03-13T01:10:40Z",
+  "source": {
+    "system": "dashboard",
+    "endpoint": "/api/costs"
+  },
+  "totals": {
+    "today_usd": 3.13,
+    "week_usd": 50.19,
+    "lifetime_usd": 50.19
+  },
+  "categories": [
+    {
+      "category": "api_usage",
+      "usd": 3.13
+    },
+    {
+      "category": "infrastructure",
+      "usd": 0
+    },
+    {
+      "category": "other",
+      "usd": 0
+    }
+  ],
+  "per_model": [
+    {
+      "model": "gpt-5.3-codex",
+      "usd": 50.18506604999995
+    }
+  ],
+  "variance": {
+    "daily_budget_usd": 5,
+    "variance_usd": -1.87,
+    "variance_pct": -0.374
+  },
+  "notes": [
+    "Daily spend within baseline budget.",
+    "Model-level spend records present."
+  ]
+}
