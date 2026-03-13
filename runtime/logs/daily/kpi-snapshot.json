@@ -1,0 +1,77 @@
+{
+  "date": "2026-03-12",
+  "captured_at": "2026-03-13T01:10:40Z",
+  "source": {
+    "system": "dashboard",
+    "endpoint": "/api/kpis/latest"
+  },
+  "departments": {
+    "executive_office": [
+      {
+        "kpi_id": "executive.pr_merges_completed_today",
+        "period_start": "2026-03-12",
+        "period_end": "2026-03-12",
+        "value": 1,
+        "target": 1,
+        "owner": "Executive Office Operator lane",
+        "source_refs": [
+          "https://github.com/zachyzissou/ventureos/pull/591"
+        ],
+        "entered_at": "2026-03-13T01:10:40Z",
+        "approved_at": "2026-03-13T01:10:40Z"
+      }
+    ],
+    "operations": [
+      {
+        "kpi_id": "operations.agent_heartbeat_freshness_rate",
+        "period_start": "2026-03-12",
+        "period_end": "2026-03-12",
+        "value": 0.2,
+        "target": 0.98,
+        "owner": "Operations Operator lane",
+        "source_refs": [
+          "/api/agent-health"
+        ],
+        "entered_at": "2026-03-13T01:10:40Z",
+        "approved_at": "2026-03-13T01:10:40Z"
+      }
+    ],
+    "data_analytics": [
+      {
+        "kpi_id": "data_analytics.kpi_feed_availability",
+        "period_start": "2026-03-12",
+        "period_end": "2026-03-12",
+        "value": 0,
+        "target": 1,
+        "owner": "Data/Analytics Operator lane",
+        "source_refs": [
+          "/api/kpis/latest"
+        ],
+        "entered_at": "2026-03-13T01:10:40Z",
+        "approved_at": "2026-03-13T01:10:40Z"
+      }
+    ],
+    "finance": [
+      {
+        "kpi_id": "finance.daily_budget_variance_pct",
+        "period_start": "2026-03-12",
+        "period_end": "2026-03-12",
+        "value": -0.374,
+        "target": 0.1,
+        "owner": "Finance Operator lane",
+        "source_refs": [
+          "/api/costs"
+        ],
+        "entered_at": "2026-03-13T01:10:40Z",
+        "approved_at": "2026-03-13T01:10:40Z"
+      }
+    ]
+  },
+  "rollup": {
+    "overall_status": "amber",
+    "notes": [
+      "No latest KPI payload available from /api/kpis/latest.",
+      "Today spend USD: 3.13 against budget USD: 5"
+    ]
+  }
+}

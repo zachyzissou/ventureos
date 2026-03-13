@@ -1,0 +1,100 @@
+{
+  "date": "2026-03-12",
+  "captured_at": "2026-03-13T01:10:40Z",
+  "source": {
+    "system": "dashboard",
+    "endpoint": "/api/agent-health"
+  },
+  "summary": {
+    "total_agents": 5,
+    "running": 1,
+    "error": 0,
+    "stalled": 4
+  },
+  "agents": [
+    {
+      "agent_id": "main",
+      "status": "running",
+      "session_count": 96,
+      "aborted_count": 0,
+      "success_rate": 1,
+      "last_updated_at": "2026-03-13T01:10:12Z",
+      "last_label": "Cron: checkpoint-progress-reporter",
+      "notes": ""
+    },
+    {
+      "agent_id": "cron-manager",
+      "status": "stalled",
+      "session_count": 2,
+      "aborted_count": 0,
+      "success_rate": 1,
+      "last_updated_at": "2026-03-11T15:14:31Z",
+      "last_label": "Cron: Cron Manager Orchestrator (local-coder, 5m)",
+      "notes": "No heartbeat within 60m at sweep time."
+    },
+    {
+      "agent_id": "codex",
+      "status": "stalled",
+      "session_count": 10,
+      "aborted_count": 0,
+      "success_rate": 1,
+      "last_updated_at": "2026-03-09T04:12:25Z",
+      "last_label": "triage-arch-codex-rerun",
+      "notes": "No heartbeat within 60m at sweep time."
+    },
+    {
+      "agent_id": "claude",
+      "status": "stalled",
+      "session_count": 6,
+      "aborted_count": 0,
+      "success_rate": 1,
+      "last_updated_at": "2026-03-08T21:28:02Z",
+      "last_label": "triage-arch-claude",
+      "notes": "No heartbeat within 60m at sweep time."
+    },
+    {
+      "agent_id": "claude-code",
+      "status": "stalled",
+      "session_count": 0,
+      "aborted_count": 0,
+      "success_rate": 0,
+      "last_updated_at": null,
+      "last_label": "",
+      "notes": "No heartbeat within 60m at sweep time."
+    }
+  ],
+  "incidents": [
+    {
+      "incident_id": "INC-CRONMANAGER-HEARTBEAT",
+      "severity": "P1",
+      "owner": "Operations Operator lane",
+      "eta": "2026-03-13T17:00:00Z",
+      "status": "open",
+      "summary": "cron-manager heartbeat stale >60m"
+    },
+    {
+      "incident_id": "INC-CODEX-HEARTBEAT",
+      "severity": "P1",
+      "owner": "Operations Operator lane",
+      "eta": "2026-03-13T17:00:00Z",
+      "status": "open",
+      "summary": "codex heartbeat stale >60m"
+    },
+    {
+      "incident_id": "INC-CLAUDE-HEARTBEAT",
+      "severity": "P1",
+      "owner": "Operations Operator lane",
+      "eta": "2026-03-13T17:00:00Z",
+      "status": "open",
+      "summary": "claude heartbeat stale >60m"
+    },
+    {
+      "incident_id": "INC-CLAUDECODE-HEARTBEAT",
+      "severity": "P1",
+      "owner": "Operations Operator lane",
+      "eta": "2026-03-13T17:00:00Z",
+      "status": "open",
+      "summary": "claude-code heartbeat stale >60m"
+    }
+  ]
+}

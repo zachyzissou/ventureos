@@ -1,0 +1,60 @@
+{
+  "date": "2026-03-12",
+  "captured_at": "2026-03-13T01:10:40Z",
+  "handoffs": [
+    {
+      "handoff_id": "h-001",
+      "producer": "Executive Office",
+      "consumer": "Operations",
+      "artifact": "Daily priorities packet",
+      "sent_at": "2026-03-12T14:00:00Z",
+      "accepted_at": "2026-03-12T14:06:00Z",
+      "producer_ts": "2026-03-12T14:00:00Z",
+      "consumer_ts": "2026-03-12T14:06:00Z",
+      "sla_status": "on_time",
+      "exceptions": ""
+    },
+    {
+      "handoff_id": "h-002",
+      "producer": "Operations",
+      "consumer": "Data/Analytics",
+      "artifact": "Ops sweep incident queue",
+      "sent_at": "2026-03-12T14:35:00Z",
+      "accepted_at": "2026-03-12T14:42:00Z",
+      "producer_ts": "2026-03-12T14:35:00Z",
+      "consumer_ts": "2026-03-12T14:42:00Z",
+      "sla_status": "on_time",
+      "exceptions": ""
+    },
+    {
+      "handoff_id": "h-003",
+      "producer": "Data/Analytics",
+      "consumer": "Finance",
+      "artifact": "KPI baseline refresh + variance dataset",
+      "sent_at": "2026-03-12T17:00:00Z",
+      "accepted_at": "2026-03-12T20:10:00Z",
+      "producer_ts": "2026-03-12T17:00:00Z",
+      "consumer_ts": "2026-03-12T20:10:00Z",
+      "sla_status": "late",
+      "exceptions": "KPI feed unavailable at standup; manual reconciliation delayed."
+    },
+    {
+      "handoff_id": "h-004",
+      "producer": "Finance",
+      "consumer": "Executive Office",
+      "artifact": "Budget variance closeout note",
+      "sent_at": "2026-03-12T22:00:00Z",
+      "accepted_at": "2026-03-12T22:05:00Z",
+      "producer_ts": "2026-03-12T22:00:00Z",
+      "consumer_ts": "2026-03-12T22:05:00Z",
+      "sla_status": "on_time",
+      "exceptions": ""
+    }
+  ],
+  "summary": {
+    "total_handoffs": 4,
+    "on_time": 3,
+    "late": 1,
+    "on_time_rate": 0.75
+  }
+}
