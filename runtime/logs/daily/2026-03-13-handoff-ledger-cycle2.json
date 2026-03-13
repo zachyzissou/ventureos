@@ -1,0 +1,60 @@
+{
+  "date": "2026-03-13",
+  "captured_at": "2026-03-13T04:00:00Z",
+  "handoffs": [
+    {
+      "handoff_id": "h-001",
+      "producer": "Executive Office",
+      "consumer": "Operations",
+      "artifact": "Daily priorities packet",
+      "sent_at": "2026-03-13T14:00:00Z",
+      "accepted_at": "2026-03-13T14:05:00Z",
+      "producer_ts": "2026-03-13T14:00:00Z",
+      "consumer_ts": "2026-03-13T14:05:00Z",
+      "sla_status": "on_time",
+      "exceptions": ""
+    },
+    {
+      "handoff_id": "h-002",
+      "producer": "Operations",
+      "consumer": "Data/Analytics",
+      "artifact": "Ops sweep incident queue",
+      "sent_at": "2026-03-13T14:35:00Z",
+      "accepted_at": "2026-03-13T14:41:00Z",
+      "producer_ts": "2026-03-13T14:35:00Z",
+      "consumer_ts": "2026-03-13T14:41:00Z",
+      "sla_status": "on_time",
+      "exceptions": ""
+    },
+    {
+      "handoff_id": "h-003",
+      "producer": "Data/Analytics",
+      "consumer": "Finance",
+      "artifact": "KPI baseline refresh + variance dataset",
+      "sent_at": "2026-03-13T17:00:00Z",
+      "accepted_at": "2026-03-13T17:08:00Z",
+      "producer_ts": "2026-03-13T17:00:00Z",
+      "consumer_ts": "2026-03-13T17:08:00Z",
+      "sla_status": "on_time",
+      "exceptions": "R2 timer controls active; acceptance completed in 8 minutes."
+    },
+    {
+      "handoff_id": "h-004",
+      "producer": "Finance",
+      "consumer": "Executive Office",
+      "artifact": "Budget variance closeout note",
+      "sent_at": "2026-03-13T22:00:00Z",
+      "accepted_at": "2026-03-13T22:04:00Z",
+      "producer_ts": "2026-03-13T22:00:00Z",
+      "consumer_ts": "2026-03-13T22:04:00Z",
+      "sla_status": "on_time",
+      "exceptions": ""
+    }
+  ],
+  "summary": {
+    "total_handoffs": 4,
+    "on_time": 4,
+    "late": 0,
+    "on_time_rate": 1
+  }
+}
