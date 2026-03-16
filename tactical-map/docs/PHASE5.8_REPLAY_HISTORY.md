@@ -5,7 +5,7 @@
 
 ## Summary
 
-Phase 5.8 adds a full session replay and history system to the Tactical Map. Users can record live sessions, replay them with VCR-style controls (play/pause/rewind/fast-forward/scrub), view synchronized event logs, compare before/after snapshots, overlay historical metrics, and export sessions as video/GIF. The design preserves the existing Protoss visual language and integrates into the Phase 5.1–5.6 renderer and store architecture.
+Phase 5.8 adds a full session replay and history system to the Tactical Map. Users can record live sessions, replay them with VCR-style controls (play/pause/rewind/fast-forward/scrub), view synchronized event logs, compare before/after snapshots, overlay historical metrics, and export sessions as video/GIF. The design preserves the existing current visual language and integrates into the Phase 5.1–5.6 renderer and store architecture.
 
 ---
 
@@ -1633,7 +1633,7 @@ tactical-map/
 | `R` | Start/stop recording | Live mode |
 | `C` | Set comparison point A/B | Replay mode |
 
-## Appendix C: Protoss Visual Theme for Replay UI
+## Appendix C: current Visual Theme for Replay UI
 
 Consistent with the existing Tactical Map aesthetic:
 
@@ -1641,11 +1641,11 @@ Consistent with the existing Tactical Map aesthetic:
 |---------|-------|
 | Scrubber background | Dark psi-field (`#0a0a1a` with `#1a1a2e` bar) |
 | Playhead | Gold crystal (`#FFD700`) with subtle glow |
-| Played region | Protoss blue (`#00D4FF`) at 60% alpha |
+| Played region | command blue (`#00D4FF`) at 60% alpha |
 | Checkpoint markers | Dim blue diamonds (`#4A6FA5`) |
 | Incident markers | Red pulse circles (`#FF3366`) |
 | Phase markers | Teal triangles (`#00E1C3`) |
 | Event log background | Dark panel (`#0a0a12`) with blue border (`#1a3b7a`) |
 | Record indicator | Pulsing red circle (`#FF3366`) top-right corner |
 | Compare mode highlight | Gold border (`#FFD700`) on diffed buildings |
-| Button hover | Protoss blue glow effect |
+| Button hover | command blue glow effect |

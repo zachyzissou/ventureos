@@ -1,7 +1,7 @@
 # Tactical Map - Feature Roadmap
 
 ## Vision
-Real-time StarCraft-inspired visualization of the VentureOS multi-agent system. Visualize agents, missions, resource flows, and system health in an intuitive tactical interface.
+Real-time tactical visualization of the VentureOS multi-agent system. Visualize agents, missions, resource flows, and system health in an intentional operational interface.
 
 ## Completed Phases
 
@@ -25,9 +25,9 @@ Real-time StarCraft-inspired visualization of the VentureOS multi-agent system. 
 - Particle effects for activity
 - Issue #8
 
-### Phase 5.3: Khala Network ⏳ In Progress
+### Phase 5.3: Affinity Network ⏳ In Progress
 - Agent bonds visualization (affinity-based)
-- Pylon network overlay (infrastructure dependencies)
+- Infrastructure dependency overlay
 - Interactive hover (bond details)
 - Performance: <500ms for 200 bonds
 - Issue #9 (Synth session 9353433f)

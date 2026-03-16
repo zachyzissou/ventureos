@@ -4,7 +4,7 @@
 
 ## Overview
 
-The performance benchmarking suite ensures the Tactical Map maintains consistent rendering performance as features are added across all 6 phases (Foundation, Activity/Animation, Khala Network, Resource Economy, Mission Tracking, Health Diagnostics).
+The performance benchmarking suite ensures the Tactical Map maintains consistent rendering performance as features are added across all 6 phases (Foundation, Activity/Animation, Affinity Network, Resource Economy, Mission Tracking, Health Diagnostics).
 
 ### What It Tests
 

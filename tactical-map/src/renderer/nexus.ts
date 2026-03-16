@@ -20,24 +20,24 @@ export function createNexus(): NexusView {
   const innerPts = toPixiPolygon(hexagonPoints(r * 0.42));
 
   const glow = new Graphics();
-  glow.poly(outerPts, true).fill({ color: COLORS.PROTOSS_GOLD, alpha: 0.20 });
+  glow.poly(outerPts, true).fill({ color: COLORS.COMMAND_GOLD, alpha: 0.20 });
   glow.filters = [new BlurFilter({ strength: 14 })];
   glow.scale.set(1.18);
 
   const shell = new Graphics();
   shell.poly(outerPts, true).fill({ color: 0x1b1a12, alpha: 0.85 });
-  shell.poly(outerPts, true).stroke({ width: 2, color: COLORS.PROTOSS_GOLD, alpha: 0.85 });
+  shell.poly(outerPts, true).stroke({ width: 2, color: COLORS.COMMAND_GOLD, alpha: 0.85 });
 
   const mid = new Graphics();
   mid.poly(midPts, true).fill({ color: 0x2a2410, alpha: 0.85 });
   mid.poly(midPts, true).stroke({ width: 1, color: 0xffffff, alpha: 0.08 });
 
   const core = new Graphics();
-  core.poly(innerPts, true).fill({ color: COLORS.PROTOSS_GOLD, alpha: 0.9 });
+  core.poly(innerPts, true).fill({ color: COLORS.COMMAND_GOLD, alpha: 0.9 });
   core.filters = [new BlurFilter({ strength: 2 })];
 
   const coreGlow = new Graphics();
-  coreGlow.circle(0, 0, r * 0.55).fill({ color: COLORS.PROTOSS_GOLD, alpha: 0.08 });
+  coreGlow.circle(0, 0, r * 0.55).fill({ color: COLORS.COMMAND_GOLD, alpha: 0.08 });
   coreGlow.filters = [new BlurFilter({ strength: 18 })];
 
   const label = new Text({

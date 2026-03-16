@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import { affinityToAlpha, affinityToTier, tierToColor, tierToParticleCount, tierToSpeedPxPerS } from '@/khala/affinity';
+import { affinityToAlpha, affinityToTier, tierToColor, tierToParticleCount, tierToSpeedPxPerS } from '@/affinity/affinity';
 
-describe('khala affinity', () => {
+describe('affinity network tiers', () => {
   it('maps affinity to the correct tier boundaries', () => {
     expect(affinityToTier(0)).toBe(1);
     expect(affinityToTier(0.5)).toBe(1);

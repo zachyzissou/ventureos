@@ -104,7 +104,7 @@ const DB_PATH = PATHS_RPG_DB_PATH;
  * The safest pattern is: validate identifiers + restrict to an allowlist.
  */
 export const ALLOWED_TABLES = new Set<string>([
-  'psionic_stats',
+  'performance_stats',
   'interaction_logs',
 ]);
 
@@ -466,7 +466,7 @@ function buildQuery(source: DataSource, date: string): BuiltQuery {
   }
 
   // Add date filter for tables with snapshot_date or created_at
-  if (source.table === 'psionic_stats') {
+  if (source.table === 'performance_stats') {
     whereConditions.push('snapshot_date = ?');
     params.push(date);
   } else if (source.table === 'interaction_logs') {

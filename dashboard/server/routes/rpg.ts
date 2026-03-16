@@ -19,16 +19,16 @@ export type { RpgHandlerOptions };
  * RPG API route handler for the dashboard.
  *
  * Handles:
- *   GET /api/rpg/stats        — Aggregate psionic stats
+ *   GET /api/rpg/stats        — Aggregate performance stats
  *   GET /api/rpg/stats/:agent — Per-agent stats
- *   GET /api/rpg/khala-network — Khala network edges
+ *   GET /api/rpg/affinity-network — Affinity network edges
  *   GET /api/rpg/tactical-overlay[/:view] — Tactical overlay data
  *   GET /api/rpg/protocols    — Protocol summaries
  *   GET /api/rpg/escalations  — Escalation events
  *
  * Also handles legacy alias routes (delegated by server.ts):
- *   GET /api/psionic-stats    → /api/rpg/stats
- *   GET /api/khala-network    → /api/rpg/khala-network
+ *   GET /api/performance-stats    → /api/rpg/stats
+ *   GET /api/affinity-network    → /api/rpg/affinity-network
  *   GET /api/tactical-overlay → /api/rpg/tactical-overlay
  *   GET /api/protocols        → /api/rpg/protocols
  *   GET /api/escalations      → /api/rpg/escalations

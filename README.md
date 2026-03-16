@@ -1,6 +1,6 @@
 # ventureos
 
-> Protoss-inspired coordination runtime for multi-agent systems, operational playbooks, and dashboard tooling.
+> Coordination runtime for multi-agent systems, operational playbooks, and dashboard tooling.
 > Status: `Production` (actively maintained)
 
 ![CI](https://github.com/zachyzissou/ventureos/actions/workflows/baseline-ts-ci.yml/badge.svg?branch=main)
@@ -9,7 +9,7 @@
 
 ## Overview
 
-VentureOS is a TypeScript monorepo that coordinates multi-agent operations, dashboard observability, and tactical command UX in a Protoss-themed production workflow.
+VentureOS is a TypeScript monorepo that coordinates multi-agent operations, dashboard observability, and tactical command UX in a production workflow.
 It combines shared libraries, API services, and a web dashboard to track role readiness, mission health, and session handoffs with audit-friendly artifacts.
 The repo currently acts as the local execution layer for roadmap delivery and readiness checks used in OpenClaw-integrated environments.
 

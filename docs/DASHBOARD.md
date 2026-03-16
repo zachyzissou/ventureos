@@ -186,7 +186,7 @@ Auth events (login, failure, brute-force) are logged to `~/clawd/logs/tactical-m
 
 ## Tactical Map Integration
 
-The dashboard serves the Tactical Map (StarCraft-style command center) as static files:
+The dashboard serves the Tactical Map as static files:
 
 ```
 GET /map/* → ventureos/tactical-map/dist/*
@@ -195,8 +195,8 @@ GET /map/* → ventureos/tactical-map/dist/*
 The Tactical Map consumes the same dashboard API endpoints:
 - `/api/ventureos-agents` for unit positions/status
 - `/api/ventureos-kpis` for building indicators
-- `/api/rpg/stats` for Protoss psionic attributes
-- `/api/rpg/khala-network` for bond visualizations
+- `/api/rpg/stats` for agent performance attributes
+- `/api/rpg/affinity-network` for bond visualizations
 
 ## RPG System Integration
 
@@ -204,7 +204,7 @@ Dashboard provides RPG API endpoints that connect to the VentureOS RPG SQLite da
 
 ```
 Dashboard ← /api/rpg/stats          → VentureOS RPG DB (SQLite)
-          ← /api/rpg/khala-network
+          ← /api/rpg/affinity-network
           ← /api/rpg/conversations
 ```
 
@@ -265,4 +265,4 @@ curl -H "Authorization: Bearer $(cat dashboard/data/.api-token)" \
 - **[dashboard/README.md](../dashboard/README.md)** — Quick start, build, deployment
 - **[dashboard/docs/API.md](../dashboard/docs/API.md)** — Complete API reference
 - **[docs/ARCHITECTURE.md](ARCHITECTURE.md)** — System architecture
-- **[docs/RPG_SYSTEM.md](RPG_SYSTEM.md)** — Protoss RPG overlay
+- **[docs/RPG_SYSTEM.md](RPG_SYSTEM.md)** — performance overlay system

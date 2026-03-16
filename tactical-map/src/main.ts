@@ -16,7 +16,7 @@ import { createTerrain } from '@/renderer/terrain';
 import { createHealthBarsLayer } from '@/renderer/health-bars';
 import { createUnitsLayer } from '@/renderer/units';
 import { createParticleSystem } from '@/renderer/particles';
-import { createKhalaNetworkLayer } from '@/renderer/khala-network';
+import { createAffinityNetworkLayer } from '@/renderer/affinity-network';
 import { createResourceEconomyLayer } from '@/renderer/resource-economy';
 import { createHealthIndicatorsLayer } from '@/renderer/health-indicators';
 import { createAlertOverlay } from '@/renderer/alert-overlay';
@@ -98,8 +98,8 @@ async function bootstrap() {
   const terrain = createTerrain();
   world.addChild(terrain.container);
 
-  const khala = createKhalaNetworkLayer();
-  world.addChild(khala.container);
+  const affinityNetwork = createAffinityNetworkLayer();
+  world.addChild(affinityNetwork.container);
 
   const particles = createParticleSystem({ seed: 1337 });
   world.addChild(particles.container);
@@ -326,10 +326,10 @@ async function bootstrap() {
   // Store → view binding
   mapStore.subscribe((s) => {
     announceStateChanges(s);
-    // Khala bonds + resource overlays follow agent positions.
+    // affinity links + resource overlays follow agent positions.
     const pos = {} as Record<AgentId, Point>;
     for (const id of AGENT_ORDER) pos[id] = s.agents[id].position;
-    khala.setAgentPositions(pos);
+    affinityNetwork.setAgentPositions(pos);
     resourceEconomy.setAgentPositions(pos);
 
     // Ring buildings + units + health bars
@@ -497,7 +497,7 @@ async function bootstrap() {
 
     camera.update(elapsedMs);
     hud.update(elapsedMs);
-    khala.update(elapsedMs);
+    affinityNetwork.update(elapsedMs);
     buildingsLayer.update(elapsedMs);
     unitsLayer.update(elapsedMs);
     nexus.update(elapsedMs);
@@ -597,7 +597,7 @@ async function bootstrap() {
     resetVisualState: () => {
       // Deterministic reset for visual regression tests.
       particles.reset();
-      khala.reset();
+      affinityNetwork.reset();
       app.render();
     },
     setMapState: (next: MapState) => mapStore.set(next),

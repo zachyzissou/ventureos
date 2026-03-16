@@ -1,8 +1,8 @@
 /**
  * RPG HTTP Route Handler — VentureOS RPG System
  *
- * Provides the HTTP API surface for the RPG system (psionic stats,
- * khala network, tactical overlay, protocols, escalations).
+ * Provides the HTTP API surface for the overlay system (performance stats,
+ * affinity network, tactical overlay, protocols, escalations).
  *
  * Uses better-sqlite3 to query the ventureos-rpg.db database.
  * Designed for integration with the dashboard's node:http server.
@@ -14,12 +14,12 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import Database from 'better-sqlite3';
 
 import type {
-  PsionicStatSnapshot,
+  PerformanceStatSnapshot,
   RpgStatsResponse,
   RpgAgentStatsResponse,
   InteractionLogEntry,
-  KhalaNetworkEdge,
-  KhalaNetworkResponse,
+  AffinityNetworkEdge,
+  AffinityNetworkResponse,
   TacticalOverlayResponse,
   ProtocolSummary,
   ProtocolsResponse,
@@ -51,17 +51,17 @@ function parseUrl(req: IncomingMessage): URL | null {
 
 // ─── Database Queries ───────────────────────────────────────────────────────
 
-function queryPsionicStats(db: Database.Database): PsionicStatSnapshot[] {
+function queryPerformanceStats(db: Database.Database): PerformanceStatSnapshot[] {
   const stmt = db.prepare(
     `SELECT snapshot_date, agent_id,
-            psionic_mastery, energy, shields, warp_technology, psi_reach,
+            performance_mastery, energy, shields, automation_depth, collaboration_reach,
             memory_count, unique_domains, canonical_edits,
             p95_latency_s, mttr_minutes,
             acceptance_rate, success_rate, approval_accuracy,
-            tasks_completed, warp_tech_inputs
-     FROM psionic_stats ORDER BY snapshot_date DESC`,
+            tasks_completed, automation_inputs
+     FROM performance_stats ORDER BY snapshot_date DESC`,
   );
-  return stmt.all() as PsionicStatSnapshot[];
+  return stmt.all() as PerformanceStatSnapshot[];
 }
 
 function getInteractionLogColumns(db: Database.Database): Set<string> {
@@ -127,13 +127,13 @@ function queryInteractionLogs(db: Database.Database, agentId?: string): Interact
   return [] as InteractionLogEntry[];
 }
 
-function queryKhalaNetwork(db: Database.Database): KhalaNetworkEdge[] {
+function queryAffinityNetwork(db: Database.Database): AffinityNetworkEdge[] {
   const stmt = db.prepare(
     `SELECT id, agent_a, agent_b, affinity, seed_value,
             last_interaction_at, interaction_count, updated_at
-     FROM khala_network ORDER BY affinity DESC`,
+     FROM affinity_network ORDER BY affinity DESC`,
   );
-  return stmt.all() as KhalaNetworkEdge[];
+  return stmt.all() as AffinityNetworkEdge[];
 }
 
 function queryProtocols(db: Database.Database): ProtocolSummary[] {
@@ -167,17 +167,17 @@ function handleStats(
   res: ServerResponse,
   subPath: string,
 ): boolean {
-  // GET /api/rpg/stats — aggregate stats as flat Record<string, number>
+  // GET /api/rpg/stats — aggregate performance stats as flat Record<string, number>
   if (!subPath || subPath === '/') {
-    const snapshots = queryPsionicStats(db);
+    const snapshots = queryPerformanceStats(db);
     const latest = snapshots[0];
     const stats: Record<string, number> = {};
     if (latest) {
-      stats['psionic_mastery'] = latest.psionic_mastery;
+      stats['performance_mastery'] = latest.performance_mastery;
       stats['energy'] = latest.energy;
       stats['shields'] = latest.shields;
-      stats['warp_technology'] = latest.warp_technology;
-      stats['psi_reach'] = latest.psi_reach;
+      stats['automation_depth'] = latest.automation_depth;
+      stats['collaboration_reach'] = latest.collaboration_reach;
       stats['memory_count'] = latest.memory_count;
       stats['unique_domains'] = latest.unique_domains;
       stats['canonical_edits'] = latest.canonical_edits;
@@ -220,19 +220,19 @@ function handleStats(
   return false;
 }
 
-function handleKhalaNetwork(
+function handleAffinityNetwork(
   db: Database.Database,
   _req: IncomingMessage,
   res: ServerResponse,
   _subPath: string,
 ): boolean {
-  const edges = queryKhalaNetwork(db);
+  const edges = queryAffinityNetwork(db);
   const agents = new Set<string>();
   for (const e of edges) {
     agents.add(e.agent_a);
     agents.add(e.agent_b);
   }
-  const body: KhalaNetworkResponse = {
+  const body: AffinityNetworkResponse = {
     edges,
     nodeCount: agents.size,
     edgeCount: edges.length,
@@ -249,18 +249,18 @@ function handleTacticalOverlay(
 ): boolean {
   const view = (subPath.replace(/^\//, '').replace(/\/$/, '')) || 'default';
 
-  const snapshots = queryPsionicStats(db);
+  const snapshots = queryPerformanceStats(db);
   const latest = snapshots[0];
   const stats: Record<string, number> = {};
   if (latest) {
-    stats['psionic_mastery'] = latest.psionic_mastery;
+    stats['performance_mastery'] = latest.performance_mastery;
     stats['energy'] = latest.energy;
     stats['shields'] = latest.shields;
-    stats['warp_technology'] = latest.warp_technology;
-    stats['psi_reach'] = latest.psi_reach;
+    stats['automation_depth'] = latest.automation_depth;
+    stats['collaboration_reach'] = latest.collaboration_reach;
   }
 
-  const edges = queryKhalaNetwork(db);
+  const edges = queryAffinityNetwork(db);
   const agents = new Set<string>();
   for (const e of edges) {
     agents.add(e.agent_a);
@@ -345,10 +345,10 @@ export function handleRpgApi(
       return handleStats(db, req, res, subPath);
     }
 
-    // Route: /api/rpg/khala-network[/...]
-    if (pathname.startsWith('/api/rpg/khala-network')) {
-      const subPath = pathname.slice('/api/rpg/khala-network'.length);
-      return handleKhalaNetwork(db, req, res, subPath);
+    // Route: /api/rpg/affinity-network[/...]
+    if (pathname.startsWith('/api/rpg/affinity-network')) {
+      const subPath = pathname.slice('/api/rpg/affinity-network'.length);
+      return handleAffinityNetwork(db, req, res, subPath);
     }
 
     // Route: /api/rpg/tactical-overlay[/...]

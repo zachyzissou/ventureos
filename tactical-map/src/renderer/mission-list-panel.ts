@@ -4,9 +4,6 @@
  * Compact overlay listing existing persisted missions.
  * Allows selecting a mission to open the edit modal.
  * Supports keyboard navigation (↑/↓, Enter to edit, Esc to close).
- *
- * Protoss lore: The Directive Archive — a crystalline scroll of active
- * Templar Directives, each glowing with the urgency of its priority.
  */
 
 import { Container, Graphics, Text } from 'pixi.js';

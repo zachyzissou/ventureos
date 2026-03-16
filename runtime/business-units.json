@@ -6,7 +6,7 @@
     {
       "id": "ventureos",
       "name": "VentureOS",
-      "description": "Protoss Multi-Agent Operating System — orchestrates missions, agents, and business units across the portfolio.",
+      "description": "current Multi-Agent Operating System — orchestrates missions, agents, and business units across the portfolio.",
       "category": "infra",
       "priority": "critical",
       "status": "active",

@@ -1,69 +1,61 @@
-# VentureOS Role Cards — Khaydarin Card System
+# VentureOS Role Cards
 
 ## What This Is
 
-A complete agent identity system for VentureOS, based on VoxYZ's 6-layer role card schema, adapted for OpenClaw's Protoss-themed multi-agent architecture.
-
-**10 agents. 10 cards. Each card defines who the agent is, what it does, what it NEVER does, and how it relates to every other agent.**
+A structured agent identity system for VentureOS. Each role card defines an agent's scope, handoff contracts, non-negotiables, escalation policy, operating metrics, and working voice.
 
 ## Files
 
 | File | Contents |
 |------|----------|
-| `00-SCHEMA.md` | Schema documentation — the 6+4 layer system explained |
-| `schema.ts` | TypeScript interfaces, validation, and SOUL.md generator |
-| `01-echo.ts` | ⚡ Echo — Hierarch (CEO/Orchestrator) |
-| `02-nexus.ts` | 🔮 Nexus — Executor (Mission Control) |
-| `03-oracle.ts` | 🔎 Oracle — Preserver (Research/Analysis) |
-| `04-atlas.ts` | 🏗️ Atlas — Phase Smith (Infrastructure/Ops) |
-| `05-sentinel.ts` | 🛡️ Sentinel — Shadow Guard (Security) |
-| `06-verifier.ts` | ✅ Verifier — Arbiter (QA/Testing) |
-| `07-archivist.ts` | 📚 Archivist — Conservator (Documentation) |
-| `08-synth.ts` | ⚒️ Synth — Forge Master (Code/Build) |
-| `09-scout.ts` | 👁️ Scout — Observer (Monitoring/Discovery) |
-| `10-liaison.ts` | 📡 Liaison — Emissary (External Communication) |
-| `11-voice-directives.md` | Personality + conflict patterns for all 10 agents |
-| `12-affinity-matrix.md` | 15 key pairwise relationships + full matrix |
-| `13-implementation.md` | Phased rollout plan |
+| `00-SCHEMA.md` | Schema documentation for the 10-layer role card model |
+| `schema.ts` | TypeScript interfaces, validation, and `SOUL.md` generator |
+| `01-echo.ts` | Echo — Strategy Lead |
+| `02-nexus.ts` | Nexus — Program Controller |
+| `03-oracle.ts` | Oracle — Research Lead |
+| `04-atlas.ts` | Atlas — Infrastructure Lead |
+| `05-sentinel.ts` | Sentinel — Security Lead |
+| `06-verifier.ts` | Verifier — Quality Lead |
+| `07-archivist.ts` | Archivist — Knowledge Lead |
+| `08-synth.ts` | Synth — Delivery Lead |
+| `09-scout.ts` | Scout — Signals Lead |
+| `10-liaison.ts` | Liaison — Communications Lead |
+| `11-voice-directives.md` | Voice and conflict-resolution guidelines |
+| `12-affinity-matrix.md` | Key pairwise collaboration affinities |
+| `13-implementation.md` | Implementation and rollout guidance |
 
 ## The Schema: 10 Layers
 
-### Front Face (The Pylon Side)
-1. **Nexus Sphere** (Domain) — What territory this agent owns
-2. **Warp Channels** (I/O) — What goes in, what comes out
-3. **Warp Complete** (Done) — Exit criteria and quality gates
+### Operating Contract
+1. **Domain Scope** — what territory the agent owns
+2. **Operating Channels** — what goes in, what comes out
+3. **Completion Contract** — exit criteria and handoff shape
 
-### Back Face (The Void Side)
-4. **Void Interdicts** (Hard Bans) — Absolute prohibitions with rationale
-5. **Psionic Cascade** (Escalation) — When to hand off and to whom
-6. **Resonance Readings** (Metrics) — Observable performance measures
+### Risk and Escalation
+4. **Hard Boundaries** — absolute prohibitions with rationale
+5. **Escalation Policy** — when to hand off and to whom
+6. **Performance Metrics** — measurable operating standards
 
-### Extensions (VentureOS-specific)
-7. **Psionic Signature** (Voice) — Personality and communication style
-8. **Khala Bonds** (Affinities) — Pairwise trust scores (0.10-0.95)
-9. **Forge Access** (Tools) — Available tools and capabilities
-10. **Crystal Memory** (State) — Persistent and volatile state
+### VentureOS Extensions
+7. **Voice Profile** — communication style and conflict handling
+8. **Affinity Map** — pairwise trust/collaboration scores
+9. **Tool Access** — tools and skills the agent can invoke
+10. **State Model** — persistent and volatile state expectations
 
-## Protoss Caste System
+## Operating Styles
 
-| Caste | Agents | Communication Style |
-|-------|--------|-------------------|
-| **Templar** | Echo, Oracle | Commanding, insightful, direct |
-| **Judicator** | Nexus, Verifier, Liaison | Structured, procedural |
-| **Khalai** | Atlas, Archivist, Synth, Scout | Practical, craft-focused |
-| **Nerazim** | Sentinel | Cryptic, authoritative, minimal |
+| Style | Agents | Default communication pattern |
+|-------|--------|-------------------------------|
+| `strategic` | Echo, Oracle | directional, high-context, decision-oriented |
+| `control` | Nexus, Verifier, Liaison | procedural, explicit, gate-aware |
+| `delivery` | Atlas, Archivist, Synth, Scout | practical, implementation-focused, concise |
+| `security` | Sentinel | protective, risk-focused, minimally ambiguous |
 
 ## Quick Start
 
-**To get agents running with role cards today:**
+1. Generate `SOUL.md` files from the role cards.
+2. Place generated `SOUL.md` files in the relevant agent workspaces.
+3. Use hard boundaries as explicit behavioral constraints.
+4. Use escalation policy and operating metrics to shape runtime behavior and evidence.
 
-1. Run the SOUL.md generator for each agent (see `schema.ts`)
-2. Place generated SOUL.md in each agent's workspace
-3. Hard bans become explicit behavioral constraints
-4. Voice directives shape personality
-
-**See `13-implementation.md` for the full phased rollout.**
-
-## GitHub Issue
-
-Tracking: https://github.com/zachyzissou/ventureos/issues/28
+See `13-implementation.md` for rollout guidance.

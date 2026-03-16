@@ -24,7 +24,7 @@ async function makeTempAffinityDb(): Promise<{ db: Database.Database; cleanup: (
   const db = new Database(dbPath);
 
   db.exec(`
-    CREATE TABLE khala_network (
+    CREATE TABLE affinity_network (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL,
       agent_b TEXT NOT NULL,
@@ -38,7 +38,7 @@ async function makeTempAffinityDb(): Promise<{ db: Database.Database; cleanup: (
       CHECK(affinity >= 0.10 AND affinity <= 0.95)
     );
 
-    CREATE TABLE khala_drift_history (
+    CREATE TABLE affinity_drift_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL,
       agent_b TEXT NOT NULL,
@@ -104,7 +104,7 @@ describe('ConversationEngine', () => {
 
     // Initial bond
     db.prepare(
-      'INSERT INTO khala_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
+      'INSERT INTO affinity_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
     ).run('archivist', 'oracle', 0.8, 0.8);
 
     const engine = makeEngine({ persistDir, affinityDb: db, enforceTurns: true });
@@ -134,7 +134,7 @@ describe('ConversationEngine', () => {
     const updated = await engine.getConversation(state.conversationId);
     expect(updated.currentTurn).toBe('archivist');
 
-    const bond = db.prepare('SELECT affinity FROM khala_network WHERE agent_a = ? AND agent_b = ?').get('archivist', 'oracle') as any;
+    const bond = db.prepare('SELECT affinity FROM affinity_network WHERE agent_a = ? AND agent_b = ?').get('archivist', 'oracle') as any;
     expect(bond.affinity).toBeGreaterThan(0.8);
 
     await cleanupDb();
@@ -201,7 +201,7 @@ describe('ConversationEngine', () => {
 
     // oracle-synth low affinity
     db.prepare(
-      'INSERT INTO khala_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
+      'INSERT INTO affinity_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
     ).run('oracle', 'synth', 0.4, 0.4);
 
     const engine = makeEngine({ persistDir, affinityDb: db, enforceTurns: true, mediationAffinityThreshold: 0.5 });

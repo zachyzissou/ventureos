@@ -8,9 +8,6 @@
  * - Duration between phases
  * - Scrollable for long histories
  * - Compact mode for inline card usage
- *
- * Protoss lore: The Khaydarin Chronicle — a living record of
- * psionic events etched into the crystalline memory lattice.
  */
 
 import type {

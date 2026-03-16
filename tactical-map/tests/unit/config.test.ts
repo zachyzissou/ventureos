@@ -5,7 +5,7 @@ describe('config.ts', () => {
   it('exports core constant groups', () => {
     expect(CANVAS.WIDTH).toBeGreaterThan(0);
     expect(CANVAS.HEIGHT).toBeGreaterThan(0);
-    expect(COLORS.PROTOSS_BLUE).toBeTypeOf('number');
+    expect(COLORS.COMMAND_BLUE).toBeTypeOf('number');
     expect(BONDS.TIER_COLORS.length).toBe(5);
     expect(CAMERA.MIN_ZOOM).toBeLessThan(CAMERA.MAX_ZOOM);
     expect(API.POLL_INTERVAL).toBeGreaterThan(0);

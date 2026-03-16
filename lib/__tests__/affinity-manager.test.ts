@@ -11,7 +11,7 @@ async function makeTempDb(): Promise<{ dbPath: string; db: Database.Database; cl
   const db = new Database(dbPath);
 
   db.exec(`
-    CREATE TABLE khala_network (
+    CREATE TABLE affinity_network (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL,
       agent_b TEXT NOT NULL,
@@ -25,7 +25,7 @@ async function makeTempDb(): Promise<{ dbPath: string; db: Database.Database; cl
       CHECK(affinity >= 0.10 AND affinity <= 0.95)
     );
 
-    CREATE TABLE khala_drift_history (
+    CREATE TABLE affinity_drift_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL,
       agent_b TEXT NOT NULL,
@@ -47,13 +47,13 @@ async function makeTempDb(): Promise<{ dbPath: string; db: Database.Database; cl
   return { dbPath, db, cleanup };
 }
 
-async function makeTempDbMinimalKhala(): Promise<{ dbPath: string; db: Database.Database; cleanup: () => Promise<void> }> {
+async function makeTempDbMinimalAffinity(): Promise<{ dbPath: string; db: Database.Database; cleanup: () => Promise<void> }> {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ventureos-affinity-min-'));
   const dbPath = path.join(dir, 'test.db');
   const db = new Database(dbPath);
 
   db.exec(`
-    CREATE TABLE khala_network (
+    CREATE TABLE affinity_network (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL,
       agent_b TEXT NOT NULL,
@@ -91,11 +91,11 @@ describe('AffinityManager', () => {
     const after = am.recordHandoffOutcome({ from: 'oracle', to: 'archivist', success: true, reason: 'Test success' });
     expect(after).toBeGreaterThan(before);
 
-    const row = db.prepare('SELECT affinity, interaction_count FROM khala_network WHERE agent_a = ? AND agent_b = ?').get('archivist', 'oracle') as any;
+    const row = db.prepare('SELECT affinity, interaction_count FROM affinity_network WHERE agent_a = ? AND agent_b = ?').get('archivist', 'oracle') as any;
     expect(row.affinity).toBeCloseTo(after);
     expect(row.interaction_count).toBe(1);
 
-    const drift = db.prepare('SELECT old_affinity, new_affinity, delta, reason, interaction_type FROM khala_drift_history LIMIT 1').get() as any;
+    const drift = db.prepare('SELECT old_affinity, new_affinity, delta, reason, interaction_type FROM affinity_drift_history LIMIT 1').get() as any;
     expect(drift.reason).toBe('Test success');
     expect(drift.interaction_type).toBe('handoff');
     expect(drift.new_affinity).toBeCloseTo(after);
@@ -109,10 +109,10 @@ describe('AffinityManager', () => {
     const { db, cleanup } = await makeTempDb();
     // Insert two pairs: lowest is oracle-synth at 0.4
     db.prepare(
-      'INSERT INTO khala_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
+      'INSERT INTO affinity_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
     ).run('oracle', 'synth', 0.4, 0.4);
     db.prepare(
-      'INSERT INTO khala_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
+      'INSERT INTO affinity_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
     ).run('archivist', 'oracle', 0.9, 0.9);
 
     const am = new AffinityManager({ defaultAffinity: 0.7 }, db);
@@ -126,15 +126,15 @@ describe('AffinityManager', () => {
     await cleanup();
   });
 
-  it('updates affinity against minimal khala_network schema (legacy compatibility)', async () => {
-    const { db, cleanup } = await makeTempDbMinimalKhala();
+  it('updates affinity against minimal affinity_network schema (legacy compatibility)', async () => {
+    const { db, cleanup } = await makeTempDbMinimalAffinity();
     const am = new AffinityManager({ defaultAffinity: 0.7 }, db);
 
     const after = am.recordHandoffOutcome({ from: 'oracle', to: 'atlas', success: true });
     expect(after).toBeGreaterThan(0.7);
 
     const row = db
-      .prepare('SELECT affinity FROM khala_network WHERE agent_a = ? AND agent_b = ?')
+      .prepare('SELECT affinity FROM affinity_network WHERE agent_a = ? AND agent_b = ?')
       .get('atlas', 'oracle') as any;
     expect(row.affinity).toBeCloseTo(after);
 

@@ -110,7 +110,7 @@ function boundaryLikelyAppliesToAction(boundary: string, action: string): boolea
 
   if (/\bdb(_|-)write\b|\bdatabase(_|-)write\b|\bsql(_|-)write\b|\bwrite_db\b/i.test(actionNorm)) {
     if (/\b(database|db|sql|schema|migration)\b/i.test(boundaryNorm)) return true;
-    // Natural-language Khaydarin boundaries often use "implement" instead of explicit DB verbs.
+    // Natural-language role-card boundaries often use "implement" instead of explicit DB verbs.
     if (/\b(implement|execute|operate)\b/i.test(boundaryNorm)) return true;
   }
 
@@ -227,7 +227,7 @@ async function evaluateInfrastructureDecision(agentId: string, action: string): 
     }
   }
 
-  // Khaydarin cards encode many operational constraints in "boundaries".
+  // Role cards encode many operational constraints in "boundaries".
   for (const boundary of card.domain.boundaries) {
     if (boundaryLikelyAppliesToAction(boundary, action)) {
       defaultLogger.warn?.('Infrastructure boundary triggered', { agentId, action, boundary, enforcement: 'boundary_policy' });

@@ -1,0 +1,62 @@
+{
+  "version": "v1.0",
+  "updated_at": "2026-03-16T22:45:00Z",
+  "resource_classes": [
+    { "resource_class": "repo_read", "description": "Read repository content" },
+    { "resource_class": "repo_write", "description": "Modify repository content" },
+    { "resource_class": "issue_tracker", "description": "Create, edit, and comment on issues" },
+    { "resource_class": "pr_merge", "description": "Merge pull requests" },
+    { "resource_class": "evidence_read", "description": "Read evidence artifacts and reports" },
+    { "resource_class": "evidence_write", "description": "Write evidence artifacts and reports" },
+    { "resource_class": "dashboard_read", "description": "Read dashboard/API state" },
+    { "resource_class": "dashboard_control", "description": "Trigger dashboard-backed control actions" },
+    { "resource_class": "task_queue_mutation", "description": "Mutate active queue or mission state" },
+    { "resource_class": "secret_metadata", "description": "Inspect secret existence, provenance, or status without reading raw value" },
+    { "resource_class": "secret_runtime_use", "description": "Use a secret through an approved runtime path" },
+    { "resource_class": "secret_raw_read", "description": "Read a secret's raw value" },
+    { "resource_class": "external_publish", "description": "Publish externally to customers or public channels" },
+    { "resource_class": "policy_override", "description": "Override policy or guardrails" }
+  ],
+  "secret_classes": [
+    { "secret_class": "S0_public_config", "description": "Public or non-sensitive configuration" },
+    { "secret_class": "S1_runtime_token", "description": "Short-lived session or runtime token" },
+    { "secret_class": "S2_service_secret", "description": "Service API key or integration credential" },
+    { "secret_class": "S3_production_credential", "description": "Production credential or irreversible-control secret" }
+  ],
+  "permissions": [
+    { "binding_id": "*:director", "capability_id": null, "specialist_id": null, "resource_class": "repo_write", "decision": "allow_with_evidence", "conditions": ["link to issue or decision context"], "required_evidence": ["decision log or PR context"], "escalation_target": null },
+    { "binding_id": "*:director", "capability_id": null, "specialist_id": null, "resource_class": "pr_merge", "decision": "escalation_required", "conditions": ["required review complete"], "required_evidence": ["PR validation and review state"], "escalation_target": "executive_office:director" },
+    { "binding_id": "*:director", "capability_id": null, "specialist_id": null, "resource_class": "secret_raw_read", "decision": "deny", "conditions": [], "required_evidence": [], "escalation_target": null },
+    { "binding_id": "*:operator", "capability_id": null, "specialist_id": null, "resource_class": "repo_write", "decision": "allow_with_evidence", "conditions": ["bounded to approved scope"], "required_evidence": ["linked issue or task"], "escalation_target": null },
+    { "binding_id": "*:operator", "capability_id": null, "specialist_id": null, "resource_class": "pr_merge", "decision": "deny", "conditions": [], "required_evidence": [], "escalation_target": null },
+    { "binding_id": "*:operator", "capability_id": null, "specialist_id": null, "resource_class": "secret_runtime_use", "decision": "allow_with_evidence", "conditions": ["S1 only", "approved runtime path"], "required_evidence": ["runtime path and log context"], "escalation_target": null },
+    { "binding_id": "*:operator", "capability_id": null, "specialist_id": null, "resource_class": "secret_raw_read", "decision": "deny", "conditions": [], "required_evidence": [], "escalation_target": null },
+    { "binding_id": "*:auditor", "capability_id": null, "specialist_id": null, "resource_class": "repo_write", "decision": "deny", "conditions": [], "required_evidence": [], "escalation_target": null },
+    { "binding_id": "*:auditor", "capability_id": null, "specialist_id": null, "resource_class": "evidence_read", "decision": "allow", "conditions": [], "required_evidence": [], "escalation_target": null },
+    { "binding_id": "*:auditor", "capability_id": null, "specialist_id": null, "resource_class": "evidence_write", "decision": "allow_with_evidence", "conditions": ["audit trace required"], "required_evidence": ["finding or gate record"], "escalation_target": null },
+    { "binding_id": "operations:operator", "capability_id": "venture_control", "specialist_id": null, "resource_class": "task_queue_mutation", "decision": "allow_with_evidence", "conditions": ["operational queue or blocker context required"], "required_evidence": ["task or incident reference"], "escalation_target": null },
+    { "binding_id": "executive_office:operator", "capability_id": "venture_strategy", "specialist_id": null, "resource_class": "external_publish", "decision": "deny", "conditions": [], "required_evidence": [], "escalation_target": null },
+    { "binding_id": "trust_evidence:auditor", "capability_id": "venture_evidence", "specialist_id": null, "resource_class": "policy_override", "decision": "deny", "conditions": [], "required_evidence": [], "escalation_target": null },
+    { "binding_id": "game_development:director", "capability_id": "venture_game_director", "specialist_id": null, "resource_class": "repo_write", "decision": "allow_with_evidence", "conditions": ["game-development scope only"], "required_evidence": ["linked game-development issue or design artifact"], "escalation_target": null },
+    { "binding_id": "game_development:director", "capability_id": "venture_game_director", "specialist_id": null, "resource_class": "policy_override", "decision": "deny", "conditions": [], "required_evidence": [], "escalation_target": null },
+    { "binding_id": "game_development:operator", "capability_id": null, "specialist_id": "game_technical", "resource_class": "repo_write", "decision": "allow_with_evidence", "conditions": ["bounded to delegated implementation scope"], "required_evidence": ["linked implementation task"], "escalation_target": null },
+    { "binding_id": "game_development:operator", "capability_id": null, "specialist_id": "game_world", "resource_class": "external_publish", "decision": "deny", "conditions": [], "required_evidence": [], "escalation_target": null },
+    { "binding_id": "human_arbiter", "capability_id": "human_arbiter", "specialist_id": null, "resource_class": "policy_override", "decision": "allow_with_evidence", "conditions": ["explicit rationale required"], "required_evidence": ["decision log entry"], "escalation_target": null }
+  ],
+  "escalations": [
+    { "action_type": "budget_scope_override", "approver": "executive_office:director", "secondary_approver": null, "required_record": "decision log", "max_decision_latency_hours": 24 },
+    { "action_type": "security_sensitive_access", "approver": "it_security:director", "secondary_approver": null, "required_record": "security approval note", "max_decision_latency_hours": 4 },
+    { "action_type": "evidence_waiver", "approver": "executive_office:director", "secondary_approver": "trust_evidence:auditor", "required_record": "decision log + evidence note", "max_decision_latency_hours": 4 },
+    { "action_type": "external_publish_high_impact", "approver": "human_arbiter", "secondary_approver": null, "required_record": "approval memo or decision log", "max_decision_latency_hours": 4 },
+    { "action_type": "production_risk_override", "approver": "human_arbiter", "secondary_approver": null, "required_record": "override decision log", "max_decision_latency_hours": 1 }
+  ],
+  "enforcement_hooks": [
+    { "path": "dashboard/client/index.html", "hook_type": "ui_role_projection", "current_state": "legacy hardcoded profiles", "planned_enforcement": "render canonical role labels through alias mapping", "issue": "#609" },
+    { "path": "lib/authority-map.ts", "hook_type": "authority_class_resolution", "current_state": "human/nexus/agent actor classes", "planned_enforcement": "consume canonical authority classes", "issue": "#609" },
+    { "path": "lib/policy-gate.ts", "hook_type": "machine_readable_gate", "current_state": "coarse policy gate only", "planned_enforcement": "map actions to binding/capability RBAC decisions", "issue": "#609" },
+    { "path": "lib/nexus-arbiter.ts", "hook_type": "override_enforcement", "current_state": "legacy control-plane naming", "planned_enforcement": "retain override path while moving to canonical role vocabulary", "issue": "#609" },
+    { "path": "tactical-map/src/interaction/permissions.ts", "hook_type": "interactive_permission_map", "current_state": "static role/action map", "planned_enforcement": "align interactive controls with canonical RBAC subjects", "issue": "#609" },
+    { "path": "dashboard/server/middleware/auth.ts", "hook_type": "auth_boundary", "current_state": "auth only", "planned_enforcement": "remain auth boundary, not full RBAC engine", "issue": "#609" },
+    { "path": "lib/evidence.ts", "hook_type": "policy_evidence_surface", "current_state": "no role-aware policy evidence surfacing", "planned_enforcement": "surface denials, waivers, and role-based failures in reports", "issue": "#609" }
+  ]
+}

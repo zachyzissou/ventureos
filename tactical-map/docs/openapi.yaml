@@ -28,7 +28,7 @@ tags:
   - name: Health
     description: System health monitoring and diagnostics
   - name: RPG
-    description: Protoss-themed RPG KPI statistics
+    description: current RPG KPI statistics
 
 paths:
   /api/tactical-map/state:
@@ -86,7 +86,7 @@ paths:
     get:
       tags: [RPG]
       summary: Get RPG KPI statistics
-      description: Returns Protoss-themed psionic attribute scores per agent for the HUD ticker.
+      description: Returns current performance attribute scores per agent for the HUD ticker.
       operationId: getRpgStats
       responses:
         "200":

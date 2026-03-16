@@ -4,9 +4,6 @@
  * Type definitions for the tactical map audio system.
  * Covers channel topology (master → bus → source), event triggers,
  * and configuration surface.
- *
- * Protoss lore: The Khala hums at frequencies beyond mortal hearing —
- * each agent's resonance weaving into the collective harmony.
  */
 
 // ═══════════════════════════════════════════
@@ -71,9 +68,9 @@ export type SoundEventId =
   | 'mission:spawned'
   | 'mission:completed'
   | 'mission:failed'
-  // Khala network
-  | 'khala:bond-formed'
-  | 'khala:bond-broken'
+  // Affinity network
+  | 'affinity:bond-formed'
+  | 'affinity:bond-broken'
   // Ambient loops
   | 'ambient:base-hum'
   | 'ambient:data-stream';

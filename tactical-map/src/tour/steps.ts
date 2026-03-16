@@ -7,7 +7,7 @@ import type { TourStep, HelpOverlayEntry } from './types';
 export const DEFAULT_TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome, Executor',
+    title: 'Welcome, Operator',
     body: 'This is the Tactical Map — your command center for the VentureOS agent swarm. Let\'s take a quick tour.',
     anchor: 'viewport',
   },
@@ -27,9 +27,9 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
     advanceOn: { type: 'event', eventType: 'agent:click' },
   },
   {
-    id: 'khala',
-    title: 'Khala Network',
-    body: 'The glowing lines between agents visualize their collaboration bonds. Brighter, thicker lines mean stronger real-time cooperation.',
+    id: 'affinity',
+    title: 'Affinity Network',
+    body: 'The glowing lines between agents visualize collaboration strength. Brighter, thicker lines mean stronger real-time cooperation.',
     anchor: 'agent:sentinel',
     spotlightRadius: 180,
   },

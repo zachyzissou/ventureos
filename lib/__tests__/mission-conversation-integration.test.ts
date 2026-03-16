@@ -33,7 +33,7 @@ async function makeTempAffinityDb() {
   const dbPath = path.join(dir, 'affinity.db');
   const db = new Database(dbPath);
   db.exec(`
-    CREATE TABLE khala_network (
+    CREATE TABLE affinity_network (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL, agent_b TEXT NOT NULL,
       affinity REAL NOT NULL, seed_value REAL NOT NULL,
@@ -42,7 +42,7 @@ async function makeTempAffinityDb() {
       UNIQUE(agent_a, agent_b), CHECK(agent_a < agent_b),
       CHECK(affinity >= 0.10 AND affinity <= 0.95)
     );
-    CREATE TABLE khala_drift_history (
+    CREATE TABLE affinity_drift_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL, agent_b TEXT NOT NULL,
       old_affinity REAL NOT NULL, new_affinity REAL NOT NULL,

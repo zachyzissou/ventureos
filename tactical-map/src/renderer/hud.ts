@@ -40,14 +40,14 @@ export function createHud(): Hud {
   const tabs = new Container();
   container.addChild(tabs);
 
-  const tabNames = ['Tactical Map', 'Conversations', 'Pylon Network', 'KPIs'];
+  const tabNames = ['Tactical Map', 'Conversations', 'Agent Network', 'KPIs'];
   const tabTexts: Text[] = [];
   for (const name of tabNames) {
     const t = new Text({
       text: name,
       style: {
         fontSize: 14,
-        fill: name === 'Tactical Map' ? COLORS.PROTOSS_GOLD : 0xffffff,
+        fill: name === 'Tactical Map' ? COLORS.COMMAND_GOLD : 0xffffff,
         fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
       }
     });
@@ -73,7 +73,7 @@ export function createHud(): Hud {
     text: 'Loading KPIs…',
     style: {
       fontSize: 14,
-      fill: COLORS.PROTOSS_BLUE,
+      fill: COLORS.COMMAND_BLUE,
       fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
     }
   });

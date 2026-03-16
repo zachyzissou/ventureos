@@ -1,0 +1,87 @@
+{
+  "version": "v1.0",
+  "updated_at": "2026-03-16T22:45:00Z",
+  "organizational_scopes": [
+    { "scope_id": "executive_office", "display_name": "Executive Office", "category": "department" },
+    { "scope_id": "operations", "display_name": "Operations", "category": "department" },
+    { "scope_id": "data_analytics", "display_name": "Data & Analytics", "category": "department" },
+    { "scope_id": "finance", "display_name": "Finance", "category": "department" },
+    { "scope_id": "product", "display_name": "Product", "category": "department" },
+    { "scope_id": "engineering", "display_name": "Engineering", "category": "department" },
+    { "scope_id": "design", "display_name": "Design", "category": "department" },
+    { "scope_id": "marketing", "display_name": "Marketing", "category": "department" },
+    { "scope_id": "sales", "display_name": "Sales", "category": "department" },
+    { "scope_id": "customer_success", "display_name": "Customer Success", "category": "department" },
+    { "scope_id": "legal", "display_name": "Legal", "category": "department" },
+    { "scope_id": "it_security", "display_name": "IT/Security", "category": "department" },
+    { "scope_id": "hr", "display_name": "HR", "category": "department" },
+    { "scope_id": "trust_evidence", "display_name": "Trust & Evidence", "category": "cross_cutting" },
+    { "scope_id": "game_development", "display_name": "Game Development", "category": "discipline" }
+  ],
+  "lane_types": [
+    { "lane_type": "director", "description": "Scope, priority, and decision authority", "base_authority": "directional" },
+    { "lane_type": "operator", "description": "Execution authority within approved scope", "base_authority": "executional" },
+    { "lane_type": "auditor", "description": "Verification and gate authority", "base_authority": "certifying" }
+  ],
+  "authority_classes": [
+    { "authority_class": "delegated_agent", "description": "Delegated specialist authority bounded by lane and scope" },
+    { "authority_class": "control_plane", "description": "Cross-cutting control authority for coordination and routing" },
+    { "authority_class": "human_final_arbiter", "description": "Final override and irreversible approval authority" }
+  ],
+  "capability_agents": [
+    { "capability_id": "venture_strategy", "display_name": "Venture Strategy", "purpose": "Strategic translation, priority routing, and dependency direction", "default_authority_class": "control_plane", "normative_status": "canonical", "replaces_aliases": ["echo"] },
+    { "capability_id": "venture_control", "display_name": "Venture Control", "purpose": "Operating cadence, blocker routing, and control-plane coordination", "default_authority_class": "control_plane", "normative_status": "canonical", "replaces_aliases": ["nexus"] },
+    { "capability_id": "venture_evidence", "display_name": "Venture Evidence", "purpose": "Evidence validation, audit findings, and gate certification", "default_authority_class": "delegated_agent", "normative_status": "canonical", "replaces_aliases": ["verifier"] },
+    { "capability_id": "venture_research", "display_name": "Venture Research", "purpose": "Research, synthesis, and recommendation support", "default_authority_class": "delegated_agent", "normative_status": "canonical", "replaces_aliases": ["oracle"] },
+    { "capability_id": "venture_infrastructure", "display_name": "Venture Infrastructure", "purpose": "Infrastructure, systems reliability, and platform hardening", "default_authority_class": "delegated_agent", "normative_status": "canonical", "replaces_aliases": ["atlas"] },
+    { "capability_id": "venture_security", "display_name": "Venture Security", "purpose": "Security policy enforcement and escalation", "default_authority_class": "delegated_agent", "normative_status": "canonical", "replaces_aliases": ["sentinel"] },
+    { "capability_id": "venture_delivery", "display_name": "Venture Delivery", "purpose": "Implementation and integration throughput", "default_authority_class": "delegated_agent", "normative_status": "canonical", "replaces_aliases": ["synth"] },
+    { "capability_id": "venture_memory", "display_name": "Venture Memory", "purpose": "Knowledge retention, process durability, and audit continuity", "default_authority_class": "delegated_agent", "normative_status": "canonical", "replaces_aliases": ["archivist"] },
+    { "capability_id": "venture_signals", "display_name": "Venture Signals", "purpose": "Monitoring, anomaly detection, and environmental signal capture", "default_authority_class": "delegated_agent", "normative_status": "canonical", "replaces_aliases": ["scout"] },
+    { "capability_id": "venture_comms", "display_name": "Venture Comms", "purpose": "Stakeholder-facing communication and summaries", "default_authority_class": "delegated_agent", "normative_status": "canonical", "replaces_aliases": ["liaison"] },
+    { "capability_id": "venture_game_director", "display_name": "Venture Game Director", "purpose": "Master-level game development direction across systems, technical feasibility, player experience, and delegated specialist work", "default_authority_class": "delegated_agent", "normative_status": "canonical", "replaces_aliases": [] },
+    { "capability_id": "human_arbiter", "display_name": "Human Arbiter", "purpose": "Final override and irreversible approval authority", "default_authority_class": "human_final_arbiter", "normative_status": "canonical", "replaces_aliases": [] }
+  ],
+  "subordinate_specialists": [
+    { "specialist_id": "game_systems", "display_name": "Game Systems", "parent_capability_id": "venture_game_director", "purpose": "Gameplay systems, progression, balance, economy, and exploit analysis", "normative_status": "canonical" },
+    { "specialist_id": "game_technical", "display_name": "Game Technical", "parent_capability_id": "venture_game_director", "purpose": "Engine architecture, gameplay implementation, tooling, and performance", "normative_status": "canonical" },
+    { "specialist_id": "game_world", "display_name": "Game World", "parent_capability_id": "venture_game_director", "purpose": "Narrative, world logic, quest scaffolding, and content coherence", "normative_status": "canonical" },
+    { "specialist_id": "game_interface", "display_name": "Game Interface", "parent_capability_id": "venture_game_director", "purpose": "UX, UI, onboarding, control clarity, and accessibility", "normative_status": "canonical" },
+    { "specialist_id": "game_art", "display_name": "Game Art", "parent_capability_id": "venture_game_director", "purpose": "Visual identity, art direction, and asset review", "normative_status": "canonical" },
+    { "specialist_id": "game_audio", "display_name": "Game Audio", "parent_capability_id": "venture_game_director", "purpose": "Audio direction, implementation guidance, and mix language", "normative_status": "canonical" },
+    { "specialist_id": "game_qa", "display_name": "Game QA", "parent_capability_id": "venture_game_director", "purpose": "Playtest planning, balance validation, and game-specific regression review", "normative_status": "canonical" }
+  ],
+  "legacy_aliases": [
+    { "legacy_id": "nexus", "canonical_target_type": "capability", "canonical_target_id": "venture_control", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "echo", "canonical_target_type": "capability", "canonical_target_id": "venture_strategy", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "oracle", "canonical_target_type": "capability", "canonical_target_id": "venture_research", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "atlas", "canonical_target_type": "capability", "canonical_target_id": "venture_infrastructure", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "sentinel", "canonical_target_type": "capability", "canonical_target_id": "venture_security", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "verifier", "canonical_target_type": "capability", "canonical_target_id": "venture_evidence", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "archivist", "canonical_target_type": "capability", "canonical_target_id": "venture_memory", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "synth", "canonical_target_type": "capability", "canonical_target_id": "venture_delivery", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "scout", "canonical_target_type": "capability", "canonical_target_id": "venture_signals", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "liaison", "canonical_target_type": "capability", "canonical_target_id": "venture_comms", "status": "supported_alias", "removal_phase": "future_ui_cleanup" },
+    { "legacy_id": "Mechanic", "canonical_target_type": "specialist", "canonical_target_id": "game_systems", "status": "deprecated_alias", "removal_phase": "future_game_role_cleanup" },
+    { "legacy_id": "Forge", "canonical_target_type": "specialist", "canonical_target_id": "game_technical", "status": "deprecated_alias", "removal_phase": "future_game_role_cleanup" },
+    { "legacy_id": "Builder", "canonical_target_type": "specialist", "canonical_target_id": "game_technical", "status": "deprecated_alias", "removal_phase": "future_game_role_cleanup" },
+    { "legacy_id": "Toolsmith", "canonical_target_type": "specialist", "canonical_target_id": "game_technical", "status": "deprecated_alias", "removal_phase": "future_game_role_cleanup" },
+    { "legacy_id": "Interface", "canonical_target_type": "specialist", "canonical_target_id": "game_interface", "status": "deprecated_alias", "removal_phase": "future_game_role_cleanup" },
+    { "legacy_id": "Muse", "canonical_target_type": "specialist", "canonical_target_id": "game_art", "status": "deprecated_alias", "removal_phase": "future_game_role_cleanup" },
+    { "legacy_id": "Glyph", "canonical_target_type": "specialist", "canonical_target_id": "game_world", "status": "deprecated_alias", "removal_phase": "future_game_role_cleanup" },
+    { "legacy_id": "Foley", "canonical_target_type": "specialist", "canonical_target_id": "game_audio", "status": "deprecated_alias", "removal_phase": "future_game_role_cleanup" }
+  ],
+  "role_bindings": [
+    { "binding_id": "executive_office:operator", "scope_id": "executive_office", "lane_type": "operator", "default_capability_id": "venture_strategy", "allowed_capability_ids": ["venture_strategy"], "allowed_specialist_ids": [], "approval_required_for_override": true },
+    { "binding_id": "operations:operator", "scope_id": "operations", "lane_type": "operator", "default_capability_id": "venture_control", "allowed_capability_ids": ["venture_control"], "allowed_specialist_ids": [], "approval_required_for_override": true },
+    { "binding_id": "trust_evidence:auditor", "scope_id": "trust_evidence", "lane_type": "auditor", "default_capability_id": "venture_evidence", "allowed_capability_ids": ["venture_evidence"], "allowed_specialist_ids": [], "approval_required_for_override": true },
+    { "binding_id": "game_development:director", "scope_id": "game_development", "lane_type": "director", "default_capability_id": "venture_game_director", "allowed_capability_ids": ["venture_game_director"], "allowed_specialist_ids": ["game_systems", "game_technical", "game_world", "game_interface", "game_art", "game_audio", "game_qa"], "approval_required_for_override": true },
+    { "binding_id": "game_development:operator", "scope_id": "game_development", "lane_type": "operator", "default_capability_id": null, "allowed_capability_ids": [], "allowed_specialist_ids": ["game_systems", "game_technical", "game_world", "game_interface", "game_art", "game_audio", "game_qa"], "approval_required_for_override": true },
+    { "binding_id": "game_development:auditor", "scope_id": "game_development", "lane_type": "auditor", "default_capability_id": null, "allowed_capability_ids": [], "allowed_specialist_ids": ["game_qa"], "approval_required_for_override": true }
+  ],
+  "ui_runtime_hooks": [
+    { "path": "dashboard/client/index.html", "current_identifier_source": "legacy runtime names", "target_identifier_source": "canonical capability labels via alias map", "issue": "#609" },
+    { "path": "lib/authority-map.ts", "current_identifier_source": "human/nexus/agent actor types", "target_identifier_source": "authority_class plus canonical capability overlays", "issue": "#609" },
+    { "path": "tactical-map/src/missions/types.ts", "current_identifier_source": "legacy squad role display labels", "target_identifier_source": "canonical display names derived from capability alias map", "issue": "#609" }
+  ]
+}

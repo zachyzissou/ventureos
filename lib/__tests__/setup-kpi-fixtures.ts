@@ -24,7 +24,7 @@ interface FixtureKpiSpec {
   stakeholder: string;
   formula: FixtureFormula;
   direction?: Direction;
-  sourceTable?: 'psionic_stats' | 'interaction_logs';
+  sourceTable?: 'performance_stats' | 'interaction_logs';
 }
 
 const FIXTURE_ROOT_ENV = 'VENTUREOS_TEST_FIXTURE_ROOT';
@@ -66,7 +66,7 @@ function buildKpiDefinition(spec: FixtureKpiSpec) {
     formula: spec.formula,
     data_sources: [
       {
-        table: spec.sourceTable ?? 'psionic_stats',
+        table: spec.sourceTable ?? 'performance_stats',
         field: sourceField,
       },
     ],
@@ -137,7 +137,7 @@ function fixtureSpecs(): FixtureKpiSpec[] {
       id: 'atlas_pylon_uptime',
       agent: 'atlas',
       category: 'reliability',
-      name: 'Pylon Uptime',
+      name: 'Network Uptime',
       description: 'Infrastructure uptime',
       stakeholder: 'Service availability ratio',
       formula: {
@@ -440,7 +440,7 @@ function seedRpgDb(dbPath: string): void {
   const db = new Database(dbPath);
   try {
     db.exec(`
-      CREATE TABLE psionic_stats (
+      CREATE TABLE performance_stats (
         snapshot_date TEXT NOT NULL,
         claims_with_citations REAL,
         total_claims REAL,
@@ -492,7 +492,7 @@ function seedRpgDb(dbPath: string): void {
         duration_ms REAL
       );
 
-      CREATE TABLE khala_network (
+      CREATE TABLE affinity_network (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         agent_a TEXT NOT NULL,
         agent_b TEXT NOT NULL,
@@ -501,7 +501,7 @@ function seedRpgDb(dbPath: string): void {
     `);
 
     const insertPsionic = db.prepare(`
-      INSERT INTO psionic_stats (
+      INSERT INTO performance_stats (
         snapshot_date, claims_with_citations, total_claims, knowledge_gaps_detected,
         cross_domain_links, source_count, pylon_uptime_minutes, total_minutes,
         deploy_successes, deploy_attempts, mttr_minutes, infra_events_processed,
@@ -584,7 +584,7 @@ function seedRpgDb(dbPath: string): void {
     insertInteraction.run(new Date().toISOString(), 95);
     insertInteraction.run(new Date().toISOString(), 110);
 
-    db.prepare(`INSERT INTO khala_network(agent_a, agent_b, affinity) VALUES (?, ?, ?)`)
+    db.prepare(`INSERT INTO affinity_network(agent_a, agent_b, affinity) VALUES (?, ?, ?)`)
       .run('oracle', 'atlas', 0.82);
   } finally {
     db.close();

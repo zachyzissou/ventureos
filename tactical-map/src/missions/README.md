@@ -1,7 +1,7 @@
 # Phase 5.5 — Mission Tracking & Workflows Dashboard Integration
 
-**En Taro Adun, Executor.** The Khaydarin Crystal projections now illuminate
-your command interface with real-time mission intelligence.
+Mission cards, dependency arrows, and history timelines now illuminate
+the tactical interface with real-time mission intelligence.
 
 ## Overview
 
@@ -57,7 +57,7 @@ Floating cards rendered above agent sprites. Each card shows:
 - Mission title (auto-truncated)
 - Progress bar (0-100% with gradient fill)
 - Queue depth indicator (colored circle)
-- Assigned roles (Protoss display names)
+- Assigned roles (agent display names)
 - Error overlay (red tint + error message)
 
 Cards expand to show a task list when only one mission is assigned
@@ -196,7 +196,7 @@ This module integrates with the existing tactical map pipeline:
 
 1. **Phase 5.1 (Security)**: ApiMissionDataProvider uses Bearer token auth
 2. **Phase 5.2 (Activity)**: Cards render above unit sprites from Phase 5.2
-3. **Phase 5.3 (Khala Network)**: Dependency arrows complement bond lines
+3. **Phase 5.3 (Affinity Network)**: Dependency arrows complement bond lines
 4. **Phase 5.4 (Real-time)**: WebSocket/SSE updates feed the data provider
 
 The `MissionTracker.render()` method is designed to be called within the
@@ -208,11 +208,11 @@ The task queue visualization connects to the task queue system
 (issues #51, #52). Currently using `MockMissionDataProvider` for data.
 Wire `ApiMissionDataProvider` when the queue API endpoints are available.
 
-## Color Palette (Protoss Theme)
+## Color Palette
 
 | Phase   | Primary   | Description              |
 |---------|-----------|--------------------------|
-| brief   | `#4FC3F7` | Light blue (psionic)     |
+| brief   | `#4FC3F7` | Light blue               |
 | plan    | `#81C784` | Green (growth)           |
 | execute | `#FFB74D` | Orange (energy)          |
 | verify  | `#BA68C8` | Purple (analysis)        |

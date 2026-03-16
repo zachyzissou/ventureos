@@ -30,10 +30,10 @@ export const AGENTS = {
 } as const;
 
 export const COLORS = {
-  /** Protoss blue (primary). */
-  PROTOSS_BLUE: 0x00d4ff,
-  /** Protoss gold (accent). */
-  PROTOSS_GOLD: 0xffd700,
+  /** Command blue (primary). */
+  COMMAND_BLUE: 0x00d4ff,
+  /** Command gold (accent). */
+  COMMAND_GOLD: 0xffd700,
   /** Building states. */
   STATE_IDLE: 0x4a6fa5,
   STATE_ACTIVE: 0x00d4ff,
@@ -217,7 +217,7 @@ export type AgentId = (typeof AGENT_ORDER)[number];
 export const AGENT_COLORS: Record<AgentId, number> = {
   /** Oracle: icy blue */
   oracle: 0x7bdcff,
-  /** Atlas: primary Protoss blue */
+  /** Atlas: primary command blue */
   atlas: 0x00d4ff,
   /** Sentinel: guardian blue */
   sentinel: 0x4aa0ff,
@@ -229,7 +229,7 @@ export const AGENT_COLORS: Record<AgentId, number> = {
   synth: 0x00e1c3,
   /** Echo: gold accent */
   echo: 0xffd700,
-  /** Nexus: Protoss gold */
+  /** Nexus: command gold */
   nexus: 0xffd700
 } as const;
 

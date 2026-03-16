@@ -24,7 +24,7 @@ function createTestDb(): Database.Database {
   const db = new Database(':memory:');
 
   db.exec(`
-    CREATE TABLE psionic_stats (
+    CREATE TABLE performance_stats (
       agent_id TEXT,
       snapshot_date TEXT,
       claims_with_citations INTEGER DEFAULT 0,
@@ -41,7 +41,7 @@ function createTestDb(): Database.Database {
       payload TEXT
     );
 
-    CREATE TABLE khala_network (
+    CREATE TABLE affinity_network (
       agent_a TEXT,
       agent_b TEXT,
       affinity REAL,
@@ -53,10 +53,10 @@ function createTestDb(): Database.Database {
     );
 
     -- Seed some test data
-    INSERT INTO psionic_stats VALUES ('oracle', '2026-02-14', 85, 100, 5, 12);
-    INSERT INTO psionic_stats VALUES ('oracle', '2026-02-15', 90, 100, 6, 14);
+    INSERT INTO performance_stats VALUES ('oracle', '2026-02-14', 85, 100, 5, 12);
+    INSERT INTO performance_stats VALUES ('oracle', '2026-02-15', 90, 100, 6, 14);
     INSERT INTO interaction_logs VALUES (1, 'oracle', '2026-02-14T10:00:00Z', 'query', '{}');
-    INSERT INTO khala_network VALUES ('atlas', 'oracle', 0.82, 0.7, NULL, 3, NULL);
+    INSERT INTO affinity_network VALUES ('atlas', 'oracle', 0.82, 0.7, NULL, 3, NULL);
   `);
 
   return db;
@@ -69,7 +69,7 @@ function createTestDb(): Database.Database {
 describe('VULN-002: SQL Identifier Validation', () => {
   describe('isValidSqlIdentifier', () => {
     test('accepts valid table/column names', () => {
-      expect(isValidSqlIdentifier('psionic_stats')).toBe(true);
+      expect(isValidSqlIdentifier('performance_stats')).toBe(true);
       expect(isValidSqlIdentifier('interaction_logs')).toBe(true);
       expect(isValidSqlIdentifier('agent_id')).toBe(true);
       expect(isValidSqlIdentifier('_private')).toBe(true);
@@ -120,7 +120,7 @@ describe('VULN-002: Date Parameter Validation', () => {
   const injectionPayloads = [
     "'; DROP TABLE users--",
     "2026-02-14' OR '1'='1",
-    "2026-02-14'; DELETE FROM psionic_stats--",
+    "2026-02-14'; DELETE FROM performance_stats--",
     "2026-02-14' UNION SELECT * FROM sqlite_master--",
     "' OR 1=1--",
     "1; ATTACH DATABASE ':memory:' AS hack",
@@ -199,7 +199,7 @@ describe('VULN-002: Integration — SQL injection blocked end-to-end', () => {
 
   test('parameterized date query returns correct data', () => {
     // Simulate what fetchDataSources now does internally
-    const sql = 'SELECT claims_with_citations, total_claims FROM psionic_stats WHERE snapshot_date = ?';
+    const sql = 'SELECT claims_with_citations, total_claims FROM performance_stats WHERE snapshot_date = ?';
     const result = db.prepare(sql).get('2026-02-14') as any;
 
     expect(result).toBeDefined();
@@ -208,22 +208,22 @@ describe('VULN-002: Integration — SQL injection blocked end-to-end', () => {
   });
 
   test("SQL injection via date param is safely escaped by prepared statement", () => {
-    const sql = 'SELECT * FROM psionic_stats WHERE snapshot_date = ?';
+    const sql = 'SELECT * FROM performance_stats WHERE snapshot_date = ?';
 
-    // Classic injection: '; DROP TABLE psionic_stats--
-    const maliciousDate = "'; DROP TABLE psionic_stats--";
+    // Classic injection: '; DROP TABLE performance_stats--
+    const maliciousDate = "'; DROP TABLE performance_stats--";
     const result = db.prepare(sql).get(maliciousDate);
 
     // The injection is treated as a literal string value — no match, no damage
     expect(result).toBeUndefined();
 
     // Table still exists and data is intact
-    const check = db.prepare('SELECT COUNT(*) AS cnt FROM psionic_stats').get() as any;
+    const check = db.prepare('SELECT COUNT(*) AS cnt FROM performance_stats').get() as any;
     expect(check.cnt).toBe(2);
   });
 
   test("UNION injection via date param is safely escaped", () => {
-    const sql = 'SELECT * FROM psionic_stats WHERE snapshot_date = ?';
+    const sql = 'SELECT * FROM performance_stats WHERE snapshot_date = ?';
     const maliciousDate = "' UNION SELECT sql, '', 0, 0, 0, 0 FROM sqlite_master--";
     const result = db.prepare(sql).get(maliciousDate);
 
@@ -232,7 +232,7 @@ describe('VULN-002: Integration — SQL injection blocked end-to-end', () => {
   });
 
   test("boolean-based blind injection via date param is safely escaped", () => {
-    const sql = 'SELECT * FROM psionic_stats WHERE snapshot_date = ?';
+    const sql = 'SELECT * FROM performance_stats WHERE snapshot_date = ?';
     const maliciousDate = "2026-02-14' OR '1'='1";
     const result = db.prepare(sql).get(maliciousDate);
 
@@ -241,14 +241,14 @@ describe('VULN-002: Integration — SQL injection blocked end-to-end', () => {
   });
 
   test("stacked query injection via date param is safely escaped", () => {
-    const sql = 'SELECT * FROM psionic_stats WHERE snapshot_date = ?';
-    const maliciousDate = "2026-02-14'; DELETE FROM psionic_stats--";
+    const sql = 'SELECT * FROM performance_stats WHERE snapshot_date = ?';
+    const maliciousDate = "2026-02-14'; DELETE FROM performance_stats--";
     const result = db.prepare(sql).get(maliciousDate);
 
     expect(result).toBeUndefined();
 
     // Data is still intact (DELETE was never executed)
-    const check = db.prepare('SELECT COUNT(*) AS cnt FROM psionic_stats').get() as any;
+    const check = db.prepare('SELECT COUNT(*) AS cnt FROM performance_stats').get() as any;
     expect(check.cnt).toBe(2);
   });
 
@@ -289,7 +289,7 @@ describe('VULN-002: Affinity Manager uses parameterized queries', () => {
 
     try {
       // Simulate the affinity manager's query pattern
-      const sql = 'SELECT affinity FROM khala_network WHERE agent_a = ? AND agent_b = ? LIMIT 1';
+      const sql = 'SELECT affinity FROM affinity_network WHERE agent_a = ? AND agent_b = ? LIMIT 1';
 
       // Normal query
       const normal = db.prepare(sql).get('atlas', 'oracle') as any;
@@ -344,8 +344,8 @@ describe('VULN-002: Comprehensive injection payloads blocked', () => {
 
     // Destructive payloads
     "'; DROP TABLE users--",
-    "'; DROP TABLE psionic_stats--",
-    "'; DELETE FROM psionic_stats WHERE '1'='1",
+    "'; DROP TABLE performance_stats--",
+    "'; DELETE FROM performance_stats WHERE '1'='1",
     "'; TRUNCATE TABLE users--",
     "'; UPDATE users SET password='hacked'--",
 
@@ -377,7 +377,7 @@ describe('VULN-002: Comprehensive injection payloads blocked', () => {
   ];
 
   test.each(payloads)('prepared statement blocks: %s', (payload) => {
-    const sql = 'SELECT * FROM psionic_stats WHERE snapshot_date = ?';
+    const sql = 'SELECT * FROM performance_stats WHERE snapshot_date = ?';
     const result = db.prepare(sql).get(payload);
 
     // Every injection payload should return no results (treated as literal)
@@ -385,7 +385,7 @@ describe('VULN-002: Comprehensive injection payloads blocked', () => {
   });
 
   test('table still intact after all injection attempts', () => {
-    const check = db.prepare('SELECT COUNT(*) AS cnt FROM psionic_stats').get() as any;
+    const check = db.prepare('SELECT COUNT(*) AS cnt FROM performance_stats').get() as any;
     expect(check.cnt).toBe(2); // Original 2 rows untouched
   });
 });
