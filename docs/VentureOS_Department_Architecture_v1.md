@@ -183,6 +183,8 @@ Cross-cutting agents:
 - **Program Control Agent** (Operations): enforces SLAs, tracks blockers, escalation routing.
 - **Evidence/QA Agent** (Trust): validates “done” claims with artifacts.
 
+Normative cross-cutting contract definitions live in `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md`, with machine-readable ownership mappings in `docs/VentureOS_Agent_Ownership_Matrix_v1.json`.
+
 ---
 
 ## 6) Governance and decision rights

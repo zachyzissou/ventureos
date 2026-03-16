@@ -33,6 +33,10 @@ Derived validation and readiness reports: `runtime/reports/`
 | Portfolio priorities and sequencing | Executive Office Director lane | Chief of Staff Operator lane | Executive Office Auditor lane |
 | Process reliability and dependency tracking | Operations Director lane | Program Control Operator lane | Operations Auditor lane |
 | KPI system and reporting data quality | Data/Analytics Director lane | Data/Analytics Operator lane | Evidence/QA Auditor lane |
+
+Cross-department contract details and ownership mappings for the Chief of Staff, Program Control, and Evidence/QA roles are defined in:
+- `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md`
+- `docs/VentureOS_Agent_Ownership_Matrix_v1.json`
 | Budget and runway control | Finance Director lane | Finance Operator lane | Finance Auditor lane |
 | Department delivery (each department) | Department Director lane | Department Operator lane | Department Auditor lane |
 

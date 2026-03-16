@@ -1,0 +1,163 @@
+{
+  "version": "v1.0",
+  "updated_at": "2026-03-16T22:20:00Z",
+  "scope": "Cross-department ownership matrix for Company OS v1 control functions.",
+  "functions": [
+    {
+      "function_id": "portfolio_priorities",
+      "function": "Portfolio priorities and sequencing",
+      "accountable_owner": "Executive Office Director lane",
+      "execution_owner": "Chief of Staff Agent",
+      "gate_owner": "Executive Office Auditor lane",
+      "supporting_lanes": [
+        "Program Control Agent",
+        "Finance Director lane"
+      ],
+      "departments_served": [
+        "All active departments"
+      ],
+      "primary_artifacts": [
+        "runtime/logs/weekly/YYYY-Www-ops-review.md",
+        "runtime/logs/daily/YYYY-MM-DD-decision-log.md"
+      ]
+    },
+    {
+      "function_id": "blocker_routing",
+      "function": "Cross-department blocker routing and directive issuance",
+      "accountable_owner": "Operations Director lane",
+      "execution_owner": "Program Control Agent",
+      "gate_owner": "Executive Office Director lane",
+      "supporting_lanes": [
+        "Chief of Staff Agent",
+        "Department Director lanes"
+      ],
+      "departments_served": [
+        "All active departments"
+      ],
+      "primary_artifacts": [
+        "runtime/logs/weekly/YYYY-Www-risk-register.md",
+        "runtime/logs/daily/YYYY-MM-DD-decision-log.md"
+      ]
+    },
+    {
+      "function_id": "sla_monitoring",
+      "function": "Inter-department handoff SLA monitoring and breach routing",
+      "accountable_owner": "Operations Director lane",
+      "execution_owner": "Program Control Agent",
+      "gate_owner": "Evidence/QA Agent",
+      "supporting_lanes": [
+        "Producer Director lane",
+        "Consumer Director lane"
+      ],
+      "departments_served": [
+        "Executive Office",
+        "Operations",
+        "Data/Analytics",
+        "Finance",
+        "Product",
+        "Engineering",
+        "Design",
+        "Marketing",
+        "Sales",
+        "Customer Success",
+        "Legal",
+        "IT/Security",
+        "HR"
+      ],
+      "primary_artifacts": [
+        "runtime/logs/daily/YYYY-MM-DD-handoff-ledger.json",
+        "runtime/logs/weekly/YYYY-Www-risk-register.md"
+      ]
+    },
+    {
+      "function_id": "evidence_validation",
+      "function": "Evidence bundle validation and freshness certification",
+      "accountable_owner": "Trust Director lane",
+      "execution_owner": "Evidence/QA Agent",
+      "gate_owner": "Evidence/QA Agent",
+      "supporting_lanes": [
+        "Department Auditor lanes",
+        "Program Control Agent"
+      ],
+      "departments_served": [
+        "All active departments"
+      ],
+      "primary_artifacts": [
+        "runtime/reports/evidence/evidence-validate-latest.json",
+        "runtime/reports/evidence/evidence-validate-latest.md"
+      ]
+    },
+    {
+      "function_id": "phase_gate_readiness",
+      "function": "Phase gate readiness packet preparation and certification",
+      "accountable_owner": "Executive Office Director lane",
+      "execution_owner": "Program Control Agent",
+      "gate_owner": "Evidence/QA Agent",
+      "supporting_lanes": [
+        "Chief of Staff Agent",
+        "Department Director lanes"
+      ],
+      "departments_served": [
+        "All active departments"
+      ],
+      "primary_artifacts": [
+        "runtime/reports/phase0-readiness/phase0-readiness-latest.json",
+        "runtime/reports/phase0-readiness/phase0-readiness-latest.md"
+      ]
+    },
+    {
+      "function_id": "kpi_quality_assurance",
+      "function": "Cross-cutting KPI quality assurance and baseline integrity",
+      "accountable_owner": "Data/Analytics Director lane",
+      "execution_owner": "Data/Analytics Operator lane",
+      "gate_owner": "Evidence/QA Agent",
+      "supporting_lanes": [
+        "Department Operator lanes",
+        "Department Auditor lanes"
+      ],
+      "departments_served": [
+        "All active departments"
+      ],
+      "primary_artifacts": [
+        "runtime/logs/daily/YYYY-MM-DD-kpi-snapshot.json",
+        "runtime/logs/weekly/YYYY-Www-kpi-rollup.json"
+      ]
+    },
+    {
+      "function_id": "department_activation_readiness",
+      "function": "Department activation readiness and dependency verification",
+      "accountable_owner": "Executive Office Director lane",
+      "execution_owner": "Chief of Staff Agent",
+      "gate_owner": "Evidence/QA Agent",
+      "supporting_lanes": [
+        "Program Control Agent",
+        "Department Director lanes"
+      ],
+      "departments_served": [
+        "Departments scheduled for activation"
+      ],
+      "primary_artifacts": [
+        "docs/VentureOS_Phase0_Readiness_Checklist_v1.md",
+        "runtime/reports/phase0-readiness/phase0-readiness-latest.json"
+      ]
+    },
+    {
+      "function_id": "operating_model_change_intake",
+      "function": "Operating model change intake, triage, and routing",
+      "accountable_owner": "Executive Office Director lane",
+      "execution_owner": "Chief of Staff Agent",
+      "gate_owner": "Operations Director lane",
+      "supporting_lanes": [
+        "Program Control Agent",
+        "Evidence/QA Agent"
+      ],
+      "departments_served": [
+        "All active departments"
+      ],
+      "primary_artifacts": [
+        "runtime/logs/daily/YYYY-MM-DD-decision-log.md",
+        "runtime/logs/weekly/YYYY-Www-risk-register.md"
+      ]
+    }
+  ]
+}

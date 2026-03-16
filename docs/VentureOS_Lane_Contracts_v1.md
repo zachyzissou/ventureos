@@ -145,3 +145,18 @@ Thresholds:
 - Proposed changes must include rationale, expected impact, and migration date.
 - Approval requires Director + Auditor sign-off for affected departments.
 - Cross-department contract changes also require Operations Director approval.
+
+## 11) Cross-cutting agent contracts
+
+The baseline lane contracts above apply to all department Director, Operator, and Auditor lanes.
+
+Three cross-cutting agents require additional contract definitions because they coordinate or certify work across department boundaries:
+- Chief of Staff Agent
+- Program Control Agent
+- Evidence/QA Agent
+
+Their mission, required I/O, authority limits, escalation rules, and ownership mappings are defined in:
+- `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md`
+- `docs/VentureOS_Agent_Ownership_Matrix_v1.json`
+
+These companion artifacts are normative for cross-department coordination and must be updated alongside this document when cross-cutting contract boundaries change.
