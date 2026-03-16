@@ -19,6 +19,7 @@ CALL_LOG="$TMP_DIR/calls.log"
 FAKE_PREFLIGHT="$TMP_DIR/fake-preflight.sh"
 FAKE_QUEUE="$TMP_DIR/fake-queue.sh"
 FAKE_CHECKLIST="$TMP_DIR/fake-checklist.sh"
+FAKE_VALIDATE="$TMP_DIR/fake-validate.sh"
 
 mkdir -p "$CADENCE_DIR" "$PREFLIGHT_REPORT_DIR"
 echo "# checklist fixture" > "$CHECKLIST_PATH"
@@ -90,13 +91,46 @@ fi
 exit "${FAKE_CHECKLIST_RC:-0}"
 SH
 
-chmod +x "$FAKE_PREFLIGHT" "$FAKE_QUEUE" "$FAKE_CHECKLIST"
+cat > "$FAKE_VALIDATE" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "validate|$*" >> "$CALL_LOG"
+report_dir=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --report-dir)
+      report_dir="${2:-}"
+      shift 2
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+if [[ -n "$report_dir" ]]; then
+  mkdir -p "$report_dir"
+  cat > "$report_dir/evidence-validate-latest.json" <<'JSON'
+{"status":"pass"}
+JSON
+  cat > "$report_dir/evidence-validate-latest.md" <<'MD'
+# evidence validate
+MD
+fi
+echo "EVIDENCE_VALIDATE_STATUS=PASS"
+echo "EVIDENCE_VALIDATE_TARGET=latest"
+echo "EVIDENCE_VALIDATE_JSON=${report_dir}/evidence-validate-latest.json"
+echo "EVIDENCE_VALIDATE_MD=${report_dir}/evidence-validate-latest.md"
+exit "${FAKE_VALIDATE_RC:-0}"
+SH
+
+chmod +x "$FAKE_PREFLIGHT" "$FAKE_QUEUE" "$FAKE_CHECKLIST" "$FAKE_VALIDATE"
 export CALL_LOG PREFLIGHT_JSON
 
 SUCCESS_OUT="$TMP_DIR/success.out"
 VENTUREOS_CADENCE_PREFLIGHT_SCRIPT="$FAKE_PREFLIGHT" \
 VENTUREOS_CADENCE_QUEUE_SCRIPT="$FAKE_QUEUE" \
 VENTUREOS_CADENCE_CHECKLIST_SCRIPT="$FAKE_CHECKLIST" \
+VENTUREOS_CADENCE_VALIDATE_SCRIPT="$FAKE_VALIDATE" \
 bash "$SCRIPT" \
   --report-dir "$CADENCE_DIR" \
   --preflight-report-dir "$PREFLIGHT_REPORT_DIR" \
@@ -109,6 +143,7 @@ grep -q "LOCAL_INTEGRATION_CADENCE_STATUS=PASS" "$SUCCESS_OUT"
 grep -q "preflight|--report-dir $PREFLIGHT_REPORT_DIR -- --openclaw-dir $TMP_DIR/.openclaw" "$CALL_LOG"
 grep -q "queue|--json-out $QUEUE_JSON" "$CALL_LOG"
 grep -q "checklist|--checklist-path $CHECKLIST_PATH --preflight-json $PREFLIGHT_JSON --queue-json $QUEUE_JSON" "$CALL_LOG"
+grep -q "validate|--cadence daily --target latest --report-dir $ROOT/runtime/reports/evidence" "$CALL_LOG"
 
 SUCCESS_JSON="$(grep -E '^LOCAL_INTEGRATION_CADENCE_JSON=' "$SUCCESS_OUT" | tail -n 1 | cut -d= -f2-)"
 [[ -f "$SUCCESS_JSON" ]]
@@ -124,6 +159,7 @@ assert steps["preflight-evidence"]["status"] == "pass", steps
 assert steps["queue-sweep"]["status"] == "pass", steps
 assert steps["queue-sweep"]["queueStatus"] == "quiet", steps
 assert steps["checklist-refresh"]["status"] == "pass", steps
+assert steps["evidence-validate"]["status"] == "pass", steps
 print("RUN_LOCAL_INTEGRATION_CADENCE_SUCCESS_OK")
 PY
 
@@ -132,6 +168,7 @@ set +e
 VENTUREOS_CADENCE_PREFLIGHT_SCRIPT="$FAKE_PREFLIGHT" \
 VENTUREOS_CADENCE_QUEUE_SCRIPT="$FAKE_QUEUE" \
 VENTUREOS_CADENCE_CHECKLIST_SCRIPT="$FAKE_CHECKLIST" \
+VENTUREOS_CADENCE_VALIDATE_SCRIPT="$FAKE_VALIDATE" \
 FAKE_PREFLIGHT_RC=7 \
 bash "$SCRIPT" \
   --report-dir "$CADENCE_DIR" \
@@ -162,6 +199,7 @@ steps = {row["id"]: row for row in payload["steps"]}
 assert steps["preflight-evidence"]["status"] == "fail", steps
 assert steps["queue-sweep"]["status"] == "skipped", steps
 assert steps["checklist-refresh"]["status"] == "skipped", steps
+assert steps["evidence-validate"]["status"] == "skipped", steps
 print("RUN_LOCAL_INTEGRATION_CADENCE_FAIL_OK")
 PY
 

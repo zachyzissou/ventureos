@@ -3,7 +3,7 @@
 Date: 2026-03-12  
 Scope: Day-1 required artifacts from `docs/VentureOS_Day1_Execution_Packet.md`.
 
-## 1) `logs/daily/YYYY-MM-DD-agent-health.json`
+## 1) `runtime/logs/daily/YYYY-MM-DD-agent-health.json`
 
 ```json
 {
@@ -35,7 +35,7 @@ Scope: Day-1 required artifacts from `docs/VentureOS_Day1_Execution_Packet.md`.
 }
 ```
 
-## 2) `logs/daily/YYYY-MM-DD-spend.json`
+## 2) `runtime/logs/daily/YYYY-MM-DD-spend.json`
 
 ```json
 {
@@ -79,7 +79,7 @@ Scope: Day-1 required artifacts from `docs/VentureOS_Day1_Execution_Packet.md`.
 }
 ```
 
-## 3) `logs/daily/YYYY-MM-DD-kpi-snapshot.json`
+## 3) `runtime/logs/daily/YYYY-MM-DD-kpi-snapshot.json`
 
 ```json
 {
@@ -158,7 +158,7 @@ Scope: Day-1 required artifacts from `docs/VentureOS_Day1_Execution_Packet.md`.
 }
 ```
 
-## 4) `logs/daily/YYYY-MM-DD-handoff-ledger.json`
+## 4) `runtime/logs/daily/YYYY-MM-DD-handoff-ledger.json`
 
 ```json
 {
@@ -195,7 +195,7 @@ Scope: Day-1 required artifacts from `docs/VentureOS_Day1_Execution_Packet.md`.
 }
 ```
 
-## 5) `logs/daily/YYYY-MM-DD-decision-log.md`
+## 5) `runtime/logs/daily/YYYY-MM-DD-decision-log.md`
 
 ```md
 # Decision Log — YYYY-MM-DD
@@ -220,9 +220,52 @@ Scope: Day-1 required artifacts from `docs/VentureOS_Day1_Execution_Packet.md`.
 3. Priority three (owner, due date)
 
 ## Evidence Links
-- `logs/daily/YYYY-MM-DD-agent-health.json`
-- `logs/daily/YYYY-MM-DD-spend.json`
-- `logs/daily/YYYY-MM-DD-kpi-snapshot.json`
-- `logs/daily/YYYY-MM-DD-handoff-ledger.json`
-- `logs/daily/YYYY-MM-DD-decision-log.md`
+- `runtime/logs/daily/YYYY-MM-DD-agent-health.json`
+- `runtime/logs/daily/YYYY-MM-DD-spend.json`
+- `runtime/logs/daily/YYYY-MM-DD-kpi-snapshot.json`
+- `runtime/logs/daily/YYYY-MM-DD-handoff-ledger.json`
+- `runtime/logs/daily/YYYY-MM-DD-decision-log.md`
 ```
+
+## 6) `runtime/logs/daily/YYYY-MM-DD-go-no-go.md`
+
+```md
+# Day Go/No-Go — YYYY-MM-DD
+
+## Verdict
+- Status: `GO` or `NO_GO`
+- Evaluated at: `YYYY-MM-DDTHH:MM:SSZ`
+- Evaluator lane: `Executive Office Operator lane`
+
+## Acceptance Criteria Check
+- [x] All required daily artifacts are present
+- [x] No unresolved P0 incidents
+- [ ] Handoff SLA target met
+- [x] Decision log complete
+
+## Evidence Summary
+- Handoff on-time rate: `0.95`
+- Open P0 incidents: `0`
+- Required artifacts present: `6/6`
+
+## Decision
+Status: `GO`
+Approver: `Executive Office Director lane`
+
+## Evidence Links
+- `runtime/logs/daily/YYYY-MM-DD-agent-health.json`
+- `runtime/logs/daily/YYYY-MM-DD-spend.json`
+- `runtime/logs/daily/YYYY-MM-DD-kpi-snapshot.json`
+- `runtime/logs/daily/YYYY-MM-DD-handoff-ledger.json`
+- `runtime/logs/daily/YYYY-MM-DD-decision-log.md`
+- `runtime/logs/daily/YYYY-MM-DD-go-no-go.md`
+```
+
+Compatibility aliases may also be refreshed alongside the dated files:
+
+- `runtime/logs/daily/agent-health.json`
+- `runtime/logs/daily/spend.json`
+- `runtime/logs/daily/kpi-snapshot.json`
+- `runtime/logs/daily/handoff-ledger.json`
+- `runtime/logs/daily/decision-log.md`
+- `runtime/logs/daily/day1-go-no-go.md`

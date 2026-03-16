@@ -1,7 +1,7 @@
 # VentureOS Day-1 Run Command Pack v1
 
 Date: 2026-03-12  
-Purpose: one exact command checklist to execute one Day-1 cycle and produce all required artifacts in `logs/daily/`.
+Purpose: one exact command checklist to execute one Day-1 cycle and produce all required artifacts in `runtime/logs/daily/`.
 
 ## Preconditions
 
@@ -16,7 +16,7 @@ export DATE="$(date +%F)"
 export TS_UTC="$(date -u +%FT%TZ)"
 export DASHBOARD_URL="${DASHBOARD_URL:-http://127.0.0.1:8001}"
 export DASHBOARD_TOKEN="${DASHBOARD_TOKEN:-$(cat dashboard/data/.api-token)}"
-export OUT_DIR="logs/daily"
+export OUT_DIR="runtime/logs/daily"
 mkdir -p "$OUT_DIR"
 ```
 
@@ -189,11 +189,47 @@ cat > "$OUT_DIR/$DATE-decision-log.md" <<EOF
 3. TBD
 
 ## Evidence Links
-- \`logs/daily/$DATE-agent-health.json\`
-- \`logs/daily/$DATE-spend.json\`
-- \`logs/daily/$DATE-kpi-snapshot.json\`
-- \`logs/daily/$DATE-handoff-ledger.json\`
-- \`logs/daily/$DATE-decision-log.md\`
+- \`runtime/logs/daily/$DATE-agent-health.json\`
+- \`runtime/logs/daily/$DATE-spend.json\`
+- \`runtime/logs/daily/$DATE-kpi-snapshot.json\`
+- \`runtime/logs/daily/$DATE-handoff-ledger.json\`
+- \`runtime/logs/daily/$DATE-decision-log.md\`
+EOF
+```
+
+- [ ] Initialize `go-no-go.md`
+
+```bash
+cat > "$OUT_DIR/$DATE-go-no-go.md" <<EOF
+# Day Go/No-Go — $DATE
+
+## Verdict
+- Status: \`PENDING\`
+- Evaluated at: \`TBD\`
+- Evaluator lane: \`Executive Office Operator lane\`
+
+## Acceptance Criteria Check
+- [ ] All required daily artifacts are present
+- [ ] No unresolved P0 incidents
+- [ ] Handoff SLA target met
+- [ ] Decision log complete
+
+## Evidence Summary
+- Handoff on-time rate: \`TBD\`
+- Open P0 incidents: \`TBD\`
+- Required artifacts present: \`TBD\`
+
+## Decision
+Status: \`PENDING\`
+Approver: \`TBD\`
+
+## Evidence Links
+- \`runtime/logs/daily/$DATE-agent-health.json\`
+- \`runtime/logs/daily/$DATE-spend.json\`
+- \`runtime/logs/daily/$DATE-kpi-snapshot.json\`
+- \`runtime/logs/daily/$DATE-handoff-ledger.json\`
+- \`runtime/logs/daily/$DATE-decision-log.md\`
+- \`runtime/logs/daily/$DATE-go-no-go.md\`
 EOF
 ```
 
@@ -232,7 +268,8 @@ for f in \
   "$OUT_DIR/$DATE-spend.json" \
   "$OUT_DIR/$DATE-kpi-snapshot.json" \
   "$OUT_DIR/$DATE-handoff-ledger.json" \
-  "$OUT_DIR/$DATE-decision-log.md"
+  "$OUT_DIR/$DATE-decision-log.md" \
+  "$OUT_DIR/$DATE-go-no-go.md"
 do
   test -s "$f" || { echo "MISSING_OR_EMPTY: $f"; exit 1; }
 done
@@ -248,11 +285,18 @@ jq empty "$OUT_DIR/$DATE-agent-health.json" \
   "$OUT_DIR/$DATE-handoff-ledger.json"
 ```
 
+- [ ] Canonicalize aliases and validate evidence bundle
+
+```bash
+bash scripts/run-evidence-daily.sh --date "$DATE"
+bash scripts/validate-evidence.sh --cadence daily --target "$DATE"
+```
+
 ## 5) End-of-cycle status line (paste into decision log)
 
 ```text
 Status: GO|NO_GO
-Evidence links: logs/daily/<DATE>-agent-health.json, logs/daily/<DATE>-spend.json, logs/daily/<DATE>-kpi-snapshot.json, logs/daily/<DATE>-handoff-ledger.json, logs/daily/<DATE>-decision-log.md
+Evidence links: runtime/logs/daily/<DATE>-agent-health.json, runtime/logs/daily/<DATE>-spend.json, runtime/logs/daily/<DATE>-kpi-snapshot.json, runtime/logs/daily/<DATE>-handoff-ledger.json, runtime/logs/daily/<DATE>-decision-log.md, runtime/logs/daily/<DATE>-go-no-go.md
 Breaches + owners + ETA: <fill>
 Next cycle priorities (top 3): <fill>
 ```

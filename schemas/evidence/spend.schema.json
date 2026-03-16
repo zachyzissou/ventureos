@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["date", "captured_at", "totals", "categories"],
+  "properties": {
+    "date": { "type": "string" },
+    "captured_at": { "type": "string" },
+    "source": { "type": "object" },
+    "totals": { "type": "object" },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["category", "usd"],
+        "properties": {
+          "category": { "type": "string" },
+          "usd": { "type": "number" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "per_model": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "variance": { "type": "object" },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

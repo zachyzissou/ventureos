@@ -20,11 +20,11 @@ Each gate maps to a checkpoint in the Day-1 Execution Packet. Every gate is bina
 
 | # | Check | PASS criteria | FAIL criteria |
 |---|-------|---------------|---------------|
-| A1 | Agent health file exists | `reports/daily/YYYY-MM-DD-D1-agent-health.json` exists, is valid JSON, and contains a status entry for every active agent | File missing, empty, malformed JSON, or missing agent entries |
+| A1 | Agent health file exists | `runtime/logs/daily/YYYY-MM-DD-agent-health.json` exists, is valid JSON, and contains a status entry for every active agent | File missing, empty, malformed JSON, or missing agent entries |
 | A2 | Agent statuses are current | Every agent `last_heartbeat` timestamp is within 60 min of sweep time | Any agent heartbeat older than 60 min or field missing |
 | A3 | Incident triage complete | All overnight incidents have severity, owner, and ETA assigned | Any incident missing severity, owner, or ETA |
-| A4 | Data freshness validated | `reports/daily/YYYY-MM-DD-D1-data-freshness.json` exists; every data source has `freshness_ts` < 24h old | File missing, any source stale (>24h), or freshness timestamp absent |
-| A5 | Spend snapshot captured | `reports/daily/YYYY-MM-DD-D1-spend.json` exists; all cost categories populated; total reconciles | File missing, categories missing, or total mismatches sum of line items |
+| A4 | KPI freshness validated | `runtime/logs/daily/YYYY-MM-DD-kpi-snapshot.json` exists and records source/freshness state for active KPI feeds | File missing, stale source notes unresolved, or freshness state absent |
+| A5 | Spend snapshot captured | `runtime/logs/daily/YYYY-MM-DD-spend.json` exists; all cost categories populated; total reconciles | File missing, categories missing, or total mismatches sum of line items |
 
 **Gate A verdict:** PASS only if A1–A5 all pass.
 
@@ -43,7 +43,7 @@ Each gate maps to a checkpoint in the Day-1 Execution Packet. Every gate is bina
 
 | # | Check | PASS criteria | FAIL criteria |
 |---|-------|---------------|---------------|
-| C1 | Handoff log exists | `reports/daily/YYYY-MM-DD-handoff-ledger.json` exists and is valid JSON | File missing or malformed |
+| C1 | Handoff log exists | `runtime/logs/daily/YYYY-MM-DD-handoff-ledger.json` exists and is valid JSON | File missing or malformed |
 | C2 | Timestamps present | Every handoff record has `producer_ts` and `consumer_ts` fields | Any handoff missing either timestamp |
 | C3 | SLA computed | Each handoff has `sla_status` field with value `on_time` or `late` | Field missing or value outside allowed enum |
 | C4 | Breach actions assigned | Every `late` handoff has `breach_owner` and `breach_action` fields | Any late handoff missing owner or action |
@@ -57,9 +57,9 @@ Each gate maps to a checkpoint in the Day-1 Execution Packet. Every gate is bina
 |---|-------|---------------|---------------|
 | D1 | All daily artifacts exist | Every file listed in Execution Packet §Must-produce artifacts is present at the expected path | Any file missing |
 | D2 | Artifacts non-empty and schema-valid | Each JSON file parses without error; each has > 0 data records | Empty file, parse error, or zero records |
-| D3 | Decision log finalized | `reports/daily/YYYY-MM-DD-decision-log.md` exists; every open item has owner + due date | File missing, or any open item without owner/due date |
+| D3 | Decision log finalized | `runtime/logs/daily/YYYY-MM-DD-decision-log.md` exists; every open item has owner + due date | File missing, or any open item without owner/due date |
 | D4 | Next-day priorities posted | Top 3 priorities for next business day are listed with owners | Fewer than 3 priorities or any missing owner |
-| D5 | Evidence completeness self-check | `reports/daily/YYYY-MM-DD-D4-evidence-check.json` exists and lists all required files with present/missing status | File missing or any required file marked missing |
+| D5 | Evidence completeness self-check | `runtime/reports/evidence/evidence-validate-latest.json` exists and lists all required files with present/missing status | File missing or any required file marked missing |
 
 **Gate D verdict:** PASS only if D1–D5 all pass.
 
@@ -157,11 +157,11 @@ Every escalation must be logged with these fields:
 Run this at each checkpoint. The verifying agent must be different from the producing agent (per ACP Execution Contract §Verification gate).
 
 ### 09:00 CT — Gate A
-- [ ] A1: `reports/daily/YYYY-MM-DD-D1-agent-health.json` exists and is valid
+- [ ] A1: `runtime/logs/daily/YYYY-MM-DD-agent-health.json` exists and is valid
 - [ ] A2: All heartbeats within 60 min
 - [ ] A3: All incidents triaged with severity/owner/ETA
-- [ ] A4: `reports/daily/YYYY-MM-DD-D1-data-freshness.json` exists; all sources fresh
-- [ ] A5: `reports/daily/YYYY-MM-DD-D1-spend.json` exists; totals reconcile
+- [ ] A4: `runtime/logs/daily/YYYY-MM-DD-kpi-snapshot.json` exists; freshness state recorded
+- [ ] A5: `runtime/logs/daily/YYYY-MM-DD-spend.json` exists; totals reconcile
 - [ ] Anti-fake: Non-trivial content, plausible timestamps, agent list matches manifest
 - [ ] **Gate A verdict:** PASS / FAIL
 
@@ -202,16 +202,18 @@ Run this at each checkpoint. The verifying agent must be different from the prod
 
 ## 5. Path and naming alignment
 
-This document uses `reports/daily/` paths per the 30-Day Operational Cadence v1. The Day-1 Execution Packet originally referenced `logs/daily/` — see the correction note in that document.
+This document uses `runtime/logs/` for canonical evidence and `runtime/reports/evidence/` for derived validation summaries.
 
 Canonical structure:
 ```
-reports/
+runtime/logs/
   daily/          # All daily evidence outputs (D-1 through D-4)
   weekly/         # Weekly cadence outputs
   monthly/        # Monthly cadence outputs
   incidents/      # Incident logs
-  decisions/      # Decision log entries
+
+runtime/reports/
+  evidence/       # Derived validation summaries
 ```
 
 ---

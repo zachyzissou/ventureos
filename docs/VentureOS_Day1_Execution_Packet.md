@@ -15,13 +15,14 @@ Activate and run these departments for one full cycle:
 
 ## Must-produce artifacts (today)
 
-> **Path correction (v1.1):** Changed from `logs/daily/` to `reports/daily/` to align with `VentureOS_30_Day_Operational_Cadence_v1.md` evidence storage conventions.
+> **Path correction (v1.2):** `runtime/logs/` is the canonical evidence root. Derived validation summaries live under `runtime/reports/evidence/`.
 
-- `reports/daily/YYYY-MM-DD-agent-health.json`
-- `reports/daily/YYYY-MM-DD-spend.json`
-- `reports/daily/YYYY-MM-DD-kpi-snapshot.json`
-- `reports/daily/YYYY-MM-DD-handoff-ledger.json`
-- `reports/daily/YYYY-MM-DD-decision-log.md`
+- `runtime/logs/daily/YYYY-MM-DD-agent-health.json`
+- `runtime/logs/daily/YYYY-MM-DD-spend.json`
+- `runtime/logs/daily/YYYY-MM-DD-kpi-snapshot.json`
+- `runtime/logs/daily/YYYY-MM-DD-handoff-ledger.json`
+- `runtime/logs/daily/YYYY-MM-DD-decision-log.md`
+- `runtime/logs/daily/YYYY-MM-DD-go-no-go.md`
 
 ## Execution checklist
 

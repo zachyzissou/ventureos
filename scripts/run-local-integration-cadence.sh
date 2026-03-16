@@ -7,12 +7,14 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 PREFLIGHT_SCRIPT="${VENTUREOS_CADENCE_PREFLIGHT_SCRIPT:-$REPO_ROOT/scripts/run-install-preflight-evidence.sh}"
 QUEUE_SCRIPT="${VENTUREOS_CADENCE_QUEUE_SCRIPT:-$REPO_ROOT/scripts/pr-queue-sweep.sh}"
 CHECKLIST_SCRIPT="${VENTUREOS_CADENCE_CHECKLIST_SCRIPT:-$REPO_ROOT/scripts/refresh-local-integration-checklist.sh}"
+VALIDATE_SCRIPT="${VENTUREOS_CADENCE_VALIDATE_SCRIPT:-$REPO_ROOT/scripts/validate-evidence.sh}"
 
 REPORT_DIR="${VENTUREOS_CADENCE_REPORT_DIR:-$REPO_ROOT/runtime/reports/local-integration-cadence}"
 PREFLIGHT_REPORT_DIR="${VENTUREOS_INSTALL_REPORT_DIR:-$REPO_ROOT/runtime/reports/ventureos-install}"
 PREFLIGHT_JSON="${VENTUREOS_PREFLIGHT_EVIDENCE_JSON:-$PREFLIGHT_REPORT_DIR/ventureos-install-preflight-evidence-latest.json}"
 QUEUE_JSON="${VENTUREOS_QUEUE_EVIDENCE_JSON:-$REPO_ROOT/runtime/reports/pr-queue/queue-latest.json}"
 CHECKLIST_PATH="${VENTUREOS_LOCAL_CHECKLIST_PATH:-$REPO_ROOT/docs/LOCAL_INTEGRATION_CHECKLIST.md}"
+EVIDENCE_REPORT_DIR="${VENTUREOS_EVIDENCE_REPORT_DIR:-$REPO_ROOT/runtime/reports/evidence}"
 
 forward_preflight_args=()
 
@@ -29,6 +31,7 @@ Options:
   --preflight-json <path>       Preflight evidence JSON path passed to checklist refresh
   --queue-json <path>           Queue sweep JSON output path
   --checklist-path <path>       Local integration checklist path
+  --evidence-report-dir <path>  Evidence validation report output directory
   -h, --help                    Show help
 
 Any args after `--` are forwarded to scripts/run-install-preflight-evidence.sh.
@@ -69,6 +72,11 @@ while [[ $# -gt 0 ]]; do
       CHECKLIST_PATH="$2"
       shift 2
       ;;
+    --evidence-report-dir)
+      need_value "$@"
+      EVIDENCE_REPORT_DIR="$2"
+      shift 2
+      ;;
     --)
       shift
       while [[ $# -gt 0 ]]; do
@@ -88,7 +96,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-for required_script in "$PREFLIGHT_SCRIPT" "$QUEUE_SCRIPT" "$CHECKLIST_SCRIPT"; do
+for required_script in "$PREFLIGHT_SCRIPT" "$QUEUE_SCRIPT" "$CHECKLIST_SCRIPT" "$VALIDATE_SCRIPT"; do
   if [[ ! -f "$required_script" ]]; then
     echo "Required script not found: $required_script" >&2
     exit 1
@@ -107,13 +115,16 @@ cadence_latest_md="$REPORT_DIR/local-integration-cadence-latest.md"
 log_preflight="$REPORT_DIR/local-integration-cadence-${timestamp_utc}-preflight.log"
 log_queue="$REPORT_DIR/local-integration-cadence-${timestamp_utc}-queue.log"
 log_checklist="$REPORT_DIR/local-integration-cadence-${timestamp_utc}-checklist.log"
+log_validate="$REPORT_DIR/local-integration-cadence-${timestamp_utc}-validate.log"
 
 status_preflight="pending"
 status_queue="pending"
 status_checklist="pending"
+status_validate="pending"
 rc_preflight=0
 rc_queue=0
 rc_checklist=0
+rc_validate=0
 
 run_logged() {
   local log_path="$1"
@@ -168,9 +179,24 @@ else
   echo "SKIP checklist-refresh :: upstream step failed" | tee "$log_checklist" >/dev/null
 fi
 
+validate_cmd=(bash "$VALIDATE_SCRIPT" --cadence daily --target latest --report-dir "$EVIDENCE_REPORT_DIR")
+if [[ "$status_preflight" == "pass" && "$status_queue" == "pass" && "$status_checklist" == "pass" ]]; then
+  if run_logged "$log_validate" "${validate_cmd[@]}"; then
+    status_validate="pass"
+    rc_validate=0
+  else
+    rc_validate=$?
+    status_validate="fail"
+  fi
+else
+  status_validate="skipped"
+  rc_validate=0
+  echo "SKIP evidence-validate :: upstream step failed" | tee "$log_validate" >/dev/null
+fi
+
 cadence_status="pass"
 cadence_exit=0
-if [[ "$status_preflight" == "fail" || "$status_queue" == "fail" || "$status_checklist" == "fail" ]]; then
+if [[ "$status_preflight" == "fail" || "$status_queue" == "fail" || "$status_checklist" == "fail" || "$status_validate" == "fail" ]]; then
   cadence_status="fail"
   cadence_exit=1
 fi
@@ -178,8 +204,11 @@ fi
 preflight_evidence_json="$(grep -E '^VENTUREOS_PREFLIGHT_EVIDENCE_JSON=' "$log_preflight" | tail -n 1 | cut -d= -f2- || true)"
 preflight_evidence_md="$(grep -E '^VENTUREOS_PREFLIGHT_EVIDENCE_MD=' "$log_preflight" | tail -n 1 | cut -d= -f2- || true)"
 queue_status_marker="$(grep -E '^PR_QUEUE_STATUS=' "$log_queue" | tail -n 1 | cut -d= -f2- || true)"
+validate_json="$(grep -E '^EVIDENCE_VALIDATE_JSON=' "$log_validate" | tail -n 1 | cut -d= -f2- || true)"
+validate_md="$(grep -E '^EVIDENCE_VALIDATE_MD=' "$log_validate" | tail -n 1 | cut -d= -f2- || true)"
+validate_target="$(grep -E '^EVIDENCE_VALIDATE_TARGET=' "$log_validate" | tail -n 1 | cut -d= -f2- || true)"
 
-python3 - "$cadence_json" "$cadence_md" "$REPO_ROOT" "$timestamp_utc" "$cadence_status" "$PREFLIGHT_SCRIPT" "$QUEUE_SCRIPT" "$CHECKLIST_SCRIPT" "$status_preflight" "$rc_preflight" "$log_preflight" "$preflight_evidence_json" "$preflight_evidence_md" "$status_queue" "$rc_queue" "$log_queue" "$QUEUE_JSON" "$queue_status_marker" "$status_checklist" "$rc_checklist" "$log_checklist" "$CHECKLIST_PATH" <<'PY'
+python3 - "$cadence_json" "$cadence_md" "$REPO_ROOT" "$timestamp_utc" "$cadence_status" "$PREFLIGHT_SCRIPT" "$QUEUE_SCRIPT" "$CHECKLIST_SCRIPT" "$VALIDATE_SCRIPT" "$status_preflight" "$rc_preflight" "$log_preflight" "$preflight_evidence_json" "$preflight_evidence_md" "$status_queue" "$rc_queue" "$log_queue" "$QUEUE_JSON" "$queue_status_marker" "$status_checklist" "$rc_checklist" "$log_checklist" "$CHECKLIST_PATH" "$status_validate" "$rc_validate" "$log_validate" "$validate_json" "$validate_md" "$validate_target" <<'PY'
 from __future__ import annotations
 
 import json
@@ -207,33 +236,45 @@ status = sys.argv[5]
 preflight = {
     "id": "preflight-evidence",
     "script": rel(sys.argv[6], repo_root),
-    "status": sys.argv[9],
-    "exitCode": int(sys.argv[10]),
-    "log": rel(sys.argv[11], repo_root),
+    "status": sys.argv[10],
+    "exitCode": int(sys.argv[11]),
+    "log": rel(sys.argv[12], repo_root),
     "artifacts": {
-        "preflightEvidenceJson": rel(sys.argv[12], repo_root),
-        "preflightEvidenceMd": rel(sys.argv[13], repo_root),
+        "preflightEvidenceJson": rel(sys.argv[13], repo_root),
+        "preflightEvidenceMd": rel(sys.argv[14], repo_root),
     },
 }
 queue = {
     "id": "queue-sweep",
     "script": rel(sys.argv[7], repo_root),
-    "status": sys.argv[14],
-    "exitCode": int(sys.argv[15]),
-    "log": rel(sys.argv[16], repo_root),
+    "status": sys.argv[15],
+    "exitCode": int(sys.argv[16]),
+    "log": rel(sys.argv[17], repo_root),
     "artifacts": {
-        "queueJson": rel(sys.argv[17], repo_root),
+        "queueJson": rel(sys.argv[18], repo_root),
     },
-    "queueStatus": sys.argv[18] or "unknown",
+    "queueStatus": sys.argv[19] or "unknown",
 }
 checklist = {
     "id": "checklist-refresh",
     "script": rel(sys.argv[8], repo_root),
-    "status": sys.argv[19],
-    "exitCode": int(sys.argv[20]),
-    "log": rel(sys.argv[21], repo_root),
+    "status": sys.argv[20],
+    "exitCode": int(sys.argv[21]),
+    "log": rel(sys.argv[22], repo_root),
     "artifacts": {
-        "checklistPath": rel(sys.argv[22], repo_root),
+        "checklistPath": rel(sys.argv[23], repo_root),
+    },
+}
+validate = {
+    "id": "evidence-validate",
+    "script": rel(sys.argv[9], repo_root),
+    "status": sys.argv[24],
+    "exitCode": int(sys.argv[25]),
+    "log": rel(sys.argv[26], repo_root),
+    "artifacts": {
+        "validationJson": rel(sys.argv[27], repo_root),
+        "validationMd": rel(sys.argv[28], repo_root),
+        "validationTarget": sys.argv[29] or "unknown",
     },
 }
 
@@ -242,7 +283,7 @@ payload = {
     "generatedAtUtc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "timestampUtc": timestamp_utc,
     "status": status,
-    "steps": [preflight, queue, checklist],
+    "steps": [preflight, queue, checklist, validate],
 }
 out_json.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
@@ -266,6 +307,9 @@ lines.extend([
     f"- Queue JSON: `{queue['artifacts']['queueJson']}`",
     f"- Queue status marker: `{queue['queueStatus']}`",
     f"- Checklist path: `{checklist['artifacts']['checklistPath']}`",
+    f"- Evidence validation JSON: `{validate['artifacts']['validationJson']}`",
+    f"- Evidence validation Markdown: `{validate['artifacts']['validationMd']}`",
+    f"- Evidence validation target: `{validate['artifacts']['validationTarget']}`",
 ])
 out_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY

@@ -4,6 +4,15 @@ Date: 2026-03-12
 Version: v1.0
 Scope: Company OS v1 rollout for the 13-department model (Executive Office, Operations, Data/Analytics, Finance, Product, Engineering, Design, Marketing, Sales, Customer Success, Legal, IT/Security, HR).
 
+Normative references:
+- `docs/VentureOS_Department_Architecture_v1.md`
+- `docs/VentureOS_30_Day_Operational_Cadence_v1.md`
+- `docs/VentureOS_Phase0_Readiness_Checklist_v1.md`
+- `docs/VentureOS_Baseline_Measurement_SOP_v1.md`
+
+Canonical evidence root: `runtime/logs/`
+Derived validation and readiness reports: `runtime/reports/`
+
 ## 1) Outcomes and non-goals
 
 ### Outcomes
@@ -34,9 +43,10 @@ Objective: establish control plane before expansion.
 
 In scope:
 - Stand up Executive Office, Operations, Data/Analytics, Finance lanes.
-- Create evidence log structure for KPI and SLA artifacts.
+- Create evidence log structure for KPI and SLA artifacts under `runtime/logs/daily`, `runtime/logs/weekly`, `runtime/logs/monthly`, and `runtime/logs/incidents`.
 - Capture KPI baselines for Phase A departments.
 - Activate weekly operating review and breach escalation workflow.
+- Pass `npm run readiness:phase0` before calling G0 complete.
 
 ### Phase A: Core control loop (2026-03-23 to 2026-04-17)
 Objective: prove repeatable execution in the core operating departments.
@@ -92,7 +102,7 @@ In scope:
 
 | Gate | Date window | Required evidence | Decision owner |
 |---|---|---|---|
-| G0 Mobilization ready | 2026-03-20 | Executive/Operations/Data/Finance lanes active; evidence directory live; KPI baseline template approved | Executive Office Director lane |
+| G0 Mobilization ready | 2026-03-20 | Executive/Operations/Data/Finance lanes active; evidence directories live; `npm run readiness:phase0` passing; KPI baseline SOP approved | Executive Office Director lane |
 | G1 Core cadence stable | 2026-04-17 | 10 consecutive business days of daily evidence; 2 weekly reviews complete; >=95% Phase A handoff SLA compliance | Operations Director lane |
 | G2 Phase B launch | 2026-04-18 to 2026-04-20 | Product/Engineering/Design/Marketing/Sales/CS lane charters approved; dependencies mapped; backlog and launch calendar published | Executive Office Director lane |
 | G3 Revenue loop validated | 2026-06-12 | Product-to-market handoffs operating; forecast variance <=10%; customer feedback loop live weekly | Finance Director lane |
@@ -122,6 +132,7 @@ In scope:
 - Phase C requires G3 pass and documented access-control model from IT/Security.
 - Phase D requires G5 pass and full lane contract adoption across all active departments.
 - Any failed gate pauses downstream phase activation until remediation evidence is accepted.
+- GitHub epic `#603` and its successor implementation issues are the execution index for this rollout.
 
 ## 8) Rollback approach (phase-level)
 
