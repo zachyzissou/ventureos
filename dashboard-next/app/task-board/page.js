@@ -22,6 +22,7 @@ function formatTs(epochMs) {
 
 export default function TaskBoardPage() {
   const {
+    normalizedApiBase,
     token,
     authenticateIfNeeded,
   } = useDashboardSession();
@@ -54,8 +55,8 @@ export default function TaskBoardPage() {
       if (!normalizedApiBase) throw new Error("API base URL is required");
       if (includeLogin) await authenticateIfNeeded();
       const [listPayload, summaryPayload] = await Promise.all([
-        requestLocalJson("/api/task-board", { token }),
-        requestLocalJson("/api/task-board/summary", { token }),
+        requestLocalJson("/api/task-board", { token, apiBase: normalizedApiBase }),
+        requestLocalJson("/api/task-board/summary", { token, apiBase: normalizedApiBase }),
       ]);
       const normalized = normalizeTaskBoardPayload(listPayload, summaryPayload);
       const nextTargets = {};
@@ -83,6 +84,7 @@ export default function TaskBoardPage() {
       await requestLocalJson("/api/task-board", {
         method: "POST",
         token,
+        apiBase: normalizedApiBase,
         body: {
           title: draft.title.trim(),
           description: draft.description.trim(),
@@ -115,6 +117,7 @@ export default function TaskBoardPage() {
       await requestLocalJson(`/api/task-board/${taskId}`, {
         method: "PATCH",
         token,
+        apiBase: normalizedApiBase,
         body: { status: target },
       });
       await loadBoard({ includeLogin: false });

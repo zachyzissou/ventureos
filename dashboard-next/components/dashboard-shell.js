@@ -37,6 +37,7 @@ export function DashboardShell({
   const {
     apiBase,
     setApiBase,
+    normalizedApiBase,
     token,
     setToken,
     authState,
@@ -75,18 +76,47 @@ export function DashboardShell({
           ))}
         </div>
         <div className="actions">
-          <input
-            type="text"
-            value={apiBase}
-            onChange={(e) => setApiBase(e.target.value)}
-            placeholder="Dashboard API base URL"
-          />
-          <input
-            type="text"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Token for /api/login and Authorization header"
-          />
+          <div className="field-group">
+            <label className="field-label" htmlFor="dashboard-api-base">
+              Dashboard API base URL
+            </label>
+            <input
+              id="dashboard-api-base"
+              type="text"
+              value={apiBase}
+              onChange={(e) => setApiBase(e.target.value)}
+              placeholder="http://localhost:7000"
+              aria-describedby="dashboard-api-base-help"
+            />
+            <p id="dashboard-api-base-help" className="field-help">
+              Read-only pages call this base directly. Task Board proxies use this same value
+              when forwarding requests through Next API routes.
+            </p>
+            {normalizedApiBase ? (
+              <p className="field-help">Normalized base: {normalizedApiBase}</p>
+            ) : (
+              <p className="field-help">Enter a valid dashboard API base URL to enable requests.</p>
+            )}
+          </div>
+          <div className="field-group">
+            <label className="field-label" htmlFor="dashboard-token">
+              Session token
+            </label>
+            <input
+              id="dashboard-token"
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="Token for /api/login and Authorization header"
+              autoComplete="current-password"
+              spellCheck="false"
+              aria-describedby="dashboard-token-help"
+            />
+            <p id="dashboard-token-help" className="field-help">
+              Stored only in this browser session storage. The token is masked in the UI and sent
+              to authenticate or forward authorized requests.
+            </p>
+          </div>
           <button
             disabled={authState === "authenticating"}
             onClick={onAuthenticate}

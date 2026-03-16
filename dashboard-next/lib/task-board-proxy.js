@@ -1,11 +1,11 @@
-function normalizeApiBase(rawBase) {
-  const value = String(rawBase ?? "").trim();
-  return value.replace(/\/+$/, "");
-}
+import { normalizeApiBase } from "./dashboard-api.js";
 
-function resolveDashboardApiBase() {
+const DASHBOARD_API_BASE_HEADER = "x-dashboard-api-base";
+
+function resolveDashboardApiBase(request) {
   return normalizeApiBase(
-    process.env.DASHBOARD_API_BASE
+    request.headers.get(DASHBOARD_API_BASE_HEADER)
+      ?? process.env.DASHBOARD_API_BASE
       ?? process.env.NEXT_PUBLIC_DASHBOARD_API_BASE
       ?? "http://localhost:7000",
   );
@@ -48,7 +48,7 @@ function resolveUpstreamPath(request, path) {
 }
 
 export async function proxyTaskBoardRequest(request, path) {
-  const base = resolveDashboardApiBase();
+  const base = resolveDashboardApiBase(request);
   if (!base) return jsonError(500, "Dashboard API base URL is not configured");
 
   const method = request.method.toUpperCase();
