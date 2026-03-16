@@ -24,7 +24,11 @@ The Architecture doc (§3) uses qualitative SLAs ("before sprint lock", "T-7 day
 
 ### CF2. Cross-cutting agent contracts are missing
 
-Architecture §5 defines Director/Operator/Auditor per department (13 × 3 = 39 roles) plus 3 cross-cutting agents (Chief of Staff, Program Control, Evidence/QA) = 42 roles total. The Lane Contracts doc specifies contracts for the 3 lane types but does not cover cross-cutting agents. These agents appear in the Implementation Plan as phase owners and in the Cadence doc as daily/weekly operators, but their I/O obligations, authority limits, and escalation paths are undefined. **Fix:** extend Lane Contracts doc with explicit contracts for each cross-cutting role.
+Architecture §5 defines Director/Operator/Auditor per department (13 × 3 = 39 roles) plus 3 cross-cutting agents (Chief of Staff, Program Control, Evidence/QA) = 42 roles total. This gap was closed on 2026-03-16 by adding explicit cross-cutting contracts and a machine-readable ownership matrix:
+- `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md`
+- `docs/VentureOS_Agent_Ownership_Matrix_v1.json`
+
+These artifacts define mission, required inputs/outputs, authority limits, escalation rules, and accountable/execution/gate ownership for the cross-department control functions.
 
 ### CF3. Implementation Plan dates vs. Cadence doc
 
@@ -137,11 +141,9 @@ All four docs require evidence-first execution, and the repo now has canonical e
 
 1. **Keep Architecture doc aligned** — `VentureOS_Department_Architecture_v1.md` is restored; companion docs must continue to reference it as normative.
 2. **Complete evidence execution coverage** — The canonical store/schema/validation layer is now present. Finish generation coverage, retention policy enforcement, and query/reporting depth.
-3. **Add cross-cutting agent contracts** — Extend Lane Contracts with Chief of Staff, Program Control, and Evidence/QA agent contracts: mission, required I/O, authority limits, SLAs.
-4. **Define tool access / RBAC per lane** — Map each lane type to specific system permissions (git repos, evidence stores, dashboards, approval workflows).
-5. **Map SLA frameworks** — Document the relationship between P0-P3 technical SLAs and department handoff SLA tiers. Define how a technical incident cascades to department-level SLA impact.
-6. **Add Phase 0 readiness checklist** — Pre-mobilization gate by Mar 14: evidence infra confirmed, stakeholder alignment documented, baseline measurement plan approved, agent provisioning verified.
-7. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
-8. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
-9. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
+3. **Define tool access / RBAC per lane** — Map each lane type to specific system permissions (git repos, evidence stores, dashboards, approval workflows).
+4. **Map SLA frameworks** — Document the relationship between P0-P3 technical SLAs and department handoff SLA tiers. Define how a technical incident cascades to department-level SLA impact.
+5. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
+6. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
+7. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
 10. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.
