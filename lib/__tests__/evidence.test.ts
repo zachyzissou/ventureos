@@ -378,7 +378,7 @@ describe('lib/evidence', () => {
       cadence: 'daily',
       target: date,
       dailyDir,
-      now: new Date('2026-03-16T12:00:00Z'),
+      now: new Date('2026-03-13T12:00:00Z'),
       writeReport: false,
     });
 
