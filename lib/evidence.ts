@@ -31,6 +31,8 @@ export type EvidenceCadence = 'daily' | 'weekly' | 'monthly';
 export type EvidenceStatus = 'pass' | 'fail';
 export type EvidenceFormat = 'json' | 'markdown';
 export type CheckStatus = 'pass' | 'fail' | 'warn';
+export type HandoffComplianceStatus = 'on_time' | 'late' | 'exception';
+export type HandoffBreachLevel = 'level_1' | 'level_2' | 'level_3';
 
 export interface EvidenceFreshnessPolicy {
   dailyHours: number;
@@ -87,15 +89,41 @@ export interface HandoffRecord {
   accepted_at?: string;
   producer_ts?: string;
   consumer_ts?: string;
+  producer_binding_id?: string;
+  consumer_binding_id?: string;
+  producer_capability_id?: string;
+  consumer_capability_id?: string;
+  producer_specialist_id?: string;
+  consumer_specialist_id?: string;
+  sla_target_minutes?: number;
+  latency_minutes?: number;
   sla_status?: string;
+  compliance_status?: HandoffComplianceStatus;
+  breach_level?: HandoffBreachLevel;
+  breach_owner?: string;
+  breach_action?: string;
+  exception_approved_by?: string;
+  exception_expires_at?: string;
   exceptions?: string;
+}
+
+export interface HandoffSummary {
+  total_handoffs?: number;
+  on_time_handoffs?: number;
+  late_handoffs?: number;
+  exception_handoffs?: number;
+  on_time_rate?: number;
+  level_1_breaches?: number;
+  level_2_breaches?: number;
+  level_3_breaches?: number;
+  [key: string]: unknown;
 }
 
 export interface HandoffLedger {
   date: string;
   captured_at: string;
   handoffs: HandoffRecord[];
-  summary: Record<string, unknown>;
+  summary: HandoffSummary;
 }
 
 export interface SpendSnapshot {
@@ -121,6 +149,7 @@ export interface EvidenceArtifactCheck {
   timestamp?: string;
   ageHours?: number;
   stale?: boolean;
+  details?: Record<string, unknown>;
   errors: string[];
   warnings: string[];
 }
@@ -216,6 +245,12 @@ interface DiscoveredDailyArtifact {
   path: string;
 }
 
+interface HandoffValidationOutcome {
+  details: Record<string, unknown>;
+  errors: string[];
+  warnings: string[];
+}
+
 const DEFAULT_FRESHNESS_POLICY: EvidenceFreshnessPolicy = {
   dailyHours: 36,
   weeklyDays: 8,
@@ -291,6 +326,19 @@ const MONTHLY_MARKDOWN_HEADINGS: Record<string, string[]> = {
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 const schemaCache = new Map<string, object>();
+const CANONICAL_BINDING_PATTERN = /^[a-z][a-z0-9_]*:(director|operator|auditor)$/;
+const CANONICAL_CAPABILITY_PATTERN = /^(venture_[a-z0-9_]+|human_arbiter)$/;
+const CANONICAL_SPECIALIST_PATTERN = /^game_[a-z0-9_]+$/;
+const HANDOFF_SUMMARY_KEYS = [
+  'total_handoffs',
+  'on_time_handoffs',
+  'late_handoffs',
+  'exception_handoffs',
+  'on_time_rate',
+  'level_1_breaches',
+  'level_2_breaches',
+  'level_3_breaches',
+] as const;
 
 export function resolveFreshnessPolicy(
   override: Partial<EvidenceFreshnessPolicy> = {},
@@ -381,6 +429,35 @@ function parseTimestamp(value: unknown): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function parseFiniteNumber(value: unknown): number | null {
+  if (typeof value !== 'number') {
+    return null;
+  }
+  return Number.isFinite(value) ? value : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isHandoffComplianceStatus(value: unknown): value is HandoffComplianceStatus {
+  return value === 'on_time' || value === 'late' || value === 'exception';
+}
+
+function isHandoffBreachLevel(value: unknown): value is HandoffBreachLevel {
+  return value === 'level_1' || value === 'level_2' || value === 'level_3';
+}
+
+function isCanonicalRoleReference(value: string): boolean {
+  return CANONICAL_BINDING_PATTERN.test(value)
+    || CANONICAL_CAPABILITY_PATTERN.test(value)
+    || CANONICAL_SPECIALIST_PATTERN.test(value);
+}
+
+function isCurrentTargetDate(targetDate: string, now: Date): boolean {
+  return targetDate === formatLocalDate(now);
+}
+
 async function fileTimestamp(targetPath: string): Promise<Date> {
   const stat = await fs.stat(targetPath);
   return stat.mtime;
@@ -388,6 +465,10 @@ async function fileTimestamp(targetPath: string): Promise<Date> {
 
 function getAgeHours(reference: Date, now: Date): number {
   return Number(((now.getTime() - reference.getTime()) / 3_600_000).toFixed(2));
+}
+
+function getLatencyMinutes(start: Date, end: Date): number {
+  return Number(((end.getTime() - start.getTime()) / 60_000).toFixed(2));
 }
 
 function getMaxAgeHours(cadence: EvidenceCadence, freshnessPolicy: EvidenceFreshnessPolicy): number {
@@ -523,6 +604,281 @@ function collectMarkdownErrors(
   return errors;
 }
 
+function validateHandoffLedger(
+  payload: Record<string, unknown>,
+  targetDate: string,
+  now: Date,
+): HandoffValidationOutcome {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const strictCurrentDateValidation = isCurrentTargetDate(targetDate, now);
+  const handoffs = Array.isArray(payload.handoffs) ? payload.handoffs : [];
+  const summary = isRecord(payload.summary) ? payload.summary : {};
+
+  if (!Array.isArray(payload.handoffs)) {
+    errors.push('handoffs must be an array');
+  }
+  if (!isRecord(payload.summary)) {
+    errors.push('summary must be an object');
+  }
+
+  let onTimeHandoffs = 0;
+  let lateHandoffs = 0;
+  let exceptionHandoffs = 0;
+  let level1Breaches = 0;
+  let level2Breaches = 0;
+  let level3Breaches = 0;
+  let lateMissingBreachOwnerCount = 0;
+  let lateMissingBreachActionCount = 0;
+  let invalidComplianceCount = 0;
+  let level3WithoutApprovalCount = 0;
+
+  for (const entry of handoffs) {
+    if (!isRecord(entry)) {
+      errors.push('handoff record must be an object');
+      continue;
+    }
+
+    const handoff = entry as unknown as HandoffRecord;
+    const label = `handoff ${handoff.handoff_id ?? '<missing-id>'}`;
+    const producerTs = parseTimestamp(handoff.producer_ts);
+    const consumerTs = parseTimestamp(handoff.consumer_ts);
+    const sentAt = parseTimestamp(handoff.sent_at);
+    const acceptedAt = parseTimestamp(handoff.accepted_at);
+    const explicitLatencyMinutes = parseFiniteNumber(handoff.latency_minutes);
+    const slaTargetMinutes = parseFiniteNumber(handoff.sla_target_minutes);
+    const recordedComplianceRaw = handoff.compliance_status ?? handoff.sla_status;
+    const recordedCompliance = isHandoffComplianceStatus(recordedComplianceRaw)
+      ? recordedComplianceRaw
+      : null;
+    const recordedBreachLevel = handoff.breach_level && isHandoffBreachLevel(handoff.breach_level)
+      ? handoff.breach_level
+      : null;
+    const exceptionApprovalExpiry = parseTimestamp(handoff.exception_expires_at);
+    const hasApprovalActor = typeof handoff.exception_approved_by === 'string' && handoff.exception_approved_by.length > 0;
+    const exceptionApprovalActive = Boolean(
+      hasApprovalActor
+      && exceptionApprovalExpiry
+      && exceptionApprovalExpiry.getTime() > now.getTime(),
+    );
+    const severityText = typeof handoff.exceptions === 'string' ? handoff.exceptions : '';
+    const explicitP0 = /\bP0\b/i.test(severityText);
+
+    if (strictCurrentDateValidation) {
+      if (!handoff.producer_binding_id) {
+        errors.push(`${label} is missing producer_binding_id`);
+      }
+      if (!handoff.consumer_binding_id) {
+        errors.push(`${label} is missing consumer_binding_id`);
+      }
+      if (!producerTs) {
+        errors.push(`${label} is missing producer_ts`);
+      }
+      if (!consumerTs) {
+        errors.push(`${label} is missing consumer_ts`);
+      }
+      if (slaTargetMinutes === null) {
+        errors.push(`${label} is missing sla_target_minutes`);
+      }
+    }
+
+    for (const [field, value] of [
+      ['producer_binding_id', handoff.producer_binding_id],
+      ['consumer_binding_id', handoff.consumer_binding_id],
+    ] as const) {
+      if (value && !CANONICAL_BINDING_PATTERN.test(value)) {
+        errors.push(`${label} has invalid ${field}: ${value}`);
+      }
+    }
+    for (const [field, value] of [
+      ['producer_capability_id', handoff.producer_capability_id],
+      ['consumer_capability_id', handoff.consumer_capability_id],
+    ] as const) {
+      if (value && !CANONICAL_CAPABILITY_PATTERN.test(value)) {
+        errors.push(`${label} has invalid ${field}: ${value}`);
+      }
+    }
+    for (const [field, value] of [
+      ['producer_specialist_id', handoff.producer_specialist_id],
+      ['consumer_specialist_id', handoff.consumer_specialist_id],
+    ] as const) {
+      if (value && !CANONICAL_SPECIALIST_PATTERN.test(value)) {
+        errors.push(`${label} has invalid ${field}: ${value}`);
+      }
+    }
+
+    if (recordedComplianceRaw !== undefined && recordedComplianceRaw !== null && !recordedCompliance) {
+      errors.push(`${label} has invalid compliance status: ${String(recordedComplianceRaw)}`);
+    }
+    if (handoff.breach_level !== undefined && handoff.breach_level !== null && !recordedBreachLevel) {
+      errors.push(`${label} has invalid breach_level: ${String(handoff.breach_level)}`);
+    }
+    if (hasApprovalActor && !isCanonicalRoleReference(handoff.exception_approved_by as string)) {
+      errors.push(`${label} has non-canonical exception_approved_by: ${handoff.exception_approved_by}`);
+    }
+    if (handoff.exception_approved_by && !handoff.exception_expires_at) {
+      errors.push(`${label} has exception_approved_by without exception_expires_at`);
+    }
+    if (handoff.exception_expires_at && !exceptionApprovalExpiry) {
+      errors.push(`${label} has invalid exception_expires_at`);
+    }
+    if (handoff.exception_expires_at && exceptionApprovalExpiry && exceptionApprovalExpiry.getTime() <= now.getTime()) {
+      errors.push(`${label} has expired exception approval`);
+    }
+
+    let timingStart = producerTs;
+    let timingEnd = consumerTs;
+    if (!timingStart || !timingEnd) {
+      timingStart = sentAt;
+      timingEnd = acceptedAt;
+    }
+
+    let derivedLatencyMinutes: number | null = null;
+    if (timingStart && timingEnd) {
+      if (timingEnd.getTime() < timingStart.getTime()) {
+        errors.push(`${label} has impossible timestamp ordering`);
+      } else {
+        derivedLatencyMinutes = getLatencyMinutes(timingStart, timingEnd);
+        if (derivedLatencyMinutes < 0) {
+          errors.push(`${label} has negative latency`);
+        }
+      }
+    } else if (strictCurrentDateValidation) {
+      errors.push(`${label} is missing timestamp pair required to derive latency`);
+    } else if (!recordedCompliance) {
+      warnings.push(`${label} is missing a complete timestamp pair; using compatibility mode.`);
+    }
+
+    if (explicitLatencyMinutes !== null && derivedLatencyMinutes !== null && Math.abs(explicitLatencyMinutes - derivedLatencyMinutes) > 0.01) {
+      errors.push(`${label} latency_minutes does not match derived latency`);
+    }
+
+    let derivedCompliance: HandoffComplianceStatus | null = null;
+    if (exceptionApprovalActive) {
+      derivedCompliance = 'exception';
+    } else if (derivedLatencyMinutes !== null && slaTargetMinutes !== null) {
+      derivedCompliance = derivedLatencyMinutes > slaTargetMinutes ? 'late' : 'on_time';
+    } else if (!strictCurrentDateValidation && recordedCompliance) {
+      derivedCompliance = recordedCompliance;
+    } else {
+      errors.push(`${label} lacks enough SLA instrumentation to derive compliance`);
+      invalidComplianceCount += 1;
+    }
+
+    if (derivedCompliance && recordedCompliance && derivedCompliance !== recordedCompliance) {
+      errors.push(`${label} compliance_status does not match derived compliance (${derivedCompliance})`);
+      invalidComplianceCount += 1;
+    }
+    if (recordedCompliance === 'exception' && !exceptionApprovalActive) {
+      errors.push(`${label} claims exception status without active approval evidence`);
+      invalidComplianceCount += 1;
+    }
+
+    const effectiveCompliance = derivedCompliance ?? recordedCompliance;
+    if (!effectiveCompliance) {
+      continue;
+    }
+
+    if (effectiveCompliance === 'on_time') {
+      onTimeHandoffs += 1;
+    }
+    const effectiveBreachLevel = recordedBreachLevel ?? (
+      effectiveCompliance === 'late'
+        ? (explicitP0 ? 'level_3' : 'level_1')
+        : null
+    );
+    if (effectiveBreachLevel === 'level_1') {
+      level1Breaches += 1;
+    }
+    if (effectiveBreachLevel === 'level_2') {
+      level2Breaches += 1;
+    }
+    if (effectiveBreachLevel === 'level_3') {
+      level3Breaches += 1;
+      if (!exceptionApprovalActive) {
+        level3WithoutApprovalCount += 1;
+        warnings.push(`${label} is a level_3 breach without active exception approval evidence.`);
+      }
+    }
+
+    if (effectiveCompliance === 'late') {
+      lateHandoffs += 1;
+      if (!handoff.breach_owner) {
+        errors.push(`${label} is late but missing breach_owner`);
+        lateMissingBreachOwnerCount += 1;
+      } else if (!isCanonicalRoleReference(handoff.breach_owner)) {
+        errors.push(`${label} has non-canonical breach_owner: ${handoff.breach_owner}`);
+      }
+      if (!handoff.breach_action) {
+        errors.push(`${label} is late but missing breach_action`);
+        lateMissingBreachActionCount += 1;
+      }
+
+      const ownerLabel = handoff.breach_owner ?? 'unassigned';
+      warnings.push(`${label} is late and routed to ${ownerLabel}.`);
+    }
+    if (effectiveCompliance === 'exception') {
+      exceptionHandoffs += 1;
+    }
+  }
+
+  const totalHandoffs = handoffs.length;
+  const onTimeRate = totalHandoffs ? Number((onTimeHandoffs / totalHandoffs).toFixed(4)) : 0;
+  const expectedSummary: Record<(typeof HANDOFF_SUMMARY_KEYS)[number], number> = {
+    total_handoffs: totalHandoffs,
+    on_time_handoffs: onTimeHandoffs,
+    late_handoffs: lateHandoffs,
+    exception_handoffs: exceptionHandoffs,
+    on_time_rate: onTimeRate,
+    level_1_breaches: level1Breaches,
+    level_2_breaches: level2Breaches,
+    level_3_breaches: level3Breaches,
+  };
+
+  for (const key of HANDOFF_SUMMARY_KEYS) {
+    const hasKey = Object.prototype.hasOwnProperty.call(summary, key);
+    if (strictCurrentDateValidation && !hasKey) {
+      errors.push(`summary is missing ${key}`);
+      continue;
+    }
+    if (!hasKey) {
+      continue;
+    }
+    const actual = parseFiniteNumber(summary[key]);
+    if (actual === null) {
+      errors.push(`summary.${key} must be a finite number`);
+      continue;
+    }
+    const expected = expectedSummary[key];
+    const tolerance = key === 'on_time_rate' ? 0.0001 : 0;
+    if (Math.abs(actual - expected) > tolerance) {
+      errors.push(`summary.${key} (${actual}) does not match derived value (${expected})`);
+    }
+  }
+
+  const details: Record<string, unknown> = {
+    strictCurrentDateValidation,
+    totalHandoffs,
+    onTimeHandoffs,
+    lateHandoffs,
+    exceptionHandoffs,
+    onTimeRate,
+    level1Breaches,
+    level2Breaches,
+    level3Breaches,
+    lateMissingBreachOwnerCount,
+    lateMissingBreachActionCount,
+    invalidComplianceCount,
+    level3WithoutApprovalCount,
+  };
+
+  return {
+    details,
+    errors,
+    warnings,
+  };
+}
+
 function ajvErrorMessage(error: ErrorObject): string {
   const instancePath = error.instancePath || '/';
   return `${instancePath} ${error.message ?? error.keyword}`.trim();
@@ -574,6 +930,13 @@ async function validateDailyArtifact(
           result.errors.push(ajvErrorMessage(error));
         }
       }
+    }
+
+    if (definition.kind === EvidenceKind.HandoffLedger) {
+      const handoffValidation = validateHandoffLedger(payload, targetDate, now);
+      result.details = handoffValidation.details;
+      result.errors.push(...handoffValidation.errors);
+      result.warnings.push(...handoffValidation.warnings);
     }
 
     timestamp = parseTimestamp(payload.captured_at) ?? await fileTimestamp(targetPath);
@@ -1039,6 +1402,38 @@ export async function runPhase0Readiness(
   if (dailyValidation.status === 'fail') {
     staleArtifacts.push(...dailyValidation.artifacts.filter((artifact) => artifact.stale).map((artifact) => relFromRepo(artifact.path)));
     recommendedRemediations.push('Run bash scripts/run-evidence-daily.sh --date latest after backfilling missing or stale daily artifacts.');
+  }
+
+  const handoffArtifact = dailyValidation.artifacts.find((artifact) => artifact.kind === EvidenceKind.HandoffLedger);
+  const handoffDetails = handoffArtifact?.details ?? {};
+  const handoffOnTimeRate = parseFiniteNumber(handoffDetails.onTimeRate);
+  const lateMissingBreachOwnerCount = parseFiniteNumber(handoffDetails.lateMissingBreachOwnerCount) ?? 0;
+  const lateMissingBreachActionCount = parseFiniteNumber(handoffDetails.lateMissingBreachActionCount) ?? 0;
+  const level3WithoutApprovalCount = parseFiniteNumber(handoffDetails.level3WithoutApprovalCount) ?? 0;
+  const handoffSlaPass = Boolean(
+    handoffArtifact?.exists
+    && handoffOnTimeRate !== null
+    && handoffOnTimeRate >= 0.9
+    && lateMissingBreachOwnerCount === 0
+    && lateMissingBreachActionCount === 0
+    && level3WithoutApprovalCount === 0
+  );
+  checks.push({
+    id: 'handoff-sla',
+    status: handoffSlaPass ? 'pass' : 'fail',
+    message: handoffSlaPass
+      ? `Handoff SLA evidence is within threshold for ${dailyValidation.target}.`
+      : `Handoff SLA evidence for ${dailyValidation.target} is degraded or incomplete.`,
+    details: {
+      target: dailyValidation.target,
+      onTimeRate: handoffOnTimeRate,
+      lateMissingBreachOwnerCount,
+      lateMissingBreachActionCount,
+      level3WithoutApprovalCount,
+    },
+  });
+  if (!handoffSlaPass) {
+    recommendedRemediations.push('Update the daily handoff ledger with canonical bindings, breach routing, and current SLA remediation details before rerunning readiness.');
   }
 
   const weeklyValidation = await validateEvidence({ cadence: 'weekly', target: options.weeklyTarget ?? 'latest', now, writeReport: false });

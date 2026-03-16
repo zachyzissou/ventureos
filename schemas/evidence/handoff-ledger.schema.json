@@ -19,13 +19,40 @@
           "accepted_at": { "type": "string" },
           "producer_ts": { "type": "string" },
           "consumer_ts": { "type": "string" },
-          "sla_status": { "type": "string" },
+          "producer_binding_id": { "type": "string" },
+          "consumer_binding_id": { "type": "string" },
+          "producer_capability_id": { "type": "string" },
+          "consumer_capability_id": { "type": "string" },
+          "producer_specialist_id": { "type": "string" },
+          "consumer_specialist_id": { "type": "string" },
+          "sla_target_minutes": { "type": "number" },
+          "latency_minutes": { "type": "number" },
+          "sla_status": { "type": "string", "enum": ["on_time", "late", "exception"] },
+          "compliance_status": { "type": "string", "enum": ["on_time", "late", "exception"] },
+          "breach_level": { "type": "string", "enum": ["level_1", "level_2", "level_3"] },
+          "breach_owner": { "type": "string" },
+          "breach_action": { "type": "string" },
+          "exception_approved_by": { "type": "string" },
+          "exception_expires_at": { "type": "string" },
           "exceptions": { "type": "string" }
         },
         "additionalProperties": true
       }
     },
-    "summary": { "type": "object" }
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total_handoffs": { "type": "number" },
+        "on_time_handoffs": { "type": "number" },
+        "late_handoffs": { "type": "number" },
+        "exception_handoffs": { "type": "number" },
+        "on_time_rate": { "type": "number" },
+        "level_1_breaches": { "type": "number" },
+        "level_2_breaches": { "type": "number" },
+        "level_3_breaches": { "type": "number" }
+      },
+      "additionalProperties": true
+    }
   },
   "additionalProperties": true
 }
