@@ -141,4 +141,66 @@ describe('lib/evidence', () => {
     expect(readiness.status).toBe('fail');
     expect(readiness.failingGates).toContain('daily-evidence');
   });
+
+  it('validates periodic artifacts from the caller-provided directories', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ventureos-weekly-dir-'));
+    const dailyDir = path.join(tmpDir, 'daily');
+    const weeklyDir = path.join(tmpDir, 'weekly-custom');
+    const envWeeklyDir = path.join(tmpDir, 'weekly-env');
+    const monthlyDir = path.join(tmpDir, 'monthly-custom');
+    const envMonthlyDir = path.join(tmpDir, 'monthly-env');
+    const reportDir = path.join(tmpDir, 'reports');
+    await fs.mkdir(dailyDir, { recursive: true });
+    await fs.mkdir(weeklyDir, { recursive: true });
+    await fs.mkdir(envWeeklyDir, { recursive: true });
+    await fs.mkdir(monthlyDir, { recursive: true });
+    await fs.mkdir(envMonthlyDir, { recursive: true });
+
+    process.env.VENTUREOS_ROOT = repoRoot;
+    process.env.VENTUREOS_EVIDENCE_DAILY_DIR = dailyDir;
+    process.env.VENTUREOS_EVIDENCE_WEEKLY_DIR = envWeeklyDir;
+    process.env.VENTUREOS_EVIDENCE_MONTHLY_DIR = envMonthlyDir;
+
+    const date = '2026-03-16';
+    const capturedAt = '2026-03-16T08:00:00Z';
+    await copyFixture('runtime/logs/daily/agent-health.json', path.join(dailyDir, `${date}-agent-health.json`));
+    await copyFixture('runtime/logs/daily/spend.json', path.join(dailyDir, `${date}-spend.json`));
+    await copyFixture('runtime/logs/daily/kpi-snapshot.json', path.join(dailyDir, `${date}-kpi-snapshot.json`));
+    await copyFixture('runtime/logs/daily/handoff-ledger.json', path.join(dailyDir, `${date}-handoff-ledger.json`));
+    await copyFixture('runtime/logs/daily/decision-log.md', path.join(dailyDir, `${date}-decision-log.md`));
+    await copyFixture('runtime/logs/daily/day1-go-no-go.md', path.join(dailyDir, `${date}-go-no-go.md`));
+    await rewriteJsonFixture(path.join(dailyDir, `${date}-agent-health.json`), date, capturedAt);
+    await rewriteJsonFixture(path.join(dailyDir, `${date}-spend.json`), date, capturedAt);
+    await rewriteJsonFixture(path.join(dailyDir, `${date}-kpi-snapshot.json`), date, capturedAt);
+    await rewriteJsonFixture(path.join(dailyDir, `${date}-handoff-ledger.json`), date, capturedAt);
+
+    const evidence = require('../evidence') as typeof import('../evidence');
+    const isoWeek = evidence.formatIsoWeek(new Date('2026-03-16T12:00:00Z'));
+    await evidence.generateWeeklyRollup({ isoWeek, dailyDir, weeklyDir });
+
+    const result = await evidence.validateEvidence({
+      cadence: 'weekly',
+      target: isoWeek,
+      weeklyDir,
+      reportDir,
+      now: new Date('2026-03-16T12:00:00Z'),
+    });
+
+    expect(result.status).toBe('pass');
+    expect(result.artifacts.every((artifact) => artifact.path.startsWith(weeklyDir))).toBe(true);
+
+    const month = '2026-03';
+    await evidence.generateMonthlyRollup({ month, dailyDir, monthlyDir });
+
+    const monthlyResult = await evidence.validateEvidence({
+      cadence: 'monthly',
+      target: month,
+      monthlyDir,
+      reportDir,
+      now: new Date('2026-03-16T12:00:00Z'),
+    });
+
+    expect(monthlyResult.status).toBe('pass');
+    expect(monthlyResult.artifacts.every((artifact) => artifact.path.startsWith(monthlyDir))).toBe(true);
+  });
 });

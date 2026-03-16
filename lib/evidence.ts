@@ -615,9 +615,7 @@ async function validatePeriodicArtifacts(
   const checks: EvidenceArtifactCheck[] = [];
 
   for (const basename of basenames) {
-    const targetPath = cadence === 'weekly'
-      ? getWeeklyEvidencePath(target, basename)
-      : getMonthlyEvidencePath(target, basename);
+    const targetPath = path.join(dir, `${target}-${basename}`);
     const exists = await pathExists(targetPath);
     const check: EvidenceArtifactCheck = {
       kind: cadence === 'weekly' ? EvidenceKind.WeeklyRollup : EvidenceKind.MonthlyRollup,
@@ -840,9 +838,9 @@ export async function generateWeeklyRollup(
     complete: (coverage.get(date)?.size ?? 0) === DAILY_ARTIFACTS.length,
   }));
 
-  const kpiRollupPath = getWeeklyEvidencePath(isoWeek, 'kpi-rollup.json');
-  const opsReviewPath = getWeeklyEvidencePath(isoWeek, 'ops-review.md');
-  const riskRegisterPath = getWeeklyEvidencePath(isoWeek, 'risk-register.md');
+  const kpiRollupPath = path.join(weeklyDir, `${isoWeek}-kpi-rollup.json`);
+  const opsReviewPath = path.join(weeklyDir, `${isoWeek}-ops-review.md`);
+  const riskRegisterPath = path.join(weeklyDir, `${isoWeek}-risk-register.md`);
 
   const kpiPayload = {
     schemaVersion: 1,
@@ -914,9 +912,9 @@ export async function generateMonthlyRollup(
     complete: (coverage.get(date)?.size ?? 0) === DAILY_ARTIFACTS.length,
   }));
 
-  const forecastPath = getMonthlyEvidencePath(month, 'forecast.md');
-  const spendRollupPath = getMonthlyEvidencePath(month, 'spend-rollup.json');
-  const readinessSummaryPath = getMonthlyEvidencePath(month, 'readiness-summary.md');
+  const forecastPath = path.join(monthlyDir, `${month}-forecast.md`);
+  const spendRollupPath = path.join(monthlyDir, `${month}-spend-rollup.json`);
+  const readinessSummaryPath = path.join(monthlyDir, `${month}-readiness-summary.md`);
 
   const spendPayload = {
     schemaVersion: 1,
