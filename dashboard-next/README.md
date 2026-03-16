@@ -47,6 +47,12 @@ npm run dashboard:next:smoke
 
 This validates task-board write auth forwarding and success/failure behavior through Next API parity routes.
 
+## API base behavior
+
+- `/readiness`, `/overview`, and `/logs` call the configured dashboard API base directly from the browser session context.
+- `/task-board` goes through Next API parity routes, but now forwards the same session-selected API base via request header so the proxy and shell stay aligned.
+- If no session-selected API base is provided, task-board proxy routes fall back to `DASHBOARD_API_BASE`, then `NEXT_PUBLIC_DASHBOARD_API_BASE`, then `http://localhost:7000`.
+
 ## Migration Notes
 
 See `dashboard-next/docs/MIGRATION_CHECKLIST.md` for route parity and rollback.

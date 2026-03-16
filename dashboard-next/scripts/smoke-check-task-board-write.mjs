@@ -72,13 +72,27 @@ const address = server.address();
 if (!address || typeof address === "string") {
   throw new Error("Failed to bind test server");
 }
-process.env.DASHBOARD_API_BASE = `http://127.0.0.1:${address.port}`;
+const upstreamBase = `http://127.0.0.1:${address.port}`;
+process.env.DASHBOARD_API_BASE = "http://127.0.0.1:9";
 
 try {
-  const readResponse = await getBoard(
+  const failedWithoutOverride = await getBoard(
     new Request("http://localhost:7001/api/task-board?limit=20", {
       method: "GET",
       headers: { authorization: "Bearer token-read" },
+    }),
+  );
+  assert.equal(failedWithoutOverride.status, 502);
+  const failedPayload = await failedWithoutOverride.json();
+  assert.equal(failedPayload.error, "Upstream dashboard request failed");
+
+  const readResponse = await getBoard(
+    new Request("http://localhost:7001/api/task-board?limit=20", {
+      method: "GET",
+      headers: {
+        authorization: "Bearer token-read",
+        "x-dashboard-api-base": upstreamBase,
+      },
     }),
   );
   assert.equal(readResponse.status, 200);
@@ -90,6 +104,7 @@ try {
         authorization: "Bearer token-write",
         cookie: "openclaw_dashboard_token=session-cookie",
         "content-type": "application/json",
+        "x-dashboard-api-base": upstreamBase,
       },
       body: JSON.stringify({ title: "Create from smoke" }),
     }),
@@ -101,7 +116,10 @@ try {
   const patchUnauthorized = await patchTask(
     new Request("http://localhost:7001/api/task-board/task-001", {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        "x-dashboard-api-base": upstreamBase,
+      },
       body: JSON.stringify({ status: "running" }),
     }),
     { params: { taskId: "task-001" } },
@@ -114,6 +132,7 @@ try {
       headers: {
         authorization: "Bearer token-write",
         "content-type": "application/json",
+        "x-dashboard-api-base": upstreamBase,
       },
       body: JSON.stringify({ status: "running" }),
     }),
@@ -127,6 +146,7 @@ try {
       headers: {
         authorization: "Bearer token-write",
         "content-type": "application/json",
+        "x-dashboard-api-base": upstreamBase,
       },
       body: "{invalid",
     }),
@@ -147,6 +167,7 @@ try {
     (entry) => entry.method === "GET" && entry.url === "/api/task-board?limit=20",
   );
   assert.ok(readUpstream, "expected upstream GET query passthrough");
+  assert.equal(readUpstream.headers["x-dashboard-api-base"], undefined);
 
   console.log("DASHBOARD_NEXT_TASK_BOARD_WRITE_SMOKE_OK");
 } finally {

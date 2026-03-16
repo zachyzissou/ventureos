@@ -159,11 +159,32 @@ a {
   gap: 10px;
 }
 
+.field-group {
+  display: grid;
+  gap: 6px;
+  min-width: min(420px, 100%);
+  flex: 1 1 320px;
+}
+
+.field-label {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.field-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
 .compact-actions {
   margin-top: 0;
 }
 
-input[type="text"] {
+input[type="text"],
+input[type="password"] {
   width: min(420px, 100%);
   background: #0a202a;
   color: var(--text);

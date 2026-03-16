@@ -73,9 +73,11 @@ export async function fetchDashboardJson(apiBase, path, token = "") {
 
 export async function requestLocalJson(
   path,
-  { method = "GET", token = "", body = undefined } = {},
+  { method = "GET", token = "", body = undefined, apiBase = "" } = {},
 ) {
   const headers = buildAuthHeaders(token);
+  const normalizedBase = normalizeApiBase(apiBase);
+  if (normalizedBase) headers["x-dashboard-api-base"] = normalizedBase;
   const init = {
     method,
     credentials: "include",
