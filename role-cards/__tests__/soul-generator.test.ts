@@ -1,4 +1,3 @@
-import { describe, expect, test } from 'vitest';
 import { generateSoulMd, validateCard } from '../schema';
 import { nexus } from '../02-nexus';
 

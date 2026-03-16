@@ -2,7 +2,6 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import Database from 'better-sqlite3';
-import { describe, expect, it } from 'vitest';
 
 import { AffinityManager } from '../affinity-manager';
 
