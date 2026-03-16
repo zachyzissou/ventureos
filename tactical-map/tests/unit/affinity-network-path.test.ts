@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import { generateBondControlPoint, quadraticBezierPoint, distance } from '@/khala/path';
+import { generateBondControlPoint, quadraticBezierPoint, distance } from '@/affinity/path';
 
-describe('khala path generation', () => {
+describe('affinity path generation', () => {
   it('generates a curved control point that avoids a central obstacle', () => {
     const a = { x: -350, y: 0 };
     const b = { x: 350, y: 0 };

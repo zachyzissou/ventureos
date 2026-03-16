@@ -1,14 +1,14 @@
 /*
- * Phase 5.3 micro-benchmark (CPU-side) for Khala network path generation.
+ * Phase 5.3 micro-benchmark (CPU-side) for affinity-network path generation.
  *
  * Run:
- *   node --experimental-strip-types scripts/bench-khala-network.ts
+ *   node --experimental-strip-types scripts/bench-affinity-network.ts
  */
 
 import { AGENT_ORDER, AGENTS, BONDS } from '../src/config.ts';
 import type { AgentId, Point } from '../src/config.ts';
-import { KHLA_SEED_BONDS } from '../src/khala/seed.ts';
-import { generateBondControlPoint, quadraticBezierPolyline, estimatePolylineLength } from '../src/khala/path.ts';
+import { AFFINITY_SEED_BONDS } from '../src/affinity/seed.ts';
+import { generateBondControlPoint, quadraticBezierPolyline, estimatePolylineLength } from '../src/affinity/path.ts';
 
 function defaultPositions(): Record<AgentId, Point> {
   const out = {} as Record<AgentId, Point>;
@@ -33,7 +33,7 @@ function run() {
 
   // Warmup JIT
   for (let w = 0; w < WARMUP; w++) {
-    for (const b of KHLA_SEED_BONDS) {
+    for (const b of AFFINITY_SEED_BONDS) {
       const a = pos[b.a];
       const bb = pos[b.b];
       const local = obstacles.filter((o) => o.id !== b.a && o.id !== b.b);
@@ -55,7 +55,7 @@ function run() {
   let sumLen = 0;
 
   for (let i = 0; i < ITERS; i++) {
-    for (const b of KHLA_SEED_BONDS) {
+    for (const b of AFFINITY_SEED_BONDS) {
       const a = pos[b.a];
       const bb = pos[b.b];
       const local = obstacles.filter((o) => o.id !== b.a && o.id !== b.b);
@@ -76,10 +76,10 @@ function run() {
   const t1 = nowMs();
   const totalMs = t1 - t0;
   const perIter = totalMs / ITERS;
-  const perBond = totalMs / (ITERS * KHLA_SEED_BONDS.length);
+  const perBond = totalMs / (ITERS * AFFINITY_SEED_BONDS.length);
 
   // eslint-disable-next-line no-console
-  console.log('[bench] bonds:', KHLA_SEED_BONDS.length);
+  console.log('[bench] bonds:', AFFINITY_SEED_BONDS.length);
   // eslint-disable-next-line no-console
   console.log('[bench] iters:', ITERS);
   // eslint-disable-next-line no-console

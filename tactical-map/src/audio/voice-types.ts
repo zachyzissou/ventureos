@@ -7,9 +7,6 @@
  *
  * Design:
  *   MapEvent → TriggerRule → VoiceLineEntry → AudioManager.play('voice' bus)
- *
- * Protoss lore: Each agent's psionic signature resonates with a unique
- * harmonic — their voice in the Khala, speaking truth without filler.
  */
 
 import type { AgentId } from '@/config';

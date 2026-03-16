@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { generateSoulMd, validateCard, type KhaydarinCard } from "../role-cards/schema";
+import { generateSoulMd, validateCard, type AgentRoleCard } from "../role-cards/schema";
 
 import { nexus } from "../role-cards/02-nexus";
 import { oracle } from "../role-cards/03-oracle";
@@ -133,7 +133,7 @@ function maybeBackup(filePath: string): void {
   fs.copyFileSync(filePath, bak);
 }
 
-const CARD_BY_ID: Record<string, KhaydarinCard> = {
+const CARD_BY_ID: Record<string, AgentRoleCard> = {
   nexus,
   oracle,
   atlas,

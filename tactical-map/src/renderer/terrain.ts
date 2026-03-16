@@ -45,7 +45,7 @@ function crystalCluster(x: number, y: number, seed: number) {
   c.addChild(base);
 
   const spikes = new Graphics();
-  const colors = [COLORS.PROTOSS_BLUE, COLORS.PROTOSS_GOLD];
+  const colors = [COLORS.COMMAND_BLUE, COLORS.COMMAND_GOLD];
 
   for (let i = 0; i < 7; i++) {
     const angle = ((i * 2 + (seed % 3)) / 7) * Math.PI * 2;
@@ -80,7 +80,7 @@ function crystalCluster(x: number, y: number, seed: number) {
   c.addChild(spikes);
 
   const glow = new Graphics();
-  glow.circle(0, 0, 42).fill({ color: COLORS.PROTOSS_BLUE, alpha: 0.08 });
+  glow.circle(0, 0, 42).fill({ color: COLORS.COMMAND_BLUE, alpha: 0.08 });
   glow.filters = [new BlurFilter({ strength: 8 })];
   c.addChild(glow);
 
@@ -109,9 +109,9 @@ export function createTerrain(): Terrain {
   drawHexGrid(grid, CANVAS.WIDTH * 2, CANVAS.HEIGHT * 2);
   container.addChild(grid);
 
-  // Center pylon glow
+  // Center node glow
   const coreGlow = new Graphics();
-  coreGlow.circle(0, 0, 220).fill({ color: COLORS.PROTOSS_GOLD, alpha: 0.05 });
+  coreGlow.circle(0, 0, 220).fill({ color: COLORS.COMMAND_GOLD, alpha: 0.05 });
   coreGlow.filters = [new BlurFilter({ strength: 28 })];
   container.addChild(coreGlow);
 

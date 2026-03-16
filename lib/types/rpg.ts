@@ -7,17 +7,17 @@
  * Issue #78 — API Integration
  */
 
-// ─── Psionic Stats ──────────────────────────────────────────────────────────
+// ─── Performance Stats ──────────────────────────────────────────────────────
 
-/** A single snapshot row from the psionic_stats table. */
-export interface PsionicStatSnapshot {
+/** A single snapshot row from the historical overlay stats table. */
+export interface PerformanceStatSnapshot {
   snapshot_date: string;
   agent_id: string;
-  psionic_mastery: number;
+  performance_mastery: number;
   energy: number;
   shields: number;
-  warp_technology: number;
-  psi_reach: number;
+  automation_depth: number;
+  collaboration_reach: number;
   memory_count: number;
   unique_domains: number;
   canonical_edits: number;
@@ -27,13 +27,13 @@ export interface PsionicStatSnapshot {
   success_rate: number;
   approval_accuracy: number;
   tasks_completed: number;
-  warp_tech_inputs: string | null;
+  automation_inputs: string | null;
 }
 
 /** GET /api/rpg/stats response. */
 export interface RpgStatsResponse {
   stats: Record<string, number>;
-  snapshots?: PsionicStatSnapshot[];
+  snapshots?: PerformanceStatSnapshot[];
 }
 
 /** GET /api/rpg/stats/:agentId response. */
@@ -53,10 +53,10 @@ export interface InteractionLogEntry {
   duration_ms: number;
 }
 
-// ─── Khala Network ──────────────────────────────────────────────────────────
+// ─── Affinity Network ──────────────────────────────────────────────────────────
 
-/** A single row from the khala_network table. */
-export interface KhalaNetworkEdge {
+/** A single row from the collaboration-affinity table. */
+export interface AffinityNetworkEdge {
   id: number;
   agent_a: string;
   agent_b: string;
@@ -67,9 +67,9 @@ export interface KhalaNetworkEdge {
   updated_at: string;
 }
 
-/** GET /api/rpg/khala-network response. */
-export interface KhalaNetworkResponse {
-  edges: KhalaNetworkEdge[];
+/** GET /api/rpg/affinity-network response. */
+export interface AffinityNetworkResponse {
+  edges: AffinityNetworkEdge[];
   nodeCount: number;
   edgeCount: number;
 }
@@ -80,7 +80,7 @@ export interface KhalaNetworkResponse {
 export interface TacticalOverlayResponse {
   view: string;
   stats: RpgStatsResponse;
-  network: KhalaNetworkResponse;
+  network: AffinityNetworkResponse;
   interactions: InteractionLogEntry[];
 }
 

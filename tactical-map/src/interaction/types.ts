@@ -4,10 +4,6 @@
  * Core type definitions for user-driven control actions
  * on the Tactical Map: agent detail panels, mission spawning,
  * pause/resume, budget adjustment, command palette, and undo/redo.
- *
- * Protoss lore: The Executor's interface — channeling the Khala's
- * will into precise commands. Each gesture resonates through the
- * psionic network, shaping fleet operations in real time.
  */
 
 import type { AgentId } from '@/config';

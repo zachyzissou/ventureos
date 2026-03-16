@@ -12,9 +12,6 @@
  *
  * All animations are frame-based, update via requestAnimationFrame,
  * and are designed to hit 60fps with up to 50 active missions.
- *
- * Protoss lore: These are Psionic Resonance Cascades — visual
- * manifestations of the Khala responding to mission state changes.
  */
 
 import type { Animation, AnimationType, Point } from './types';

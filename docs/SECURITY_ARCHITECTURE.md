@@ -219,8 +219,8 @@ If the token file is missing or unreadable and no `DASHBOARD_API_TOKEN` env var 
 | | **Internal**: success rates, latency, recent session labels | ✅ Expose (authenticated) |
 | | **Confidential**: `lastMessage` content from isolated sessions, full session keys | ❌ Redact |
 | `GET /api/ventureos-kpis` | **Internal**: KPI values, trends, SLO status | ✅ Expose (authenticated) |
-| `GET /api/rpg/stats` | **Internal**: psionic stats per agent | ✅ Expose (authenticated) |
-| `GET /api/rpg/khala-network` | **Internal**: bond affinities, drift history | ✅ Expose (authenticated) |
+| `GET /api/rpg/stats` | **Internal**: performance stats per agent | ✅ Expose (authenticated) |
+| `GET /api/rpg/affinity-network` | **Internal**: bond affinities, drift history | ✅ Expose (authenticated) |
 | `GET /api/rpg/conversations/*` | **Internal**: conversation titles, participants, message text | ✅ Expose (authenticated) |
 | `GET /api/costs` | **Internal**: cost data per model, per session | ✅ Expose (authenticated) |
 | `GET /api/usage-windows` | **Internal**: token usage, burn rates | ✅ Expose (authenticated) |
@@ -675,7 +675,7 @@ Rate limiting prevents abuse (intentional or accidental) of expensive endpoints.
 | `GET /api/ventureos-agents` | 20 req/min | Sliding 60s | Moderate — polled by UI |
 | `GET /api/ventureos-kpis` | 10 req/min | Sliding 60s | Light — data changes slowly |
 | `GET /api/rpg/stats` | 10 req/min | Sliding 60s | Light |
-| `GET /api/rpg/khala-network` | 10 req/min | Sliding 60s | Expensive (360ms currently) |
+| `GET /api/rpg/affinity-network` | 10 req/min | Sliding 60s | Expensive (360ms currently) |
 | `GET /api/rpg/conversations/*` | 15 req/min | Sliding 60s | Moderate |
 | `GET /api/costs` | 10 req/min | Sliding 60s | Expensive (reads all JSONL) |
 | `GET /api/usage-windows` | 10 req/min | Sliding 60s | Expensive |
@@ -744,7 +744,7 @@ const LIMITS = {
   '/api/ventureos-agents':    { limit: 20, windowMs: 60000 },
   '/api/ventureos-kpis':      { limit: 10, windowMs: 60000 },
   '/api/rpg/stats':           { limit: 10, windowMs: 60000 },
-  '/api/rpg/khala-network':   { limit: 10, windowMs: 60000 },
+  '/api/rpg/affinity-network':   { limit: 10, windowMs: 60000 },
   '/api/rpg/conversations':   { limit: 15, windowMs: 60000 },
   '/api/costs':               { limit: 10, windowMs: 60000 },
   '/api/usage-windows':       { limit: 10, windowMs: 60000 },
@@ -802,7 +802,7 @@ const POLL_INTERVALS = {
   agents: 15000,        // 15s
   kpis: 30000,          // 30s
   system: 30000,        // 30s
-  khalaNetwork: 60000,  // 60s (expensive)
+  affinityNetwork: 60000,  // 60s (expensive)
   costs: 60000,         // 60s (expensive)
 };
 ```

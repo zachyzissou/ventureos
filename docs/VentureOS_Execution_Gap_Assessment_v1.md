@@ -1,12 +1,16 @@
 # VentureOS Execution Gap Assessment v1
 
-Date: 2026-03-12 (revised)
-Scope: Critical review of Company OS v1 artifacts.
+Date: 2026-03-16 (revised)
+Scope: Critical review of VentureOS operating-model artifacts.
 Inputs reviewed:
 - `VentureOS_Department_Architecture_v1.md` — department map, handoffs, cadence, agent roles, governance (restored to the working tree on 2026-03-16 from git history commit f8ab267f)
 - `VentureOS_Implementation_Plan_v1.md` — phased rollout, acceptance gates, ownership model
 - `VentureOS_Department_KPI_SLA_v1.md` — department KPIs, handoff SLA matrix, breach handling
 - `VentureOS_Lane_Contracts_v1.md` — Director/Operator/Auditor contracts, escalation triggers
+- `VentureOS_Role_Model_v1.md` — canonical VentureOS lane bindings, capability overlays, and authority classes
+- `VentureOS_Agent_Role_Registry_v1.json` — machine-readable role registry
+- `VentureOS_RBAC_Spec_v1.md` — canonical access-control policy
+- `VentureOS_Tool_Access_Matrix_v1.json` — machine-readable RBAC matrix
 
 ---
 
@@ -22,7 +26,7 @@ The `VentureOS_Department_Architecture_v1.md` file was committed in `f8ab267f` t
 
 The Architecture doc (§3) uses qualitative SLAs ("before sprint lock", "T-7 days"). The KPI/SLA doc (§3) sharpens these with numeric targets. **Gap:** the Architecture doc does not reference the KPI/SLA doc, so a reader of the Architecture alone gets stale information. **Fix:** add a forward reference in Architecture §3 noting that KPI/SLA doc §3 is authoritative for SLA targets.
 
-### CF2. Cross-cutting agent contracts are missing
+### CF2. Cross-cutting agent contracts are present
 
 Architecture §5 defines Director/Operator/Auditor per department (13 × 3 = 39 roles) plus 3 cross-cutting agents (Chief of Staff, Program Control, Evidence/QA) = 42 roles total. This gap was closed on 2026-03-16 by adding explicit cross-cutting contracts and a machine-readable ownership matrix:
 - `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md`
@@ -30,15 +34,23 @@ Architecture §5 defines Director/Operator/Auditor per department (13 × 3 = 39 
 
 These artifacts define mission, required inputs/outputs, authority limits, escalation rules, and accountable/execution/gate ownership for the cross-department control functions.
 
-### CF3. Implementation Plan dates vs. Cadence doc
+### CF3. Role model ambiguity is closed at the spec layer
+
+The repo previously mixed department lane labels, legacy runtime agent names, and themed specialist names. This gap is now closed at the design layer through:
+- `docs/VentureOS_Role_Model_v1.md`
+- `docs/VentureOS_Agent_Role_Registry_v1.json`
+
+These artifacts define canonical lane bindings, capability overlays, subordinate game specialists, and legacy alias handling. Runtime/UI surfaces may still carry compatibility labels, but they are no longer the source of truth for authority or ownership.
+
+### CF4. Implementation Plan dates vs. Cadence doc
 
 The Implementation Plan starts Phase 0 on 2026-03-16. The 30-Day Cadence doc now anchors to this date (after initial revision). Verify all date arithmetic remains consistent as schedule changes occur.
 
-### CF4. KPI ownership is consistent but needs explicit clarification
+### CF5. KPI ownership is consistent but needs explicit clarification
 
 The KPI/SLA doc assigns KPI ownership to Operator lanes (correct — KPI reporting is operational work). The Lane Contracts doc says Directors "set scope" and Operators "execute." The Architecture doc implies Directors own departmental outputs. **Resolution:** KPI data collection and reporting is Operator responsibility; KPI target-setting and approval is Director responsibility. This distinction should be stated explicitly in the KPI/SLA doc §1.
 
-### CF5. Department naming inconsistency
+### CF6. Department naming inconsistency
 
 Architecture uses "Legal & Compliance" (D3) and "People / HR" (D4). All other docs use "Legal" and "HR." Implementation Plan uses "IT/Security." Standardize names across all docs.
 
@@ -74,7 +86,11 @@ Architecture uses "Legal & Compliance" (D3) and "People / HR" (D4). All other do
 
 ### Lane Contracts gaps
 
-**G11. No tool access boundaries.** Contracts define responsibilities and I/O but not which tools/systems each lane can access. §3 defines read/write/approval authority at a conceptual level, but no mapping to actual systems (git repos, dashboards, evidence stores, communication channels). Without system-level access controls, separation of duties is advisory only. **Fix:** add a system access matrix mapping lane types to specific tools/repos/stores.
+**G11. Tool access boundaries are now defined at the spec layer, but runtime enforcement is still pending.** Contracts previously defined responsibilities and I/O without mapping them to actual systems. This design gap is now closed by:
+- `docs/VentureOS_RBAC_Spec_v1.md`
+- `docs/VentureOS_Tool_Access_Matrix_v1.json`
+
+The remaining gap is implementation: policy decisions still need to be enforced in the named hook points (`lib/policy-gate.ts`, `tactical-map/src/interaction/permissions.ts`, `dashboard/server/middleware/auth.ts`, and related runtime surfaces). **Fix:** implement those enforcement hooks without reintroducing non-canonical identifiers.
 
 **G12. No degraded-mode operating procedure for lane failures.** §2 states "If Auditor is unavailable, no irreversible action may proceed; temporary exceptions require Executive Office Director approval and explicit expiry." This is a good hard rule but incomplete: no maximum exception duration, no process for restoring the lane, no coverage plan for extended outages. The existing `docs/DEGRADATION_POLICY.md` covers technical degradation, not organizational lane failures. **Fix:** add degraded-mode SOPs with maximum exception durations, restoration procedures, and cross-department coverage assignments.
 
@@ -124,8 +140,8 @@ All four docs require evidence-first execution, and the repo now has canonical e
 |---|---|---|---|---|
 | R1 | Architecture doc was missing from repo — companion docs referenced a ghost | RESOLVED | Executive Office Director | Restored from git history (commit f8ab267f) on 2026-03-16 |
 | R2 | Evidence infrastructure is partially implemented — evidence generation coverage still needs enforcement | HIGH | Data/Analytics Director + Engineering | Keep canonical store/schema/validation in place; finish generation, retention, and query/reporting depth |
-| R3 | Cross-cutting agents (Chief of Staff, Program Control, Evidence/QA) have no contracts | HIGH | Operations Director | Extend Lane Contracts doc with explicit I/O and authority for cross-cutting roles |
-| R4 | No tool access boundaries — separation of duties is advisory | HIGH | IT/Security Director | Define RBAC per lane type; enforce in agent provisioning |
+| R3 | Cross-cutting agent contracts were missing | RESOLVED | Operations Director | Closed by `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md` and `docs/VentureOS_Agent_Ownership_Matrix_v1.json` |
+| R4 | Access boundaries are defined only at the spec layer — runtime enforcement still pending | HIGH | IT/Security Director | Implement policy decisions through the named RBAC hook points and agent provisioning flow |
 | R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) unconnected | HIGH | Operations Director | Unify or explicitly map between technical and department SLA frameworks |
 | R6 | No external boundary protocol for customer/vendor/regulator interactions | HIGH | Legal Director | Define boundary contracts before Sales/Legal activation in Phase B/C |
 | R7 | No inter-lane communication security model | HIGH | IT/Security Director | Define authentication/authorization for lane artifact exchange |
@@ -141,9 +157,9 @@ All four docs require evidence-first execution, and the repo now has canonical e
 
 1. **Keep Architecture doc aligned** — `VentureOS_Department_Architecture_v1.md` is restored; companion docs must continue to reference it as normative.
 2. **Complete evidence execution coverage** — The canonical store/schema/validation layer is now present. Finish generation coverage, retention policy enforcement, and query/reporting depth.
-3. **Define tool access / RBAC per lane** — Map each lane type to specific system permissions (git repos, evidence stores, dashboards, approval workflows).
+3. **Implement RBAC enforcement hooks** — The role model and access matrix now exist; wire them into runtime policy, dashboard control surfaces, and agent provisioning.
 4. **Map SLA frameworks** — Document the relationship between P0-P3 technical SLAs and department handoff SLA tiers. Define how a technical incident cascades to department-level SLA impact.
 5. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
 6. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
 7. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
-10. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.
+8. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.

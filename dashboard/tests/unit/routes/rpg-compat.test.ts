@@ -24,21 +24,21 @@ describe('rpg-compat', () => {
     expect(spies.handleRpgApi).not.toHaveBeenCalled();
   });
 
-  it('rewrites /api/psionic-stats to canonical route', () => {
+  it('rewrites /api/performance-stats to canonical route', () => {
     const { deps, spies } = createDeps();
-    const req = mockRequest({ url: '/api/psionic-stats' });
+    const req = mockRequest({ url: '/api/performance-stats' });
     const handled = handleRpgCompat(req, mockResponse(), deps as any);
     expect(handled).toBe(true);
     expect(req.url).toBe('/api/rpg/stats');
     expect(spies.handleRpgApi).toHaveBeenCalledTimes(1);
   });
 
-  it('rewrites /api/khala-network query path preserving query string', () => {
+  it('rewrites /api/affinity-network query path preserving query string', () => {
     const { deps } = createDeps();
-    const req = mockRequest({ url: '/api/khala-network?limit=10' });
+    const req = mockRequest({ url: '/api/affinity-network?limit=10' });
     const handled = handleRpgCompat(req, mockResponse(), deps as any);
     expect(handled).toBe(true);
-    expect(req.url).toBe('/api/rpg/khala-network?limit=10');
+    expect(req.url).toBe('/api/rpg/affinity-network?limit=10');
   });
 
   it('rewrites tactical overlay paths', () => {

@@ -9,9 +9,6 @@
  *
  * Arrows are Bézier curves that route around obstacles and
  * animate with flowing particles along the path.
- *
- * Protoss lore: These are Psionic Conduits — visible threads of the
- * Khala connecting related directives across the network.
  */
 
 import type {

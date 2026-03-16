@@ -7,7 +7,7 @@
  * - Challenge-specific rate limiting (low-affinity pair escalation control)
  * - Sliding window implementation (accurate, memory-efficient)
  * - Configurable backoff strategy when limits hit
- * - Integration with Khala Network affinity data
+ * - Integration with Affinity Network affinity data
  *
  * Uses in-memory sliding windows. For persistence across restarts,
  * call exportState() / importState().

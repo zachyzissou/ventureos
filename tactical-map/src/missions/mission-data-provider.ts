@@ -214,7 +214,7 @@ export class MockMissionDataProvider implements MissionDataProvider {
       'Model Router v2',
       'E2E Test Coverage',
       'Documentation Refresh',
-      'Khala Network Bonds',
+      'Affinity Network Bonds',
     ];
 
     for (let i = 0; i < count; i++) {

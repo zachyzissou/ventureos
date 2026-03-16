@@ -1,4 +1,4 @@
-# Phase 5.3 — Khala Network (Bonds & Affinity Visualization)
+# Phase 5.3 — Affinity Network (Bonds & Affinity Visualization)
 
 ## What shipped
 
@@ -49,17 +49,17 @@ PERF=1 npm run test:e2e -- tests/e2e/performance.spec.ts
 
 ```bash
 cd tactical-map
-node --experimental-strip-types scripts/bench-khala-network.ts
+node --experimental-strip-types scripts/bench-affinity-network.ts
 ```
 
 ## Implementation notes
 
-- Seed bond values come from `~/clawd/scripts/seed-khala-network.sh` (fully connected 28 edges).
+- Seed bond values come from `~/clawd/scripts/seed-affinity-network.sh` (fully connected 28 edges).
 - Bonds redraw each animation frame, but the total geometry is small (28 × 16 segments) and has not shown measurable regression in the existing Playwright FPS benchmark.
 
 ## Key files
 
-- `src/renderer/khala-network.ts` — rendering + drift + particles
-- `src/khala/affinity.ts` — tier/color/speed mapping
-- `src/khala/path.ts` — curved path + obstacle avoidance
-- `src/khala/seed.ts` — canonical 28-bond seed list
+- `src/renderer/affinity-network.ts` — rendering + drift + particles
+- `src/affinity/affinity.ts` — tier/color/speed mapping
+- `src/affinity/path.ts` — curved path + obstacle avoidance
+- `src/affinity/seed.ts` — canonical 28-bond seed list

@@ -2,6 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import Database from 'better-sqlite3';
+import { describe, expect, it } from 'vitest';
 
 import { AffinityManager } from '../affinity-manager';
 
@@ -11,7 +12,7 @@ import { AffinityManager } from '../affinity-manager';
  * Verifies that:
  *  - getAffinitiesBatch returns identical results to individual getAffinity calls
  *  - computeStats uses batch query (performance)
- *  - Legacy psionic_bonds batch works
+ *  - Legacy affinity_bonds batch works
  *  - Edge cases (empty, duplicates, missing bonds)
  */
 
@@ -23,7 +24,7 @@ async function makeTempDb(opts?: {
   const db = new Database(dbPath);
 
   db.exec(`
-    CREATE TABLE khala_network (
+    CREATE TABLE affinity_network (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL,
       agent_b TEXT NOT NULL,
@@ -37,7 +38,7 @@ async function makeTempDb(opts?: {
       CHECK(affinity >= 0.10 AND affinity <= 0.95)
     );
 
-    CREATE TABLE khala_drift_history (
+    CREATE TABLE affinity_drift_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL,
       agent_b TEXT NOT NULL,
@@ -53,7 +54,7 @@ async function makeTempDb(opts?: {
 
   if (opts?.legacy) {
     db.exec(`
-      CREATE TABLE psionic_bonds (
+      CREATE TABLE affinity_bonds (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         agent_a TEXT NOT NULL,
         agent_b TEXT NOT NULL,
@@ -74,13 +75,13 @@ async function makeTempDb(opts?: {
 
 function seedBonds(db: Database.Database, table: string, bonds: Array<[string, string, number]>): void {
   const insert = db.prepare(
-    table === 'khala_network'
-      ? `INSERT INTO khala_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)`
-      : `INSERT INTO psionic_bonds(agent_a, agent_b, affinity) VALUES(?, ?, ?)`
+    table === 'affinity_network'
+      ? `INSERT INTO affinity_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)`
+      : `INSERT INTO affinity_bonds(agent_a, agent_b, affinity) VALUES(?, ?, ?)`
   );
 
   for (const [a, b, affinity] of bonds) {
-    if (table === 'khala_network') {
+    if (table === 'affinity_network') {
       insert.run(a, b, affinity, affinity);
     } else {
       insert.run(a, b, affinity);
@@ -92,7 +93,7 @@ describe('PERF-003: Batch Affinity Queries', () => {
   describe('getAffinitiesBatch', () => {
     it('returns correct affinities matching individual getAffinity calls', async () => {
       const { db, cleanup } = await makeTempDb();
-      seedBonds(db, 'khala_network', [
+      seedBonds(db, 'affinity_network', [
         ['archivist', 'oracle', 0.85],
         ['echo', 'nexus', 0.6],
         ['nexus', 'oracle', 0.45],
@@ -155,7 +156,7 @@ describe('PERF-003: Batch Affinity Queries', () => {
 
     it('handles mixed found and missing bonds', async () => {
       const { db, cleanup } = await makeTempDb();
-      seedBonds(db, 'khala_network', [
+      seedBonds(db, 'affinity_network', [
         ['echo', 'oracle', 0.3],
       ]);
 
@@ -175,7 +176,7 @@ describe('PERF-003: Batch Affinity Queries', () => {
 
     it('handles duplicate pairs gracefully', async () => {
       const { db, cleanup } = await makeTempDb();
-      seedBonds(db, 'khala_network', [
+      seedBonds(db, 'affinity_network', [
         ['archivist', 'oracle', 0.85],
       ]);
 
@@ -194,16 +195,16 @@ describe('PERF-003: Batch Affinity Queries', () => {
     });
   });
 
-  describe('getLegacyAffinitiesBatch (psionic_bonds)', () => {
+  describe('getLegacyAffinitiesBatch (affinity_bonds)', () => {
     it('fetches affinities from legacy table', async () => {
       const { db, cleanup } = await makeTempDb({ legacy: true });
-      seedBonds(db, 'psionic_bonds', [
+      seedBonds(db, 'affinity_bonds', [
         ['archivist', 'oracle', 0.5],
         ['echo', 'synth', 0.8],
       ]);
 
-      // Create manager without khala_network to force legacy path
-      db.exec('DROP TABLE khala_network');
+      // Create manager without affinity_network to force legacy path
+      db.exec('DROP TABLE affinity_network');
       const am = new AffinityManager({ defaultAffinity: 0.7 }, db);
 
       const batchMap = am.getAffinitiesBatch([
@@ -220,22 +221,22 @@ describe('PERF-003: Batch Affinity Queries', () => {
       await cleanup();
     });
 
-    it('getLegacyAffinitiesBatch explicitly targets psionic_bonds', async () => {
+    it('getLegacyAffinitiesBatch explicitly targets affinity_bonds', async () => {
       const { db, cleanup } = await makeTempDb({ legacy: true });
-      seedBonds(db, 'psionic_bonds', [
+      seedBonds(db, 'affinity_bonds', [
         ['archivist', 'oracle', 0.55],
       ]);
-      seedBonds(db, 'khala_network', [
+      seedBonds(db, 'affinity_network', [
         ['archivist', 'oracle', 0.88],
       ]);
 
       const am = new AffinityManager({ defaultAffinity: 0.7 }, db);
 
-      // getAffinitiesBatch should prefer khala_network
-      const khalaMap = am.getAffinitiesBatch([['oracle', 'archivist']]);
-      expect(khalaMap.get('archivist:oracle')).toBe(0.88);
+      // getAffinitiesBatch should prefer affinity_network
+      const affinityMap = am.getAffinitiesBatch([['oracle', 'archivist']]);
+      expect(affinityMap.get('archivist:oracle')).toBe(0.88);
 
-      // getLegacyAffinitiesBatch should use psionic_bonds
+      // getLegacyAffinitiesBatch should use affinity_bonds
       const legacyMap = am.getLegacyAffinitiesBatch([['oracle', 'archivist']]);
       expect(legacyMap.get('archivist:oracle')).toBe(0.55);
 
@@ -247,7 +248,7 @@ describe('PERF-003: Batch Affinity Queries', () => {
   describe('computeStats uses batch query', () => {
     it('produces identical results to pre-batch implementation', async () => {
       const { db, cleanup } = await makeTempDb();
-      seedBonds(db, 'khala_network', [
+      seedBonds(db, 'affinity_network', [
         ['archivist', 'oracle', 0.9],
         ['oracle', 'synth', 0.4],
         ['archivist', 'synth', 0.75],
@@ -280,7 +281,7 @@ describe('PERF-003: Batch Affinity Queries', () => {
 
     it('handles duplicates in participant list', async () => {
       const { db, cleanup } = await makeTempDb();
-      seedBonds(db, 'khala_network', [
+      seedBonds(db, 'affinity_network', [
         ['echo', 'oracle', 0.6],
       ]);
 
@@ -303,7 +304,7 @@ describe('PERF-003: Batch Affinity Queries', () => {
       // Generate 200 unique bond pairs
       const agents = Array.from({ length: 21 }, (_, i) => `agent_${String(i).padStart(3, '0')}`);
       const insertStmt = db.prepare(
-        'INSERT INTO khala_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
+        'INSERT INTO affinity_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
       );
 
       const allPairs: Array<[string, string]> = [];
@@ -344,7 +345,7 @@ describe('PERF-003: Batch Affinity Queries', () => {
       // Generate 50 agents → 1225 pairs
       const agents = Array.from({ length: 50 }, (_, i) => `agent_${String(i).padStart(3, '0')}`);
       const insertStmt = db.prepare(
-        'INSERT INTO khala_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
+        'INSERT INTO affinity_network(agent_a, agent_b, affinity, seed_value, interaction_count) VALUES(?, ?, ?, ?, 0)'
       );
 
       const insertTx = db.transaction(() => {

@@ -267,12 +267,12 @@ describe('KPI Registry - Data Source Validation', () => {
       for (const def of definitions.values()) {
         for (const source of def.data_sources) {
           // Check if table exists (or skip if it's a future table)
-          if (!['ops_agent_memory', 'rpg_warp_tech_inputs'].includes(source.table)) {
+          if (!['ops_agent_memory', 'rpg_automation_inputs'].includes(source.table)) {
             // These tables might not exist yet - that's OK for now
             // Only validate tables we know exist
-            if (source.table === 'psionic_stats' || 
+            if (source.table === 'performance_stats' ||
                 source.table === 'interaction_logs' ||
-                source.table === 'khala_network') {
+                source.table === 'affinity_network') {
               expect(tables).toContain(source.table);
             }
           }

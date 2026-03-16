@@ -4424,7 +4424,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
       </div>
       <div class="nav-item" data-page="rpg">
         <span class="icon">🌀</span>
-        <span class="nav-text">Pylon Network</span>
+        <span class="nav-text">Agent Network</span>
       </div>
       <div class="nav-item" data-page="conversations">
         <span class="icon">💬</span>
@@ -4944,8 +4944,8 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
 
     <div class="page" id="rpg">
       <div class="page-header">
-        <h1 class="page-title">Pylon Network</h1>
-        <p class="page-subtitle">Protoss Command — tactical overlays, psionic attributes, and Khala bonds</p>
+        <h1 class="page-title">Agent Network</h1>
+        <p class="page-subtitle">Tactical overlays, performance attributes, and affinity links</p>
       </div>
 
       <div class="card mb-24">
@@ -4960,11 +4960,11 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
           <tactical-overlay-panel agent="archivist"></tactical-overlay-panel>
           <tactical-overlay-panel agent="synth"></tactical-overlay-panel>
         </div>
-        <div style="margin-top:10px;font-size:12px;color:var(--text-muted);">Tip: expand a card to inspect warp-tech inputs (audit trail). Use the Khala threshold slider to focus on strong bonds.</div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text-muted);">Tip: expand a card to inspect supporting metric inputs. Use the affinity threshold slider to focus on the strongest collaboration links.</div>
       </div>
 
       <div class="mb-24">
-        <khala-network-graph></khala-network-graph>
+        <affinity-network-graph></affinity-network-graph>
       </div>
 
       <div class="mb-24">
@@ -4998,7 +4998,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
     <div class="page" id="conversations">
       <div class="page-header">
         <h1 class="page-title">Live Conversations</h1>
-        <p class="page-subtitle">VOXYZ Multi-Agent Orchestration — real-time Khala transmissions</p>
+        <p class="page-subtitle">VentureOS multi-agent orchestration with real-time coordination telemetry</p>
       </div>
 
       <div class="mb-24">
@@ -5008,7 +5008,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
       <div class="card mb-24">
         <h3 class="card-title" style="display:flex;align-items:center;gap:8px;">
           Agent Roster
-          <span style="font-size:10px;color:var(--text-muted);font-weight:400;">Protoss Command Sprites</span>
+          <span style="font-size:10px;color:var(--text-muted);font-weight:400;">Live agent sprites</span>
         </h3>
         <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:16px 0;">
           <div style="text-align:center;">
@@ -8110,61 +8110,61 @@ const AGENT_LABELS = {
 
 const TEAM_ROLE_PROFILES = {
   nexus: {
-    role: 'Executor',
+    role: 'Program Controller',
     authorityLevel: 'Control Plane',
     authorityScope: 'Operational coordination, dependency orchestration, and task routing',
     boundary: 'Escalates strategic priority conflicts and irreversible calls to the human final arbiter.',
   },
   echo: {
-    role: 'Hierarch',
+    role: 'Strategy Lead',
     authorityLevel: 'Strategic',
     authorityScope: 'Mission direction, objective shaping, and strategic tradeoff framing',
     boundary: 'Cannot finalize irreversible actions without human arbiter confirmation.',
   },
   oracle: {
-    role: 'Preserver',
+    role: 'Research Lead',
     authorityLevel: 'Research',
     authorityScope: 'Evidence synthesis, recommendation framing, and source-backed analysis',
     boundary: 'Provides recommendations only; strategic decisions route through Echo/human.',
   },
   atlas: {
-    role: 'Forgewright',
+    role: 'Infrastructure Lead',
     authorityLevel: 'Infrastructure',
     authorityScope: 'Build/runtime systems, deployment plumbing, and operational hardening',
     boundary: 'Security-critical changes require Sentinel gate and human escalation when high risk.',
   },
   sentinel: {
-    role: 'Judicator',
+    role: 'Security Lead',
     authorityLevel: 'Security Gate',
     authorityScope: 'Security policy enforcement, threat escalation, and risk containment',
     boundary: 'Can block delivery paths but cannot override human final-arbiter decisions.',
   },
   verifier: {
-    role: 'Templar Auditor',
+    role: 'Evidence Auditor',
     authorityLevel: 'Quality Gate',
     authorityScope: 'Validation, test quality gates, and release confidence checks',
     boundary: 'Can fail builds/tests but release overrides are human-arbiter controlled.',
   },
   archivist: {
-    role: 'Chronicle Keeper',
+    role: 'Knowledge Lead',
     authorityLevel: 'Memory',
     authorityScope: 'Knowledge retention, runbook curation, and audit memory continuity',
     boundary: 'Documentation authority only; does not dictate strategy or execution priority.',
   },
   synth: {
-    role: 'Artificer',
+    role: 'Delivery Lead',
     authorityLevel: 'Implementation',
     authorityScope: 'Code delivery, integration execution, and implementation throughput',
     boundary: 'Build authority only; strategic/irreversible choices escalate to human arbiter.',
   },
   scout: {
-    role: 'Observer',
+    role: 'Verifier',
     authorityLevel: 'Signal',
     authorityScope: 'Monitoring, anomaly detection, and proactive environmental scanning',
     boundary: 'Signals and alerts only; prioritization and execution remain upstream.',
   },
   liaison: {
-    role: 'Envoy',
+    role: 'Communications Lead',
     authorityLevel: 'Comms',
     authorityScope: 'External communication formatting and stakeholder-facing summaries',
     boundary: 'Cannot publish high-impact external messaging without human sign-off.',

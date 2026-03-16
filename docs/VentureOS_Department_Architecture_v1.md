@@ -3,7 +3,7 @@
 > Change note (2026-03-16): Restored from git history commit `f8ab267f` and reconciled with the March 2026 implementation, cadence, and gap-assessment docs. This is the normative department architecture reference for Phase 0 and Phase A execution.
 
 
-Purpose: define a complete **company-in-a-box** operating model with explicit department boundaries, handoffs, cadences, and agent-role contracts.
+Purpose: define the complete VentureOS operating model with explicit department boundaries, handoffs, cadences, and role contracts.
 
 ---
 
@@ -14,6 +14,14 @@ Purpose: define a complete **company-in-a-box** operating model with explicit de
 3. Decision rights are clear: avoid cross-department ambiguity.
 4. Cadence-driven operations: daily/weekly/monthly rhythm is mandatory.
 5. Evidence-first execution: no “done” without artifacts + verification.
+
+Normative role and authority references:
+- `docs/VentureOS_Role_Model_v1.md`
+- `docs/VentureOS_Agent_Role_Registry_v1.json`
+- `docs/VentureOS_RBAC_Spec_v1.md`
+- `docs/VentureOS_Tool_Access_Matrix_v1.json`
+
+Authority, ownership, and permissions in VentureOS derive from canonical lane bindings and capability overlays. Legacy runtime labels may remain in compatibility surfaces, but they are not normative role identifiers.
 
 ---
 
@@ -31,13 +39,13 @@ Purpose: define a complete **company-in-a-box** operating model with explicit de
 - Inputs: pipeline forecasts, hiring plans, delivery plans.
 - Outputs: monthly close, variance report, allocation constraints.
 
-## D3. Legal & Compliance
+## D3. Legal
 - Mission: legal safety and policy adherence.
 - Owns: contracts, policy library, regulatory tasks, privacy controls.
 - Inputs: sales contracts, HR policies, product/data flows.
 - Outputs: approved contract language, compliance checklists, exceptions log.
 
-## D4. People / HR
+## D4. HR
 - Mission: staffing, onboarding, performance, organizational health.
 - Owns: role definitions, hiring funnel, onboarding runbooks, review cycles.
 - Inputs: headcount plans, team capacity needs, budget limits.
@@ -100,6 +108,8 @@ Purpose: define a complete **company-in-a-box** operating model with explicit de
 ---
 
 ## 3) Core inter-department handoffs
+
+The qualitative handoff timings below describe intent and sequence. Numeric SLA targets, breach levels, and acceptance windows are governed by `docs/VentureOS_Department_KPI_SLA_v1.md`.
 
 Each handoff defines **producer → consumer**, payload, SLA, and acceptance.
 

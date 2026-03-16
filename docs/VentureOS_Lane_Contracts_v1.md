@@ -1,8 +1,8 @@
 # VentureOS Lane Contracts v1
 
-Date: 2026-03-12
-Version: v1.0
-Scope: Contract definitions for Director, Operator, and Auditor lanes used across Company OS v1 departments.
+Date: 2026-03-16
+Version: v1.1
+Scope: Contract definitions for Director, Operator, and Auditor lanes used across VentureOS departments.
 
 ## 1) Contract purpose
 
@@ -16,9 +16,19 @@ These contracts define lane-level obligations, authority limits, handoff require
 - If Auditor is unavailable, no irreversible action may proceed; temporary exceptions require Executive Office Director approval and explicit expiry.
 - Lane state must be persisted in department logs at the end of each execution cycle.
 
-## 3) Access boundaries (v1 RBAC)
+## 3) Access boundaries (canonical role model and RBAC)
 
-| Lane | Read access | Write access | Approval authority |
+This document defines baseline lane obligations and separation of duties. It does not, by itself, define the canonical role identifiers or machine-readable system permissions.
+
+The normative role and access-control sources are:
+- `docs/VentureOS_Role_Model_v1.md`
+- `docs/VentureOS_Agent_Role_Registry_v1.json`
+- `docs/VentureOS_RBAC_Spec_v1.md`
+- `docs/VentureOS_Tool_Access_Matrix_v1.json`
+
+The table below is a conceptual summary only. System-level permissions, escalation targets, capability overlays, and subordinate specialist restrictions must be taken from the RBAC artifacts listed above.
+
+| Lane | Baseline read access | Baseline write access | Baseline approval authority |
 |---|---|---|---|
 | Director | Department plans, KPI/SLA reports, escalations, decision logs | Priorities, scope docs, decision records | Scope changes, budget proposals, escalation decisions |
 | Operator | Approved plans, active queues, SOPs, source systems needed for execution | Work artifacts, status logs, KPI/SLA entries, handoff packages | None for policy, budget, legal, or production-risk overrides |
@@ -150,13 +160,15 @@ Thresholds:
 
 The baseline lane contracts above apply to all department Director, Operator, and Auditor lanes.
 
-Three cross-cutting agents require additional contract definitions because they coordinate or certify work across department boundaries:
-- Chief of Staff Agent
-- Program Control Agent
-- Evidence/QA Agent
+Three cross-cutting functions require additional contract definitions because they coordinate or certify work across department boundaries:
+- Chief of Staff / `venture_strategy`
+- Program Control / `venture_control`
+- Evidence/QA / `venture_evidence`
 
 Their mission, required I/O, authority limits, escalation rules, and ownership mappings are defined in:
 - `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md`
 - `docs/VentureOS_Agent_Ownership_Matrix_v1.json`
+- `docs/VentureOS_Role_Model_v1.md`
+- `docs/VentureOS_RBAC_Spec_v1.md`
 
 These companion artifacts are normative for cross-department coordination and must be updated alongside this document when cross-cutting contract boundaries change.

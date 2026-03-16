@@ -1,9 +1,9 @@
 import { BlurFilter, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { AGENT_ORDER, AGENTS, BONDS } from '@/config';
 import type { AgentId, Point } from '@/config';
-import { affinityToAlpha, affinityToTier, tierToColor, tierToParticleCount, tierToSpeedPxPerS } from '@/khala/affinity';
-import type { AffinityTier } from '@/khala/affinity';
-import { KHLA_SEED_BONDS } from '@/khala/seed';
+import { affinityToAlpha, affinityToTier, tierToColor, tierToParticleCount, tierToSpeedPxPerS } from '@/affinity/affinity';
+import type { AffinityTier } from '@/affinity/affinity';
+import { AFFINITY_SEED_BONDS } from '@/affinity/seed';
 import {
   type CircleObstacle,
   quadraticBezierPoint,
@@ -12,7 +12,7 @@ import {
   estimatePolylineLength,
   generateBondControlPoint,
   hashString
-} from '@/khala/path';
+} from '@/affinity/path';
 
 export type Bond = {
   a: AgentId;
@@ -32,7 +32,7 @@ export type Bond = {
   particles: Array<{ t: number; sprite: Sprite }>;
 };
 
-export type KhalaNetworkLayer = {
+export type AffinityNetworkLayer = {
   container: Container;
   setAgentPositions: (pos: Record<AgentId, Point>) => void;
   setBondAffinity: (a: AgentId, b: AgentId, affinity: number) => void;
@@ -60,7 +60,7 @@ function defaultPositions(): Record<AgentId, Point> {
   return out;
 }
 
-export function createKhalaNetworkLayer(): KhalaNetworkLayer {
+export function createAffinityNetworkLayer(): AffinityNetworkLayer {
   const container = new Container();
 
   // Bond line Graphics nodes (one per bond) to avoid per-frame full-geometry rebuild.
@@ -83,7 +83,7 @@ export function createKhalaNetworkLayer(): KhalaNetworkLayer {
   const bondByKey = new Map<string, Bond>();
 
   // Initialize from seed list.
-  for (const s of KHLA_SEED_BONDS) {
+  for (const s of AFFINITY_SEED_BONDS) {
     const key = bondKey(s.a, s.b);
     const tier = affinityToTier(s.affinity);
     const color = tierToColor(tier);

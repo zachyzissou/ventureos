@@ -1,5 +1,5 @@
 /**
- * Voice Rules — VOXYZ Multi-Agent Communication Standards
+ * Voice Rules — VentureOS Multi-Agent Communication Standards
  *
  * Enforces two core rules for agent-to-agent and agent-to-user messages:
  *

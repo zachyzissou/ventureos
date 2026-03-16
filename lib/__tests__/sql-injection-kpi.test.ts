@@ -52,13 +52,13 @@ describe('VULN-002 (KPI Registry): date string validation', () => {
     "2026-02-15' UNION SELECT sql FROM sqlite_master--",
 
     // Stacked/destructive
-    "'; DROP TABLE psionic_stats--",
-    "2026-02-15'; DROP TABLE psionic_stats--",
-    "2026-02-15'; DELETE FROM psionic_stats--",
+    "'; DROP TABLE performance_stats--",
+    "2026-02-15'; DROP TABLE performance_stats--",
+    "2026-02-15'; DELETE FROM performance_stats--",
 
     // Comment / encoding / escape tricks
     "%27%20OR%201%3D1--",
-    "2026-02-15\'; DROP TABLE psionic_stats--",
+    "2026-02-15\'; DROP TABLE performance_stats--",
     "2026-02-15'--",
     "2026-02-15'/*",
     "2026-02-15'/**/OR/**/1=1--",
@@ -72,24 +72,24 @@ describe('VULN-002 (KPI Registry): date string validation', () => {
   });
 
   test("explicitly rejects DROP TABLE payload (regression)", () => {
-    expect(isValidDateString("'; DROP TABLE psionic_stats--")).toBe(false);
+    expect(isValidDateString("'; DROP TABLE performance_stats--")).toBe(false);
   });
 });
 
 describe('VULN-002 (KPI Registry): identifier + field validation helpers', () => {
   test('accepts safe SQL identifiers', () => {
-    expect(isValidSqlIdentifier('psionic_stats')).toBe(true);
+    expect(isValidSqlIdentifier('performance_stats')).toBe(true);
     expect(isValidSqlIdentifier('interaction_logs')).toBe(true);
     expect(isValidSqlIdentifier('agent_id')).toBe(true);
     expect(isValidSqlIdentifier('_private')).toBe(true);
   });
 
   const badIdentifiers = [
-    "psionic_stats; DROP TABLE psionic_stats--",
-    "psionic_stats UNION SELECT * FROM sqlite_master",
-    "psionic_stats --",
-    "psionic_stats/*comment*/",
-    "psionic_stats' OR '1'='1",
+    "performance_stats; DROP TABLE performance_stats--",
+    "performance_stats UNION SELECT * FROM sqlite_master",
+    "performance_stats --",
+    "performance_stats/*comment*/",
+    "performance_stats' OR '1'='1",
     '123bad',
     '',
   ];
@@ -105,10 +105,10 @@ describe('VULN-002 (KPI Registry): identifier + field validation helpers', () =>
   });
 
   const badFields = [
-    "* FROM psionic_stats; DROP TABLE psionic_stats--",
-    "COUNT(*) FROM psionic_stats; DROP TABLE psionic_stats--",
+    "* FROM performance_stats; DROP TABLE performance_stats--",
+    "COUNT(*) FROM performance_stats; DROP TABLE performance_stats--",
     "1 UNION SELECT sql FROM sqlite_master--",
-    "'; DELETE FROM psionic_stats--",
+    "'; DELETE FROM performance_stats--",
   ];
 
   test.each(badFields)('rejects dangerous field expressions: %s', (expr) => {

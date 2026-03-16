@@ -21,23 +21,23 @@ export function handleRpgCompat(
   res: ServerResponse,
   deps: RpgCompatDeps,
 ): boolean {
-  if (req.url === '/api/psionic-stats') {
+  if (req.url === '/api/performance-stats') {
     (req as { url: string }).url = '/api/rpg/stats';
     return deps.handleRpgApi(req, res, { dbPath: deps.dbPath });
   }
 
-  if (req.url && req.url.startsWith('/api/psionic-stats/')) {
-    (req as { url: string }).url = req.url.replace('/api/psionic-stats/', '/api/rpg/stats/');
+  if (req.url && req.url.startsWith('/api/performance-stats/')) {
+    (req as { url: string }).url = req.url.replace('/api/performance-stats/', '/api/rpg/stats/');
     return deps.handleRpgApi(req, res, { dbPath: deps.dbPath });
   }
 
-  if (req.url === '/api/khala-network' || (req.url && req.url.startsWith('/api/khala-network?'))) {
-    (req as { url: string }).url = (req.url ?? '').replace('/api/khala-network', '/api/rpg/khala-network');
+  if (req.url === '/api/affinity-network' || (req.url && req.url.startsWith('/api/affinity-network?'))) {
+    (req as { url: string }).url = (req.url ?? '').replace('/api/affinity-network', '/api/rpg/affinity-network');
     return deps.handleRpgApi(req, res, { dbPath: deps.dbPath });
   }
 
-  if (req.url && req.url.startsWith('/api/khala-network/')) {
-    (req as { url: string }).url = req.url.replace('/api/khala-network/', '/api/rpg/khala-network/');
+  if (req.url && req.url.startsWith('/api/affinity-network/')) {
+    (req as { url: string }).url = req.url.replace('/api/affinity-network/', '/api/rpg/affinity-network/');
     return deps.handleRpgApi(req, res, { dbPath: deps.dbPath });
   }
 

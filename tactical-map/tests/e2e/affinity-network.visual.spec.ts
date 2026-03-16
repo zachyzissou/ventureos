@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { installDeterministicApiMocks, stabilizeForVisualSnapshot } from './helpers/tactical-map-test-harness';
 
-test.describe('visual regression - khala network', () => {
+test.describe('visual regression - affinity network', () => {
   test('renders bond lines + collaboration particles', async ({ page }) => {
     await installDeterministicApiMocks(page);
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -9,7 +9,7 @@ test.describe('visual regression - khala network', () => {
     await page.waitForFunction(() => (window as any).__TACTICAL_MAP__);
     await stabilizeForVisualSnapshot(page);
 
-    await expect(page.locator('canvas')).toHaveScreenshot('khala-network.png', {
+    await expect(page.locator('canvas')).toHaveScreenshot('affinity-network.png', {
       maxDiffPixelRatio: 0.015
     });
   });

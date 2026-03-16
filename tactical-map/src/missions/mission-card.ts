@@ -11,9 +11,6 @@
  *
  * Cards float above agents with a gentle bobbing animation and
  * glow effect matching the current phase color.
- *
- * Protoss lore: These are Khaydarin Crystal projections — holographic
- * mission briefings visible to the Executor on the command interface.
  */
 
 import type {

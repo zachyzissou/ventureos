@@ -12,6 +12,7 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { handleRpgApi, createRpgRouter } from '../rpg-http';
 
@@ -41,21 +42,21 @@ function fetch(urlPath: string, method: string = 'GET'): Promise<{ status: numbe
 
 // ─── Setup / Teardown ───────────────────────────────────────────────────────
 
-beforeAll((done) => {
+ beforeAll(async () => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rpg-http-test-'));
   dbPath = path.join(tmpDir, 'test-rpg.db');
 
   db = new Database(dbPath);
   db.exec(`
-    CREATE TABLE psionic_stats (
+    CREATE TABLE performance_stats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_id TEXT NOT NULL,
       snapshot_date DATE NOT NULL,
-      psionic_mastery INTEGER DEFAULT 0,
+      performance_mastery INTEGER DEFAULT 0,
       energy INTEGER DEFAULT 0,
       shields INTEGER DEFAULT 0,
-      warp_technology INTEGER DEFAULT 0,
-      psi_reach INTEGER DEFAULT 0,
+      automation_depth INTEGER DEFAULT 0,
+      collaboration_reach INTEGER DEFAULT 0,
       memory_count INTEGER DEFAULT 0,
       unique_domains INTEGER DEFAULT 0,
       canonical_edits INTEGER DEFAULT 0,
@@ -65,7 +66,7 @@ beforeAll((done) => {
       success_rate REAL DEFAULT 0,
       approval_accuracy REAL DEFAULT 0,
       tasks_completed INTEGER DEFAULT 0,
-      warp_tech_inputs TEXT,
+      automation_inputs TEXT,
       calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(agent_id, snapshot_date)
     );
@@ -77,7 +78,7 @@ beforeAll((done) => {
       duration_ms INTEGER DEFAULT 0
     );
 
-    CREATE TABLE khala_network (
+    CREATE TABLE affinity_network (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_a TEXT NOT NULL,
       agent_b TEXT NOT NULL,
@@ -91,13 +92,13 @@ beforeAll((done) => {
   `);
 
   // Seed data
-  db.prepare(`INSERT INTO psionic_stats (agent_id, snapshot_date, psionic_mastery, energy, shields, warp_technology, psi_reach, memory_count, unique_domains, canonical_edits, p95_latency_s, mttr_minutes, acceptance_rate, success_rate, approval_accuracy, tasks_completed) VALUES ('atlas', '2026-02-15', 72, 85, 60, 45, 55, 120, 8, 15, 1.2, 20.0, 0.85, 0.92, 0.88, 42)`).run();
-  db.prepare(`INSERT INTO psionic_stats (agent_id, snapshot_date, psionic_mastery, energy, shields, warp_technology, psi_reach, memory_count, unique_domains, canonical_edits, p95_latency_s, mttr_minutes, acceptance_rate, success_rate, approval_accuracy, tasks_completed) VALUES ('atlas', '2026-02-14', 68, 80, 58, 42, 50, 110, 7, 12, 1.5, 12.5, 0.82, 0.90, 0.85, 38)`).run();
+  db.prepare(`INSERT INTO performance_stats (agent_id, snapshot_date, performance_mastery, energy, shields, automation_depth, collaboration_reach, memory_count, unique_domains, canonical_edits, p95_latency_s, mttr_minutes, acceptance_rate, success_rate, approval_accuracy, tasks_completed) VALUES ('atlas', '2026-02-15', 72, 85, 60, 45, 55, 120, 8, 15, 1.2, 20.0, 0.85, 0.92, 0.88, 42)`).run();
+  db.prepare(`INSERT INTO performance_stats (agent_id, snapshot_date, performance_mastery, energy, shields, automation_depth, collaboration_reach, memory_count, unique_domains, canonical_edits, p95_latency_s, mttr_minutes, acceptance_rate, success_rate, approval_accuracy, tasks_completed) VALUES ('atlas', '2026-02-14', 68, 80, 58, 42, 50, 110, 7, 12, 1.5, 12.5, 0.82, 0.90, 0.85, 38)`).run();
   db.prepare(`INSERT INTO interaction_logs VALUES ('2026-02-14 12:00:00', 'atlas', 'deploy_success', 1200)`).run();
   db.prepare(`INSERT INTO interaction_logs VALUES ('2026-02-14 13:00:00', 'sentinel', 'escalation_true', 50)`).run();
   db.prepare(`INSERT INTO interaction_logs VALUES ('2026-02-15 09:00:00', 'oracle', 'verify', 900)`).run();
-  db.prepare(`INSERT INTO khala_network (agent_a, agent_b, affinity, seed_value, interaction_count) VALUES ('archivist', 'oracle', 0.8, 0.8, 1)`).run();
-  db.prepare(`INSERT INTO khala_network (agent_a, agent_b, affinity, seed_value, interaction_count) VALUES ('atlas', 'oracle', 0.49, 0.7, 8)`).run();
+  db.prepare(`INSERT INTO affinity_network (agent_a, agent_b, affinity, seed_value, interaction_count) VALUES ('archivist', 'oracle', 0.8, 0.8, 1)`).run();
+  db.prepare(`INSERT INTO affinity_network (agent_a, agent_b, affinity, seed_value, interaction_count) VALUES ('atlas', 'oracle', 0.49, 0.7, 8)`).run();
   db.close();
 
   // Start a test server
@@ -107,21 +108,34 @@ beforeAll((done) => {
       res.end('Not found');
     }
   });
-  server.listen(0, '127.0.0.1', () => {
-    const addr = server.address() as { port: number };
-    baseUrl = `http://127.0.0.1:${addr.port}`;
-    done();
+  await new Promise<void>((resolve) => {
+    server.listen(0, '127.0.0.1', () => {
+      const addr = server.address() as { port: number };
+      baseUrl = `http://127.0.0.1:${addr.port}`;
+      resolve();
+    });
   });
 });
 
-afterAll((done) => {
-  server.close(() => {
+afterAll(async () => {
+  if (!server) {
     try {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     } catch {
       // ignore cleanup errors
     }
-    done();
+    return;
+  }
+
+  await new Promise<void>((resolve) => {
+    server.close(() => {
+      try {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      } catch {
+        // ignore cleanup errors
+      }
+      resolve();
+    });
   });
 });
 
@@ -140,14 +154,14 @@ describe('RPG HTTP API', () => {
   });
 
   describe('GET /api/rpg/stats', () => {
-    it('returns aggregate psionic stats', async () => {
+    it('returns aggregate performance stats', async () => {
       const { status, body } = await fetch('/api/rpg/stats');
       expect(status).toBe(200);
       expect(body.stats).toBeDefined();
-      expect(body.stats.psionic_mastery).toBe(72);
+      expect(body.stats.performance_mastery).toBe(72);
       expect(body.stats.energy).toBe(85);
       expect(body.stats.shields).toBe(60);
-      expect(body.stats.warp_technology).toBe(45);
+      expect(body.stats.automation_depth).toBe(45);
       expect(body.stats.mttr_minutes).toBe(20.0);
       expect(body.snapshots).toHaveLength(2);
       expect(body.snapshots[0].snapshot_date).toBe('2026-02-15');
@@ -173,9 +187,9 @@ describe('RPG HTTP API', () => {
     });
   });
 
-  describe('GET /api/rpg/khala-network', () => {
-    it('returns khala network edges sorted by affinity desc', async () => {
-      const { status, body } = await fetch('/api/rpg/khala-network');
+  describe('GET /api/rpg/affinity-network', () => {
+    it('returns affinity network edges sorted by affinity desc', async () => {
+      const { status, body } = await fetch('/api/rpg/affinity-network');
       expect(status).toBe(200);
       expect(body.edgeCount).toBe(2);
       expect(body.nodeCount).toBe(3); // archivist, oracle, atlas

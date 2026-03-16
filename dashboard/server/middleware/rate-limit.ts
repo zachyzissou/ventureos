@@ -113,7 +113,7 @@ export const LIMITS: Record<string, RateLimitConfig> = {
   '/api/ventureos-agents':    { limit: 30, windowMs: 60000 },
   '/api/ventureos-kpis':      { limit: 30, windowMs: 60000 },
   '/api/rpg/stats':           { limit: 20, windowMs: 60000 },
-  '/api/rpg/khala-network':   { limit: 20, windowMs: 60000 },
+  '/api/rpg/affinity-network':   { limit: 20, windowMs: 60000 },
   '/api/rpg/conversations':   { limit: 30, windowMs: 60000 },
   '/api/costs':               { limit: 60, windowMs: 60000 },
   '/api/usage':               { limit: 60, windowMs: 60000 },

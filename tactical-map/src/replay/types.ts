@@ -4,10 +4,6 @@
  * Core type definitions for session recording, replay, comparison,
  * and export on the Tactical Map.
  *
- * Protoss lore: The Preservers keep the memories of the Protoss race —
- * every battle, every sacrifice, every triumph. Through the Khala's
- * temporal echoes, past events can be witnessed anew.
- *
  * @see docs/PHASE5.8_REPLAY_HISTORY.md for full architecture.
  */
 

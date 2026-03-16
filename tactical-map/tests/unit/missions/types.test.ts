@@ -81,8 +81,8 @@ describe('ROLE_DISPLAY_NAMES', () => {
     }
   });
 
-  it('oracle maps to Zeratul', () => {
-    expect(ROLE_DISPLAY_NAMES.oracle).toBe('Zeratul');
+  it('oracle maps to Oracle', () => {
+    expect(ROLE_DISPLAY_NAMES.oracle).toBe('Oracle');
   });
 });
 

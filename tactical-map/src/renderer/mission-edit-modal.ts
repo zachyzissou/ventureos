@@ -6,9 +6,6 @@
  *
  * Mirrors the MissionSpawnModal structure but pre-populates
  * from existing mission data and calls updateMission on save.
- *
- * Protoss lore: The Recalibration Chamber — where a Templar Directive
- * can be reshaped, its priority realigned to the shifting battlefield.
  */
 
 import { Container, Graphics, Text } from 'pixi.js';

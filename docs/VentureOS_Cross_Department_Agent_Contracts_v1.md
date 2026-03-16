@@ -1,12 +1,12 @@
 # VentureOS Cross-Department Agent Contracts v1
 
 Date: 2026-03-16
-Version: v1.0
-Scope: normative contract definitions for the three cross-cutting agents that operate across Company OS v1 departments.
+Version: v1.1
+Scope: normative contract definitions for the three cross-cutting control functions that operate across VentureOS departments.
 
 ## 1) Purpose
 
-This document closes the Phase 0 contract gap for the three cross-cutting agents named in `docs/VentureOS_Department_Architecture_v1.md`:
+This document closes the Phase 0 contract gap for the three cross-cutting functions named in `docs/VentureOS_Department_Architecture_v1.md`:
 - Chief of Staff Agent
 - Program Control Agent
 - Evidence/QA Agent
@@ -17,12 +17,16 @@ These roles are not department-local variants of the Director, Operator, and Aud
 
 - `docs/VentureOS_Department_Architecture_v1.md` remains the normative source for department topology and decision rights.
 - `docs/VentureOS_Lane_Contracts_v1.md` remains the normative source for baseline lane obligations and separation of duties.
+- `docs/VentureOS_Role_Model_v1.md` remains the normative source for canonical lane bindings, capability overlays, and authority classes.
+- `docs/VentureOS_Agent_Role_Registry_v1.json` is the machine-readable role registry for those canonical identifiers.
+- `docs/VentureOS_RBAC_Spec_v1.md` and `docs/VentureOS_Tool_Access_Matrix_v1.json` remain the normative access-control sources.
 - This document is the normative source for cross-cutting agent mission, I/O, authority limits, and escalation obligations.
 - `docs/VentureOS_Agent_Ownership_Matrix_v1.json` is the machine-readable ownership companion for future enforcement and reporting.
 
 ## 3) Global rules for cross-cutting agents
 
 - Cross-cutting agents may coordinate or certify work across departments, but they do not replace department Directors, Operators, or Auditors.
+- Cross-cutting functions must be bound to canonical VentureOS identifiers and must not rely on legacy runtime labels as the source of truth.
 - No cross-cutting agent may unilaterally approve budget, legal, security, or irreversible production-risk exceptions.
 - Every cross-cutting output must include timestamps, linked evidence, and an accountable lane owner.
 - Every cross-cutting handoff must use the envelope standard defined in `docs/VentureOS_Lane_Contracts_v1.md`.
@@ -77,7 +81,7 @@ Convert executive intent into coherent cross-department execution and keep depen
 ## 6) Program Control Agent contract
 
 ### Mission
-Run the Company OS control loop by enforcing cadence, surfacing dependency risk, and keeping inter-department SLAs measurable and actionable.
+Run the VentureOS control loop by enforcing cadence, surfacing dependency risk, and keeping inter-department SLAs measurable and actionable.
 
 ### Required inputs
 - Daily status from department Operators.
@@ -116,7 +120,7 @@ Run the Company OS control loop by enforcing cadence, surfacing dependency risk,
 ## 7) Evidence/QA Agent contract
 
 ### Mission
-Independently verify that Company OS claims are backed by current, complete, and reproducible evidence before gates are passed or work is treated as complete.
+Independently verify that VentureOS claims are backed by current, complete, and reproducible evidence before gates are passed or work is treated as complete.
 
 ### Required inputs
 - Daily, weekly, and monthly evidence bundles.
@@ -179,4 +183,4 @@ The matrix assigns accountable owner, execution owner, gate owner, supporting la
 
 - Changes to this document require Executive Office Director approval and review from the affected home department Director.
 - Changes that alter measurable SLAs or approval boundaries must also update `docs/VentureOS_Agent_Ownership_Matrix_v1.json` in the same change.
-- Contract changes that introduce new access rights must not be merged until the RBAC workstream in `#609` is updated.
+- Contract changes that introduce new access rights must update `docs/VentureOS_RBAC_Spec_v1.md` and `docs/VentureOS_Tool_Access_Matrix_v1.json` in the same change.

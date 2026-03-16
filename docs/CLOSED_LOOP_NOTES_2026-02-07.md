@@ -1,6 +1,6 @@
-# Closed‑Loop Ops Notes – Voxyz (2026‑02‑07)
+# Closed-Loop Ops Notes (2026-02-07)
 
-**Source:** https://x.com/voxyz_ai/status/2019914775061270747
+**Source:** historical operator note
 
 ## High‑Signal Concepts
 1) **Closed‑loop execution**
@@ -21,7 +21,7 @@
 ## Implications for OpenClaw‑Upgrade
 - **Task queue** should be designed for closed‑loop flow, not just scheduling.
 - **Usage‑gate policy** should block new work at enqueue time (not after it’s in the queue).
-- **Executor split** is a reliability principle (one executor, one control plane).
+- **Execution-lane split** is a reliability principle (one execution lane, one control plane).
 - **Triggers & reactions** map well to Phase 2 “Proactive Engine.”
 
 ## Suggested Backlog Additions

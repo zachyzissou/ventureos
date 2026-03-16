@@ -17,11 +17,11 @@
 
 ## System Overview
 
-The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and **TypeScript**. It visualizes the VentureOS multi-agent system as a Protoss-themed StarCraft-style map, showing:
+The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and **TypeScript**. It visualizes the VentureOS multi-agent system as a tactical map, showing:
 
 - **7 AI agents** as hexagonal buildings arranged in a ring
 - **1 Central Nexus** at the hub, reflecting overall system health
-- **Khala Network** — 28 bond lines showing inter-agent collaboration affinity
+- **Affinity Network** — 28 bond lines showing inter-agent collaboration affinity
 - **Resource Economy** — token budgets, cost tracking, sparklines per agent
 - **Mission Tracking** — task cards, dependency arrows, progress indicators
 - **Particle System** — activity-driven visual effects
@@ -38,17 +38,17 @@ The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and 
 | Testing | Vitest 4.x + Playwright | Unit/integration + E2E |
 | Sanitization | DOMPurify | XSS prevention |
 
-### Agent ↔ Protoss Mapping
+### Agent ↔ current Mapping
 
-| Agent ID | Protoss Unit | Color | Role |
+| Agent ID | current Unit | Color | Role |
 |----------|-------------|-------|------|
-| `oracle` | Zeratul | `#7BDCFF` | Research & Foresight |
-| `atlas` | Probe | `#00D4FF` | Infrastructure Fabricator |
+| `oracle` | Oracle | `#7BDCFF` | Research & Foresight |
+| `atlas` | Atlas | `#00D4FF` | Infrastructure Fabricator |
 | `sentinel` | Sentinel | `#4AA0FF` | Security Guardian |
-| `verifier` | Observer | `#7A7DFF` | Detection & QA |
-| `archivist` | High Templar | `#67FFD1` | Knowledge Keeper |
-| `synth` | Dark Templar | `#00E1C3` | Shadow Weaver / Creator |
-| `echo` | Artanis | `#FFD700` | CEO Orchestrator |
+| `verifier` | Verifier | `#7A7DFF` | Detection & QA |
+| `archivist` | Archivist | `#67FFD1` | Knowledge Keeper |
+| `synth` | Synth | `#00E1C3` | Shadow Weaver / Creator |
+| `echo` | Echo | `#FFD700` | CEO Orchestrator |
 | `nexus` | Nexus | `#FFD700` | Mission Control Hub |
 
 ---
@@ -67,7 +67,7 @@ The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and 
 │  ┌─────┴─────────────┴─────────────┴───────────────┴────────┐  │
 │  │                   PIXI.js Render Loop                     │  │
 │  │  ┌─────────────────────────────────────────────────────┐  │  │
-│  │  │ Terrain → Khala → Particles → Buildings → Units →   │  │  │
+│  │  │ Terrain → affinity → Particles → Buildings → Units →   │  │  │
 │  │  │ Nexus → Health Bars → Resource Economy →            │  │  │
 │  │  │ Health Indicators → HUD → Alerts → Dashboard        │  │  │
 │  │  └─────────────────────────────────────────────────────┘  │  │
@@ -116,7 +116,7 @@ The rendering pipeline uses a layered container hierarchy within PIXI.js. Layers
 app.stage
 ├── world (Container — camera transforms applied here)
 │   ├── terrain          Z=0   Hex grid, vignette, crystal clusters
-│   ├── khalaNetwork     Z=1   28 bond curves + collaboration particles
+│   ├── affinityNetwork     Z=1   28 bond curves + collaboration particles
 │   ├── particles        Z=2   Activity/ambient particle system
 │   ├── buildings        Z=3   7 hexagonal ring-agent buildings
 │   ├── units            Z=4   Orbiting session sprites
@@ -152,7 +152,7 @@ app.ticker.add((ticker) => {
   hud.update(elapsedMs);
 
   // 3. Bond line drift + particle movement
-  khala.update(elapsedMs);
+  affinityNetwork.update(elapsedMs);
 
   // 4. Building crossfade, pulse, jitter animations
   buildingsLayer.update(elapsedMs);
@@ -212,9 +212,9 @@ The particle system (`src/renderer/particles.ts`) uses an **object pool** patter
 
 Emission is rate-based via `emitRate(kind, origin, rate, elapsedMs)`, which uses a fractional accumulator to produce smooth particle streams independent of frame rate.
 
-### Khala Network Rendering
+### Affinity Network Rendering
 
-The bond visualization (`src/renderer/khala-network.ts`) renders 28 agent-pair connections:
+The bond visualization (`src/renderer/affinity-network.ts`) renders 28 agent-pair connections:
 
 1. **Path calculation**: Quadratic Bézier curves with collision avoidance against building footprints
 2. **5-tier affinity system**: Colors range from dim blue (nascent) to gold (synergistic)
@@ -254,7 +254,7 @@ This is a simplified Redux-like pattern without actions/reducers — just direct
 │  - Buildings      - ResourceEconomy  - HealthInd. │
 │  - Units          - AlertManager     - AlertOverlay│
 │  - HealthBars     - Console.warn     - Dashboard  │
-│  - Khala bonds                       - HealthAlert│
+│  - affinity links                       - HealthAlert│
 │  - Nexus color                         Manager    │
 └──────────────────────────────────────────────────┘
 ```
@@ -429,7 +429,7 @@ wss://host/api/tactical-map/resources/stream?token=<token>
 | **Dirty-flag redraws** | Agent economy indicators only redraw when their data signature changes | Avoids per-frame full redraws |
 | **Throttled heatmap** | Heat map redraws at most every `ECONOMY.HEATMAP_REDRAW_MS` (90ms) | Prevents GPU thrash |
 | **Object pooling** | Particle system recycles Sprite objects | Eliminates GC pressure |
-| **Bounded geometry** | Khala bond line geometry rebuilds throttled to 100ms | Reduces path calculation cost |
+| **Bounded geometry** | affinity bond line geometry rebuilds throttled to 100ms | Reduces path calculation cost |
 | **Off-screen culling** | Particles outside ±2200px/±1400px are killed | Prevents unbounded growth |
 | **Hard caps** | Max 500 particles, max 64 history points, max 50 alerts | Memory bounds |
 | **Deterministic RNG** | Mulberry32 PRNG for particle/ambient positions | Reproducible visual tests |
@@ -601,7 +601,7 @@ base-uri 'self';
 | `src/renderer/nexus.ts` | Central Nexus structure |
 | `src/renderer/units.ts` | Orbiting session sprites |
 | `src/renderer/particles.ts` | Object-pooled particle system |
-| `src/renderer/khala-network.ts` | Bond visualization with particles |
+| `src/renderer/affinity-network.ts` | Bond visualization with particles |
 | `src/renderer/resource-economy.ts` | Budget rings, sparklines, heatmap |
 | `src/renderer/health-indicators.ts` | Per-agent health rings |
 | `src/renderer/health-dashboard.ts` | System health overlay panel |
@@ -615,7 +615,7 @@ base-uri 'self';
 | `src/health/alerts.ts` | Health alert manager |
 | `src/health/metrics.ts` | Sparkline extraction, health scoring |
 | `src/interaction/camera.ts` | Pan, zoom, reset controller |
-| `src/khala/affinity.ts` | Tier/color/speed mapping |
-| `src/khala/path.ts` | Bézier path + obstacle avoidance |
-| `src/khala/seed.ts` | 28-bond seed data |
+| `src/affinity/affinity.ts` | Tier/color/speed mapping |
+| `src/affinity/path.ts` | Bézier path + obstacle avoidance |
+| `src/affinity/seed.ts` | 28-bond seed data |
 | `src/missions/` | Mission tracking module (Phase 5.5) |

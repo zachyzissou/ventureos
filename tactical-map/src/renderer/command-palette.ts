@@ -3,9 +3,6 @@
  *
  * Cmd+K searchable command palette. Opens as a centered overlay
  * with fuzzy-filtered list of available commands.
- *
- * Protoss lore: The Executor's neural interface —
- * thought becomes action with a mere whisper to the Khala.
  */
 
 import { Container, Graphics, Text } from 'pixi.js';

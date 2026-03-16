@@ -69,16 +69,16 @@ vi.mock('pixi.js', () => {
   return { Container, Graphics, BlurFilter, Texture, Sprite };
 });
 
-import { createKhalaNetworkLayer } from '@/renderer/khala-network';
-import { KHLA_SEED_BONDS } from '@/khala/seed';
+import { createAffinityNetworkLayer } from '@/renderer/affinity-network';
+import { AFFINITY_SEED_BONDS } from '@/affinity/seed';
 
-describe('khala network layer', () => {
+describe('affinity network layer', () => {
   it('initializes with 28 bonds and creates particle sprites', () => {
-    const layer = createKhalaNetworkLayer();
+    const layer = createAffinityNetworkLayer();
     const bonds = layer.getBonds();
 
     expect(bonds.length).toBe(28);
-    expect(KHLA_SEED_BONDS.length).toBe(28);
+    expect(AFFINITY_SEED_BONDS.length).toBe(28);
 
     // container has [lines, particleContainer]
     expect(layer.container.children.length).toBe(2);
@@ -92,7 +92,7 @@ describe('khala network layer', () => {
   });
 
   it('can update a bond affinity and rebuild particle counts', () => {
-    const layer = createKhalaNetworkLayer();
+    const layer = createAffinityNetworkLayer();
 
     const before = (layer.container.children[1] as any).children.length;
     layer.setBondAffinity('sentinel', 'synth', 0.9);
@@ -105,7 +105,7 @@ describe('khala network layer', () => {
   });
 
   it('reset returns particles to deterministic positions', () => {
-    const layer = createKhalaNetworkLayer();
+    const layer = createAffinityNetworkLayer();
     const initialTs = layer.getBonds()[0].particles.map((p) => p.t);
 
     layer.update(120);

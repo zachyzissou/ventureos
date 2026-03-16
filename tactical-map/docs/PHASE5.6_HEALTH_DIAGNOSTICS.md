@@ -2,7 +2,7 @@
 
 ## Summary
 
-Phase 5.6 adds real-time system health monitoring and issue detection to the tactical map. Every agent gets continuous health telemetry (CPU, memory, latency, error rate), alert overlays for P0/P1 incidents, connectivity status tracking, and a system-wide health dashboard panel. The design preserves the existing StarCraft/Protoss visual language — pulsing red auras for errors, amber for warnings, green for healthy — while integrating smoothly into the Phase 5.1–5.5 renderer and store architecture.
+Phase 5.6 adds real-time system health monitoring and issue detection to the tactical map. Every agent gets continuous health telemetry (CPU, memory, latency, error rate), alert overlays for P0/P1 incidents, connectivity status tracking, and a system-wide health dashboard panel. The design preserves the existing current visual language — pulsing red auras for errors, amber for warnings, green for healthy — while integrating smoothly into the Phase 5.1–5.5 renderer and store architecture.
 
 ---
 

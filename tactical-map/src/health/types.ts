@@ -3,10 +3,6 @@
  *
  * Core type definitions for real-time system health monitoring
  * and issue detection on the Tactical Map.
- *
- * Protoss lore: The Khala carries not just thoughts but vital signs —
- * each agent's pulse echoes through the psionic network. When a node
- * falters, the collective feels it instantly.
  */
 
 import type { AgentId } from '@/config';

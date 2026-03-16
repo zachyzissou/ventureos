@@ -4,9 +4,6 @@
  * Core type definitions for mission visualization on the tactical map.
  * These mirror the backend MissionRecord / QueueTask schemas but are
  * tailored for the rendering pipeline (canvas coordinates, colors, timing).
- *
- * Protoss lore: Each mission is a Templar Directive — a crystallized
- * objective channeled through the Khala to the squad.
  */
 
 // ═══════════════════════════════════════════
@@ -46,7 +43,7 @@ export const PHASE_PROGRESS: Record<MissionPhase, number> = {
 };
 
 // ═══════════════════════════════════════════
-// Color Palette (Protoss Theme)
+// Color palette
 // ═══════════════════════════════════════════
 
 export interface ColorScheme {
@@ -73,14 +70,14 @@ export const PHASE_COLORS: Record<MissionPhase, ColorScheme> = {
 export type SquadRole = 'oracle' | 'atlas' | 'sentinel' | 'verifier' | 'archivist' | 'synth' | 'echo' | 'nexus';
 
 export const ROLE_DISPLAY_NAMES: Record<SquadRole, string> = {
-  echo: 'Artanis',
+  echo: 'Echo',
   nexus: 'Nexus',
-  oracle: 'Zeratul',
-  atlas: 'Probe',
+  oracle: 'Oracle',
+  atlas: 'Atlas',
   sentinel: 'Sentinel',
-  verifier: 'Observer',
-  archivist: 'High Templar',
-  synth: 'Dark Templar',
+  verifier: 'Verifier',
+  archivist: 'Archivist',
+  synth: 'Synth',
 };
 
 // ═══════════════════════════════════════════

@@ -8,10 +8,10 @@ export type BondSeed = {
 };
 
 /**
- * Phase 5.3 seed data: fully-connected 8-agent Khala Network (C(8,2)=28).
- * Source of truth: ~/clawd/scripts/seed-khala-network.sh
+ * Phase 5.3 seed data: fully-connected 8-agent Affinity Network (C(8,2)=28).
+ * Source of truth: ~/clawd/scripts/seed-affinity-network.sh
  */
-export const KHLA_SEED_BONDS: BondSeed[] = [
+export const AFFINITY_SEED_BONDS: BondSeed[] = [
   { a: 'archivist', b: 'atlas', affinity: 0.8 },
   { a: 'archivist', b: 'echo', affinity: 0.75 },
   { a: 'archivist', b: 'nexus', affinity: 0.75 },

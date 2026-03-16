@@ -15,6 +15,10 @@
 
 ## Core
 - **README.md** – project overview
+- **docs/VentureOS_Role_Model_v1.md** – canonical VentureOS role model
+- **docs/VentureOS_Agent_Role_Registry_v1.json** – machine-readable role registry
+- **docs/VentureOS_RBAC_Spec_v1.md** – canonical RBAC policy
+- **docs/VentureOS_Tool_Access_Matrix_v1.json** – machine-readable RBAC matrix
 - **docs/roles/REPO_CHARTER.md** – VentureOS charter + scope boundaries
 - **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitHub-first work contract (legacy filename kept for compatibility)
 - **docs/process/LABEL_PROTOCOL.md** – how workflow labels are applied/removed
@@ -43,7 +47,7 @@
 
 ## VentureOS / Multi-Agent Orchestration
 - **docs/roles/VENTURE_OS.md** – venture studio OS overview (system vs persona)
-- **docs/roles/MULTI_AGENT_TEAM.md** – 20-role roster + squad patterns
+- **docs/MULTI_AGENT_TEAM.md** – legacy roster compatibility map; canonical roles live in the VentureOS role model docs
 - **docs/roles/BUSINESS_UNITS.md** – business unit registry + scaling rules
 - **docs/roles/MISSION_CONTROL.md** – mission lifecycle, gates, and artifact standards
 - **docs/process/MISSION_RUNNER.md** – end-to-end mission runner implementation + usage
@@ -152,5 +156,5 @@
 
 ## Research Notes
 - **docs/archive/TWITTER_CONFIG_RESEARCH_2026-02-07.md** – external config patterns & learnings
-- **docs/archive/VOXYZ_CLOSED_LOOP_NOTES_2026-02-07.md** – closed‑loop execution patterns
+- **docs/CLOSED_LOOP_NOTES_2026-02-07.md** – closed‑loop execution patterns
 - **docs/archive/SPACEPIXEL_THREE_LAYER_MEMORY_NOTES_2026-02-07.md** – three‑layer memory system

@@ -1,11 +1,15 @@
 # VentureOS Implementation Plan v1
 
-Date: 2026-03-12
-Version: v1.0
-Scope: Company OS v1 rollout for the 13-department model (Executive Office, Operations, Data/Analytics, Finance, Product, Engineering, Design, Marketing, Sales, Customer Success, Legal, IT/Security, HR).
+Date: 2026-03-16
+Version: v1.1
+Scope: VentureOS operating-model rollout for the 13-department model (Executive Office, Operations, Data/Analytics, Finance, Product, Engineering, Design, Marketing, Sales, Customer Success, Legal, IT/Security, HR).
 
 Normative references:
 - `docs/VentureOS_Department_Architecture_v1.md`
+- `docs/VentureOS_Role_Model_v1.md`
+- `docs/VentureOS_Agent_Role_Registry_v1.json`
+- `docs/VentureOS_RBAC_Spec_v1.md`
+- `docs/VentureOS_Tool_Access_Matrix_v1.json`
 - `docs/VentureOS_30_Day_Operational_Cadence_v1.md`
 - `docs/VentureOS_Phase0_Readiness_Checklist_v1.md`
 - `docs/VentureOS_Baseline_Measurement_SOP_v1.md`
@@ -33,12 +37,17 @@ Derived validation and readiness reports: `runtime/reports/`
 | Portfolio priorities and sequencing | Executive Office Director lane | Chief of Staff Operator lane | Executive Office Auditor lane |
 | Process reliability and dependency tracking | Operations Director lane | Program Control Operator lane | Operations Auditor lane |
 | KPI system and reporting data quality | Data/Analytics Director lane | Data/Analytics Operator lane | Evidence/QA Auditor lane |
+| Budget and runway control | Finance Director lane | Finance Operator lane | Finance Auditor lane |
+| Department delivery (each department) | Department Director lane | Department Operator lane | Department Auditor lane |
 
 Cross-department contract details and ownership mappings for the Chief of Staff, Program Control, and Evidence/QA roles are defined in:
 - `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md`
 - `docs/VentureOS_Agent_Ownership_Matrix_v1.json`
-| Budget and runway control | Finance Director lane | Finance Operator lane | Finance Auditor lane |
-| Department delivery (each department) | Department Director lane | Department Operator lane | Department Auditor lane |
+
+Role-model and access-control dependencies for all phases are defined in:
+- `docs/VentureOS_Role_Model_v1.md`
+- `docs/VentureOS_RBAC_Spec_v1.md`
+- `docs/VentureOS_Tool_Access_Matrix_v1.json`
 
 ## 3) Phased rollout
 
@@ -75,9 +84,10 @@ In scope:
 - Activate Legal, IT/Security, HR.
 - Enforce policy/compliance/security checkpoints on all high-risk workflows.
 - Add hiring and access-review controls.
+- Apply the canonical role model and RBAC matrix to access-model implementation work.
 
 ### Phase D: Hardening and certification (2026-07-27 to 2026-08-21)
-Objective: certify Company OS v1 as stable and auditable.
+Objective: certify VentureOS v1 operations as stable and auditable.
 
 In scope:
 - Run end-to-end audit of KPI/SLA accuracy and lane separation of duties.
@@ -133,7 +143,7 @@ In scope:
 ## 7) Dependency controls
 
 - Phase B requires G1 pass and verified KPI data quality from Data/Analytics.
-- Phase C requires G3 pass and documented access-control model from IT/Security.
+- Phase C requires G3 pass and documented access-control model from IT/Security using the canonical VentureOS role model and RBAC artifacts.
 - Phase D requires G5 pass and full lane contract adoption across all active departments.
 - Any failed gate pauses downstream phase activation until remediation evidence is accepted.
 - GitHub epic `#603` and its successor implementation issues are the execution index for this rollout.
@@ -147,9 +157,9 @@ In scope:
 | SLA monitoring failure > 48h | Switch to manual handoff ledger and daily incident review until restored | Operations Director lane |
 | Security/compliance breach | Suspend high-risk workflows; require Legal + IT/Security re-authorization | IT/Security Director lane |
 
-## 9) Completion criteria for Company OS v1
+## 9) Completion criteria for VentureOS v1 operations
 
-Company OS v1 is complete only when all conditions hold:
+VentureOS v1 operations are complete only when all conditions hold:
 - G0 through G6 passed with stored evidence.
 - All 13 departments have active Director/Operator/Auditor lane assignments.
 - Weekly KPI and SLA reports published for 4 consecutive weeks with >=95% completeness.
