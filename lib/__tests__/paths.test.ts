@@ -29,6 +29,12 @@ describe('lib/paths', () => {
     delete process.env.VENTUREOS_KPI_DIR;
     delete process.env.OBSERVATIONS_DIR;
     delete process.env.VENTUREOS_OBSERVATIONS_DIR;
+    delete process.env.VENTUREOS_RUNTIME_DIR;
+    delete process.env.VENTUREOS_RUNTIME_LOG_DIR;
+    delete process.env.VENTUREOS_EVIDENCE_DAILY_DIR;
+    delete process.env.VENTUREOS_EVIDENCE_WEEKLY_DIR;
+    delete process.env.VENTUREOS_EVIDENCE_MONTHLY_DIR;
+    delete process.env.VENTUREOS_EVIDENCE_INCIDENTS_DIR;
     delete process.env.VENTUREOS_LOG_DIR;
     delete process.env.VENTUREOS_RPG_ROOT;
     delete process.env.VENTUREOS_RPG_DB;
@@ -42,6 +48,12 @@ describe('lib/paths', () => {
     expect(p.OBSERVATIONS_DIR).toBe(
       path.join(HOME, '.openclaw', 'workspace-archivist', 'observations'),
     );
+    expect(p.RUNTIME_DIR).toBe(path.join(HOME, 'clawd', 'ventureos', 'runtime'));
+    expect(p.RUNTIME_LOG_DIR).toBe(path.join(HOME, 'clawd', 'ventureos', 'runtime', 'logs'));
+    expect(p.EVIDENCE_DAILY_DIR).toBe(path.join(HOME, 'clawd', 'ventureos', 'runtime', 'logs', 'daily'));
+    expect(p.EVIDENCE_WEEKLY_DIR).toBe(path.join(HOME, 'clawd', 'ventureos', 'runtime', 'logs', 'weekly'));
+    expect(p.EVIDENCE_MONTHLY_DIR).toBe(path.join(HOME, 'clawd', 'ventureos', 'runtime', 'logs', 'monthly'));
+    expect(p.EVIDENCE_INCIDENTS_DIR).toBe(path.join(HOME, 'clawd', 'ventureos', 'runtime', 'logs', 'incidents'));
     expect(p.LOG_DIR).toBe(path.join(HOME, 'clawd', 'logs'));
     expect(p.RPG_ROOT).toBe(path.join(HOME, 'clawd', 'ventureos-rpg'));
     expect(p.RPG_DB_PATH).toBe(path.join(HOME, 'clawd', 'agents', 'ventureos-rpg.db'));
@@ -110,11 +122,34 @@ describe('lib/paths', () => {
     expect(typeof p.paths.sharedContextDir).toBe('string');
     expect(typeof p.paths.kpiDir).toBe('string');
     expect(typeof p.paths.observationsDir).toBe('string');
+    expect(typeof p.paths.runtimeDir).toBe('string');
+    expect(typeof p.paths.runtimeLogDir).toBe('string');
+    expect(typeof p.paths.evidenceDailyDir).toBe('string');
+    expect(typeof p.paths.evidenceWeeklyDir).toBe('string');
+    expect(typeof p.paths.evidenceMonthlyDir).toBe('string');
+    expect(typeof p.paths.evidenceIncidentsDir).toBe('string');
     expect(typeof p.paths.logDir).toBe('string');
     expect(typeof p.paths.rpgRoot).toBe('string');
     expect(typeof p.paths.rpgDbPath).toBe('string');
     expect(typeof p.paths.activeWorkPath).toBe('string');
     expect(typeof p.paths.prioritiesPath).toBe('string');
+  });
+
+  it('builds canonical evidence artifact paths', () => {
+    jest.resetModules();
+    const p = require('../paths');
+    expect(p.getDailyEvidencePath('2026-03-16', 'kpi-snapshot.json')).toBe(
+      path.join(p.EVIDENCE_DAILY_DIR, '2026-03-16-kpi-snapshot.json'),
+    );
+    expect(p.getWeeklyEvidencePath('2026-W12', 'ops-review.md')).toBe(
+      path.join(p.EVIDENCE_WEEKLY_DIR, '2026-W12-ops-review.md'),
+    );
+    expect(p.getMonthlyEvidencePath('2026-03', 'forecast.md')).toBe(
+      path.join(p.EVIDENCE_MONTHLY_DIR, '2026-03-forecast.md'),
+    );
+    expect(p.getIncidentEvidencePath('INC-001', 'incident.md')).toBe(
+      path.join(p.EVIDENCE_INCIDENTS_DIR, 'inc-001', 'incident.md'),
+    );
   });
 
   it('no path contains hardcoded tilde', () => {

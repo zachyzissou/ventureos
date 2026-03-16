@@ -4,12 +4,13 @@ Date: 2026-03-12 (revised)
 Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, Operations, Data/Analytics, Finance) with extensions for Phase B/C as they come online.
 
 **Prerequisites:** This cadence is aligned with all four v1 artifacts:
-- `VentureOS_Department_Architecture_v1.md` — department missions and handoffs (must be restored to repo; see Gap Assessment §0)
+- `VentureOS_Department_Architecture_v1.md` — department missions and handoffs (restored to repo on 2026-03-16)
 - `VentureOS_Implementation_Plan_v1.md` — Phase 0 starts 2026-03-16; Phase A starts 2026-03-23
 - `VentureOS_Department_KPI_SLA_v1.md` — KPI targets and handoff SLAs
 - `VentureOS_Lane_Contracts_v1.md` — Director/Operator/Auditor lane obligations
 
-**Critical prerequisite:** Evidence infrastructure (store, schema, retention) must be built before Phase 0 activates. See Gap Assessment R2.
+**Canonical evidence model:** primary artifacts live under `runtime/logs/`; validation and readiness summaries live under `runtime/reports/`.
+**Critical prerequisite:** Evidence infrastructure (store, schema, retention) must be built before Phase 0 activates. See Gap Assessment R2 and `VentureOS_Phase0_Readiness_Checklist_v1.md`.
 
 ---
 
@@ -19,10 +20,10 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 
 | Step | Owner | Action | Evidence output | Acceptance criteria |
 |---|---|---|---|---|
-| 1 | Operations Operator | Check all agent health: running, errored, stalled | `reports/daily/YYYY-MM-DD-D1-agent-health.json` | Every active agent has a status entry; no stale entries >1h |
+| 1 | Operations Operator | Check all agent health: running, errored, stalled | `runtime/logs/daily/YYYY-MM-DD-agent-health.json` | Every active agent has a status entry; no stale entries >1h |
 | 2 | Operations Operator | Review overnight incident queue; triage new items | Updated incident log with severity + owner assigned | All new incidents triaged with severity, owner, and ETA |
-| 3 | Data/Analytics Operator | Validate dashboard data freshness (all sources <24h old) | `reports/daily/YYYY-MM-DD-D1-data-freshness.json` | Every data source has freshness timestamp; stale sources flagged |
-| 4 | Finance Operator | Record daily burn (API costs, infrastructure spend) | `reports/daily/YYYY-MM-DD-D1-spend.json` | All cost categories populated; total matches source system |
+| 3 | Data/Analytics Operator | Validate dashboard data freshness (all sources <24h old) | `runtime/logs/daily/YYYY-MM-DD-kpi-snapshot.json` | KPI snapshot notes capture freshness state; stale sources flagged |
+| 4 | Finance Operator | Record daily burn (API costs, infrastructure spend) | `runtime/logs/daily/YYYY-MM-DD-spend.json` | All cost categories populated; total matches source system |
 
 ### D-2. Department standup updates (09:30 CT)
 
@@ -45,7 +46,7 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 | Step | Owner | Action | Evidence output | Acceptance criteria |
 |---|---|---|---|---|
 | 1 | Each active department Operator | Post daily status update per Lane Contracts §5 | Status entry in department log | Status posted before 17:00 CT deadline |
-| 2 | Operations Program Control | Verify all D-1 through D-3 evidence outputs exist | `reports/daily/YYYY-MM-DD-D4-evidence-check.json` | All required evidence files present and non-empty |
+| 2 | Operations Program Control | Verify all D-1 through D-3 evidence outputs exist | `runtime/reports/evidence/evidence-validate-latest.json` | Validation summary status is PASS and required daily files are present |
 
 ---
 
@@ -59,10 +60,10 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 
 | Step | Owner | Action | Evidence output | Acceptance criteria |
 |---|---|---|---|---|
-| 1 | Data/Analytics Director | Compile KPI snapshot across all active departments | `reports/weekly/YYYY-MM-DD-W1-kpi-snapshot.json` | All active department KPIs present with values, targets, and trend delta |
+| 1 | Data/Analytics Director | Compile KPI snapshot across all active departments | `runtime/logs/weekly/YYYY-Www-kpi-rollup.json` | All active department KPIs present with values, targets, and trend delta |
 | 2 | Operations Program Control | Compile SLA compliance report (handoffs met/missed) | SLA compliance summary | Every handoff SLA has met/missed status and miss count |
 | 3 | Finance Director | Produce spend vs. budget variance report | Variance report with delta from plan | Variance calculated per department; items >10% flagged |
-| 4 | Executive Director | Review KPI + SLA + variance; log decisions | `reports/decisions/YYYY-MM-DD-W1-decisions.md` | Each decision has owner + deadline + rationale |
+| 4 | Executive Director | Review KPI + SLA + variance; log decisions | `runtime/logs/weekly/YYYY-Www-ops-review.md` | Each decision has owner + deadline + rationale |
 | 5 | Executive Chief of Staff | Distribute action items to department Directors | Action item distribution confirmation | Each action item acknowledged by recipient Director |
 
 ### W-2. Product/Engineering planning sync (Monday 14:00 CT, Phase B+)
@@ -96,7 +97,7 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 
 | Step | Owner | Action | Evidence output | Acceptance criteria |
 |---|---|---|---|---|
-| 1 | Operations Operator | Compile week's incidents with resolution status | `reports/weekly/YYYY-MM-DD-W5-incident-summary.json` | All incidents listed with severity, owner, status, resolution time |
+| 1 | Operations Operator | Compile week's incidents with resolution status | `runtime/logs/weekly/YYYY-Www-risk-register.md` | All incidents listed with severity, owner, status, resolution time |
 | 2 | Operations Director | Identify patterns; propose SOP updates | SOP change proposals (if any) | Each proposal has rationale and expected impact |
 | 3 | Operations Auditor | Verify incident resolutions are complete | Retro sign-off | Each resolved incident has evidence of resolution |
 
@@ -110,10 +111,10 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 
 | Step | Owner | Action | Evidence output | Acceptance criteria |
 |---|---|---|---|---|
-| 1 | Finance Director | Produce updated runway forecast (3/6/12 month) | `reports/monthly/YYYY-MM-forecast.md` | Runway calculation with assumptions documented |
+| 1 | Finance Director | Produce updated runway forecast (3/6/12 month) | `runtime/logs/monthly/YYYY-MM-forecast.md` | Runway calculation with assumptions documented |
 | 2 | Sales Director (Phase B+) | Submit pipeline forecast for next 90 days | Sales forecast | Coverage ratio and confidence level per segment |
 | 3 | Product Director (Phase B+) | Submit resource needs for next quarter | Product resource request | Each request has justification and priority |
-| 4 | Executive Director | Review forecasts; adjust allocations if needed | `reports/decisions/YYYY-MM-M1-allocation-decisions.md` | Allocation changes documented with rationale |
+| 4 | Executive Director | Review forecasts; adjust allocations if needed | `runtime/logs/monthly/YYYY-MM-readiness-summary.md` | Allocation changes documented with rationale |
 
 ### M-2. Security and compliance review (1st week)
 
@@ -137,7 +138,7 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 |---|---|---|---|---|
 | 1 | HR Director | Report on open roles, pipeline, onboarding status | HR monthly report | All open reqs listed with stage and timeline |
 | 2 | Each Department Director | Submit capacity assessment + headcount needs | Capacity request forms | Justification present for each request |
-| 3 | Executive Director | Approve hiring priorities | `reports/decisions/YYYY-MM-M4-hiring-decisions.md` | Each decision documented with budget impact |
+| 3 | Executive Director | Approve hiring priorities | `runtime/logs/monthly/YYYY-MM-readiness-summary.md` | Each decision documented with budget impact |
 
 ### M-5. Architecture review (4th week)
 
@@ -145,7 +146,7 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 |---|---|---|---|---|
 | 1 | Operations Program Control | Compile month's SLA data, incident patterns, KPI trends | Operational health summary | All active departments covered; trends over 4+ weeks |
 | 2 | Data/Analytics Director | Present KPI trend analysis + anomalies | KPI trend report | Anomalies flagged with root cause hypothesis |
-| 3 | Executive Director | Decide if architecture changes needed | `reports/decisions/YYYY-MM-M5-architecture-review.md` | Decision logged: change or "no change" with rationale |
+| 3 | Executive Director | Decide if architecture changes needed | `runtime/logs/monthly/YYYY-MM-readiness-summary.md` | Decision logged: change or "no change" with rationale |
 
 ---
 
@@ -154,16 +155,19 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 All evidence outputs follow this structure:
 
 ```
-reports/
+runtime/logs/
   daily/          # D-1 through D-4 outputs
   weekly/         # W-1 through W-5 outputs
   monthly/        # M-1 through M-5 outputs
   incidents/      # Incident logs and retros
-  decisions/      # Executive decision log entries
+
+runtime/reports/
+  evidence/       # validation summaries
+  phase0-readiness/ # rollout gate summaries
 ```
 
 **Naming:** `YYYY-MM-DD-{cadence-id}-{description}.{json|md}`
-Example: `2026-03-16-D1-agent-health.json`
+Example: `2026-03-16-agent-health.json`
 
 **Format:** JSON for structured data (KPIs, health checks, spend). Markdown for narrative reports (decisions, retros, forecasts).
 
@@ -201,7 +205,7 @@ Calendar-anchored to Implementation Plan: Phase 0 = 2026-03-16 to 2026-03-20; Ph
 |---|---|---|---|---|
 | 1 | Mar 16 | Deploy Executive Office lanes: Director, Chief of Staff, Auditor | Executive Office Director | All 3 agent roles responding to health check |
 | 1 | Mar 16 | Deploy Operations lanes: Director, Operator, Program Control, Auditor | Operations Director | All 4 agent roles responding to health check |
-| 2 | Mar 17 | Create evidence directory structure (`reports/daily/`, `weekly/`, `monthly/`, `incidents/`, `decisions/`) | Operations Operator | Directories exist and writable |
+| 2 | Mar 17 | Create evidence directory structure (`runtime/logs/daily/`, `weekly/`, `monthly/`, `incidents/`) | Operations Operator | Directories exist and writable |
 | 2 | Mar 17 | Deploy evidence schema templates (KPI record, handoff record per KPI/SLA §5) | Data/Analytics Operator | Templates validated against schema |
 | 3 | Mar 18 | Deploy Data/Analytics lanes: Director, Operator, Auditor | Data/Analytics Director | All 3 agent roles responding to health check |
 | 3 | Mar 18 | Configure data freshness monitoring for all known data sources | Data/Analytics Operator | Freshness check runs and produces valid output |

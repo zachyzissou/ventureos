@@ -56,6 +56,30 @@ export const OBSERVATIONS_DIR: string =
   process.env.VENTUREOS_OBSERVATIONS_DIR ??
   path.join(OPENCLAW_DIR, 'workspace-archivist', 'observations');
 
+/** VentureOS runtime directory. */
+export const RUNTIME_DIR: string =
+  process.env.VENTUREOS_RUNTIME_DIR ?? path.join(VENTUREOS_ROOT, 'runtime');
+
+/** VentureOS runtime log directory. */
+export const RUNTIME_LOG_DIR: string =
+  process.env.VENTUREOS_RUNTIME_LOG_DIR ?? path.join(RUNTIME_DIR, 'logs');
+
+/** Canonical daily evidence directory. */
+export const EVIDENCE_DAILY_DIR: string =
+  process.env.VENTUREOS_EVIDENCE_DAILY_DIR ?? path.join(RUNTIME_LOG_DIR, 'daily');
+
+/** Canonical weekly evidence directory. */
+export const EVIDENCE_WEEKLY_DIR: string =
+  process.env.VENTUREOS_EVIDENCE_WEEKLY_DIR ?? path.join(RUNTIME_LOG_DIR, 'weekly');
+
+/** Canonical monthly evidence directory. */
+export const EVIDENCE_MONTHLY_DIR: string =
+  process.env.VENTUREOS_EVIDENCE_MONTHLY_DIR ?? path.join(RUNTIME_LOG_DIR, 'monthly');
+
+/** Canonical incident evidence directory. */
+export const EVIDENCE_INCIDENTS_DIR: string =
+  process.env.VENTUREOS_EVIDENCE_INCIDENTS_DIR ?? path.join(RUNTIME_LOG_DIR, 'incidents');
+
 /** VentureOS log directory (access logs, audit logs). */
 export const LOG_DIR: string =
   process.env.VENTUREOS_LOG_DIR ?? path.join(HOME, 'clawd', 'logs');
@@ -96,6 +120,12 @@ export const paths = {
   kpiDir: KPI_DIR,
   dashboardDataDir: DASHBOARD_DATA_DIR,
   observationsDir: OBSERVATIONS_DIR,
+  runtimeDir: RUNTIME_DIR,
+  runtimeLogDir: RUNTIME_LOG_DIR,
+  evidenceDailyDir: EVIDENCE_DAILY_DIR,
+  evidenceWeeklyDir: EVIDENCE_WEEKLY_DIR,
+  evidenceMonthlyDir: EVIDENCE_MONTHLY_DIR,
+  evidenceIncidentsDir: EVIDENCE_INCIDENTS_DIR,
   logDir: LOG_DIR,
   launchAgentDirs: LAUNCH_AGENT_DIRS,
   rpgRoot: RPG_ROOT,
@@ -137,6 +167,29 @@ export function teamSharedContextDir(teamName: string): string {
   return path.join(SHARED_CONTEXT_DIR, safe);
 }
 
+export function getDailyEvidencePath(date: string, name: string): string {
+  return path.join(EVIDENCE_DAILY_DIR, `${date}-${name}`);
+}
+
+export function getWeeklyEvidencePath(isoWeek: string, name: string): string {
+  return path.join(EVIDENCE_WEEKLY_DIR, `${isoWeek}-${name}`);
+}
+
+export function getMonthlyEvidencePath(month: string, name: string): string {
+  return path.join(EVIDENCE_MONTHLY_DIR, `${month}-${name}`);
+}
+
+export function getIncidentEvidencePath(incidentId: string, name = ''): string {
+  const safeIncidentId = String(incidentId || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\-_]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return name
+    ? path.join(EVIDENCE_INCIDENTS_DIR, safeIncidentId, name)
+    : path.join(EVIDENCE_INCIDENTS_DIR, safeIncidentId);
+}
+
 
 const defaultPathsExport = {
   VENTUREOS_ROOT,
@@ -146,6 +199,12 @@ const defaultPathsExport = {
   KPI_DIR,
   DASHBOARD_DATA_DIR,
   OBSERVATIONS_DIR,
+  RUNTIME_DIR,
+  RUNTIME_LOG_DIR,
+  EVIDENCE_DAILY_DIR,
+  EVIDENCE_WEEKLY_DIR,
+  EVIDENCE_MONTHLY_DIR,
+  EVIDENCE_INCIDENTS_DIR,
   LOG_DIR,
   LAUNCH_AGENT_DIRS,
   RPG_ROOT,
@@ -155,6 +214,10 @@ const defaultPathsExport = {
   agentSessionsDir,
   agentWorkspaceDir,
   teamSharedContextDir,
+  getDailyEvidencePath,
+  getWeeklyEvidencePath,
+  getMonthlyEvidencePath,
+  getIncidentEvidencePath,
   paths,
 } as const;
 

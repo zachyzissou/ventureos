@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["date", "captured_at", "departments"],
+  "properties": {
+    "date": { "type": "string" },
+    "captured_at": { "type": "string" },
+    "source": { "type": "object" },
+    "departments": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["kpi_id", "period_start", "period_end", "value"],
+          "properties": {
+            "kpi_id": { "type": "string" },
+            "period_start": { "type": "string" },
+            "period_end": { "type": "string" },
+            "value": { "type": "number" },
+            "target": { "type": "number" },
+            "owner": { "type": "string" },
+            "source_refs": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "entered_at": { "type": "string" },
+            "approved_at": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      }
+    },
+    "rollup": { "type": "object" }
+  },
+  "additionalProperties": true
+}

@@ -3,16 +3,16 @@
 Date: 2026-03-12 (revised)
 Scope: Critical review of Company OS v1 artifacts.
 Inputs reviewed:
-- `VentureOS_Department_Architecture_v1.md` — department map, handoffs, cadence, agent roles, governance (reverted from repo in commit 79eb19e4; content reviewed from git history commit f8ab267f)
+- `VentureOS_Department_Architecture_v1.md` — department map, handoffs, cadence, agent roles, governance (restored to the working tree on 2026-03-16 from git history commit f8ab267f)
 - `VentureOS_Implementation_Plan_v1.md` — phased rollout, acceptance gates, ownership model
 - `VentureOS_Department_KPI_SLA_v1.md` — department KPIs, handoff SLA matrix, breach handling
 - `VentureOS_Lane_Contracts_v1.md` — Director/Operator/Auditor contracts, escalation triggers
 
 ---
 
-## 0) Structural issue: Architecture doc is missing from repo
+## 0) Structural issue: Architecture doc was missing from repo
 
-The `VentureOS_Department_Architecture_v1.md` file was committed in `f8ab267f` then immediately reverted in `79eb19e4`. It is not present in the working tree. All three companion docs reference it. **This must be restored or replaced before Phase 0 starts.** The gap assessment below is based on the reverted content recovered from git history.
+The `VentureOS_Department_Architecture_v1.md` file was committed in `f8ab267f` then immediately reverted in `79eb19e4`. It has now been restored to the working tree on 2026-03-16 and should be treated as the normative source going forward. This gap item is resolved in the repo, but the downstream docs still need to stay aligned to it.
 
 ---
 
@@ -80,9 +80,9 @@ Architecture uses "Legal & Compliance" (D3) and "People / HR" (D4). All other do
 
 ## 3) Contradictions
 
-### C1. Evidence gate vs. missing evidence infrastructure
+### C1. Evidence gate vs. incomplete evidence infrastructure
 
-All four docs require evidence-first execution, but no evidence store, format standard, or retention policy is defined in the codebase. `docs/METRICS_PLAN.md` covers task-queue metrics only. The KPI/SLA doc (§5) assumes an evidence logging system exists ("KPI record fields: kpi_id, period_start, period_end...") but this system is not built. The Cadence doc defines evidence output paths (`reports/daily/`, etc.) and naming conventions, which is a start but not a running system. **Resolution:** build evidence store before Phase 0. Minimum viable: directory structure per Cadence doc, JSON schema per KPI/SLA doc §5, retention per Cadence doc conventions.
+All four docs require evidence-first execution, and the repo now has canonical evidence pathing under `runtime/logs/`, JSON schemas under `schemas/evidence/`, and executable validation/readiness entrypoints. The remaining gap is operational completeness: daily/weekly/monthly evidence must be generated consistently and kept fresh. `docs/METRICS_PLAN.md` still covers task-queue metrics only. **Resolution:** treat the storage and validation layer as present, and focus follow-on work on generation coverage, retention enforcement, and query/reporting depth.
 
 ### C2. Two disjoint KPI systems
 
@@ -118,8 +118,8 @@ All four docs require evidence-first execution, but no evidence store, format st
 
 | # | Risk | Severity | Owner | Mitigation |
 |---|---|---|---|---|
-| R1 | Architecture doc missing from repo — companion docs reference a ghost | CRITICAL | Executive Office Director | Restore from git history (commit f8ab267f) or produce replacement before Phase 0 |
-| R2 | Evidence infrastructure does not exist — evidence-first principle is unenforceable | CRITICAL | Data/Analytics Director + Engineering | Build evidence store with schema, retention, and query interface before Phase 0 |
+| R1 | Architecture doc was missing from repo — companion docs referenced a ghost | RESOLVED | Executive Office Director | Restored from git history (commit f8ab267f) on 2026-03-16 |
+| R2 | Evidence infrastructure is partially implemented — evidence generation coverage still needs enforcement | HIGH | Data/Analytics Director + Engineering | Keep canonical store/schema/validation in place; finish generation, retention, and query/reporting depth |
 | R3 | Cross-cutting agents (Chief of Staff, Program Control, Evidence/QA) have no contracts | HIGH | Operations Director | Extend Lane Contracts doc with explicit I/O and authority for cross-cutting roles |
 | R4 | No tool access boundaries — separation of duties is advisory | HIGH | IT/Security Director | Define RBAC per lane type; enforce in agent provisioning |
 | R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) unconnected | HIGH | Operations Director | Unify or explicitly map between technical and department SLA frameworks |
@@ -135,8 +135,8 @@ All four docs require evidence-first execution, but no evidence store, format st
 
 ## 6) Recommended next actions (priority order)
 
-1. **Restore Architecture doc** — Recover `VentureOS_Department_Architecture_v1.md` from git commit `f8ab267f` and add forward references to companion docs. All other docs depend on it.
-2. **Build evidence infrastructure** — Define schema (per KPI/SLA §5), storage (per Cadence doc conventions), retention policy, and query interface. This unblocks the entire evidence-first model. Minimum viable: directory structure + JSON schema + naming convention.
+1. **Keep Architecture doc aligned** — `VentureOS_Department_Architecture_v1.md` is restored; companion docs must continue to reference it as normative.
+2. **Complete evidence execution coverage** — The canonical store/schema/validation layer is now present. Finish generation coverage, retention policy enforcement, and query/reporting depth.
 3. **Add cross-cutting agent contracts** — Extend Lane Contracts with Chief of Staff, Program Control, and Evidence/QA agent contracts: mission, required I/O, authority limits, SLAs.
 4. **Define tool access / RBAC per lane** — Map each lane type to specific system permissions (git repos, evidence stores, dashboards, approval workflows).
 5. **Map SLA frameworks** — Document the relationship between P0-P3 technical SLAs and department handoff SLA tiers. Define how a technical incident cascades to department-level SLA impact.
