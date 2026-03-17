@@ -201,7 +201,7 @@ function renderMarkdown(status) {
     ? status.policy.executedSuites.join(', ')
     : 'none';
 
-  lines.push('## Performance Benchmark Results');
+  lines.push('## 🏎️ Performance Benchmark Results');
   lines.push('');
   lines.push(`**Commit:** \`${status.metadata.commitSha}\``);
   lines.push(`**Branch:** \`${status.metadata.branch}\``);

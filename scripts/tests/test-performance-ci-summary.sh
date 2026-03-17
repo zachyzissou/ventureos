@@ -15,6 +15,7 @@ run_case() {
 
   local workdir
   workdir="$(mktemp -d)"
+  trap 'rm -rf "$workdir"' RETURN
 
   cat > "$workdir/performance-output.txt" <<EOF
 $perf_output
@@ -58,7 +59,7 @@ if actual_enabled != expected_enabled:
 if expected_suite not in observed_suites:
     raise SystemExit(f"expected observed suite {expected_suite}, got {observed_suites}")
 PY
-
+  trap - RETURN
   rm -rf "$workdir"
 }
 
