@@ -13,6 +13,8 @@
  * All redactions are logged for audit trail.
  */
 
+import { KNOWN_AGENT_IDS } from './agent-identity';
+
 // ─── Types ────────────────────────────────────────────────────────────────
 
 export interface Redaction {
@@ -88,11 +90,7 @@ export interface StructureValidationResult {
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
-const VALID_AGENT_IDS = new Set([
-  'oracle', 'atlas', 'sentinel', 'verifier',
-  'archivist', 'synth', 'echo', 'nexus',
-  'user', 'system', 'broadcast',
-]);
+const VALID_AGENT_IDS = new Set(KNOWN_AGENT_IDS);
 
 const DEFAULT_CONFIG: SanitizerConfig = {
   maxLength: 4000,

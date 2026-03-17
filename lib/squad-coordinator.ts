@@ -86,19 +86,19 @@ export class SquadCoordinator {
     const text = `${brief.title}\n${brief.description}\n${(brief.requirements ?? []).join('\n')}`.toLowerCase();
     const roles = new Set<SquadRole>();
 
-    // Always include synth as the general builder.
-    roles.add('synth');
+    // Always include Venture Delivery as the general implementation lane.
+    roles.add('venture_delivery');
 
-    // NOTE: use word boundaries to avoid accidental matches (e.g. "spe**ci**al" should not trigger atlas).
+    // NOTE: use word boundaries to avoid accidental matches (e.g. "spe**ci**al" should not trigger infra).
     if (/\b(security|vuln|xss|secrets|sanitize|auth|threat)\b/i.test(text) || /sql\s+injection/i.test(text)) {
-      roles.add('sentinel');
+      roles.add('venture_security');
     }
 
-    if (/\b(tests?|jest|vitest|qa|verify|lint|coverage)\b/i.test(text)) roles.add('verifier');
-    if (/\b(doc|docs|documentation|readme|guide|diagram)\b/i.test(text)) roles.add('archivist');
-    if (/\b(research|investigate|compare|option|options|tradeoff|tradeoffs|benchmark)\b/i.test(text)) roles.add('oracle');
+    if (/\b(tests?|jest|vitest|qa|verify|lint|coverage)\b/i.test(text)) roles.add('venture_evidence');
+    if (/\b(doc|docs|documentation|readme|guide|diagram)\b/i.test(text)) roles.add('venture_memory');
+    if (/\b(research|investigate|compare|option|options|tradeoff|tradeoffs|benchmark)\b/i.test(text)) roles.add('venture_research');
     if (/\b(deploy|ci|pipeline|infra|docker|k8s|config|configuration)\b/i.test(text) || /ci\/cd/i.test(text)) {
-      roles.add('atlas');
+      roles.add('venture_infrastructure');
     }
 
     return Array.from(roles);
@@ -116,12 +116,12 @@ export class SquadCoordinator {
     const tasks: MissionTask[] = [];
 
     // Research task (optional)
-    if (roles.includes('oracle')) {
+    if (roles.includes('venture_research')) {
       tasks.push({
         taskId: crypto.randomUUID(),
         title: 'Research & risk assessment',
         description: 'Identify unknowns, risks, and recommended approach for the mission.',
-        role: 'oracle',
+        role: 'venture_research',
       });
     }
 
@@ -130,50 +130,50 @@ export class SquadCoordinator {
       taskId: crypto.randomUUID(),
       title: 'Implement mission deliverables',
       description: 'Produce the requested artifacts / changes described in the brief.',
-      role: 'synth',
+      role: 'venture_delivery',
       dependsOnTaskIds: tasks.length ? [tasks[0].taskId] : undefined,
     });
 
     // Security review
-    if (roles.includes('sentinel')) {
+    if (roles.includes('venture_security')) {
       tasks.push({
         taskId: crypto.randomUUID(),
         title: 'Security review',
         description: 'Run security checks and review for common vulnerability classes.',
-        role: 'sentinel',
+        role: 'venture_security',
         dependsOnTaskIds: [tasks[tasks.length - 1].taskId],
       });
     }
 
     // QA
-    if (roles.includes('verifier')) {
+    if (roles.includes('venture_evidence')) {
       tasks.push({
         taskId: crypto.randomUUID(),
         title: 'Verification & testing',
         description: 'Run tests and verify acceptance criteria.',
-        role: 'verifier',
+        role: 'venture_evidence',
         dependsOnTaskIds: [tasks[tasks.length - 1].taskId],
       });
     }
 
     // Docs
-    if (roles.includes('archivist')) {
+    if (roles.includes('venture_memory')) {
       tasks.push({
         taskId: crypto.randomUUID(),
         title: 'Documentation & reporting',
         description: 'Write usage docs, diagrams, and summary report artifacts.',
-        role: 'archivist',
+        role: 'venture_memory',
         dependsOnTaskIds: [tasks[tasks.length - 1].taskId],
       });
     }
 
     // Infra / packaging
-    if (roles.includes('atlas')) {
+    if (roles.includes('venture_infrastructure')) {
       tasks.push({
         taskId: crypto.randomUUID(),
         title: 'Integration & packaging',
         description: 'Ensure integration points are wired up (CI/config) and ready to ship.',
-        role: 'atlas',
+        role: 'venture_infrastructure',
         dependsOnTaskIds: [tasks[tasks.length - 1].taskId],
       });
     }

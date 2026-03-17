@@ -435,17 +435,17 @@ describe('ensureTeamSymlinksOnBoot', () => {
 
     const mockTeamService = {
       getTeamForAgent: jest.fn((agentId: string) => {
-        if (agentId === 'nexus') {
+        if (agentId === 'venture_control') {
           return { id: 'team-uuid', name: 'uniform' };
         }
         return null;
       }),
     };
 
-    const result = ensureTeamSymlinksOnBoot('nexus', mockTeamService);
+    const result = ensureTeamSymlinksOnBoot('venture_control', mockTeamService);
     expect(result).not.toBeNull();
     expect(result!.action).toBe('created');
-    expect(mockTeamService.getTeamForAgent).toHaveBeenCalledWith('nexus');
+    expect(mockTeamService.getTeamForAgent).toHaveBeenCalledWith('venture_control');
   });
 
   test('returns null for agent not in any team', () => {

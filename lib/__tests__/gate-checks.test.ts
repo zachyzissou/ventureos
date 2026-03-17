@@ -11,7 +11,7 @@ function baseMission(overrides: Partial<MissionRecord> = {}): MissionRecord {
     brief: { title: 't', description: 'd', requirements: [] },
     plan: {
       createdAt: now,
-      tasks: [{ taskId: 't1', title: 'x', description: 'y', role: 'synth' }],
+      tasks: [{ taskId: 't1', title: 'x', description: 'y', role: 'venture_delivery' }],
     },
     execution: {
       startedAt: now,
@@ -20,7 +20,7 @@ function baseMission(overrides: Partial<MissionRecord> = {}): MissionRecord {
       results: [
         {
           taskId: 't1',
-          agentId: 'synth',
+          agentId: 'venture_delivery',
           startedAt: now,
           finishedAt: now,
           status: 'succeeded',
@@ -44,7 +44,7 @@ describe('GateChecks', () => {
         results: [
           {
             taskId: 't1',
-            agentId: 'synth',
+            agentId: 'venture_delivery',
             startedAt: baseMission().createdAt,
             finishedAt: baseMission().createdAt,
             status: 'failed',
@@ -67,7 +67,7 @@ describe('GateChecks', () => {
         results: [
           {
             taskId: 't1',
-            agentId: 'synth',
+            agentId: 'venture_delivery',
             startedAt: baseMission().createdAt,
             finishedAt: baseMission().createdAt,
             status: 'succeeded',

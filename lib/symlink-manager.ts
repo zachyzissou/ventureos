@@ -63,7 +63,7 @@ export class SymlinkManager {
    * - If missing → creates it.
    * - If broken or wrong target → removes and recreates.
    *
-   * @param agentId - Agent identifier (e.g. 'nexus', 'oracle').
+   * @param agentId - Agent identifier (e.g. 'venture_control', 'venture_research').
    * @param teamName - Team name (used for directory resolution).
    * @returns Result of the symlink operation.
    */
@@ -420,7 +420,7 @@ export class SymlinkManager {
  * import { TeamService } from './lib/team-service';
  *
  * const teamService = new TeamService(dbPath);
- * const result = ensureTeamSymlinksOnBoot('nexus', teamService);
+ * const result = ensureTeamSymlinksOnBoot('venture_control', teamService);
  * // result is null if agent has no team, or SymlinkResult on success
  * ```
  *

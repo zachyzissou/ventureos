@@ -139,6 +139,7 @@ PLAYWRIGHT_ARGS=(
 if [ "$CI_MODE" = true ]; then
   PLAYWRIGHT_ARGS+=(
     "--reporter=list,json"
+    "--workers=1"
   )
   export PLAYWRIGHT_JSON_OUTPUT_DIR="$REPORT_DIR"
 fi

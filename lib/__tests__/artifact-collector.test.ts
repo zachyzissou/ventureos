@@ -23,14 +23,14 @@ describe('ArtifactCollector', () => {
       [
         {
           taskId: 't1',
-          agentId: 'synth',
+          agentId: 'venture_delivery',
           startedAt: new Date().toISOString(),
           finishedAt: new Date().toISOString(),
           status: 'succeeded',
           artifacts: [{ name: 'a.md', content: '# A' }],
         },
       ],
-      [{ name: 'status-report.md', content: 'ok', producedBy: 'archivist' }]
+      [{ name: 'status-report.md', content: 'ok', producedBy: 'venture_memory' }]
     );
 
     expect(path.basename(r1.artifactsDir)).toBe('v0001');

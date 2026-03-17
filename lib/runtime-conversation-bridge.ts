@@ -351,9 +351,9 @@ export class RuntimeConversationBridge implements MissionRunnerHooks {
       }
     }
 
-    // Fallback: at least include the generic builder
+    // Fallback: at least include the general implementation lane.
     if (agents.size === 0) {
-      agents.add('synth');
+      agents.add('venture_delivery');
     }
 
     return [...agents];

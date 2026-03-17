@@ -13,7 +13,13 @@ export default defineConfig({
     trace: 'on-first-retry',
     // Chrome-specific flags for performance.memory and GC access
     launchOptions: {
-      args: ['--js-flags=--expose-gc', '--enable-precise-memory-info'],
+      args: [
+        '--js-flags=--expose-gc',
+        '--enable-precise-memory-info',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+      ],
     },
   },
   webServer: {

@@ -14,6 +14,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
+import type { MissionCapabilityId } from './agent-identity';
 
 export type MissionPhase =
   | 'brief'
@@ -24,7 +25,7 @@ export type MissionPhase =
   | 'closed'
   | 'error';
 
-export type SquadRole = 'oracle' | 'atlas' | 'sentinel' | 'verifier' | 'archivist' | 'synth' | 'curator';
+export type SquadRole = MissionCapabilityId | 'curator';
 
 export interface MissionBrief {
   title: string;

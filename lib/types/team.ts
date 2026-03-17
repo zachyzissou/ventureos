@@ -32,7 +32,7 @@ export interface Team {
 export interface TeamAgent {
   /** Team the agent belongs to. */
   teamId: string;
-  /** Agent identifier (e.g. 'nexus', 'oracle', 'synth'). */
+  /** Agent identifier (e.g. 'venture_control', 'venture_research', 'venture_delivery'). */
   agentId: string;
   /** Role determining access level within the team. */
   role: TeamAgentRole;
