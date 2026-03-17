@@ -18,9 +18,9 @@ import {
 describe('validateMessageStructure', () => {
   it('accepts a valid message', () => {
     const result = validateMessageStructure({
-      from: 'oracle',
-      to: 'sentinel',
-      content: 'Hello sentinel',
+      from: 'venture_research',
+      to: 'venture_security',
+      content: 'Hello Venture Security',
     });
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
@@ -28,8 +28,8 @@ describe('validateMessageStructure', () => {
 
   it('accepts array of recipients', () => {
     const result = validateMessageStructure({
-      from: 'oracle',
-      to: ['sentinel', 'atlas'],
+      from: 'venture_research',
+      to: ['venture_security', 'venture_infrastructure'],
       content: 'Hello team',
     });
     expect(result.valid).toBe(true);
@@ -37,7 +37,7 @@ describe('validateMessageStructure', () => {
 
   it('accepts broadcast target', () => {
     const result = validateMessageStructure({
-      from: 'nexus',
+      from: 'venture_control',
       to: 'broadcast',
       content: 'Announcement',
     });
@@ -45,7 +45,7 @@ describe('validateMessageStructure', () => {
   });
 
   it('rejects missing from', () => {
-    const result = validateMessageStructure({ to: 'sentinel', content: 'Hi' });
+    const result = validateMessageStructure({ to: 'venture_security', content: 'Hi' });
     expect(result.valid).toBe(false);
     expect(result.errors.some(e => e.includes('"from"'))).toBe(true);
   });
@@ -53,7 +53,7 @@ describe('validateMessageStructure', () => {
   it('rejects unknown sender', () => {
     const result = validateMessageStructure({
       from: 'unknown_agent',
-      to: 'sentinel',
+      to: 'venture_security',
       content: 'Hi',
     });
     expect(result.valid).toBe(false);
@@ -62,7 +62,7 @@ describe('validateMessageStructure', () => {
 
   it('rejects unknown recipient', () => {
     const result = validateMessageStructure({
-      from: 'oracle',
+      from: 'venture_research',
       to: 'unknown_agent',
       content: 'Hi',
     });
@@ -71,15 +71,15 @@ describe('validateMessageStructure', () => {
   });
 
   it('rejects missing content', () => {
-    const result = validateMessageStructure({ from: 'oracle', to: 'sentinel' });
+    const result = validateMessageStructure({ from: 'venture_research', to: 'venture_security' });
     expect(result.valid).toBe(false);
     expect(result.errors.some(e => e.includes('"content"'))).toBe(true);
   });
 
   it('rejects empty content', () => {
     const result = validateMessageStructure({
-      from: 'oracle',
-      to: 'sentinel',
+      from: 'venture_research',
+      to: 'venture_security',
       content: '   ',
     });
     expect(result.valid).toBe(false);
@@ -88,8 +88,8 @@ describe('validateMessageStructure', () => {
 
   it('rejects non-string content', () => {
     const result = validateMessageStructure({
-      from: 'oracle',
-      to: 'sentinel',
+      from: 'venture_research',
+      to: 'venture_security',
       content: 123 as any,
     });
     expect(result.valid).toBe(false);
@@ -431,19 +431,19 @@ describe('sanitizeMessage', () => {
 
 describe('sanitizeAgentMessage', () => {
   it('validates structure and sanitizes content', () => {
-    const result = sanitizeAgentMessage('oracle', 'sentinel', 'Deploy status ok');
+    const result = sanitizeAgentMessage('venture_research', 'venture_security', 'Deploy status ok');
     expect(result.structureValid).toBe(true);
     expect(result.structureErrors).toHaveLength(0);
   });
 
   it('reports structure errors for invalid agents', () => {
-    const result = sanitizeAgentMessage('fake', 'sentinel', 'Hi');
+    const result = sanitizeAgentMessage('fake', 'venture_security', 'Hi');
     expect(result.structureValid).toBe(false);
     expect(result.structureErrors.length).toBeGreaterThan(0);
   });
 
   it('still sanitizes content even with invalid structure', () => {
-    const result = sanitizeAgentMessage('fake', 'sentinel', 'api_key=sk-abcdefghijklmnopqrstuvwxyz');
+    const result = sanitizeAgentMessage('fake', 'venture_security', 'api_key=sk-abcdefghijklmnopqrstuvwxyz');
     expect(result.content).toContain('[REDACTED');
   });
 });

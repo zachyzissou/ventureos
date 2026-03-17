@@ -76,7 +76,7 @@ Respond with ONLY the markdown. No fences, no preamble.`;
 // ─── User Prompt Builders ───────────────────────────────────────────────────
 
 export interface CuratorAgentOutput {
-  /** Agent identifier (e.g. 'nexus', 'oracle', 'synth'). */
+  /** Agent identifier (e.g. 'venture_control', 'venture_research', 'venture_delivery'). */
   agentId: string;
   /** Filename of the output. */
   filename: string;

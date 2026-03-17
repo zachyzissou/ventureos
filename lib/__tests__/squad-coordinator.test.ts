@@ -13,7 +13,7 @@ describe('SquadCoordinator', () => {
   it('infers roles from brief text', () => {
     const c = new SquadCoordinator({
       agents: [
-        { id: 'synth', async runTask() { return {}; } },
+        { id: 'venture_delivery', async runTask() { return {}; } },
       ],
       now: makeNow(),
     });
@@ -24,10 +24,10 @@ describe('SquadCoordinator', () => {
       requirements: ['Add documentation'],
     });
 
-    expect(roles).toContain('synth');
-    expect(roles).toContain('sentinel');
-    expect(roles).toContain('verifier');
-    expect(roles).toContain('archivist');
+    expect(roles).toContain('venture_delivery');
+    expect(roles).toContain('venture_security');
+    expect(roles).toContain('venture_evidence');
+    expect(roles).toContain('venture_memory');
   });
 
   it('executes tasks and continues after failure when configured', async () => {
@@ -36,14 +36,14 @@ describe('SquadCoordinator', () => {
     const c = new SquadCoordinator({
       agents: [
         {
-          id: 'synth',
+          id: 'venture_delivery',
           async runTask(task) {
             if (task.title.includes('Implement')) throw new Error('impl fail');
             return { summary: 'ok' };
           },
         },
         {
-          id: 'oracle',
+          id: 'venture_research',
           async runTask() {
             return { summary: 'researched' };
           },
@@ -73,7 +73,7 @@ describe('SquadCoordinator', () => {
 
     const c = new SquadCoordinator({
       agents: [
-        { id: 'synth', async runTask() { return { summary: 'ok' }; } },
+        { id: 'venture_delivery', async runTask() { return { summary: 'ok' }; } },
       ],
       continueOnFailure: true,
       now,
@@ -86,7 +86,7 @@ describe('SquadCoordinator', () => {
           taskId: 't1',
           title: 'Missing agent',
           description: 'Should fail',
-          role: 'verifier' as const,
+          role: 'venture_evidence' as const,
         },
       ],
     };

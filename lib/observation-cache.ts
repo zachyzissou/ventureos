@@ -79,7 +79,7 @@ const DEFAULT_CONFIG: ObservationCacheConfig = {
  *
  * Usage:
  * ```ts
- * const cache = new ObservationCache(store, 'oracle');
+ * const cache = new ObservationCache(store, 'venture_research');
  * const block = cache.getPromptBlock();
  * // inject block.text into system prompt
  * ```

@@ -26,7 +26,7 @@ describe('MissionRunner — integration', () => {
       now,
       agents: [
         {
-          id: 'synth',
+          id: 'venture_delivery',
           async runTask(task) {
             return {
               summary: `done: ${task.title}`,
@@ -74,7 +74,7 @@ describe('MissionRunner — integration', () => {
       now,
       agents: [
         {
-          id: 'synth',
+          id: 'venture_delivery',
           async runTask() {
             return { artifacts: [{ name: 'out.txt', content: 'ok' }] };
           },

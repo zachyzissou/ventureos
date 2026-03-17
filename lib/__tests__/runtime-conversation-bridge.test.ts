@@ -102,8 +102,8 @@ function makeMission(overrides?: Partial<MissionRecord>): MissionRecord {
     plan: {
       createdAt: '2026-02-17T00:00:00.000Z',
       tasks: [
-        { taskId: 'task-1', title: 'Build it', description: 'Build the thing', role: 'synth' },
-        { taskId: 'task-2', title: 'Test it', description: 'Test the thing', role: 'verifier' },
+        { taskId: 'task-1', title: 'Build it', description: 'Build the thing', role: 'venture_delivery' },
+        { taskId: 'task-2', title: 'Test it', description: 'Test the thing', role: 'venture_evidence' },
       ],
     },
     history: [{ phase: 'brief' as MissionPhase, enteredAt: '2026-02-17T00:00:00.000Z' }],
@@ -169,8 +169,8 @@ describe('RuntimeConversationBridge', () => {
 
       expect(state).toBeTruthy();
       expect(state.participants).toContain('system');
-      expect(state.participants).toContain('synth');
-      expect(state.participants).toContain('verifier');
+      expect(state.participants).toContain('venture_delivery');
+      expect(state.participants).toContain('venture_evidence');
       expect(state.status).toBe('active');
       expect(state.metadata).toHaveProperty('missionId', mission.missionId);
     });
@@ -218,13 +218,13 @@ describe('RuntimeConversationBridge', () => {
       await bridge.onMissionCreated(mission);
 
       const task = mission.plan!.tasks[0];
-      await bridge.onTaskStart(mission, task, 'synth');
+      await bridge.onTaskStart(mission, task, 'venture_delivery');
 
       const convId = missionConversationId(mission.missionId);
       const state = await api.getConversation(convId);
       const msgs = state.messages.filter(m => m.content.includes('Task dispatched'));
       expect(msgs.length).toBe(1);
-      expect(msgs[0].content).toContain('synth');
+      expect(msgs[0].content).toContain('venture_delivery');
       expect(msgs[0].content).toContain('Build it');
     });
   });
@@ -327,7 +327,7 @@ describe('RuntimeConversationBridge', () => {
       await bridge.onPhaseTransition(mission, 'brief', 'plan');
 
       const task = mission.plan!.tasks[0];
-      await bridge.onTaskStart(mission, task, 'synth');
+      await bridge.onTaskStart(mission, task, 'venture_delivery');
       await bridge.onTaskComplete(mission, task, makeTaskResult(task));
 
       const closedMission = makeMission({ ...mission, phase: 'closed' });

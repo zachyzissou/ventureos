@@ -126,7 +126,7 @@ describe('MissionRunner + ConversationBridge integration', () => {
       hooks: bridge,
       agents: [
         {
-          id: 'synth',
+          id: 'venture_delivery',
           async runTask(task) {
             return { summary: `done: ${task.title}`, artifacts: [{ name: 'output.md', content: '# Output' }] };
           },
@@ -150,7 +150,7 @@ describe('MissionRunner + ConversationBridge integration', () => {
     expect(state).toBeTruthy();
     expect(state.status).toBe('closed');
     expect(state.participants).toContain('system');
-    expect(state.participants).toContain('synth');
+    expect(state.participants).toContain('venture_delivery');
 
     // Should have messages for: phase transitions + task start + task complete + mission close
     expect(state.messages.length).toBeGreaterThanOrEqual(4);
@@ -181,7 +181,7 @@ describe('MissionRunner + ConversationBridge integration', () => {
       continueOnFailure: false,
       agents: [
         {
-          id: 'synth',
+          id: 'venture_delivery',
           async runTask() {
             throw new Error('Agent crashed');
           },
@@ -228,7 +228,7 @@ describe('MissionRunner + ConversationBridge integration', () => {
       hooks: brokenBridge,
       agents: [
         {
-          id: 'synth',
+          id: 'venture_delivery',
           async runTask(task) {
             return { summary: `done: ${task.title}` };
           },
