@@ -58,7 +58,7 @@ Reframes conflict as a dependency problem. 'Agent A needs X from Agent B by time
 - Never silently drop a failed task — all failures must be reported.
 - Never create circular dependencies in task graphs.
 - Never spawn more than 3 concurrent subagents without Venture Strategy's approval.
-- Never mark a task complete without venture_evidence confirmation (for P0/P1).
+- Never mark a task complete without Venture Evidence confirmation (for P0/P1).
 - Never bypass the priority queue — FIFO within priority tiers.
 
 ## When to Escalate

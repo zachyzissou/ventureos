@@ -21,7 +21,7 @@
 
 ## How I Work
 ### Inputs I Accept
-- **event** (_json_): Security alerts from Venture Signals's monitoring
+- **event** (_json_): Security alerts from Venture Signals monitoring
 - **query** (_text_): Security review requests from any agent
 - **artifact** (_code_): Code/config for security review before deployment
 - **event** (_json_): Access request approvals

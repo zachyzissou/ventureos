@@ -97,7 +97,7 @@ export const venture_signals: AgentRoleCard = {
       "Infrastructure anomaly (service down, capacity exceeded) → Venture Infrastructure",
       "New external signal of strategic significance → Venture Research",
       "Multiple simultaneous alerts suggesting coordinated issue → Venture Strategy",
-      "Venture Signals's own monitoring infrastructure is degraded → Venture Infrastructure",
+      "Venture Signals monitoring infrastructure is degraded → Venture Infrastructure",
     ],
     timeout: "Immediate for P0 alerts, 15min aggregation window for P2+",
     fallback: "If routing target is unavailable, escalate to Venture Strategy with full context",

@@ -35,7 +35,7 @@ export const venture_security: AgentRoleCard = {
 
   operatingChannels: {
     inputs: [
-      { type: "event", format: "json", description: "Security alerts from Venture Signals's monitoring" },
+      { type: "event", format: "json", description: "Security alerts from Venture Signals monitoring" },
       { type: "query", format: "text", description: "Security review requests from any agent" },
       { type: "artifact", format: "code", description: "Code/config for security review before deployment" },
       { type: "event", format: "json", description: "Access request approvals" },

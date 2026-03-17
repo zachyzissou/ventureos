@@ -67,7 +67,7 @@ export const venture_control: AgentRoleCard = {
       "NEVER silently drop a failed task — all failures must be reported",
       "NEVER create circular dependencies in task graphs",
       "NEVER spawn more than 3 concurrent subagents without Venture Strategy's approval",
-      "NEVER mark a task complete without venture_evidence confirmation (for P0/P1)",
+      "NEVER mark a task complete without Venture Evidence confirmation (for P0/P1)",
       "NEVER bypass the priority queue — FIFO within priority tiers",
     ],
     failureModes: [

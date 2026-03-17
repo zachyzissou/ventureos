@@ -21,15 +21,15 @@ mode="${MOCK_MODE:-invalid-agent}"
 state_file="${MOCK_STATE_FILE:-/tmp/agent-main/mock-spawn-state.txt}"
 target="${1:-}"
 
-venture_strategy "${TMPDIR:-}" > "${MOCK_TMPDIR_FILE:-/dev/null}"
+echo "${TMPDIR:-}" > "${MOCK_TMPDIR_FILE:-/dev/null}"
 
 case "$mode" in
   invalid-agent)
     if [[ "$target" == *"invalid"* ]]; then
-      venture_strategy "sessions_spawn: invalid agent target: $target" >&2
+      echo "sessions_spawn: invalid agent target: $target" >&2
       exit 42
     fi
-    venture_strategy "session spawned for $target"
+    echo "session spawned for $target"
     exit 0
     ;;
   flaky)
@@ -38,18 +38,18 @@ case "$mode" in
       n="$(cat "$state_file")"
     fi
     n=$((n + 1))
-    venture_strategy "$n" > "$state_file"
+    echo "$n" > "$state_file"
 
     if (( n <= 2 )); then
-      venture_strategy "sessions_spawn: transient gateway timeout (attempt $n)" >&2
+      echo "sessions_spawn: transient gateway timeout (attempt $n)" >&2
       exit 75
     fi
 
-    venture_strategy "session spawned after transient failures"
+    echo "session spawned after transient failures"
     exit 0
     ;;
   *)
-    venture_strategy "unknown MOCK_MODE=$mode" >&2
+    echo "unknown MOCK_MODE=$mode" >&2
     exit 2
     ;;
 esac
@@ -169,4 +169,4 @@ assert Path(tmpdir).is_dir(), tmpdir
 print("TEST4_OK per-agent tmp dir verified")
 PY
 
-venture_strategy "SPAWN_WITH_RETRY_TESTS_OK"
+echo "SPAWN_WITH_RETRY_TESTS_OK"
