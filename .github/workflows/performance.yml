@@ -72,28 +72,28 @@ jobs:
         run: npm run build
 
       - name: Run performance benchmarks
-        if: github.event_name != 'pull_request'
         working-directory: tactical-map
         env:
           PERF: '1'
           CI: 'true'
         run: |
           set +e
-          ./scripts/run-benchmarks.sh --ci --threshold 10 2>&1 | tee performance-output.txt
+          MODE="full-observe"
+          EXECUTED_SUITES="load,render,network,memory"
+          SUITE_ARGS=()
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            MODE="pr-stable"
+            EXECUTED_SUITES="load"
+            SUITE_ARGS+=(--suite load)
+          fi
+
+          ./scripts/run-benchmarks.sh --ci --threshold 10 "${SUITE_ARGS[@]}" 2>&1 | tee performance-output.txt
           bench_exit=${PIPESTATUS[0]}
           set -e
           printf '%s\n' "$bench_exit" > benchmark-exit-code.txt
+          printf '%s\n' "$MODE" > benchmark-mode.txt
+          printf '%s\n' "$EXECUTED_SUITES" > benchmark-executed-suites.txt
         continue-on-error: true
-
-      - name: Mark PR benchmark run as informational
-        if: github.event_name == 'pull_request'
-        working-directory: tactical-map
-        run: |
-          cat <<'EOF' > performance-output.txt
-          PR performance benchmarks skipped while CI stabilization is tracked in #627.
-          Benchmark artifacts remain informational until the workflow is trustworthy again.
-          EOF
-          printf '0\n' > benchmark-exit-code.txt
 
       - name: Collect benchmark results
         if: always()
@@ -110,6 +110,9 @@ jobs:
             cp test-results/.last-run.json performance-reports/playwright-results.json
           fi
 
+          MODE="$(cat benchmark-mode.txt 2>/dev/null || echo full-observe)"
+          EXECUTED_SUITES="$(cat benchmark-executed-suites.txt 2>/dev/null || echo load,render,network,memory)"
+
           # Git metadata
           echo '{
             "commitSha": "${{ github.sha }}",
@@ -118,11 +121,6 @@ jobs:
             "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
             "runner": "'$(uname -m)'"
           }' > performance-reports/metadata.json
-
-          MODE="executed"
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            MODE="pr-skip"
-          fi
 
           node ./scripts/summarize-performance-ci.mjs \
             --mode "$MODE" \
@@ -134,7 +132,10 @@ jobs:
             --branch "${{ github.head_ref || github.ref_name }}" \
             --pr "${{ github.event.pull_request.number || 'none' }}" \
             --threshold "10" \
-            --issue "627"
+            --issue "630" \
+            --stableSuites "load" \
+            --informationalSuites "render,network,memory" \
+            --executedSuites "$EXECUTED_SUITES"
 
       - name: Upload performance reports
         if: always()
@@ -197,11 +198,15 @@ jobs:
           node - <<'EOF'
           const fs = require('fs');
           const status = JSON.parse(fs.readFileSync('performance-reports/performance-status.json', 'utf8'));
+          if (status.gating.decision === 'fail') {
+            console.log(`::error::${status.gating.reason}`);
+            process.exit(1);
+          }
           if (status.gating.decision === 'warn') {
             console.log(`::warning::${status.gating.reason}`);
             process.exit(0);
           }
-          console.log('✅ No performance regressions detected.');
+          console.log(`✅ ${status.gating.reason}`);
           EOF
 
       - name: Update baselines (main branch only)
