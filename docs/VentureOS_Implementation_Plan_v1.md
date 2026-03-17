@@ -11,6 +11,7 @@ Normative references:
 - `docs/VentureOS_RBAC_Spec_v1.md`
 - `docs/VentureOS_Tool_Access_Matrix_v1.json`
 - `docs/VentureOS_30_Day_Operational_Cadence_v1.md`
+- `docs/VentureOS_SLA_Framework_Map_v1.md`
 - `docs/VentureOS_Phase0_Readiness_Checklist_v1.md`
 - `docs/VentureOS_Baseline_Measurement_SOP_v1.md`
 
@@ -67,6 +68,7 @@ Objective: prove repeatable execution in the core operating departments.
 In scope:
 - Run daily/weekly cadence for Executive Office, Operations, Data/Analytics, Finance.
 - Enforce SLA tracking for all handoffs among active departments.
+- Apply the technical-to-department SLA cascade map so P0-P3 incidents are recorded consistently in handoff evidence and readiness decisions.
 - Close all P0/P1 incidents within target windows.
 
 ### Phase B: Product and revenue engine (2026-04-20 to 2026-06-12)
@@ -146,6 +148,7 @@ In scope:
 - Phase C requires G3 pass and documented access-control model from IT/Security using the canonical VentureOS role model and RBAC artifacts.
 - Phase D requires G5 pass and full lane contract adoption across all active departments.
 - Any failed gate pauses downstream phase activation until remediation evidence is accepted.
+- Technical incident severity must be translated into department handoff impact using `docs/VentureOS_SLA_Framework_Map_v1.md`; teams may not invent ad hoc exception semantics during gate review.
 - GitHub epic `#603` and its successor implementation issues are the execution index for this rollout.
 
 ## 8) Rollback approach (phase-level)

@@ -7,6 +7,7 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 - `VentureOS_Department_Architecture_v1.md` — department missions and handoffs (restored to repo on 2026-03-16)
 - `VentureOS_Implementation_Plan_v1.md` — Phase 0 starts 2026-03-16; Phase A starts 2026-03-23
 - `VentureOS_Department_KPI_SLA_v1.md` — KPI targets and handoff SLAs
+- `VentureOS_SLA_Framework_Map_v1.md` — mapping from technical incident severity to handoff exception/breach handling
 - `VentureOS_Lane_Contracts_v1.md` — Director/Operator/Auditor lane obligations
 
 **Canonical evidence model:** primary artifacts live under `runtime/logs/`; validation and readiness summaries live under `runtime/reports/`.
@@ -188,9 +189,10 @@ Example: `2026-03-16-agent-health.json`
 | Agent health check fails (D-1) | Immediate → Operations Director | Operations | Acknowledge within 30 min |
 | Standup blocker unresolved >24h | Auto-escalate → Executive Chief of Staff | Operations Program Control | Directive within 4h |
 | KPI target missed 2 consecutive weeks | Flag in W-1 review; require action plan | Department Director | Action plan within 1 business day of W-1 |
-| Handoff SLA missed | Log + notify both producer and consumer Directors | Operations Program Control | Per KPI/SLA breach policy (Level 1/2/3) |
+| Handoff SLA missed | Log + notify both producer and consumer Directors | Operations Program Control | Per KPI/SLA breach policy (Level 1/2/3) and `VentureOS_SLA_Framework_Map_v1.md` when a technical incident is causal |
 | Spend variance >10% weekly | Flag in W-4; escalate to Executive if >20% | Finance Director | Corrective action within 1 business day |
 | Security incident (any severity) | Immediate → IT/Security Director + Executive | IT/Security | Containment per KPI/SLA doc: <=4h high severity |
+| Technical P0/P1 incident blocks an active handoff | Record incident-linked exception or breach routing in the handoff ledger before the handoff deadline | Operations Program Control + producer/consumer Directors | Approval route and expiry must follow `VentureOS_SLA_Framework_Map_v1.md` |
 | Daily evidence outputs missing at 17:30 CT | Operations Program Control flags; escalate to Department Director | Operations | Evidence produced or exception logged by end of next business day |
 
 ---

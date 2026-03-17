@@ -110,7 +110,7 @@ All four docs require evidence-first execution, and the repo now has canonical e
 
 ### C3. Two parallel SLA systems
 
-`docs/SLA_POLICY.md` defines P0-P3 SLAs for the technical task queue with response/resolution time targets. The KPI/SLA doc defines inter-department handoff SLAs with a different breach escalation model (Level 1/2/3 breach tiers based on miss count). These are parallel, unconnected SLA systems. **Resolution:** map them explicitly. Technical P0 incidents can trigger department-level SLA misses (e.g., if the task queue is down, Operations cannot meet its MTTR SLA). Document the dependency chain.
+This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Map_v1.md`, which maps technical `P0-P3` incident severity to department handoff exception handling, breach tiers, and readiness consequences. Technical P0 incidents can now be recorded as incident-linked handoff exceptions or `level_3` breaches under explicit approval rules instead of ad hoc interpretation.
 
 ### C4. OPS_RUNBOOK scope mismatch
 
@@ -142,7 +142,7 @@ All four docs require evidence-first execution, and the repo now has canonical e
 | R2 | Evidence infrastructure is partially implemented — evidence generation coverage still needs enforcement | HIGH | Data/Analytics Director + Engineering | Keep canonical store/schema/validation in place; finish generation, retention, and query/reporting depth |
 | R3 | Cross-cutting agent contracts were missing | RESOLVED | Operations Director | Closed by `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md` and `docs/VentureOS_Agent_Ownership_Matrix_v1.json` |
 | R4 | Access boundaries are defined only at the spec layer — runtime enforcement still pending | HIGH | IT/Security Director | Implement policy decisions through the named RBAC hook points and agent provisioning flow |
-| R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) still need cross-framework mapping, but handoff SLA detection is now implemented in the evidence-validation/readiness layer | MEDIUM-HIGH | Operations Director | Preserve the new handoff evidence gate; finish documenting how technical incidents cascade into department-level SLA impact |
+| R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) were previously unconnected | RESOLVED | Operations Director | Closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Map_v1.md` plus the existing handoff evidence gate |
 | R6 | No external boundary protocol for customer/vendor/regulator interactions | HIGH | Legal Director | Define boundary contracts before Sales/Legal activation in Phase B/C |
 | R7 | No inter-lane communication security model | HIGH | IT/Security Director | Define authentication/authorization for lane artifact exchange |
 | R8 | No KPI baselines — targets are aspirational until measured | MEDIUM | Data/Analytics Operator | Execute baseline measurement sprint in Phase 0 (Mar 16-25 per KPI/SLA doc §1) |
@@ -158,8 +158,7 @@ All four docs require evidence-first execution, and the repo now has canonical e
 1. **Keep Architecture doc aligned** — `VentureOS_Department_Architecture_v1.md` is restored; companion docs must continue to reference it as normative.
 2. **Complete evidence execution coverage** — The canonical store/schema/validation layer is now present. Finish generation coverage, retention policy enforcement, and query/reporting depth.
 3. **Implement RBAC enforcement hooks** — The role model and access matrix now exist; wire them into runtime policy, dashboard control surfaces, and agent provisioning.
-4. **Map SLA frameworks** — The evidence layer now computes handoff compliance, breach routing, and readiness failures. Next, document how P0-P3 technical incidents cascade into department handoff SLA impact.
-5. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
-6. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
-7. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
-8. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.
+4. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
+5. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
+6. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
+7. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.
