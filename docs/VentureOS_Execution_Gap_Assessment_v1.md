@@ -141,7 +141,7 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 | R1 | Architecture doc was missing from repo — companion docs referenced a ghost | RESOLVED | Executive Office Director | Restored from git history (commit f8ab267f) on 2026-03-16 |
 | R2 | Evidence execution coverage was partially implemented — control-plane generation, retention, and inventory/reporting were incomplete | RESOLVED | Data/Analytics Director + Engineering | Closed by the canonical evidence CLI flow: daily rollup sync, inventory reports, and retention preview/apply under `runtime/reports/evidence/` |
 | R3 | Cross-cutting agent contracts were missing | RESOLVED | Operations Director | Closed by `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md` and `docs/VentureOS_Agent_Ownership_Matrix_v1.json` |
-| R4 | Access boundaries are partially enforced at runtime — shared authority-plane and tactical-map hooks now use canonical VentureOS metadata, but dashboard control surfaces and provisioning flow still need coverage | MEDIUM-HIGH | IT/Security Director | Expand enforcement beyond `lib/authority-map.ts`, `lib/policy-gate.ts`, `lib/nexus-arbiter.ts`, and `tactical-map/src/interaction/permissions.ts` into remaining hook points and agent provisioning flow |
+| R4 | Access boundaries are now enforced across the shared authority plane, tactical-map hooks, dashboard control surfaces, and provisioning-adjacent agent routes using canonical VentureOS subject metadata | RESOLVED | IT/Security Director | Closed by canonical subject extraction in `dashboard/server/middleware/auth.ts`, privileged-route RBAC enforcement in `dashboard/server/middleware/rbac.ts`, shared resource gating in `lib/policy-gate.ts`, and canonical agent normalization in dashboard control/provisioning routes |
 | R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) were previously unconnected | RESOLVED | Operations Director | Closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Map_v1.md` plus the existing handoff evidence gate |
 | R6 | No external boundary protocol for customer/vendor/regulator interactions | RESOLVED | Legal Director | Closed at the doc/spec layer by `docs/VentureOS_External_Boundary_Protocol_v1.md` and `docs/VentureOS_External_Boundary_Control_Matrix_v1.json` |
 | R7 | Inter-lane communication security model is defined at the doc/spec layer, but runtime enforcement is still pending | MEDIUM-HIGH | IT/Security Director | Implement the model in exchange envelopes, auth boundaries, and evidence validation |
@@ -156,7 +156,7 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 ## 6) Recommended next actions (priority order)
 
 1. **Keep Architecture doc aligned** — `VentureOS_Department_Architecture_v1.md` is restored; companion docs must continue to reference it as normative.
-2. **Complete RBAC enforcement hooks** — The first runtime slice is live in the shared authority-plane and tactical-map permissions. Expand the same canonical policy model into dashboard control surfaces and agent provisioning.
-3. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
-4. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
-5. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.
+2. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
+3. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
+4. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.
+5. **Implement inter-lane security model at runtime** — Apply the existing protocol to exchange envelopes, auth boundaries, and evidence validation.

@@ -1,6 +1,12 @@
 import { normalizeApiBase } from "./dashboard-api.js";
 
 const DASHBOARD_API_BASE_HEADER = "x-dashboard-api-base";
+const SUBJECT_HEADERS = [
+  "x-ventureos-actor-id",
+  "x-ventureos-binding-id",
+  "x-ventureos-capability-id",
+  "x-ventureos-specialist-id",
+];
 
 function resolveDashboardApiBase(request) {
   return normalizeApiBase(
@@ -23,6 +29,11 @@ function copyAuthHeaders(fromHeaders) {
 
   const cookie = fromHeaders.get("cookie");
   if (cookie) nextHeaders.set("cookie", cookie);
+
+  for (const headerName of SUBJECT_HEADERS) {
+    const value = fromHeaders.get(headerName);
+    if (value) nextHeaders.set(headerName, value);
+  }
 
   nextHeaders.set("accept", "application/json");
   return nextHeaders;

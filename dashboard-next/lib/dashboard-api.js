@@ -1,15 +1,39 @@
 export const DEFAULT_API_BASE =
   process.env.NEXT_PUBLIC_DASHBOARD_API_BASE ?? "http://localhost:7000";
+export const DEFAULT_SUBJECT = {
+  actorId: "venture-control",
+  bindingId: "operations:operator",
+  capabilityId: "venture_control",
+  specialistId: "",
+};
 
 export function normalizeApiBase(rawBase) {
   const value = String(rawBase ?? "").trim();
   return value.replace(/\/+$/, "");
 }
 
-export function buildAuthHeaders(token, extra = {}) {
+function normalizeSubject(subject = {}) {
+  return {
+    actorId: String(subject.actorId ?? "").trim(),
+    bindingId: String(subject.bindingId ?? "").trim(),
+    capabilityId: String(subject.capabilityId ?? "").trim(),
+    specialistId: String(subject.specialistId ?? "").trim(),
+  };
+}
+
+function applySubjectHeaders(headers, subject = {}) {
+  const normalized = normalizeSubject(subject);
+  if (normalized.actorId) headers["x-ventureos-actor-id"] = normalized.actorId;
+  if (normalized.bindingId) headers["x-ventureos-binding-id"] = normalized.bindingId;
+  if (normalized.capabilityId) headers["x-ventureos-capability-id"] = normalized.capabilityId;
+  if (normalized.specialistId) headers["x-ventureos-specialist-id"] = normalized.specialistId;
+}
+
+export function buildAuthHeaders(token, extra = {}, subject = {}) {
   const headers = { Accept: "application/json", ...extra };
   const clean = String(token ?? "").trim();
   if (clean) headers.Authorization = `Bearer ${clean}`;
+  applySubjectHeaders(headers, subject);
   return headers;
 }
 
@@ -37,11 +61,11 @@ export async function loginWithToken(apiBase, token) {
 export async function requestDashboardJson(
   apiBase,
   path,
-  { method = "GET", token = "", body = undefined } = {},
+  { method = "GET", token = "", body = undefined, subject = DEFAULT_SUBJECT } = {},
 ) {
   const base = normalizeApiBase(apiBase);
   if (!base) throw new Error("API base URL is required");
-  const headers = buildAuthHeaders(token);
+  const headers = buildAuthHeaders(token, {}, subject);
   const init = {
     method,
     credentials: "include",
@@ -67,15 +91,15 @@ export async function requestDashboardJson(
   return readResponseJson(res);
 }
 
-export async function fetchDashboardJson(apiBase, path, token = "") {
-  return requestDashboardJson(apiBase, path, { method: "GET", token });
+export async function fetchDashboardJson(apiBase, path, token = "", subject = DEFAULT_SUBJECT) {
+  return requestDashboardJson(apiBase, path, { method: "GET", token, subject });
 }
 
 export async function requestLocalJson(
   path,
-  { method = "GET", token = "", body = undefined, apiBase = "" } = {},
+  { method = "GET", token = "", body = undefined, apiBase = "", subject = DEFAULT_SUBJECT } = {},
 ) {
-  const headers = buildAuthHeaders(token);
+  const headers = buildAuthHeaders(token, {}, subject);
   const normalizedBase = normalizeApiBase(apiBase);
   if (normalizedBase) headers["x-dashboard-api-base"] = normalizedBase;
   const init = {

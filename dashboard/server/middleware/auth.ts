@@ -14,6 +14,8 @@ import path from 'node:path';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { CookieMap } from '../types.js';
 import paths from '../../../lib/paths.js';
+import type { AuthorityActor, AuthorityClass } from '../../../lib/authority-map.js';
+import { normalizeCapabilityId } from '../../../lib/agent-identity.js';
 
 const { LOG_DIR, DASHBOARD_DATA_DIR } = paths as typeof import('../../../lib/paths.js');
 
@@ -115,6 +117,17 @@ function getPeerIp(req: IncomingMessage | null): string {
 function isTrustedProxyPeer(ip: string): boolean {
   const cleaned: string = normalizeIp(ip);
   return TRUSTED_PROXY_IPS.has(ip) || TRUSTED_PROXY_IPS.has(cleaned);
+}
+
+function isLoopbackIp(ip: string): boolean {
+  const cleaned: string = normalizeIp(ip);
+  return cleaned === '127.0.0.1' || cleaned === '::1';
+}
+
+function isTrustedSubjectHeaderSource(req: IncomingMessage | null): boolean {
+  const peerIp: string = getPeerIp(req);
+  if (isLoopbackIp(peerIp)) return true;
+  return TRUST_PROXY && isTrustedProxyPeer(peerIp);
 }
 
 function getClientIp(req: IncomingMessage | null): string {
@@ -220,6 +233,19 @@ export function tokenMatch(provided: string): boolean {
 }
 
 export const COOKIE_NAME: string = process.env.DASHBOARD_AUTH_COOKIE ?? 'openclaw_dashboard_token';
+export const SUBJECT_ACTOR_HEADER = 'x-ventureos-actor-id';
+export const SUBJECT_BINDING_HEADER = 'x-ventureos-binding-id';
+export const SUBJECT_CAPABILITY_HEADER = 'x-ventureos-capability-id';
+export const SUBJECT_SPECIALIST_HEADER = 'x-ventureos-specialist-id';
+export const SUBJECT_AUTHORITY_HEADER = 'x-ventureos-authority-class';
+
+const REQUEST_SUBJECT_SYMBOL = Symbol.for('ventureos.dashboard.requestSubject');
+
+export interface DashboardRequestSubject {
+  actor: AuthorityActor;
+  source: 'headers' | 'inferred';
+  hasExplicitHeaders: boolean;
+}
 
 export function parseCookies(header: string = ''): CookieMap {
   const out: CookieMap = {};
@@ -238,6 +264,79 @@ export function parseCookies(header: string = ''): CookieMap {
     }
   }
   return out;
+}
+
+function readHeaderValue(req: IncomingMessage | null, name: string): string {
+  const raw: string | string[] | undefined = req?.headers?.[name];
+  if (Array.isArray(raw)) return String(raw[0] ?? '').trim();
+  return typeof raw === 'string' ? raw.trim() : '';
+}
+
+function isCanonicalBindingId(value: string): boolean {
+  return /^[a-z_]+:[a-z_]+$/.test(value);
+}
+
+function isCanonicalId(value: string): boolean {
+  return /^[a-z_]+$/.test(value);
+}
+
+function inferAuthorityClass(
+  bindingId: string,
+  capabilityId: string,
+): AuthorityClass | null {
+  if (bindingId === 'human_arbiter' || capabilityId === 'human_arbiter') {
+    return 'human_final_arbiter';
+  }
+  if (capabilityId === 'venture_control' || capabilityId === 'venture_strategy') {
+    return 'control_plane';
+  }
+  return 'delegated_agent';
+}
+
+export function extractRequestSubject(req: IncomingMessage | null): DashboardRequestSubject | null {
+  const rawBindingId = readHeaderValue(req, SUBJECT_BINDING_HEADER);
+  const rawCapabilityId = readHeaderValue(req, SUBJECT_CAPABILITY_HEADER);
+  const rawSpecialistId = readHeaderValue(req, SUBJECT_SPECIALIST_HEADER);
+  const rawActorId = readHeaderValue(req, SUBJECT_ACTOR_HEADER);
+
+  const hasExplicitHeaders = Boolean(
+    rawBindingId || rawCapabilityId || rawSpecialistId || rawActorId,
+  );
+  if (!hasExplicitHeaders) return null;
+  if (!isTrustedSubjectHeaderSource(req)) return null;
+
+  const bindingId = isCanonicalBindingId(rawBindingId) ? rawBindingId : '';
+  const normalizedCapabilityId = normalizeCapabilityId(rawCapabilityId);
+  const capabilityId = normalizedCapabilityId ?? '';
+  const specialistId = isCanonicalId(rawSpecialistId) ? rawSpecialistId : '';
+  if (!bindingId && !capabilityId) return null;
+  const actorId = rawActorId || capabilityId || bindingId.replace(':', '-');
+  const authorityClass = inferAuthorityClass(bindingId, capabilityId);
+
+  return {
+    actor: {
+      id: actorId,
+      authorityClass: authorityClass ?? undefined,
+      bindingId: bindingId || undefined,
+      capabilityId: capabilityId || undefined,
+      specialistId: specialistId || undefined,
+    },
+    source: rawActorId ? 'headers' : 'inferred',
+    hasExplicitHeaders,
+  };
+}
+
+export function attachRequestSubject(req: IncomingMessage): DashboardRequestSubject | null {
+  const subject = extractRequestSubject(req);
+  (req as IncomingMessage & { [REQUEST_SUBJECT_SYMBOL]?: DashboardRequestSubject | null })[REQUEST_SUBJECT_SYMBOL] = subject;
+  return subject;
+}
+
+export function getRequestSubject(req: IncomingMessage | null): DashboardRequestSubject | null {
+  if (!req) return null;
+  const attached = (req as IncomingMessage & { [REQUEST_SUBJECT_SYMBOL]?: DashboardRequestSubject | null })[REQUEST_SUBJECT_SYMBOL];
+  if (attached !== undefined) return attached;
+  return attachRequestSubject(req);
 }
 
 export function getAuthTokenFromRequest(req: IncomingMessage | null): string | null {
@@ -264,7 +363,9 @@ export function isAuthenticated(req: IncomingMessage): boolean {
   }
 
   const provided: string | null = getAuthTokenFromRequest(req);
-  return !!(provided && tokenMatch(provided));
+  if (!(provided && tokenMatch(provided))) return false;
+  attachRequestSubject(req);
+  return true;
 }
 
 export function authenticate(req: IncomingMessage, res: ServerResponse): boolean {
@@ -298,6 +399,7 @@ export function authenticate(req: IncomingMessage, res: ServerResponse): boolean
 
   const provided: string | null = getAuthTokenFromRequest(req);
   if (provided && tokenMatch(provided)) {
+    attachRequestSubject(req);
     // Successful auth — don't log every success to avoid log spam
     return true;
   }

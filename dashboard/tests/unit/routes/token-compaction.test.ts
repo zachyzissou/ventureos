@@ -60,11 +60,13 @@ describe('token-compaction route', () => {
 
     const metricsBody = parseJsonBody<{
       total: number;
+      metrics: Array<{ agentId?: string }>;
       summary: { savedTokens: number; bySession: Record<string, { runs: number }> };
     }>(metricsRes);
     expect(metricsBody.total).toBe(1);
     expect(metricsBody.summary.savedTokens).toBeGreaterThan(0);
     expect(metricsBody.summary.bySession['sess-a']?.runs).toBe(1);
+    expect(metricsBody.metrics[0]?.agentId).toBe('venture_research');
   });
 
   it('returns validation errors for malformed payloads', async () => {
@@ -99,5 +101,44 @@ describe('token-compaction route', () => {
     expect(body.total).toBe(1);
     expect(body.metrics[0]?.agentId).toBe('venture_infrastructure');
   });
-});
 
+  it('normalizes legacy alias filters for metrics reads', async () => {
+    const req = mockRequest({ method: 'POST', url: '/api/token-compaction/run' });
+    const res = mockResponse();
+    await handleTokenCompaction(req, res, createDeps({
+      sessionId: 'sess-legacy',
+      agentId: 'oracle',
+      files: [{ path: 'oracle.ts', content: '// comment\nconst z = 1;\n'.repeat(10) }],
+    }));
+    expect(res._statusCode).toBe(200);
+
+    const metricsReq = mockRequest({ method: 'GET', url: '/api/token-compaction/metrics?agentId=oracle' });
+    const metricsRes = mockResponse();
+    await handleTokenCompaction(metricsReq, metricsRes, createDeps());
+    expect(metricsRes._statusCode).toBe(200);
+
+    const body = parseJsonBody<{ total: number; metrics: Array<{ agentId?: string }> }>(metricsRes);
+    expect(body.total).toBe(1);
+    expect(body.metrics[0]?.agentId).toBe('venture_research');
+  });
+
+  it('rejects unknown agent identifiers for compaction runs', async () => {
+    const req = mockRequest({ method: 'POST', url: '/api/token-compaction/run' });
+    const res = mockResponse();
+    await handleTokenCompaction(req, res, createDeps({
+      sessionId: 'sess-3',
+      agentId: 'not-a-real-agent',
+      files: [{ path: 'x.ts', content: 'const x = 1;' }],
+    }));
+    expect(res._statusCode).toBe(400);
+    expect(parseJsonBody<{ error: string }>(res).error).toMatch(/canonical VentureOS capability/i);
+  });
+
+  it('rejects unknown agent filters for metrics reads', async () => {
+    const req = mockRequest({ method: 'GET', url: '/api/token-compaction/metrics?agentId=not-a-real-agent' });
+    const res = mockResponse();
+    await handleTokenCompaction(req, res, createDeps());
+    expect(res._statusCode).toBe(400);
+    expect(parseJsonBody<{ error: string }>(res).error).toMatch(/canonical VentureOS capability/i);
+  });
+});

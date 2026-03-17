@@ -26,10 +26,19 @@ const server = http.createServer(async (req, res) => {
   });
 
   const hasAuth = Boolean(req.headers.authorization || req.headers.cookie);
+  const hasCanonicalSubject = Boolean(
+    req.headers["x-ventureos-binding-id"] && req.headers["x-ventureos-capability-id"],
+  );
   if ((req.method === "POST" || req.method === "PATCH") && !hasAuth) {
     res.statusCode = 401;
     res.setHeader("content-type", "application/json");
     res.end(JSON.stringify({ ok: false, error: "Missing credentials" }));
+    return;
+  }
+  if ((req.method === "POST" || req.method === "PATCH") && !hasCanonicalSubject) {
+    res.statusCode = 403;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ ok: false, error: "Missing canonical subject" }));
     return;
   }
 
@@ -105,6 +114,8 @@ try {
         cookie: "openclaw_dashboard_token=session-cookie",
         "content-type": "application/json",
         "x-dashboard-api-base": upstreamBase,
+        "x-ventureos-binding-id": "operations:operator",
+        "x-ventureos-capability-id": "venture_control",
       },
       body: JSON.stringify({ title: "Create from smoke" }),
     }),
@@ -126,6 +137,20 @@ try {
   );
   assert.equal(patchUnauthorized.status, 401);
 
+  const patchMissingSubject = await patchTask(
+    new Request("http://localhost:7001/api/task-board/task-001", {
+      method: "PATCH",
+      headers: {
+        authorization: "Bearer token-write",
+        "content-type": "application/json",
+        "x-dashboard-api-base": upstreamBase,
+      },
+      body: JSON.stringify({ status: "running" }),
+    }),
+    { params: { taskId: "task-001" } },
+  );
+  assert.equal(patchMissingSubject.status, 403);
+
   const patchResponse = await patchTask(
     new Request("http://localhost:7001/api/task-board/task-001", {
       method: "PATCH",
@@ -133,6 +158,8 @@ try {
         authorization: "Bearer token-write",
         "content-type": "application/json",
         "x-dashboard-api-base": upstreamBase,
+        "x-ventureos-binding-id": "operations:operator",
+        "x-ventureos-capability-id": "venture_control",
       },
       body: JSON.stringify({ status: "running" }),
     }),
@@ -147,6 +174,8 @@ try {
         authorization: "Bearer token-write",
         "content-type": "application/json",
         "x-dashboard-api-base": upstreamBase,
+        "x-ventureos-binding-id": "operations:operator",
+        "x-ventureos-capability-id": "venture_control",
       },
       body: "{invalid",
     }),
@@ -162,6 +191,8 @@ try {
     createUpstream.headers.cookie,
     "openclaw_dashboard_token=session-cookie",
   );
+  assert.equal(createUpstream.headers["x-ventureos-binding-id"], "operations:operator");
+  assert.equal(createUpstream.headers["x-ventureos-capability-id"], "venture_control");
 
   const readUpstream = upstreamRequests.find(
     (entry) => entry.method === "GET" && entry.url === "/api/task-board?limit=20",

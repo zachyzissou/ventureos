@@ -15,6 +15,7 @@ import {
   type CompactorFileInput,
   type CompressionLevel,
 } from '../../../lib/token-compactor.js';
+import { normalizeCapabilityId } from '../../../lib/agent-identity.js';
 
 export interface TokenCompactionDeps {
   dataDir: string;
@@ -92,6 +93,11 @@ function normalizeLevel(levelRaw: string | undefined): CompressionLevel {
   return 'standard';
 }
 
+function normalizeAgentId(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  return normalizeCapabilityId(raw) ?? undefined;
+}
+
 export function handleTokenCompaction(
   req: IncomingMessage,
   res: ServerResponse,
@@ -110,7 +116,12 @@ export function handleTokenCompaction(
   if (url.pathname === '/api/token-compaction/metrics' && req.method === 'GET') {
     const limit = clampInt(url.searchParams.get('limit'), 100, 1, 500);
     const sessionId = (url.searchParams.get('sessionId') ?? '').trim();
-    const agentId = (url.searchParams.get('agentId') ?? '').trim();
+    const rawAgentId = (url.searchParams.get('agentId') ?? '').trim();
+    const agentId = normalizeAgentId(rawAgentId);
+    if (rawAgentId && !agentId) {
+      deps.sendJson(res, { ok: false, error: 'agentId must resolve to a canonical VentureOS capability' }, 400);
+      return true;
+    }
 
     const history = readMetricsFile(metricsPath)
       .filter((metric) => (!sessionId || metric.sessionId === sessionId))
@@ -179,6 +190,12 @@ export function handleTokenCompaction(
         });
       }
 
+      const canonicalAgentId = normalizeAgentId(payload.agentId);
+      if (payload.agentId && !canonicalAgentId) {
+        deps.sendJson(res, { ok: false, error: 'agentId must resolve to a canonical VentureOS capability' }, 400);
+        return true;
+      }
+
       const result = runTokenCompaction(normalizedFiles, {
         level: normalizeLevel(payload.compression?.level),
         protectedFiles: Array.isArray(payload.compression?.protected_files)
@@ -188,7 +205,7 @@ export function handleTokenCompaction(
           ? clampInt(String(payload.compression.max_processing_ms), 200, 25, 5000)
           : undefined,
         sessionId: payload.sessionId,
-        agentId: payload.agentId,
+        agentId: canonicalAgentId,
       });
 
       appendMetric(metricsPath, result.metrics);
@@ -203,4 +220,3 @@ export function handleTokenCompaction(
   deps.sendJson(res, { ok: false, error: 'Not found' }, 404);
   return true;
 }
-

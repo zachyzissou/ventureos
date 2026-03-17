@@ -9,6 +9,7 @@ import {
   loadSelfImprovementDigests,
   setRecommendationStatus,
 } from '../self-improvement.js';
+import { normalizeCapabilityId } from '../../../lib/agent-identity.js';
 
 export interface SelfImprovementRouteDeps {
   dataDir: string;
@@ -38,6 +39,12 @@ function cleanId(raw: string | null | undefined): string {
   return (raw ?? '').trim();
 }
 
+function normalizeAgentId(raw: string | null | undefined): string | null {
+  const cleaned = cleanId(raw);
+  if (!cleaned) return null;
+  return normalizeCapabilityId(cleaned);
+}
+
 function parsePositiveInt(raw: string | null, fallback: number, min: number, max: number): number {
   const parsed = Number.parseInt(String(raw ?? ''), 10);
   if (Number.isNaN(parsed)) return fallback;
@@ -63,7 +70,16 @@ export function handleSelfImprovement(
       const body = parseJson<{ agentId?: string; date?: string; minRecommendations?: number }>(
         await deps.readRequestBody(req),
       ) ?? {};
-      const agentId = cleanId(body.agentId) || deps.defaultAgentId;
+      const explicitAgentId = cleanId(body.agentId);
+      if (explicitAgentId && !normalizeAgentId(explicitAgentId)) {
+        deps.sendJson(res, { ok: false, error: 'agentId must resolve to a canonical VentureOS capability' }, 400);
+        return true;
+      }
+      const agentId = normalizeAgentId(explicitAgentId) ?? normalizeAgentId(deps.defaultAgentId);
+      if (!agentId) {
+        deps.sendJson(res, { ok: false, error: 'agentId must resolve to a canonical VentureOS capability' }, 400);
+        return true;
+      }
       const minRecommendations = body.minRecommendations == null
         ? 3
         : parsePositiveInt(String(body.minRecommendations), 3, 1, 10);
@@ -84,8 +100,13 @@ export function handleSelfImprovement(
   // GET /api/self-improvement/digests
   if (url.pathname === '/api/self-improvement/digests' && req.method === 'GET') {
     const limit = parsePositiveInt(url.searchParams.get('limit'), 30, 1, 365);
-    const agentId = cleanId(url.searchParams.get('agentId')) || undefined;
-    const digests = listSelfImprovementDigests(deps.dataDir, { limit, agentId });
+    const rawAgentId = cleanId(url.searchParams.get('agentId'));
+    const agentId = normalizeAgentId(rawAgentId);
+    if (rawAgentId && !agentId) {
+      deps.sendJson(res, { ok: false, error: 'agentId must resolve to a canonical VentureOS capability' }, 400);
+      return true;
+    }
+    const digests = listSelfImprovementDigests(deps.dataDir, { limit, agentId: agentId ?? undefined });
     deps.sendJson(res, { total: digests.length, digests });
     return true;
   }
@@ -114,7 +135,16 @@ export function handleSelfImprovement(
 
     return (async () => {
       const body = parseJson<{ agentId?: string }>(await deps.readRequestBody(req)) ?? {};
-      const agentId = cleanId(body.agentId) || deps.defaultAgentId;
+      const explicitAgentId = cleanId(body.agentId);
+      if (explicitAgentId && !normalizeAgentId(explicitAgentId)) {
+        deps.sendJson(res, { ok: false, error: 'agentId must resolve to a canonical VentureOS capability' }, 400);
+        return true;
+      }
+      const agentId = normalizeAgentId(explicitAgentId) ?? normalizeAgentId(deps.defaultAgentId);
+      if (!agentId) {
+        deps.sendJson(res, { ok: false, error: 'agentId must resolve to a canonical VentureOS capability' }, 400);
+        return true;
+      }
       const result = setRecommendationStatus({
         dataDir: deps.dataDir,
         workspaceDir: deps.workspaceDir,
@@ -141,4 +171,3 @@ export function handleSelfImprovement(
   deps.sendJson(res, { ok: false, error: 'Not found' }, 404);
   return true;
 }
-
