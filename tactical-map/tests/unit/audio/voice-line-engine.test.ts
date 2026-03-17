@@ -124,21 +124,21 @@ describe('VoiceLineEngine — catalog', () => {
   });
 
   it('registers a single line', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Oracle reporting.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Oracle reporting.'));
     expect(engine.catalogSize).toBe(1);
   });
 
   it('registers multiple variants for same agent+trigger', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Oracle online.'));
-    engine.registerLine(makeLine('oracle', 'spawn', 'Sensors calibrated.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Oracle online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Sensors calibrated.'));
     expect(engine.catalogSize).toBe(2);
   });
 
   it('bulk registers', () => {
     engine.registerLines([
-      makeLine('oracle', 'spawn', 'Oracle online.'),
-      makeLine('atlas', 'error', 'Systems failing.'),
-      makeLine('synth', 'selected', 'Ready to build.'),
+      makeLine('venture_research', 'spawn', 'Oracle online.'),
+      makeLine('venture_infrastructure', 'error', 'Systems failing.'),
+      makeLine('venture_delivery', 'selected', 'Ready to build.'),
     ]);
     expect(engine.catalogSize).toBe(3);
   });
@@ -191,59 +191,59 @@ describe('VoiceLineEngine — event processing', () => {
   });
 
   it('returns false when no rules match', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
     engine.addRule(makeRule({ matches: () => false }));
-    const result = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const result = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(result).toBe(false);
   });
 
   it('returns false when no catalog entry for resolved trigger', () => {
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
     // No line registered — should return false
-    const result = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const result = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(result).toBe(false);
   });
 
   it('plays a voice line when rule matches and catalog has entry', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Oracle online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Oracle online.'));
     engine.addRule(makeRule({
       matches: (e) => e.type === 'agent-spawned',
       resolve: (e) => ({ agentId: e.agentId, trigger: 'spawn' as any }),
     }));
 
-    const result = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const result = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(result).toBe(true);
     expect(mgr.plays).toHaveLength(1);
-    expect(mgr.plays[0]).toBe('voice:oracle:spawn');
+    expect(mgr.plays[0]).toBe('voice:venture_research:spawn');
   });
 
   it('first matching rule wins (priority order)', () => {
-    engine.registerLine(makeLine('oracle', 'error', 'Error!'));
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'error', 'Error!'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
 
     engine.addRule(makeRule({
       id: 'low-priority',
       priority: 10,
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
     engine.addRule(makeRule({
       id: 'high-priority',
       priority: 90,
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'error' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'error' as any }),
     }));
 
-    engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
-    expect(mgr.plays[0]).toBe('voice:oracle:error');
+    engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
+    expect(mgr.plays[0]).toBe('voice:venture_research:error');
   });
 
   it('returns false when disabled', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
     engine.addRule(makeRule());
     engine.updateConfig({ enabled: false });
 
-    const result = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const result = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(result).toBe(false);
   });
 });
@@ -264,29 +264,29 @@ describe('VoiceLineEngine — cooldowns', () => {
   });
 
   it('enforces per-agent+trigger cooldown', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
 
-    const first = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const first = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(first).toBe(true);
 
-    const second = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const second = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(second).toBe(false); // on cooldown
   });
 
   it('clearCooldowns resets all cooldowns', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
 
-    engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     engine.clearCooldowns();
 
     // Should be able to play again after clearing
-    const result = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const result = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(result).toBe(true);
   });
 
@@ -297,15 +297,15 @@ describe('VoiceLineEngine — cooldowns', () => {
       defaultCooldownMs: 0,
     });
 
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
-    engine.registerLine(makeLine('atlas', 'spawn', 'Atlas ready.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_infrastructure', 'spawn', 'Atlas ready.'));
     engine.addRule(makeRule({
       resolve: (e) => ({ agentId: e.agentId, trigger: 'spawn' as any }),
     }));
 
-    engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     // Different agent, but global cooldown should block
-    const result = engine.handleEvent(makeEvent('agent-spawned', 'atlas'));
+    const result = engine.handleEvent(makeEvent('agent-spawned', 'venture_infrastructure'));
     expect(result).toBe(false);
   });
 });
@@ -326,11 +326,11 @@ describe('VoiceLineEngine — variant selection', () => {
   });
 
   it('round-robins through variants', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Line A'));
-    engine.registerLine(makeLine('oracle', 'spawn', 'Line B'));
-    engine.registerLine(makeLine('oracle', 'spawn', 'Line C'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Line A'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Line B'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Line C'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
 
     const subtitles: string[] = [];
@@ -342,7 +342,7 @@ describe('VoiceLineEngine — variant selection', () => {
     for (let i = 0; i < 3; i++) {
       engine.stopAll();
       engine.clearCooldowns();
-      engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+      engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     }
 
     expect(subtitles).toEqual(['Line A', 'Line B', 'Line C']);
@@ -369,32 +369,32 @@ describe('VoiceLineEngine — state observation', () => {
   });
 
   it('emits state on play', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Oracle online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Oracle online.'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
 
     const states: VoiceLineState[] = [];
     engine.subscribe((s) => states.push({ ...s }));
 
-    engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
 
     // Should have initial state + play state
     expect(states.length).toBeGreaterThanOrEqual(2);
     const playState = states[states.length - 1];
     expect(playState.current).not.toBeNull();
-    expect(playState.current!.agentId).toBe('oracle');
+    expect(playState.current!.agentId).toBe('venture_research');
     expect(playState.current!.trigger).toBe('spawn');
     expect(playState.current!.subtitle).toBe('Oracle online.');
   });
 
   it('emits null current after stopAll', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
 
-    engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     engine.stopAll();
 
     expect(engine.getState().current).toBeNull();
@@ -406,13 +406,13 @@ describe('VoiceLineEngine — state observation', () => {
     const unsub = engine.subscribe(() => { callCount++; });
     expect(callCount).toBe(1); // initial call
 
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
 
     unsub();
-    engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(callCount).toBe(1); // no further calls
   });
 });
@@ -433,28 +433,28 @@ describe('VoiceLineEngine — preemption', () => {
   });
 
   it('higher priority line preempts current', () => {
-    engine.registerLine(makeLine('oracle', 'spawn', 'Low priority.', { priority: 3 }));
-    engine.registerLine(makeLine('sentinel', 'error', 'ALERT!', { priority: 9 }));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Low priority.', { priority: 3 }));
+    engine.registerLine(makeLine('venture_security', 'error', 'ALERT!', { priority: 9 }));
 
     engine.addRules([
       makeRule({
         id: 'spawn-rule',
         priority: 50,
         matches: (e) => e.type === 'agent-spawned',
-        resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+        resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
       }),
       makeRule({
         id: 'error-rule',
         priority: 100,
         matches: (e) => e.type === 'state-change',
-        resolve: () => ({ agentId: 'sentinel' as any, trigger: 'error' as any }),
+        resolve: () => ({ agentId: 'venture_security' as any, trigger: 'error' as any }),
       }),
     ]);
 
-    engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(engine.getState().current!.subtitle).toBe('Low priority.');
 
-    engine.handleEvent(makeEvent('state-change', 'sentinel', { newState: 'ERROR' }));
+    engine.handleEvent(makeEvent('state-change', 'venture_security', { newState: 'ERROR' }));
     expect(engine.getState().current!.subtitle).toBe('ALERT!');
   });
 });
@@ -467,12 +467,12 @@ describe('VoiceLineEngine — graceful degradation', () => {
       defaultCooldownMs: 0,
     });
 
-    engine.registerLine(makeLine('oracle', 'spawn', 'Oracle online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Oracle online.'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
 
-    const result = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const result = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(result).toBe(true);
 
     // State should reflect playing (subtitles work without audio)
@@ -491,12 +491,12 @@ describe('VoiceLineEngine — graceful degradation', () => {
       defaultCooldownMs: 0,
     });
 
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
 
-    const result = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const result = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(result).toBe(true);
 
     // Subtitle works even though audio didn't play
@@ -527,12 +527,12 @@ describe('VoiceLineEngine — config', () => {
       globalCooldownMs: 0,
       defaultCooldownMs: 0,
     });
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
 
-    engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(engine.getState().current).not.toBeNull();
 
     engine.updateConfig({ enabled: false });
@@ -563,13 +563,13 @@ describe('VoiceLineEngine — dispose', () => {
       globalCooldownMs: 0,
       defaultCooldownMs: 0,
     });
-    engine.registerLine(makeLine('oracle', 'spawn', 'Online.'));
+    engine.registerLine(makeLine('venture_research', 'spawn', 'Online.'));
     engine.addRule(makeRule({
-      resolve: () => ({ agentId: 'oracle' as any, trigger: 'spawn' as any }),
+      resolve: () => ({ agentId: 'venture_research' as any, trigger: 'spawn' as any }),
     }));
     engine.dispose();
 
-    const result = engine.handleEvent(makeEvent('agent-spawned', 'oracle'));
+    const result = engine.handleEvent(makeEvent('agent-spawned', 'venture_research'));
     expect(result).toBe(false);
   });
 });

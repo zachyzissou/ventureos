@@ -95,8 +95,8 @@ Response 200:
 {
   "updatedAt": "2026-02-16T15:12:00.000Z",
   "agents": {
-    "oracle": {
-      "agentId": "oracle",
+    "venture_research": {
+      "agentId": "venture_research",
       "status": "healthy",           // "healthy" | "degraded" | "unhealthy" | "offline"
       "uptimeMs": 3600000,
       "lastHeartbeatAt": "2026-02-16T15:11:58.000Z",
@@ -137,7 +137,7 @@ Authorization: Bearer <token>
 
 Response 200:
 {
-  "agentId": "oracle",
+  "agentId": "venture_research",
   "status": "healthy",
   "uptimeMs": 3600000,
   "lastHeartbeatAt": "2026-02-16T15:11:58.000Z",
@@ -207,7 +207,7 @@ Server → Client events:
 {
   "type": "health.agent",
   "data": {
-    "agentId": "oracle",
+    "agentId": "venture_research",
     "status": "degraded",
     "metrics": { ... },
     "alertLevel": "warning",
@@ -222,7 +222,7 @@ Server → Client events:
     "id": "alert-abc123",
     "severity": "p1",                  // "p0" | "p1" | "warning" | "info"
     "scope": "agent",                  // "agent" | "system"
-    "targetId": "oracle",
+    "targetId": "venture_research",
     "title": "High latency detected",
     "message": "Oracle p95 latency exceeded 200ms for 60s",
     "createdAt": "2026-02-16T15:12:00.000Z",
@@ -625,7 +625,7 @@ When an agent enters `unhealthy` or `offline` status:
    
 3. **Building tint:** Building body lerps to error color over 500ms (matches existing `STATE_CROSSFADE_MS`)
 
-4. **Nexus color update:** Existing nexus color logic already handles this via `deriveBuildingState` — extend to consider health status alongside session-based state
+4. **Nexus color update:** Existing venture_control color logic already handles this via `deriveBuildingState` — extend to consider health status alongside session-based state
 
 ### 4.3 Alert Overlays
 
@@ -720,18 +720,18 @@ Overlay panel (togglable from HUD tab bar, alongside existing tabs):
 │  └──────────────────────────────┘     │
 │                                       │
 │  Agents    8/8 ████████████████      │
-│  oracle    ● healthy   12% cpu       │
-│  atlas     ● healthy    8% cpu       │
-│  sentinel  ◐ degraded  72% cpu  ⚠   │
-│  verifier  ● healthy   15% cpu       │
-│  archivist ● healthy    5% cpu       │
-│  synth     ● healthy   22% cpu       │
-│  echo      ● healthy    9% cpu       │
-│  nexus     ● healthy   18% cpu       │
+│  venture_research    ● healthy   12% cpu       │
+│  venture_infrastructure     ● healthy    8% cpu       │
+│  venture_security  ◐ degraded  72% cpu  ⚠   │
+│  venture_evidence  ● healthy   15% cpu       │
+│  venture_memory ● healthy    5% cpu       │
+│  venture_delivery     ● healthy   22% cpu       │
+│  venture_strategy      ● healthy    9% cpu       │
+│  venture_control     ● healthy   18% cpu       │
 │                                       │
 │  ┌──────────────────────────────┐     │
 │  │  Active Alerts (1)            │     │
-│  │  ⚠ P1 sentinel latency high  │     │
+│  │  ⚠ P1 venture_security latency high  │     │
 │  └──────────────────────────────┘     │
 └───────────────────────────────────────┘
 ```

@@ -79,7 +79,7 @@ describe('parseHealthEvent', () => {
   it('parses agent_update events', () => {
     const event = parseHealthEvent({
       type: 'agent_update',
-      agent: { agentId: 'oracle', cpu: 0.5 },
+      agent: { agentId: 'venture_research', cpu: 0.5 },
     });
     expect(event.type).toBe('agent_update');
     expect(event.agent).toBeDefined();
@@ -88,7 +88,7 @@ describe('parseHealthEvent', () => {
   it('parses agent_health events', () => {
     const event = parseHealthEvent({
       type: 'agent_health',
-      data: { agentId: 'atlas' },
+      data: { agentId: 'venture_infrastructure' },
     });
     expect(event.type).toBe('agent_update');
   });

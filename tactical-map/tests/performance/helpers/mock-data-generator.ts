@@ -46,8 +46,8 @@ export interface MockHealthAgent {
 }
 
 // Agent IDs matching the actual app
-const AGENT_IDS = ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'echo', 'nexus'] as const;
-const RING_AGENTS = AGENT_IDS.filter(id => id !== 'nexus');
+const AGENT_IDS = ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_delivery', 'venture_strategy', 'venture_control'] as const;
+const RING_AGENTS = AGENT_IDS.filter(id => id !== 'venture_control');
 const RING_RADIUS = 350;
 
 // Activity labels for realistic session simulation
@@ -160,7 +160,7 @@ export function generateMapState(profile: LoadProfile, seed: number = 42): MockM
 
   for (let i = 0; i < AGENT_IDS.length; i++) {
     const id = AGENT_IDS[i];
-    const pos = id === 'nexus' ? { x: 0, y: 0 } : positions[i] ?? { x: 0, y: 0 };
+    const pos = id === 'venture_control' ? { x: 0, y: 0 } : positions[i] ?? { x: 0, y: 0 };
 
     // Determine state based on ratios
     let state: MockAgentNode['state'] = 'IDLE';

@@ -56,19 +56,19 @@ describe('state:error rule', () => {
   });
 
   it('matches state-change to ERROR', () => {
-    const event = makeEvent('state-change', 'oracle', { newState: 'ERROR' });
+    const event = makeEvent('state-change', 'venture_research', { newState: 'ERROR' });
     expect(rule.matches(event)).toBe(true);
   });
 
   it('does not match state-change to ACTIVE', () => {
-    const event = makeEvent('state-change', 'oracle', { newState: 'ACTIVE' });
+    const event = makeEvent('state-change', 'venture_research', { newState: 'ACTIVE' });
     expect(rule.matches(event)).toBe(false);
   });
 
   it('resolves to error trigger for the event agent', () => {
-    const event = makeEvent('state-change', 'sentinel', { newState: 'ERROR' });
+    const event = makeEvent('state-change', 'venture_security', { newState: 'ERROR' });
     const result = rule.resolve(event);
-    expect(result).toEqual({ agentId: 'sentinel', trigger: 'error' });
+    expect(result).toEqual({ agentId: 'venture_security', trigger: 'error' });
   });
 });
 
@@ -76,16 +76,16 @@ describe('state:overloaded rule', () => {
   const rule = DEFAULT_VOICE_TRIGGER_RULES.find((r) => r.id === 'state:overloaded')!;
 
   it('matches state-change to OVERLOADED', () => {
-    expect(rule.matches(makeEvent('state-change', 'atlas', { newState: 'OVERLOADED' }))).toBe(true);
+    expect(rule.matches(makeEvent('state-change', 'venture_infrastructure', { newState: 'OVERLOADED' }))).toBe(true);
   });
 
   it('does not match IDLE', () => {
-    expect(rule.matches(makeEvent('state-change', 'atlas', { newState: 'IDLE' }))).toBe(false);
+    expect(rule.matches(makeEvent('state-change', 'venture_infrastructure', { newState: 'IDLE' }))).toBe(false);
   });
 
   it('resolves to overloaded trigger', () => {
-    const result = rule.resolve(makeEvent('state-change', 'atlas', { newState: 'OVERLOADED' }));
-    expect(result).toEqual({ agentId: 'atlas', trigger: 'overloaded' });
+    const result = rule.resolve(makeEvent('state-change', 'venture_infrastructure', { newState: 'OVERLOADED' }));
+    expect(result).toEqual({ agentId: 'venture_infrastructure', trigger: 'overloaded' });
   });
 });
 
@@ -93,16 +93,16 @@ describe('mission:completed rule', () => {
   const rule = DEFAULT_VOICE_TRIGGER_RULES.find((r) => r.id === 'mission:completed')!;
 
   it('matches mission-completed events', () => {
-    expect(rule.matches(makeEvent('mission-completed', 'synth'))).toBe(true);
+    expect(rule.matches(makeEvent('mission-completed', 'venture_delivery'))).toBe(true);
   });
 
   it('does not match agent-spawned', () => {
-    expect(rule.matches(makeEvent('agent-spawned', 'synth'))).toBe(false);
+    expect(rule.matches(makeEvent('agent-spawned', 'venture_delivery'))).toBe(false);
   });
 
   it('resolves to mission-complete trigger', () => {
-    const result = rule.resolve(makeEvent('mission-completed', 'synth'));
-    expect(result).toEqual({ agentId: 'synth', trigger: 'mission-complete' });
+    const result = rule.resolve(makeEvent('mission-completed', 'venture_delivery'));
+    expect(result).toEqual({ agentId: 'venture_delivery', trigger: 'mission-complete' });
   });
 });
 
@@ -110,7 +110,7 @@ describe('mission:failed rule', () => {
   const rule = DEFAULT_VOICE_TRIGGER_RULES.find((r) => r.id === 'mission:failed')!;
 
   it('matches mission-failed events', () => {
-    expect(rule.matches(makeEvent('mission-failed', 'oracle'))).toBe(true);
+    expect(rule.matches(makeEvent('mission-failed', 'venture_research'))).toBe(true);
   });
 
   it('has higher priority than mission:completed', () => {
@@ -123,12 +123,12 @@ describe('agent:spawned rule', () => {
   const rule = DEFAULT_VOICE_TRIGGER_RULES.find((r) => r.id === 'agent:spawned')!;
 
   it('matches agent-spawned events', () => {
-    expect(rule.matches(makeEvent('agent-spawned', 'oracle'))).toBe(true);
+    expect(rule.matches(makeEvent('agent-spawned', 'venture_research'))).toBe(true);
   });
 
   it('resolves to spawn trigger', () => {
-    const result = rule.resolve(makeEvent('agent-spawned', 'oracle'));
-    expect(result).toEqual({ agentId: 'oracle', trigger: 'spawn' });
+    const result = rule.resolve(makeEvent('agent-spawned', 'venture_research'));
+    expect(result).toEqual({ agentId: 'venture_research', trigger: 'spawn' });
   });
 
   it('has long cooldown (prevent re-announcement)', () => {
@@ -141,11 +141,11 @@ describe('agent:paused / agent:resumed rules', () => {
   const resumedRule = DEFAULT_VOICE_TRIGGER_RULES.find((r) => r.id === 'agent:resumed')!;
 
   it('paused matches agent-paused', () => {
-    expect(pausedRule.matches(makeEvent('agent-paused', 'atlas'))).toBe(true);
+    expect(pausedRule.matches(makeEvent('agent-paused', 'venture_infrastructure'))).toBe(true);
   });
 
   it('resumed matches agent-resumed', () => {
-    expect(resumedRule.matches(makeEvent('agent-resumed', 'atlas'))).toBe(true);
+    expect(resumedRule.matches(makeEvent('agent-resumed', 'venture_infrastructure'))).toBe(true);
   });
 
   it('have equal priority', () => {
@@ -157,7 +157,7 @@ describe('agent:selected rule', () => {
   const rule = DEFAULT_VOICE_TRIGGER_RULES.find((r) => r.id === 'agent:selected')!;
 
   it('matches agent-selected events', () => {
-    expect(rule.matches(makeEvent('agent-selected', 'verifier'))).toBe(true);
+    expect(rule.matches(makeEvent('agent-selected', 'venture_evidence'))).toBe(true);
   });
 
   it('has low priority (non-urgent)', () => {
@@ -173,7 +173,7 @@ describe('state:active rule', () => {
   const rule = DEFAULT_VOICE_TRIGGER_RULES.find((r) => r.id === 'state:active')!;
 
   it('matches IDLE → ACTIVE transition', () => {
-    const event = makeEvent('state-change', 'oracle', {
+    const event = makeEvent('state-change', 'venture_research', {
       newState: 'ACTIVE',
       previousState: 'IDLE',
     });
@@ -181,7 +181,7 @@ describe('state:active rule', () => {
   });
 
   it('does not match ERROR → ACTIVE (not the right transition)', () => {
-    const event = makeEvent('state-change', 'oracle', {
+    const event = makeEvent('state-change', 'venture_research', {
       newState: 'ACTIVE',
       previousState: 'ERROR',
     });
@@ -189,7 +189,7 @@ describe('state:active rule', () => {
   });
 
   it('does not match ACTIVE → ACTIVE (no change)', () => {
-    const event = makeEvent('state-change', 'oracle', {
+    const event = makeEvent('state-change', 'venture_research', {
       newState: 'ACTIVE',
       previousState: 'ACTIVE',
     });
@@ -201,7 +201,7 @@ describe('state:idle rule', () => {
   const rule = DEFAULT_VOICE_TRIGGER_RULES.find((r) => r.id === 'state:idle')!;
 
   it('matches ACTIVE → IDLE transition', () => {
-    const event = makeEvent('state-change', 'synth', {
+    const event = makeEvent('state-change', 'venture_delivery', {
       newState: 'IDLE',
       previousState: 'ACTIVE',
     });
@@ -209,7 +209,7 @@ describe('state:idle rule', () => {
   });
 
   it('matches OVERLOADED → IDLE transition', () => {
-    const event = makeEvent('state-change', 'synth', {
+    const event = makeEvent('state-change', 'venture_delivery', {
       newState: 'IDLE',
       previousState: 'OVERLOADED',
     });
@@ -217,7 +217,7 @@ describe('state:idle rule', () => {
   });
 
   it('does not match ERROR → IDLE (recovery should use a different rule)', () => {
-    const event = makeEvent('state-change', 'synth', {
+    const event = makeEvent('state-change', 'venture_delivery', {
       newState: 'IDLE',
       previousState: 'ERROR',
     });

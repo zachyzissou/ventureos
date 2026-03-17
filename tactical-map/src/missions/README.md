@@ -37,8 +37,8 @@ tracker.connect();
 // In your render loop:
 function renderFrame(ctx: CanvasRenderingContext2D) {
   const agentPositions = new Map([
-    ['oracle', { x: 200, y: 300 }],
-    ['atlas', { x: 400, y: 300 }],
+    ['venture_research', { x: 200, y: 300 }],
+    ['venture_infrastructure', { x: 400, y: 300 }],
   ]);
 
   tracker.render(ctx, agentPositions, Date.now());

@@ -89,13 +89,13 @@ Returns the current map state for all agents (7 ring agents + 1 central Nexus).
 {
   "updatedAt": "2026-02-16T09:00:00.000Z",
   "agents": {
-    "oracle": {
+    "venture_research": {
       "state": "ACTIVE",
       "sessions": 2,
       "position": { "x": 0, "y": -350 },
       "activeSessions": [
         {
-          "id": "oracle:0",
+          "id": "venture_research:0",
           "label": "Research multi-domain synthesis",
           "startedAt": "2026-02-16T08:45:00.000Z",
           "estimatedMs": 600000,
@@ -103,17 +103,17 @@ Returns the current map state for all agents (7 ring agents + 1 central Nexus).
         }
       ]
     },
-    "atlas": {
+    "venture_infrastructure": {
       "state": "IDLE",
       "sessions": 0,
       "position": { "x": 247.49, "y": -247.49 }
     },
-    "sentinel": { "..." },
-    "verifier": { "..." },
-    "archivist": { "..." },
-    "synth": { "..." },
-    "echo": { "..." },
-    "nexus": {
+    "venture_security": { "..." },
+    "venture_evidence": { "..." },
+    "venture_memory": { "..." },
+    "venture_delivery": { "..." },
+    "venture_strategy": { "..." },
+    "venture_control": {
       "state": "ACTIVE",
       "sessions": 3,
       "position": { "x": 0, "y": 0 }
@@ -153,8 +153,8 @@ Returns the current resource economy snapshot (token budgets + costs).
 {
   "updatedAt": "2026-02-16T09:00:00.000Z",
   "agents": {
-    "oracle": {
-      "agentId": "oracle",
+    "venture_research": {
+      "agentId": "venture_research",
       "tokenBudget": 100000,
       "tokensUsed": 45000,
       "tokensRemaining": 55000,
@@ -166,7 +166,7 @@ Returns the current resource economy snapshot (token budgets + costs).
         { "ts": 1708074000000, "tokensUsed": 45000, "costUsd": 2.34 }
       ]
     },
-    "atlas": { "..." }
+    "venture_infrastructure": { "..." }
   },
   "pool": {
     "tokenQuotaTotal": 1000000,
@@ -203,8 +203,8 @@ Returns the current health snapshot for all agents.
 {
   "updatedAt": "2026-02-16T09:00:00.000Z",
   "agents": {
-    "oracle": {
-      "agentId": "oracle",
+    "venture_research": {
+      "agentId": "venture_research",
       "status": "green",
       "connectivity": "online",
       "cpuUsage": 0.35,
@@ -227,7 +227,7 @@ Returns the current health snapshot for all agents.
         }
       ]
     },
-    "atlas": { "..." }
+    "venture_infrastructure": { "..." }
   },
   "system": {
     "overallStatus": "green",
@@ -272,13 +272,13 @@ Returns persisted interactive-control state (paused agents, budget overrides, sa
 {
   "ok": true,
   "updatedAt": "2026-02-16T15:30:00.000Z",
-  "pausedAgents": ["synth"],
+  "pausedAgents": ["venture_delivery"],
   "budgets": {
-    "synth": 75000,
-    "oracle": 100000
+    "venture_delivery": 75000,
+    "venture_research": 100000
   },
   "configs": {
-    "synth": { "maxSessions": 3 }
+    "venture_delivery": { "maxSessions": 3 }
   }
 }
 ```
@@ -314,7 +314,7 @@ Create a mission from the tactical map mission-spawn UI.
 {
   "title": "Investigate build regression",
   "description": "Focus on tactical map controls",
-  "assignee": "synth",
+  "assignee": "venture_delivery",
   "priority": "high",
   "tokenBudget": 32000
 }
@@ -383,7 +383,7 @@ Returns the RPG KPI statistics for the HUD ticker.
 {
   "type": "agent_update",
   "agent": {
-    "agentId": "oracle",
+    "agentId": "venture_research",
     "tokensUsed": 46000,
     "costUsd": 2.40,
     "burnRateUsdPerHour": 0.82
@@ -468,7 +468,7 @@ During disconnection, client falls back to polling `GET /resources` every 2s.
 {
   "type": "agent_health",
   "agent": {
-    "agentId": "oracle",
+    "agentId": "venture_research",
     "cpuUsage": 0.38,
     "memoryUsage": 0.54,
     "latencyMs": 125,
@@ -482,9 +482,9 @@ During disconnection, client falls back to polling `GET /resources` every 2s.
 {
   "type": "health_alert",
   "alert": {
-    "id": "health:oracle:cpu:1708074000000",
+    "id": "health:venture_research:cpu:1708074000000",
     "severity": "P1",
-    "agentId": "oracle",
+    "agentId": "venture_research",
     "title": "🟡 Warning",
     "message": "Oracle CPU elevated (72%)",
     "metric": "cpu",
@@ -577,14 +577,14 @@ else → IDLE
 Max sessions per agent:
 | Agent | Max Sessions |
 |-------|-------------|
-| oracle | 3 |
-| atlas | 5 |
-| sentinel | 3 |
-| verifier | 4 |
-| archivist | 3 |
-| synth | 3 |
-| echo | 5 |
-| nexus | 5 |
+| venture_research | 3 |
+| venture_infrastructure | 5 |
+| venture_security | 3 |
+| venture_evidence | 4 |
+| venture_memory | 3 |
+| venture_delivery | 3 |
+| venture_strategy | 5 |
+| venture_control | 5 |
 
 ---
 

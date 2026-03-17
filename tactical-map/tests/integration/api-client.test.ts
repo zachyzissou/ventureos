@@ -9,8 +9,8 @@ const server = setupServer(
     HttpResponse.json({
       updatedAt: '2026-02-14T00:00:00.000Z',
       agents: {
-        oracle: { state: 'ACTIVE', sessions: 1 },
-        atlas: { state: 'IDLE', sessions: 0 }
+        venture_research: { state: 'ACTIVE', sessions: 1 },
+        venture_infrastructure: { state: 'IDLE', sessions: 0 }
       }
     })
   ),
@@ -38,10 +38,10 @@ describe('api-client', () => {
     const s = await client.fetchOnce();
 
     expect(s.updatedAt).toContain('2026-02-14');
-    expect(s.agents.oracle.state).toBe('ACTIVE');
-    expect(s.agents.oracle.sessions).toBe(1);
+    expect(s.agents.venture_research.state).toBe('ACTIVE');
+    expect(s.agents.venture_research.sessions).toBe(1);
     // unknown agents should still exist in normalized state
-    expect(s.agents.sentinel).toBeTruthy();
+    expect(s.agents.venture_security).toBeTruthy();
   });
 
   it('start() schedules next poll at API.POLL_INTERVAL after success', async () => {
@@ -81,7 +81,7 @@ describe('api-client', () => {
           first = false;
           return new HttpResponse('boom', { status: 500 });
         }
-        return HttpResponse.json({ updatedAt: 'x', agents: { oracle: { state: 'IDLE' } } });
+        return HttpResponse.json({ updatedAt: 'x', agents: { venture_research: { state: 'IDLE' } } });
       })
     );
 

@@ -5,6 +5,14 @@
  * Update this file instead of hardcoding values.
  */
 
+import {
+  AGENT_DISPLAY_NAMES,
+  CANONICAL_AGENT_ORDER,
+  CONTROL_HUB_AGENT_ID,
+  type AgentId,
+} from '@/identity';
+export type { AgentId } from '@/identity';
+
 export type Point = { x: number; y: number };
 
 export const CANVAS = {
@@ -59,15 +67,10 @@ export const BONDS = {
 
   /**
    * 5-tier affinity palette (per Phase 5.3 spec).
-   * - Tier 1 (nascent): dim blue
-   * - Tier 2 (forming): cyan
-   * - Tier 3 (active): green
-   * - Tier 4 (strong): yellow
-   * - Tier 5 (synergistic): gold/orange
    */
   TIER_COLORS: [0x1b3b7a, 0x00d4ff, 0x2dff7a, 0xffe45a, 0xffb000],
 
-  /** Alpha mapping for bonds (strength → alpha). */
+  /** Alpha mapping for bonds (strength -> alpha). */
   ALPHA_MIN: 0.12,
   ALPHA_MAX: 0.85,
   /** How quickly lines fade toward new target strength. */
@@ -88,9 +91,6 @@ export const BONDS = {
 
   /**
    * Organic motion
-   *
-   * - Pulse: subtle alpha modulation
-   * - Drift: control point wobble (keeps endpoints stable)
    */
   PULSE_HZ: 0.30,
   DRIFT_HZ: 0.22,
@@ -144,14 +144,14 @@ export const API = {
 export const CAPACITY = {
   /** Per-agent max sessions (from phase5-ambiguities-resolved.md). */
   MAX_SESSIONS: {
-    oracle: 3,
-    atlas: 5,
-    sentinel: 3,
-    verifier: 4,
-    archivist: 3,
-    synth: 3,
-    echo: 5,
-    nexus: 5
+    venture_research: 3,
+    venture_infrastructure: 5,
+    venture_security: 3,
+    venture_evidence: 4,
+    venture_memory: 3,
+    venture_delivery: 3,
+    venture_strategy: 5,
+    venture_control: 5,
   },
   /** Overload threshold (% of max). */
   OVERLOAD_THRESHOLD: 0.8,
@@ -201,48 +201,35 @@ export const ECONOMY = {
   HEATMAP_REDRAW_MS: 90
 } as const;
 
-export const AGENT_ORDER = [
-  'oracle',
-  'atlas',
-  'sentinel',
-  'verifier',
-  'archivist',
-  'synth',
-  'echo',
-  'nexus'
-] as const;
-
-export type AgentId = (typeof AGENT_ORDER)[number];
+export const AGENT_ORDER = CANONICAL_AGENT_ORDER;
+export { AGENT_DISPLAY_NAMES, CONTROL_HUB_AGENT_ID };
 
 export const AGENT_COLORS: Record<AgentId, number> = {
-  /** Oracle: icy blue */
-  oracle: 0x7bdcff,
-  /** Atlas: primary command blue */
-  atlas: 0x00d4ff,
-  /** Sentinel: guardian blue */
-  sentinel: 0x4aa0ff,
-  /** Verifier: violet-blue */
-  verifier: 0x7a7dff,
-  /** Archivist: teal */
-  archivist: 0x67ffd1,
-  /** Synth: aqua */
-  synth: 0x00e1c3,
-  /** Echo: gold accent */
-  echo: 0xffd700,
-  /** Nexus: command gold */
-  nexus: 0xffd700
+  venture_research: 0x7bdcff,
+  venture_infrastructure: 0x00d4ff,
+  venture_security: 0x4aa0ff,
+  venture_evidence: 0x7a7dff,
+  venture_memory: 0x67ffd1,
+  venture_delivery: 0x00e1c3,
+  venture_strategy: 0xffd700,
+  venture_control: 0xffd700,
 } as const;
 
 /**
  * Calculate evenly spaced points around a circle.
  *
- * Angle starts at the top (-90°), rotating clockwise.
+ * Angle starts at the top (-90deg), rotating clockwise.
  */
-export function calculateCirclePositions(count: number, radius: number): Point[] {
+function calculateCirclePositions(count: number, radius: number): Point[] {
   const positions: Point[] = [];
   for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-    positions.push({ x: Math.cos(angle) * radius, y: Math.sin(angle) * radius });
+    const angle = (-Math.PI / 2) + (i * 2 * Math.PI) / count;
+    positions.push({
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+    });
   }
   return positions;
 }
+
+export { calculateCirclePositions };

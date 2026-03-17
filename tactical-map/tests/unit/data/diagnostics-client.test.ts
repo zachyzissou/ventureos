@@ -39,7 +39,7 @@ describe('toNumber', () => {
 
 describe('transformDiagnostics', () => {
   const rawResponse: RawDiagnosticsResponse = {
-    agentId: 'oracle',
+    agentId: 'venture_research',
     now: Date.now(),
     healthScore: 85,
     sessionCount: 10,
@@ -61,8 +61,8 @@ describe('transformDiagnostics', () => {
   };
 
   it('transforms basic fields', () => {
-    const data = transformDiagnostics(rawResponse, 'oracle');
-    expect(data.agentId).toBe('oracle');
+    const data = transformDiagnostics(rawResponse, 'venture_research');
+    expect(data.agentId).toBe('venture_research');
     expect(data.healthScore).toBe(85);
     expect(data.sessionCount).toBe(10);
     expect(data.abortedCount).toBe(2);
@@ -70,7 +70,7 @@ describe('transformDiagnostics', () => {
   });
 
   it('transforms metrics history into arrays', () => {
-    const data = transformDiagnostics(rawResponse, 'oracle');
+    const data = transformDiagnostics(rawResponse, 'venture_research');
     expect(data.metricsHistory.cpuUsage).toEqual([0.3, 0.4]);
     expect(data.metricsHistory.memoryUsage).toEqual([0.5, 0.55]);
     expect(data.metricsHistory.latencyMs).toEqual([100, 120]);
@@ -78,22 +78,22 @@ describe('transformDiagnostics', () => {
   });
 
   it('transforms errors', () => {
-    const data = transformDiagnostics(rawResponse, 'oracle');
+    const data = transformDiagnostics(rawResponse, 'venture_research');
     expect(data.recentErrors).toHaveLength(1);
     expect(data.recentErrors[0].message).toBe('timeout');
     expect(data.recentErrors[0].level).toBe('error');
   });
 
   it('transforms alerts', () => {
-    const data = transformDiagnostics(rawResponse, 'oracle');
+    const data = transformDiagnostics(rawResponse, 'venture_research');
     expect(data.alerts).toHaveLength(1);
     expect(data.alerts[0].severity).toBe('P1');
     expect(data.alerts[0].title).toBe('CPU Warning');
   });
 
   it('handles empty response', () => {
-    const data = transformDiagnostics({}, 'oracle');
-    expect(data.agentId).toBe('oracle');
+    const data = transformDiagnostics({}, 'venture_research');
+    expect(data.agentId).toBe('venture_research');
     expect(data.healthScore).toBe(0);
     expect(data.sessionCount).toBe(0);
     expect(data.metricsHistory.cpuUsage).toEqual([]);
@@ -102,7 +102,7 @@ describe('transformDiagnostics', () => {
   });
 
   it('handles null successRate', () => {
-    const data = transformDiagnostics({ ...rawResponse, successRate: null }, 'oracle');
+    const data = transformDiagnostics({ ...rawResponse, successRate: null }, 'venture_research');
     expect(data.successRate).toBeNull();
   });
 
@@ -110,7 +110,7 @@ describe('transformDiagnostics', () => {
     const data = transformDiagnostics({
       ...rawResponse,
       alerts: [{ severity: 'P3', title: 'Unknown', message: 'Test' } as any],
-    }, 'oracle');
+    }, 'venture_research');
     expect(data.alerts[0].severity).toBe('P1');
   });
 });
@@ -123,7 +123,7 @@ describe('createDiagnosticsClient', () => {
 
   it('fetch calls the API with correct URL', async () => {
     const mockFetchJson = vi.fn().mockResolvedValue({
-      agentId: 'oracle',
+      agentId: 'venture_research',
       healthScore: 90,
       sessionCount: 5,
       metricsHistory: [],
@@ -136,12 +136,12 @@ describe('createDiagnosticsClient', () => {
       { fetchJson: mockFetchJson, getAuthToken: () => null },
     );
 
-    const data = await client.fetch('oracle');
+    const data = await client.fetch('venture_research');
     expect(mockFetchJson).toHaveBeenCalledWith(
-      'http://test/api/agent-health/oracle/diagnostics',
+      'http://test/api/agent-health/venture_research/diagnostics',
       expect.any(Object),
     );
-    expect(data.agentId).toBe('oracle');
+    expect(data.agentId).toBe('venture_research');
   });
 
   it('passes auth token when available', async () => {
@@ -156,7 +156,7 @@ describe('createDiagnosticsClient', () => {
       { fetchJson: mockFetchJson, getAuthToken: () => 'my-token' },
     );
 
-    await client.fetch('oracle');
+    await client.fetch('venture_research');
     expect(mockFetchJson).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
@@ -178,7 +178,7 @@ describe('createDiagnosticsClient', () => {
       { fetchJson: mockFetchJson, getAuthToken: () => null },
     );
 
-    await client.fetch('oracle');
+    await client.fetch('venture_research');
     expect(onData).toHaveBeenCalledTimes(1);
   });
 
@@ -191,6 +191,6 @@ describe('createDiagnosticsClient', () => {
       { fetchJson: mockFetchJson, getAuthToken: () => null },
     );
 
-    await expect(client.fetch('oracle')).rejects.toThrow('network');
+    await expect(client.fetch('venture_research')).rejects.toThrow('network');
   });
 });

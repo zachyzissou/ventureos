@@ -205,7 +205,7 @@ export class MockMissionDataProvider implements MissionDataProvider {
   private generateInitialMissions(count: number): MissionData[] {
     const missions: MissionData[] = [];
     const phases: MissionPhase[] = ['brief', 'plan', 'execute', 'verify', 'deliver'];
-    const roles: SquadRole[] = ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth'];
+    const roles: SquadRole[] = ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_delivery'];
     const titles = [
       'Security Audit Sprint',
       'API Gateway Refactor',

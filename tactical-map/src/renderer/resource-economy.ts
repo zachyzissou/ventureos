@@ -37,7 +37,7 @@ function defaultPositions(): Record<AgentId, Point> {
   const out = {} as Record<AgentId, Point>;
   for (let i = 0; i < AGENT_ORDER.length; i++) {
     const id = AGENT_ORDER[i];
-    out[id] = id === 'nexus' ? { x: 0, y: 0 } : AGENTS.POSITIONS[i] ?? { x: 0, y: 0 };
+    out[id] = id === 'venture_control' ? { x: 0, y: 0 } : AGENTS.POSITIONS[i] ?? { x: 0, y: 0 };
   }
   return out;
 }

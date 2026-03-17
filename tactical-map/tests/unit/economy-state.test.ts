@@ -12,7 +12,7 @@ describe('economy/state', () => {
     const state = createEmptyEconomyState(1000);
 
     expect(Object.keys(state.agents)).toHaveLength(8);
-    expect(state.agents.oracle.quotaRemainingRatio).toBe(1);
+    expect(state.agents.venture_research.quotaRemainingRatio).toBe(1);
     expect(state.pool.costRemainingRatio).toBe(1);
   });
 
@@ -24,7 +24,7 @@ describe('economy/state', () => {
       {
         updatedAt: '2026-02-16T00:00:00.000Z',
         agents: {
-          oracle: {
+          venture_research: {
             tokenBudget: 10_000,
             tokensUsed: 8_250,
             costUsd: 12.4,
@@ -45,10 +45,10 @@ describe('economy/state', () => {
       2_000
     );
 
-    expect(next.agents.oracle.tokensRemaining).toBe(1750);
-    expect(next.agents.oracle.quotaRemainingRatio).toBeCloseTo(0.175, 3);
-    expect(next.agents.oracle.health).toBe('yellow');
-    expect(next.agents.oracle.history.length).toBeGreaterThan(1);
+    expect(next.agents.venture_research.tokensRemaining).toBe(1750);
+    expect(next.agents.venture_research.quotaRemainingRatio).toBeCloseTo(0.175, 3);
+    expect(next.agents.venture_research.health).toBe('yellow');
+    expect(next.agents.venture_research.history.length).toBeGreaterThan(1);
 
     expect(next.pool.tokenQuotaRemaining).toBe(36_000);
     expect(next.pool.costRemainingUsd).toBe(108);
@@ -60,7 +60,7 @@ describe('economy/state', () => {
     const withAgent = applyAgentEconomyUpdate(
       initial,
       {
-        agentId: 'synth',
+        agentId: 'venture_delivery',
         tokenBudget: 5_000,
         tokensUsed: 4_500,
         costUsd: 3.5,
@@ -70,8 +70,8 @@ describe('economy/state', () => {
       10_000
     );
 
-    expect(withAgent.agents.synth.tokensRemaining).toBe(500);
-    expect(withAgent.agents.synth.health).toBe('red');
+    expect(withAgent.agents.venture_delivery.tokensRemaining).toBe(500);
+    expect(withAgent.agents.venture_delivery.health).toBe('red');
 
     const withPool = applyPoolEconomyUpdate(
       withAgent,
@@ -92,7 +92,7 @@ describe('economy/state', () => {
     const snapshot = parseEconomyEvent({ type: 'economy.snapshot', data: { agents: {} } });
     expect(snapshot.type).toBe('snapshot');
 
-    const agent = parseEconomyEvent({ type: 'agent_update', data: { agentId: 'atlas', tokenBudget: 100 } });
+    const agent = parseEconomyEvent({ type: 'agent_update', data: { agentId: 'venture_infrastructure', tokenBudget: 100 } });
     expect(agent.type).toBe('agent_update');
 
     const pool = parseEconomyEvent({ type: 'economy.pool', data: { tokenQuotaTotal: 1000 } });

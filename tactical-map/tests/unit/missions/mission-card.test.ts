@@ -18,7 +18,7 @@ function makeMission(overrides: Partial<MissionData> = {}): MissionData {
     description: 'A test mission',
     phase: 'execute',
     progress: 50,
-    assignedTo: ['oracle'],
+    assignedTo: ['venture_research'],
     tasks: [
       { id: 'task-1', title: 'Task 1', tier: 'P1', status: 'running', progress: 50 },
       { id: 'task-2', title: 'Task 2', tier: 'P2', status: 'queued', progress: 0 },
@@ -34,9 +34,9 @@ function makeMission(overrides: Partial<MissionData> = {}): MissionData {
 
 function makeAgentPositions(): Map<string, Point> {
   return new Map<string, Point>([
-    ['oracle', { x: 200, y: 300 }],
-    ['atlas', { x: 400, y: 300 }],
-    ['sentinel', { x: 600, y: 300 }],
+    ['venture_research', { x: 200, y: 300 }],
+    ['venture_infrastructure', { x: 400, y: 300 }],
+    ['venture_security', { x: 600, y: 300 }],
   ]);
 }
 
@@ -67,7 +67,7 @@ describe('calculateCardLayouts', () => {
     const layouts = calculateCardLayouts(missions, positions, DEFAULT_CONFIG, 0);
 
     const layout = layouts[0];
-    const agentPos = positions.get('oracle')!;
+    const agentPos = positions.get('venture_research')!;
 
     // Card should be roughly centered on agent X
     expect(layout.position.x).toBeCloseTo(agentPos.x - DEFAULT_CONFIG.cardWidth / 2, 0);
@@ -160,8 +160,8 @@ describe('calculateCardLayouts', () => {
 
   it('distributes missions to different agents correctly', () => {
     const missions = [
-      makeMission({ missionId: 'm-1', assignedTo: ['oracle'] }),
-      makeMission({ missionId: 'm-2', assignedTo: ['atlas'] }),
+      makeMission({ missionId: 'm-1', assignedTo: ['venture_research'] }),
+      makeMission({ missionId: 'm-2', assignedTo: ['venture_infrastructure'] }),
     ];
     const positions = makeAgentPositions();
     const layouts = calculateCardLayouts(missions, positions);

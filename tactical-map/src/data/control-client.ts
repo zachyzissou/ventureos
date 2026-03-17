@@ -10,6 +10,7 @@
 
 import { API } from '@/config';
 import type { AgentId } from '@/config';
+import { normalizeAgentId, toLegacyAgentId } from '@/identity';
 import { fetchJson, getAuthToken } from '@/utils/fetch';
 import type {
   BudgetAdjustment,
@@ -96,6 +97,34 @@ function resolveUrl(url: string): string {
     : url;
 }
 
+function requireLegacyAgentId(agentId: AgentId): string {
+  const legacyId = toLegacyAgentId(agentId);
+  if (!legacyId) throw new Error(`No legacy agent mapping found for ${agentId}`);
+  return legacyId;
+}
+
+function normalizeMission(mission: PersistedMission): PersistedMission {
+  const assignee = normalizeAgentId(mission.assignee);
+  return {
+    ...mission,
+    assignee: assignee ?? mission.assignee,
+  };
+}
+
+function normalizeControlStateSnapshot(state: ControlStateSnapshot): ControlStateSnapshot {
+  const pausedAgents = (state.pausedAgents ?? [])
+    .map((id) => normalizeAgentId(id) ?? id);
+  const budgets = Object.fromEntries(
+    Object.entries(state.budgets ?? {}).map(([id, budget]) => [normalizeAgentId(id) ?? id, budget]),
+  );
+
+  return {
+    ...state,
+    pausedAgents,
+    budgets,
+  };
+}
+
 async function postJson<T>(
   url: string,
   body: Record<string, unknown>,
@@ -136,9 +165,10 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
 
   async function pauseAgent(agentId: AgentId) {
     try {
+      const legacyId = requireLegacyAgentId(agentId);
       return await postJson<{ ok: boolean; error?: string }>(
-        `${base}/agents/${agentId}/pause`,
-        { agentId },
+        `${base}/agents/${legacyId}/pause`,
+        { agentId: legacyId },
       );
     } catch (err) {
       opts.onError?.(err);
@@ -148,9 +178,10 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
 
   async function resumeAgent(agentId: AgentId) {
     try {
+      const legacyId = requireLegacyAgentId(agentId);
       return await postJson<{ ok: boolean; error?: string }>(
-        `${base}/agents/${agentId}/resume`,
-        { agentId },
+        `${base}/agents/${legacyId}/resume`,
+        { agentId: legacyId },
       );
     } catch (err) {
       opts.onError?.(err);
@@ -160,9 +191,10 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
 
   async function spawnMission(req: MissionSpawnRequest): Promise<MissionSpawnResult> {
     try {
+      const legacyAssignee = requireLegacyAgentId(req.assignee);
       return await postJson<MissionSpawnResult>(
         `${base}/missions/spawn`,
-        req as unknown as Record<string, unknown>,
+        { ...req, assignee: legacyAssignee } as unknown as Record<string, unknown>,
       );
     } catch (err) {
       opts.onError?.(err);
@@ -172,8 +204,9 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
 
   async function adjustBudget(adj: BudgetAdjustment) {
     try {
+      const legacyId = requireLegacyAgentId(adj.agentId);
       return await postJson<{ ok: boolean; error?: string }>(
-        `${base}/agents/${adj.agentId}/budget`,
+        `${base}/agents/${legacyId}/budget`,
         { newBudget: adj.newBudget, previousBudget: adj.previousBudget },
       );
     } catch (err) {
@@ -196,8 +229,9 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
 
   async function updateConfig(agentId: AgentId, config: Record<string, unknown>) {
     try {
+      const legacyId = requireLegacyAgentId(agentId);
       return await postJson<{ ok: boolean; error?: string }>(
-        `${base}/agents/${agentId}/config`,
+        `${base}/agents/${legacyId}/config`,
         { config },
       );
     } catch (err) {
@@ -208,7 +242,7 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
 
   async function fetchControlState(): Promise<ControlStateSnapshot> {
     try {
-      return await getJson<ControlStateSnapshot>(`${base}/control-state`);
+      return normalizeControlStateSnapshot(await getJson<ControlStateSnapshot>(`${base}/control-state`));
     } catch (err) {
       opts.onError?.(err);
       return { ok: false, error: String(err) };
@@ -217,7 +251,11 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
 
   async function fetchMissions(): Promise<MissionListResult> {
     try {
-      return await getJson<MissionListResult>(`${base}/missions`);
+      const result = await getJson<MissionListResult>(`${base}/missions`);
+      return {
+        ...result,
+        missions: result.missions?.map(normalizeMission),
+      };
     } catch (err) {
       opts.onError?.(err);
       return { ok: false, error: String(err) };
@@ -229,9 +267,13 @@ export function createControlClient(opts: ControlClientOptions = {}): ControlCli
     updates: MissionUpdateRequest,
   ): Promise<MissionUpdateResult> {
     try {
+      const body = {
+        ...updates,
+        assignee: updates.assignee ? requireLegacyAgentId(updates.assignee) : undefined,
+      };
       return await postJson<MissionUpdateResult>(
         `${base}/missions/${encodeURIComponent(missionId)}`,
-        updates as unknown as Record<string, unknown>,
+        body as unknown as Record<string, unknown>,
       );
     } catch (err) {
       opts.onError?.(err);

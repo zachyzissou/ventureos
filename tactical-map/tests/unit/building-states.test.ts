@@ -23,26 +23,26 @@ describe('building-states', () => {
   });
 
   it('derives overload by capacity threshold (>= 0.8)', () => {
-    const id: AgentId = 'oracle';
+    const id: AgentId = 'venture_research';
     const max = CAPACITY.MAX_SESSIONS[id];
     expect(deriveBuildingState(id, 'IDLE', Math.ceil(max * 0.8))).toBe('OVERLOADED');
   });
 
   it('keeps ERROR sticky', () => {
-    expect(deriveBuildingState('atlas', 'ERROR', 0)).toBe('ERROR');
-    expect(deriveBuildingState('atlas', 'ERROR', 999)).toBe('ERROR');
+    expect(deriveBuildingState('venture_infrastructure', 'ERROR', 0)).toBe('ERROR');
+    expect(deriveBuildingState('venture_infrastructure', 'ERROR', 999)).toBe('ERROR');
   });
 
   it('makes ACTIVE when sessions > 0', () => {
-    expect(deriveBuildingState('verifier', 'IDLE', 1)).toBe('ACTIVE');
+    expect(deriveBuildingState('venture_evidence', 'IDLE', 1)).toBe('ACTIVE');
   });
 
   it('respects explicit OVERLOADED state', () => {
-    expect(deriveBuildingState('echo', 'OVERLOADED', 0)).toBe('OVERLOADED');
+    expect(deriveBuildingState('venture_strategy', 'OVERLOADED', 0)).toBe('OVERLOADED');
   });
 
   it('computes capacity ratio from MAX_SESSIONS', () => {
-    const r = capacityRatio('atlas', 3);
-    expect(r).toBeCloseTo(3 / CAPACITY.MAX_SESSIONS.atlas);
+    const r = capacityRatio('venture_infrastructure', 3);
+    expect(r).toBeCloseTo(3 / CAPACITY.MAX_SESSIONS.venture_infrastructure);
   });
 });

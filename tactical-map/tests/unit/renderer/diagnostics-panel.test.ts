@@ -66,7 +66,7 @@ import type { DiagnosticsData } from '@/renderer/diagnostics-panel';
 
 function makeSampleData(overrides?: Partial<DiagnosticsData>): DiagnosticsData {
   return {
-    agentId: 'oracle',
+    agentId: 'venture_research',
     healthScore: 85,
     sessionCount: 12,
     abortedCount: 2,
@@ -113,7 +113,7 @@ describe('createDiagnosticsPanel', () => {
     const panel = createDiagnosticsPanel();
     panel.show(makeSampleData());
     expect(panel.isVisible()).toBe(true);
-    expect(panel.currentAgent()).toBe('oracle');
+    expect(panel.currentAgent()).toBe('venture_research');
   });
 
   it('hide makes it invisible', () => {
@@ -217,10 +217,10 @@ describe('createDiagnosticsPanel', () => {
 
   it('can switch between agents', () => {
     const panel = createDiagnosticsPanel();
-    panel.show(makeSampleData({ agentId: 'oracle' }));
-    expect(panel.currentAgent()).toBe('oracle');
+    panel.show(makeSampleData({ agentId: 'venture_research' }));
+    expect(panel.currentAgent()).toBe('venture_research');
 
-    panel.show(makeSampleData({ agentId: 'sentinel' as any }));
-    expect(panel.currentAgent()).toBe('sentinel');
+    panel.show(makeSampleData({ agentId: 'venture_security' as any }));
+    expect(panel.currentAgent()).toBe('venture_security');
   });
 });

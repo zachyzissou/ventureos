@@ -109,7 +109,7 @@ describe('createHealthDashboard', () => {
     const dashboard = createHealthDashboard();
     const snapshot: RawHealthSnapshot = {
       agents: {
-        oracle: { cpu: 0.95, memory: 0.92, latency: 3000, errorRate: 0.20 },
+        venture_research: { cpu: 0.95, memory: 0.92, latency: 3000, errorRate: 0.20 },
       },
     };
     const state = applyHealthSnapshot(createEmptyHealthState(), snapshot);
@@ -124,9 +124,9 @@ describe('createHealthDashboard', () => {
     const dashboard = createHealthDashboard();
     const snapshot: RawHealthSnapshot = {
       agents: {
-        oracle: { cpu: 0.95 },
-        atlas: { cpu: 0.95 },
-        sentinel: { cpu: 0.95 },
+        venture_research: { cpu: 0.95 },
+        venture_infrastructure: { cpu: 0.95 },
+        venture_security: { cpu: 0.95 },
       },
     };
     const state = applyHealthSnapshot(createEmptyHealthState(), snapshot);
@@ -153,7 +153,7 @@ describe('createHealthDashboard', () => {
     dashboard.update(16);
 
     const snapshot: RawHealthSnapshot = {
-      agents: { oracle: { cpu: 0.8 } },
+      agents: { venture_research: { cpu: 0.8 } },
     };
     const state2 = applyHealthSnapshot(state1, snapshot);
     dashboard.setHealthState(state2);

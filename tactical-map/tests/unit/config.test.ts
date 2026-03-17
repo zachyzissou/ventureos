@@ -11,7 +11,7 @@ describe('config.ts', () => {
     expect(API.POLL_INTERVAL).toBeGreaterThan(0);
     expect(API.RESOURCE_WS_URL).toContain('/resources/stream');
     expect(ECONOMY.WARNING_THRESHOLD).toBeGreaterThan(0);
-    expect(CAPACITY.MAX_SESSIONS.atlas).toBe(5);
+    expect(CAPACITY.MAX_SESSIONS.venture_infrastructure).toBe(5);
     expect(AGENTS.POSITIONS.length).toBe(8);
   });
 

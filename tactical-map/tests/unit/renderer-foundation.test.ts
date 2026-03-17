@@ -140,7 +140,7 @@ describe('renderer foundation', () => {
     layer.update(16);
   });
 
-  it('creates nexus view and update does not throw', () => {
+  it('creates venture_control view and update does not throw', () => {
     const n = createNexus();
     expect(n.container).toBeInstanceOf(Container);
     expect(n.container.children.length).toBeGreaterThan(0);
@@ -152,7 +152,7 @@ describe('renderer foundation', () => {
     const hud = createHud();
     expect(hud.container).toBeInstanceOf(Container);
     hud.setSize(1920, 1080);
-    hud.setKpiText('Oracle WIS: 85 | Atlas SPD: 72');
+    hud.setKpiText('Venture Research WIS: 85 | Venture Infrastructure SPD: 72');
     hud.update(16);
     hud.setSize(1366, 768);
     hud.update(16);

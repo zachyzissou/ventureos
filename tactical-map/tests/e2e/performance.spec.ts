@@ -15,7 +15,7 @@ perfTest('FPS ≥ 55 with all agents active + particles (smoke benchmark)', asyn
     const curr = tm.mapStore.get();
     const next = structuredClone(curr);
 
-    const ring = ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'echo'];
+    const ring = ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_delivery', 'venture_strategy'];
     for (const id of ring) {
       next.agents[id].state = 'ACTIVE';
       next.agents[id].sessions = 5;

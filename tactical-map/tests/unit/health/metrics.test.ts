@@ -66,7 +66,7 @@ describe('extractMetricSeries', () => {
 describe('computeAgentMetricsSummary', () => {
   it('returns summaries for all metric types', () => {
     const agent: AgentHealthState = {
-      agentId: 'oracle',
+      agentId: 'venture_research',
       status: 'green',
       connectivity: 'online',
       metrics: { cpuUsage: 0.5, memoryUsage: 0.4, latencyMs: 100, requestsPerSec: 20, errorRate: 0.01, uptimeSec: 3600 },
@@ -81,7 +81,7 @@ describe('computeAgentMetricsSummary', () => {
     };
 
     const summary = computeAgentMetricsSummary(agent);
-    expect(summary.agentId).toBe('oracle');
+    expect(summary.agentId).toBe('venture_research');
     expect(summary.cpu.values).toHaveLength(2);
     expect(summary.memory.values).toHaveLength(2);
     expect(summary.latency.values).toHaveLength(2);
@@ -99,8 +99,8 @@ describe('computeAllMetricsSummaries', () => {
     const state = createEmptyHealthState();
     const summaries = computeAllMetricsSummaries(state);
     expect(Object.keys(summaries)).toHaveLength(8);
-    expect(summaries.oracle).toBeDefined();
-    expect(summaries.nexus).toBeDefined();
+    expect(summaries.venture_research).toBeDefined();
+    expect(summaries.venture_control).toBeDefined();
   });
 });
 
@@ -162,7 +162,7 @@ describe('computeSystemHealthScore', () => {
   it('averages across all agents', () => {
     const state = createEmptyHealthState();
     // Set one agent to worst case
-    state.agents.oracle.metrics = {
+    state.agents.venture_research.metrics = {
       cpuUsage: 1.0,
       memoryUsage: 1.0,
       latencyMs: 2000,

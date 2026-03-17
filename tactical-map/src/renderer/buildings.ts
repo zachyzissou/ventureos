@@ -1,18 +1,18 @@
 import { BlurFilter, Container, Graphics, Text } from 'pixi.js';
-import { AGENTS, AGENT_COLORS } from '@/config';
+import { AGENTS, AGENT_COLORS, AGENT_DISPLAY_NAMES } from '@/config';
 import type { AgentId, Point } from '@/config';
 import type { BuildingState } from '@/state/types';
 import { hexagonPoints, toPixiPolygon } from '@/renderer/primitives';
 import { BUILDING_STATE_CONFIG, BUILDING_VISUALS, agentGlowColor } from '@/renderer/building-states';
 
 export const RING_AGENT_IDS: AgentId[] = [
-  'oracle',
-  'atlas',
-  'sentinel',
-  'verifier',
-  'archivist',
-  'synth',
-  'echo'
+  'venture_research',
+  'venture_infrastructure',
+  'venture_security',
+  'venture_evidence',
+  'venture_memory',
+  'venture_delivery',
+  'venture_strategy'
 ];
 
 type Crossfade = {
@@ -76,7 +76,7 @@ function createBuilding(id: AgentId, initialState: BuildingState): BuildingView 
     .stroke({ width: 1, color: 0xffffff, alpha: 0.08 });
 
   const label = new Text({
-    text: id.toUpperCase(),
+    text: AGENT_DISPLAY_NAMES[id],
     style: {
       fontSize: 14,
       fill: 0xffffff,

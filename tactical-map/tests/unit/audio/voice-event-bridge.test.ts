@@ -33,14 +33,14 @@ function createTestMapState(): MapState {
   return {
     updatedAt: new Date().toISOString(),
     agents: {
-      oracle: { id: 'oracle', position: { x: 0, y: 0 }, state: 'IDLE' },
-      atlas: { id: 'atlas', position: { x: 10, y: 0 }, state: 'IDLE' },
-      sentinel: { id: 'sentinel', position: { x: 20, y: 0 }, state: 'IDLE' },
-      verifier: { id: 'verifier', position: { x: 30, y: 0 }, state: 'IDLE' },
-      archivist: { id: 'archivist', position: { x: 40, y: 0 }, state: 'IDLE' },
-      synth: { id: 'synth', position: { x: 50, y: 0 }, state: 'IDLE' },
-      echo: { id: 'echo', position: { x: 60, y: 0 }, state: 'IDLE' },
-      nexus: { id: 'nexus', position: { x: 0, y: 0 }, state: 'IDLE' },
+      venture_research: { id: 'venture_research', position: { x: 0, y: 0 }, state: 'IDLE' },
+      venture_infrastructure: { id: 'venture_infrastructure', position: { x: 10, y: 0 }, state: 'IDLE' },
+      venture_security: { id: 'venture_security', position: { x: 20, y: 0 }, state: 'IDLE' },
+      venture_evidence: { id: 'venture_evidence', position: { x: 30, y: 0 }, state: 'IDLE' },
+      venture_memory: { id: 'venture_memory', position: { x: 40, y: 0 }, state: 'IDLE' },
+      venture_delivery: { id: 'venture_delivery', position: { x: 50, y: 0 }, state: 'IDLE' },
+      venture_strategy: { id: 'venture_strategy', position: { x: 60, y: 0 }, state: 'IDLE' },
+      venture_control: { id: 'venture_control', position: { x: 0, y: 0 }, state: 'IDLE' },
     } as any,
   };
 }
@@ -63,13 +63,13 @@ describe('VoiceEventBridge — agent:click → agent-selected', () => {
 
     eventBus.emit({
       type: 'agent:click',
-      agentId: 'oracle',
+      agentId: 'venture_research',
       timestamp: 12345,
     });
 
     expect(engine.events).toHaveLength(1);
     expect(engine.events[0].type).toBe('agent-selected');
-    expect(engine.events[0].agentId).toBe('oracle');
+    expect(engine.events[0].agentId).toBe('venture_research');
 
     bridge.dispose();
   });
@@ -93,7 +93,7 @@ describe('VoiceEventBridge — agent:click → agent-selected', () => {
 
     eventBus.emit({
       type: 'agent:click',
-      agentId: 'oracle',
+      agentId: 'venture_research',
       timestamp: 12345,
     });
 
@@ -121,13 +121,13 @@ describe('VoiceEventBridge — MapState transitions', () => {
       ...s,
       agents: {
         ...s.agents,
-        oracle: { ...s.agents.oracle, state: 'ACTIVE' },
+        venture_research: { ...s.agents.venture_research, state: 'ACTIVE' },
       },
     }));
 
     expect(engine.events).toHaveLength(1);
     expect(engine.events[0].type).toBe('state-change');
-    expect(engine.events[0].agentId).toBe('oracle');
+    expect(engine.events[0].agentId).toBe('venture_research');
     expect(engine.events[0].newState).toBe('ACTIVE');
     expect(engine.events[0].previousState).toBe('IDLE');
 
@@ -143,7 +143,7 @@ describe('VoiceEventBridge — MapState transitions', () => {
       ...s,
       agents: {
         ...s.agents,
-        oracle: { ...s.agents.oracle, state: 'IDLE' },
+        venture_research: { ...s.agents.venture_research, state: 'IDLE' },
       },
     }));
 
@@ -160,15 +160,15 @@ describe('VoiceEventBridge — MapState transitions', () => {
       ...s,
       agents: {
         ...s.agents,
-        oracle: { ...s.agents.oracle, state: 'ACTIVE' },
-        atlas: { ...s.agents.atlas, state: 'ERROR' },
+        venture_research: { ...s.agents.venture_research, state: 'ACTIVE' },
+        venture_infrastructure: { ...s.agents.venture_infrastructure, state: 'ERROR' },
       },
     }));
 
     expect(engine.events).toHaveLength(2);
     const agents = engine.events.map((e) => e.agentId);
-    expect(agents).toContain('oracle');
-    expect(agents).toContain('atlas');
+    expect(agents).toContain('venture_research');
+    expect(agents).toContain('venture_infrastructure');
 
     bridge.dispose();
   });
@@ -184,11 +184,11 @@ describe('VoiceEventBridge — imperative push', () => {
   it('push sends event to engine', () => {
     const bridge = createVoiceEventBridge(engine, null, null);
 
-    bridge.push('mission-completed', 'synth' as any);
+    bridge.push('mission-completed', 'venture_delivery' as any);
 
     expect(engine.events).toHaveLength(1);
     expect(engine.events[0].type).toBe('mission-completed');
-    expect(engine.events[0].agentId).toBe('synth');
+    expect(engine.events[0].agentId).toBe('venture_delivery');
 
     bridge.dispose();
   });
@@ -197,7 +197,7 @@ describe('VoiceEventBridge — imperative push', () => {
     const bridge = createVoiceEventBridge(engine, null, null);
     bridge.dispose();
 
-    bridge.push('agent-spawned', 'oracle' as any);
+    bridge.push('agent-spawned', 'venture_research' as any);
     expect(engine.events).toHaveLength(0);
   });
 });
@@ -227,7 +227,7 @@ describe('VoiceEventBridge — lifecycle', () => {
     const bridge = createVoiceEventBridge(engine, null, null);
 
     // Should still support push
-    bridge.push('agent-spawned', 'oracle' as any);
+    bridge.push('agent-spawned', 'venture_research' as any);
     expect(engine.events).toHaveLength(1);
 
     bridge.dispose();

@@ -91,49 +91,49 @@ function stateBodyFill(state: BuildingState): number {
  * Mostly state-driven; agent-specific color is applied in the building renderer.
  */
 export const BUILDING_VISUALS: Record<AgentId, Record<BuildingState, BuildingVisual>> = {
-  oracle: {
+  venture_research: {
     IDLE: { bodyFill: stateBodyFill('IDLE'), ...makeVisual('IDLE') },
     ACTIVE: { bodyFill: stateBodyFill('ACTIVE'), ...makeVisual('ACTIVE') },
     OVERLOADED: { bodyFill: stateBodyFill('OVERLOADED'), ...makeVisual('OVERLOADED') },
     ERROR: { bodyFill: stateBodyFill('ERROR'), ...makeVisual('ERROR') }
   },
-  atlas: {
+  venture_infrastructure: {
     IDLE: { bodyFill: stateBodyFill('IDLE'), ...makeVisual('IDLE') },
     ACTIVE: { bodyFill: stateBodyFill('ACTIVE'), ...makeVisual('ACTIVE') },
     OVERLOADED: { bodyFill: stateBodyFill('OVERLOADED'), ...makeVisual('OVERLOADED') },
     ERROR: { bodyFill: stateBodyFill('ERROR'), ...makeVisual('ERROR') }
   },
-  sentinel: {
+  venture_security: {
     IDLE: { bodyFill: stateBodyFill('IDLE'), ...makeVisual('IDLE') },
     ACTIVE: { bodyFill: stateBodyFill('ACTIVE'), ...makeVisual('ACTIVE') },
     OVERLOADED: { bodyFill: stateBodyFill('OVERLOADED'), ...makeVisual('OVERLOADED') },
     ERROR: { bodyFill: stateBodyFill('ERROR'), ...makeVisual('ERROR') }
   },
-  verifier: {
+  venture_evidence: {
     IDLE: { bodyFill: stateBodyFill('IDLE'), ...makeVisual('IDLE') },
     ACTIVE: { bodyFill: stateBodyFill('ACTIVE'), ...makeVisual('ACTIVE') },
     OVERLOADED: { bodyFill: stateBodyFill('OVERLOADED'), ...makeVisual('OVERLOADED') },
     ERROR: { bodyFill: stateBodyFill('ERROR'), ...makeVisual('ERROR') }
   },
-  archivist: {
+  venture_memory: {
     IDLE: { bodyFill: stateBodyFill('IDLE'), ...makeVisual('IDLE') },
     ACTIVE: { bodyFill: stateBodyFill('ACTIVE'), ...makeVisual('ACTIVE') },
     OVERLOADED: { bodyFill: stateBodyFill('OVERLOADED'), ...makeVisual('OVERLOADED') },
     ERROR: { bodyFill: stateBodyFill('ERROR'), ...makeVisual('ERROR') }
   },
-  synth: {
+  venture_delivery: {
     IDLE: { bodyFill: stateBodyFill('IDLE'), ...makeVisual('IDLE') },
     ACTIVE: { bodyFill: stateBodyFill('ACTIVE'), ...makeVisual('ACTIVE') },
     OVERLOADED: { bodyFill: stateBodyFill('OVERLOADED'), ...makeVisual('OVERLOADED') },
     ERROR: { bodyFill: stateBodyFill('ERROR'), ...makeVisual('ERROR') }
   },
-  echo: {
+  venture_strategy: {
     IDLE: { bodyFill: stateBodyFill('IDLE'), ...makeVisual('IDLE') },
     ACTIVE: { bodyFill: stateBodyFill('ACTIVE'), ...makeVisual('ACTIVE') },
     OVERLOADED: { bodyFill: stateBodyFill('OVERLOADED'), ...makeVisual('OVERLOADED') },
     ERROR: { bodyFill: stateBodyFill('ERROR'), ...makeVisual('ERROR') }
   },
-  nexus: {
+  venture_control: {
     IDLE: { bodyFill: stateBodyFill('IDLE'), ...makeVisual('IDLE') },
     ACTIVE: { bodyFill: stateBodyFill('ACTIVE'), ...makeVisual('ACTIVE') },
     OVERLOADED: { bodyFill: stateBodyFill('OVERLOADED'), ...makeVisual('OVERLOADED') },

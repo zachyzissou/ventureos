@@ -103,10 +103,25 @@ const DEFAULT_CONFIG: RateLimitConfig = {
  * More restrictive for higher-tension pairs.
  */
 const DEFAULT_CHALLENGE_OVERRIDES: ChallengeLimitOverride[] = [
-  { pair: ['oracle', 'synth'], maxPerHour: 5, cooldownMs: 10 * 60 * 1000 },
-  { pair: ['sentinel', 'atlas'], maxPerHour: 3, cooldownMs: 15 * 60 * 1000 },
-  { pair: ['verifier', 'synth'], maxPerHour: 4, cooldownMs: 12 * 60 * 1000 },
+  { pair: ['venture_research', 'venture_delivery'], maxPerHour: 5, cooldownMs: 10 * 60 * 1000 },
+  { pair: ['venture_security', 'venture_infrastructure'], maxPerHour: 3, cooldownMs: 15 * 60 * 1000 },
+  { pair: ['venture_evidence', 'venture_delivery'], maxPerHour: 4, cooldownMs: 12 * 60 * 1000 },
 ];
+
+const LEGACY_AGENT_ID_ALIASES: Record<string, string> = {
+  oracle: 'venture_research',
+  atlas: 'venture_infrastructure',
+  sentinel: 'venture_security',
+  verifier: 'venture_evidence',
+  archivist: 'venture_memory',
+  synth: 'venture_delivery',
+  echo: 'venture_strategy',
+  nexus: 'venture_control',
+};
+
+function normalizeAgentId(agentId: string): string {
+  return LEGACY_AGENT_ID_ALIASES[agentId] ?? agentId;
+}
 
 // ─── Sliding Window ───────────────────────────────────────────────────────
 
@@ -212,7 +227,7 @@ export class RateLimiter {
 
   /** Normalize a pair key so order doesn't matter. */
   private pairKey(agentA: string, agentB: string): string {
-    return [agentA, agentB].sort().join('::');
+    return [normalizeAgentId(agentA), normalizeAgentId(agentB)].sort().join('::');
   }
 
   // ─── Backoff Calculation ──────────────────────────────────────────────
@@ -341,11 +356,13 @@ export class RateLimiter {
   checkChallengeLimit(agentA: string, agentB: string, now: number = Date.now()): ChallengeRateResult {
     const key = this.pairKey(agentA, agentB);
     const window = this.getChallengeWindow(key);
+    const normalizedAgentA = normalizeAgentId(agentA);
+    const normalizedAgentB = normalizeAgentId(agentB);
 
     // Find pair-specific override
     const override = this.challengeOverrides.find(o =>
-      (o.pair[0] === agentA && o.pair[1] === agentB) ||
-      (o.pair[1] === agentA && o.pair[0] === agentB)
+      (normalizeAgentId(o.pair[0]) === normalizedAgentA && normalizeAgentId(o.pair[1]) === normalizedAgentB) ||
+      (normalizeAgentId(o.pair[1]) === normalizedAgentA && normalizeAgentId(o.pair[0]) === normalizedAgentB)
     );
 
     const maxPerHour = override?.maxPerHour ?? this.config.challengePerHour;

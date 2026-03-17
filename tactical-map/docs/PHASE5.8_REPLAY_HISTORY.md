@@ -820,7 +820,7 @@ Hovering over a timeline marker shows a tooltip with event details:
 
 ```
 ┌──────────────────────────────────┐
-│ 🔴 Incident: oracle → ERROR     │
+│ 🔴 Incident: venture_research → ERROR     │
 │ 14:32:15  •  Health alert P0    │
 │ CPU 95%, Latency 3200ms         │
 └──────────────────────────────────┘
@@ -846,19 +846,19 @@ A scrollable panel on the right side of the screen showing events synchronized w
 │  EVENT LOG              [Filter] │
 │──────────────────────────────────│
 │  14:32:10  map.agent             │
-│    oracle: IDLE → ACTIVE         │
+│    venture_research: IDLE → ACTIVE         │
 │                                  │
 │  14:32:11  economy.agent         │
-│    oracle: +2,340 tokens         │
+│    venture_research: +2,340 tokens         │
 │                                  │
 │▶ 14:32:15  marker.incident    ◀─┤─── Current playback position
-│    🔴 oracle ERROR: CPU 95%     │
+│    🔴 venture_research ERROR: CPU 95%     │
 │                                  │
 │  14:32:18  health.alert          │
-│    P0: oracle latency 3200ms    │
+│    P0: venture_research latency 3200ms    │
 │                                  │
 │  14:32:22  map.agent             │
-│    oracle: ERROR → ACTIVE        │
+│    venture_research: ERROR → ACTIVE        │
 │──────────────────────────────────│
 │  Showing 42 of 1,847 events     │
 └──────────────────────────────────┘
@@ -920,8 +920,8 @@ Users can pin two points in time and compare the state side-by-side:
 │                                                                 │
 │  Changes:                                                       │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │  oracle:   IDLE → ERROR  │ CPU: 0.35 → 0.95 │ +$2.34     ││
-│  │  sentinel: ACTIVE → IDLE │ sessions: 3 → 0   │             ││
+│  │  venture_research:   IDLE → ERROR  │ CPU: 0.35 → 0.95 │ +$2.34     ││
+│  │  venture_security: ACTIVE → IDLE │ sessions: 3 → 0   │             ││
 │  │  pool:     68% → 52%    │ burn: $1.20/h → $0.45/h         ││
 │  └─────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
@@ -1210,7 +1210,7 @@ List available sessions on the server.
       "durationMs": 3600000,
       "eventCount": 12847,
       "compressedBytes": 524288,
-      "tags": ["incident", "oracle", "production"],
+      "tags": ["incident", "venture_research", "production"],
       "schemaVersion": 1
     }
   ],

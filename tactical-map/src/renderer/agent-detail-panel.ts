@@ -10,7 +10,7 @@
  */
 
 import { Container, Graphics, Text } from 'pixi.js';
-import { AGENT_COLORS, AGENT_ORDER } from '@/config';
+import { AGENT_COLORS, AGENT_DISPLAY_NAMES, CONTROL_HUB_AGENT_ID } from '@/config';
 import type { AgentId } from '@/config';
 import type { AgentDetailData } from '@/interaction/types';
 import type { EventBus } from '@/interaction/event-bus';
@@ -132,7 +132,7 @@ export function createAgentDetailPanel(eventBus?: EventBus): AgentDetailPanelLay
   actionText.eventMode = 'static';
   actionText.cursor = 'pointer';
   actionText.on('pointertap', () => {
-    if (!currentData || currentData.id === 'nexus') return;
+    if (!currentData || currentData.id === CONTROL_HUB_AGENT_ID) return;
     togglePauseResumeCallback?.(currentData.id, currentData.paused);
   });
   container.addChild(actionText);
@@ -142,7 +142,7 @@ export function createAgentDetailPanel(eventBus?: EventBus): AgentDetailPanelLay
   missionText.eventMode = 'static';
   missionText.cursor = 'pointer';
   missionText.on('pointertap', () => {
-    if (!currentData || currentData.id === 'nexus') return;
+    if (!currentData || currentData.id === CONTROL_HUB_AGENT_ID) return;
     spawnMissionCallback?.(currentData.id);
   });
   container.addChild(missionText);
@@ -165,7 +165,7 @@ export function createAgentDetailPanel(eventBus?: EventBus): AgentDetailPanelLay
     const agentColor = AGENT_COLORS[data.id] ?? 0x00d4ff;
 
     // Header
-    headerText.text = data.id.toUpperCase();
+    headerText.text = AGENT_DISPLAY_NAMES[data.id];
     headerText.style.fill = agentColor;
 
     // Status
@@ -233,7 +233,7 @@ export function createAgentDetailPanel(eventBus?: EventBus): AgentDetailPanelLay
 
     // Action controls
     const actionY = metricsY + (lineIdx + 2) * ROW_HEIGHT;
-    const canControl = data.id !== 'nexus';
+    const canControl = data.id !== CONTROL_HUB_AGENT_ID;
 
     if (canControl) {
       actionText.text = data.paused ? '[▶ Resume]' : '[⏸ Pause]';

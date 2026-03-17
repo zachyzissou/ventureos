@@ -167,7 +167,7 @@ test.describe('Memory Leak Detection', () => {
             id: `test-alert-${i}`,
             severity: 'P1',
             state: 'active',
-            agentId: 'oracle',
+            agentId: 'venture_research',
             title: 'Test Alert',
             message: `Health alert iteration ${i}`,
             createdAt: Date.now() - 120_000, // old enough to expire
@@ -204,7 +204,7 @@ test.describe('Memory Leak Detection', () => {
     // Rapidly update map state 200 times (tests store subscription cleanup)
     await page.evaluate(() => {
       const tm = (window as any).__TACTICAL_MAP__;
-      const agentIds = ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'echo'];
+      const agentIds = ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_delivery', 'venture_strategy'];
 
       for (let i = 0; i < 200; i++) {
         const curr = tm.mapStore.get();
@@ -253,7 +253,7 @@ test.describe('Memory Leak Detection', () => {
           const curr = tm.mapStore.get();
           const next = structuredClone(curr);
           for (const id of Object.keys(next.agents)) {
-            if (id === 'nexus') continue;
+            if (id === 'venture_control') continue;
             next.agents[id].state = 'ACTIVE';
             next.agents[id].sessions = 4;
           }

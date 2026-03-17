@@ -54,7 +54,7 @@ function makeAlert(overrides: Partial<HealthAlert> = {}): HealthAlert {
     id: `alert-${Math.random()}`,
     severity: 'P1',
     state: 'active',
-    agentId: 'oracle',
+    agentId: 'venture_research',
     title: 'Warning',
     message: 'Test alert message',
     createdAt: Date.now(),

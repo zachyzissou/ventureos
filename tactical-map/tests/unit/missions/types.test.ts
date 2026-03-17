@@ -32,7 +32,7 @@ describe('PHASE_PROGRESS', () => {
     expect(PHASE_PROGRESS.closed).toBe(100);
   });
 
-  it('error has negative progress (sentinel value)', () => {
+  it('error has negative progress (venture_security value)', () => {
     expect(PHASE_PROGRESS.error).toBeLessThan(0);
   });
 });
@@ -75,14 +75,14 @@ describe('MISSION_PHASE_ORDER', () => {
 
 describe('ROLE_DISPLAY_NAMES', () => {
   it('maps all squad roles', () => {
-    const roles = ['echo', 'nexus', 'oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth'];
+    const roles = ['venture_strategy', 'venture_control', 'venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_delivery'];
     for (const role of roles) {
       expect(ROLE_DISPLAY_NAMES[role as keyof typeof ROLE_DISPLAY_NAMES]).toBeTruthy();
     }
   });
 
-  it('oracle maps to Oracle', () => {
-    expect(ROLE_DISPLAY_NAMES.oracle).toBe('Oracle');
+  it('venture_research maps to Venture Research', () => {
+    expect(ROLE_DISPLAY_NAMES.venture_research).toBe('Venture Research');
   });
 });
 
