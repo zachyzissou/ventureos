@@ -26,15 +26,25 @@ vi.mock('node:fs', async (importOriginal) => {
     default: {
       ...actual,
       existsSync: vi.fn((p: string) => {
+        if (String(p).includes('.api-token')) return true;
         if (String(p).includes('test-logs')) return true;
         return actual.existsSync(p);
+      }),
+      readFileSync: vi.fn((p: string, ...args: unknown[]) => {
+        if (String(p).includes('.api-token')) return 'test-token-abc123';
+        return actual.readFileSync(p, ...args as [BufferEncoding]);
       }),
       appendFileSync: vi.fn(),
       mkdirSync: vi.fn(),
     },
     existsSync: vi.fn((p: string) => {
+      if (String(p).includes('.api-token')) return true;
       if (String(p).includes('test-logs')) return true;
       return actual.existsSync(p);
+    }),
+    readFileSync: vi.fn((p: string, ...args: unknown[]) => {
+      if (String(p).includes('.api-token')) return 'test-token-abc123';
+      return actual.readFileSync(p, ...args as [BufferEncoding]);
     }),
     appendFileSync: vi.fn(),
     mkdirSync: vi.fn(),

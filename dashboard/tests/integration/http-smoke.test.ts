@@ -33,6 +33,14 @@ function authHeaders(): Record<string, string> {
   return { Authorization: `Bearer ${TOKEN}` };
 }
 
+function controlHeaders(): Record<string, string> {
+  return {
+    ...authHeaders(),
+    'x-ventureos-binding-id': 'operations:operator',
+    'x-ventureos-capability-id': 'venture_control',
+  };
+}
+
 beforeAll(async () => {
   tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ventureos-dashboard-http-'));
 
@@ -452,7 +460,7 @@ describe('Dashboard HTTP smoke tests', () => {
 
     const replayCreateRes = await fetch(`${BASE_URL}/api/replay/sessions`, {
       method: 'POST',
-      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      headers: { ...controlHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: 'smoke-authority-1',
         name: 'Smoke Authority Replay',
@@ -505,7 +513,7 @@ describe('Dashboard HTTP smoke tests', () => {
     };
     const eventRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
       method: 'POST',
-      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      headers: { ...controlHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     expect(eventRes.status).toBe(200);
@@ -521,7 +529,7 @@ describe('Dashboard HTTP smoke tests', () => {
 
     const duplicateRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
       method: 'POST',
-      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      headers: { ...controlHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     expect(duplicateRes.status).toBe(200);
@@ -534,7 +542,7 @@ describe('Dashboard HTTP smoke tests', () => {
 
     const freshRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
       method: 'POST',
-      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      headers: { ...controlHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...payload,
         state: 'fresh',
@@ -560,7 +568,7 @@ describe('Dashboard HTTP smoke tests', () => {
 
     const badRes = await fetch(`${BASE_URL}/api/overview-freshness-event`, {
       method: 'POST',
-      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      headers: { ...controlHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ state: 'bogus' }),
     });
     expect(badRes.status).toBe(400);
