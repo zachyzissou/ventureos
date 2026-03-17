@@ -173,6 +173,13 @@ The `performance.yml` workflow runs automatically on:
 - Push to `main` branch
 - Manual dispatch
 
+Current stabilization policy while `#627` is open:
+- PR runs are informational and skip benchmark execution rather than pretending to enforce unstable results.
+- Non-PR CI runs execute benchmarks through `./scripts/run-benchmarks.sh --ci`.
+- CI benchmark execution is pinned to `workers=1` and `retries=1` to reduce runner contention.
+- Render isolation comes from `waitForTacticalMap()`, which stops backend polling/reconnect loops before measurement.
+- Workflow summaries come from `scripts/summarize-performance-ci.mjs`, not ad hoc `grep` parsing.
+
 ### Regression Detection
 
 A regression is flagged when:
@@ -195,6 +202,8 @@ The CI workflow automatically comments benchmark results on PRs, showing:
 Each CI run uploads a `performance-reports` artifact containing:
 - `performance-output.txt` — Raw Playwright output
 - `metadata.json` — Git commit, branch, timestamp
+- `benchmark-exit-code.txt` — Captured runner exit code
+- `performance-status.json` — Structured CI status contract for gating/commenting
 - `summary.md` — Human-readable summary
 
 ## Troubleshooting

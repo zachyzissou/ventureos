@@ -78,13 +78,11 @@ jobs:
           PERF: '1'
           CI: 'true'
         run: |
-          # Performance tests measure client render behavior and become meaningless
-          # if Playwright saturates the runner with parallel workers.
-          npx playwright test tests/performance/ \
-            --reporter=list,json \
-            --workers=1 \
-            --retries=1 \
-            2>&1 | tee performance-output.txt
+          set +e
+          ./scripts/run-benchmarks.sh --ci --threshold 10 2>&1 | tee performance-output.txt
+          bench_exit=${PIPESTATUS[0]}
+          set -e
+          printf '%s\n' "$bench_exit" > benchmark-exit-code.txt
         continue-on-error: true
 
       - name: Mark PR benchmark run as informational
@@ -95,6 +93,7 @@ jobs:
           PR performance benchmarks skipped while CI stabilization is tracked in #627.
           Benchmark artifacts remain informational until the workflow is trustworthy again.
           EOF
+          printf '0\n' > benchmark-exit-code.txt
 
       - name: Collect benchmark results
         if: always()
@@ -104,6 +103,7 @@ jobs:
 
           # Save raw output
           cp performance-output.txt performance-reports/ 2>/dev/null || true
+          cp benchmark-exit-code.txt performance-reports/ 2>/dev/null || true
 
           # Save Playwright JSON results
           if [ -f test-results/.last-run.json ]; then
@@ -119,23 +119,22 @@ jobs:
             "runner": "'$(uname -m)'"
           }' > performance-reports/metadata.json
 
-          # Parse key metrics from output
-          echo "## 🏎️ Performance Benchmark Results" > performance-reports/summary.md
-          echo "" >> performance-reports/summary.md
-          echo "**Commit:** \`${{ github.sha }}\`" >> performance-reports/summary.md
-          echo "**Branch:** \`${{ github.head_ref || github.ref_name }}\`" >> performance-reports/summary.md
-          echo "" >> performance-reports/summary.md
-
-          if grep -qi "failed" performance-output.txt 2>/dev/null; then
-            echo "### ❌ Some benchmarks failed" >> performance-reports/summary.md
-          else
-            echo "### ✅ All benchmarks passed" >> performance-reports/summary.md
+          MODE="executed"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            MODE="pr-skip"
           fi
 
-          echo "" >> performance-reports/summary.md
-          echo '```' >> performance-reports/summary.md
-          grep -E '\[perf:' performance-output.txt >> performance-reports/summary.md 2>/dev/null || echo "No perf metrics captured" >> performance-reports/summary.md
-          echo '```' >> performance-reports/summary.md
+          node ./scripts/summarize-performance-ci.mjs \
+            --mode "$MODE" \
+            --output performance-output.txt \
+            --playwrightStatus test-results/.last-run.json \
+            --exitCodeFile benchmark-exit-code.txt \
+            --reportsDir performance-reports \
+            --sha "${{ github.sha }}" \
+            --branch "${{ github.head_ref || github.ref_name }}" \
+            --pr "${{ github.event.pull_request.number || 'none' }}" \
+            --threshold "10" \
+            --issue "627"
 
       - name: Upload performance reports
         if: always()
@@ -195,14 +194,15 @@ jobs:
       - name: Check for regressions
         working-directory: tactical-map
         run: |
-          # Benchmarks are currently informational while CI stability work is
-          # ongoing. Artifacts and PR comments remain the source of truth.
-          if grep -q "failed" performance-output.txt 2>/dev/null; then
-            echo "::warning::Performance benchmark failures detected. Check uploaded artifacts and summary for details."
-            exit 0
-          fi
-
-          echo "✅ No performance regressions detected."
+          node - <<'EOF'
+          const fs = require('fs');
+          const status = JSON.parse(fs.readFileSync('performance-reports/performance-status.json', 'utf8'));
+          if (status.gating.decision === 'warn') {
+            console.log(`::warning::${status.gating.reason}`);
+            process.exit(0);
+          }
+          console.log('✅ No performance regressions detected.');
+          EOF
 
       - name: Update baselines (main branch only)
         if: |
