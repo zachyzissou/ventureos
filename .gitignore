@@ -42,6 +42,16 @@ runtime/tmp/
 runtime/backups/
 runtime/reports/
 runtime/monitor/
+!runtime/logs/
+runtime/logs/*
+!runtime/logs/daily/
+runtime/logs/daily/*
+!runtime/logs/daily/agent-health.json
+!runtime/logs/daily/day1-go-no-go.md
+!runtime/logs/daily/decision-log.md
+!runtime/logs/daily/handoff-ledger.json
+!runtime/logs/daily/kpi-snapshot.json
+!runtime/logs/daily/spend.json
 dashboard/data/
 dashboard/disk-history.json
 data/health-history.json

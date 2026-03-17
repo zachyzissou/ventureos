@@ -78,7 +78,9 @@ Scope: KPI definitions and inter-department handoff SLAs for Company OS v1 depar
 ## 5) Evidence and audit requirements
 
 - KPI record fields: `kpi_id`, `period_start`, `period_end`, `value`, `target`, `owner`, `source_refs`, `entered_at`, `approved_at`.
-- Handoff record fields: `handoff_id`, `producer`, `consumer`, `artifact`, `sent_at`, `accepted_at`, `sla_status`, `exceptions`.
+- Handoff record fields: `handoff_id`, `producer`, `consumer`, `producer_binding_id`, `consumer_binding_id`, `artifact`, `sent_at`, `accepted_at`, `producer_ts`, `consumer_ts`, `sla_target_minutes`, `latency_minutes`, `compliance_status`, `breach_level`, `breach_owner`, `breach_action`, `exception_approved_by`, `exception_expires_at`, `exceptions`.
+- `sla_status` remains accepted for compatibility with historical ledgers, but `compliance_status` is the canonical field for current-day evidence and readiness evaluation.
+- Current-day ledgers must use canonical VentureOS role identifiers such as `operations:operator`, `finance:director`, or `venture_control` for binding, capability, and breach-routing fields.
 - Monthly audit sample rate: 10% of KPI entries and 10% of handoffs, minimum 3 samples per department category.
 - Failed audit sample requires correction within 2 business days and re-audit.
 

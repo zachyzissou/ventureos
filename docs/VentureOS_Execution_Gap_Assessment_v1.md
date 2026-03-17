@@ -142,7 +142,7 @@ All four docs require evidence-first execution, and the repo now has canonical e
 | R2 | Evidence infrastructure is partially implemented — evidence generation coverage still needs enforcement | HIGH | Data/Analytics Director + Engineering | Keep canonical store/schema/validation in place; finish generation, retention, and query/reporting depth |
 | R3 | Cross-cutting agent contracts were missing | RESOLVED | Operations Director | Closed by `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md` and `docs/VentureOS_Agent_Ownership_Matrix_v1.json` |
 | R4 | Access boundaries are defined only at the spec layer — runtime enforcement still pending | HIGH | IT/Security Director | Implement policy decisions through the named RBAC hook points and agent provisioning flow |
-| R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) unconnected | HIGH | Operations Director | Unify or explicitly map between technical and department SLA frameworks |
+| R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) still need cross-framework mapping, but handoff SLA detection is now implemented in the evidence-validation/readiness layer | MEDIUM-HIGH | Operations Director | Preserve the new handoff evidence gate; finish documenting how technical incidents cascade into department-level SLA impact |
 | R6 | No external boundary protocol for customer/vendor/regulator interactions | HIGH | Legal Director | Define boundary contracts before Sales/Legal activation in Phase B/C |
 | R7 | No inter-lane communication security model | HIGH | IT/Security Director | Define authentication/authorization for lane artifact exchange |
 | R8 | No KPI baselines — targets are aspirational until measured | MEDIUM | Data/Analytics Operator | Execute baseline measurement sprint in Phase 0 (Mar 16-25 per KPI/SLA doc §1) |
@@ -158,7 +158,7 @@ All four docs require evidence-first execution, and the repo now has canonical e
 1. **Keep Architecture doc aligned** — `VentureOS_Department_Architecture_v1.md` is restored; companion docs must continue to reference it as normative.
 2. **Complete evidence execution coverage** — The canonical store/schema/validation layer is now present. Finish generation coverage, retention policy enforcement, and query/reporting depth.
 3. **Implement RBAC enforcement hooks** — The role model and access matrix now exist; wire them into runtime policy, dashboard control surfaces, and agent provisioning.
-4. **Map SLA frameworks** — Document the relationship between P0-P3 technical SLAs and department handoff SLA tiers. Define how a technical incident cascades to department-level SLA impact.
+4. **Map SLA frameworks** — The evidence layer now computes handoff compliance, breach routing, and readiness failures. Next, document how P0-P3 technical incidents cascade into department handoff SLA impact.
 5. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
 6. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
 7. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.

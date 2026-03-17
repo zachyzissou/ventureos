@@ -45,9 +45,9 @@ Each gate maps to a checkpoint in the Day-1 Execution Packet. Every gate is bina
 |---|-------|---------------|---------------|
 | C1 | Handoff log exists | `runtime/logs/daily/YYYY-MM-DD-handoff-ledger.json` exists and is valid JSON | File missing or malformed |
 | C2 | Timestamps present | Every handoff record has `producer_ts` and `consumer_ts` fields | Any handoff missing either timestamp |
-| C3 | SLA computed | Each handoff has `sla_status` field with value `on_time` or `late` | Field missing or value outside allowed enum |
-| C4 | Breach actions assigned | Every `late` handoff has `breach_owner` and `breach_action` fields | Any late handoff missing owner or action |
-| C5 | On-time rate >= 90% | `count(on_time) / count(total) >= 0.90` for active departments | Rate below 90% |
+| C3 | SLA computed | Each current-day handoff has `compliance_status` with value `on_time`, `late`, or `exception`, plus `sla_target_minutes` and derived `latency_minutes` | Canonical compliance field missing, invalid enum, or SLA instrumentation incomplete |
+| C4 | Breach routing assigned | Every `late` handoff has canonical `breach_owner` and `breach_action` fields | Any late handoff missing owner/action, or owner uses non-canonical identifier |
+| C5 | On-time rate >= 90% | `count(on_time) / count(total) >= 0.90` for active departments, with no unresolved `level_3` breach lacking exception approval evidence | Rate below 90%, or any `level_3` breach without approval evidence |
 
 **Gate C verdict:** PASS only if C1–C5 all pass.
 
