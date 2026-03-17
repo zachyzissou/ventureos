@@ -69,7 +69,7 @@ describe('dashboard RBAC middleware', () => {
     const res = mockResponse();
     expect(authorizeDashboardRbac(req, res)).toBe(false);
     expect(res._statusCode).toBe(403);
-    expect(parseJsonBody<{ requiredHeaders: string[] }>(res).requiredHeaders).toContain('x-ventureos-binding-id');
+    expect(parseJsonBody<{ requiredHeadersAnyOf: string[] }>(res).requiredHeadersAnyOf).toContain('x-ventureos-binding-id');
   });
 
   it('allows operations control subject to mutate task board state', () => {
@@ -98,5 +98,22 @@ describe('dashboard RBAC middleware', () => {
     expect(authorizeDashboardRbac(req, res)).toBe(false);
     expect(res._statusCode).toBe(403);
     expect(parseJsonBody<{ code: string }>(res).code).toBe('ACTOR_FORBIDDEN');
+  });
+
+  it('rejects subject headers asserted from an untrusted remote client', () => {
+    const req = mockRequest({
+      method: 'PATCH',
+      url: '/api/task-board/task-1',
+      socket: { remoteAddress: '203.0.113.50' },
+      headers: {
+        authorization: 'Bearer test-token-abc123',
+        'x-ventureos-binding-id': 'operations:operator',
+        'x-ventureos-capability-id': 'venture_control',
+      },
+    });
+    const res = mockResponse();
+    expect(authorizeDashboardRbac(req, res)).toBe(false);
+    expect(res._statusCode).toBe(403);
+    expect(parseJsonBody<{ error: string }>(res).error).toMatch(/trusted local or proxy boundary/i);
   });
 });

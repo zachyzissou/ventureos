@@ -119,6 +119,17 @@ function isTrustedProxyPeer(ip: string): boolean {
   return TRUSTED_PROXY_IPS.has(ip) || TRUSTED_PROXY_IPS.has(cleaned);
 }
 
+function isLoopbackIp(ip: string): boolean {
+  const cleaned: string = normalizeIp(ip);
+  return cleaned === '127.0.0.1' || cleaned === '::1';
+}
+
+function isTrustedSubjectHeaderSource(req: IncomingMessage | null): boolean {
+  const peerIp: string = getPeerIp(req);
+  if (isLoopbackIp(peerIp)) return true;
+  return TRUST_PROXY && isTrustedProxyPeer(peerIp);
+}
+
 function getClientIp(req: IncomingMessage | null): string {
   const peerIp: string = getPeerIp(req);
   if (!req || !TRUST_PROXY || !isTrustedProxyPeer(peerIp)) {
@@ -272,15 +283,7 @@ function isCanonicalId(value: string): boolean {
 function inferAuthorityClass(
   bindingId: string,
   capabilityId: string,
-  explicitAuthorityClass: string,
 ): AuthorityClass | null {
-  if (
-    explicitAuthorityClass === 'delegated_agent'
-    || explicitAuthorityClass === 'control_plane'
-    || explicitAuthorityClass === 'human_final_arbiter'
-  ) {
-    return explicitAuthorityClass;
-  }
   if (bindingId === 'human_arbiter' || capabilityId === 'human_arbiter') {
     return 'human_final_arbiter';
   }
@@ -295,19 +298,20 @@ export function extractRequestSubject(req: IncomingMessage | null): DashboardReq
   const rawCapabilityId = readHeaderValue(req, SUBJECT_CAPABILITY_HEADER);
   const rawSpecialistId = readHeaderValue(req, SUBJECT_SPECIALIST_HEADER);
   const rawActorId = readHeaderValue(req, SUBJECT_ACTOR_HEADER);
-  const rawAuthorityClass = readHeaderValue(req, SUBJECT_AUTHORITY_HEADER);
 
   const hasExplicitHeaders = Boolean(
-    rawBindingId || rawCapabilityId || rawSpecialistId || rawActorId || rawAuthorityClass,
+    rawBindingId || rawCapabilityId || rawSpecialistId || rawActorId,
   );
   if (!hasExplicitHeaders) return null;
+  if (!isTrustedSubjectHeaderSource(req)) return null;
 
   const bindingId = isCanonicalBindingId(rawBindingId) ? rawBindingId : '';
   const normalizedCapabilityId = normalizeCapabilityId(rawCapabilityId);
   const capabilityId = normalizedCapabilityId ?? '';
   const specialistId = isCanonicalId(rawSpecialistId) ? rawSpecialistId : '';
+  if (!bindingId && !capabilityId) return null;
   const actorId = rawActorId || capabilityId || bindingId.replace(':', '-');
-  const authorityClass = inferAuthorityClass(bindingId, capabilityId, rawAuthorityClass);
+  const authorityClass = inferAuthorityClass(bindingId, capabilityId);
 
   return {
     actor: {
@@ -317,7 +321,7 @@ export function extractRequestSubject(req: IncomingMessage | null): DashboardReq
       capabilityId: capabilityId || undefined,
       specialistId: specialistId || undefined,
     },
-    source: rawActorId || rawAuthorityClass ? 'headers' : 'inferred',
+    source: rawActorId ? 'headers' : 'inferred',
     hasExplicitHeaders,
   };
 }

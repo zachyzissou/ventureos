@@ -100,8 +100,13 @@ export function handleSelfImprovement(
   // GET /api/self-improvement/digests
   if (url.pathname === '/api/self-improvement/digests' && req.method === 'GET') {
     const limit = parsePositiveInt(url.searchParams.get('limit'), 30, 1, 365);
-    const agentId = normalizeAgentId(url.searchParams.get('agentId')) ?? undefined;
-    const digests = listSelfImprovementDigests(deps.dataDir, { limit, agentId });
+    const rawAgentId = cleanId(url.searchParams.get('agentId'));
+    const agentId = normalizeAgentId(rawAgentId);
+    if (rawAgentId && !agentId) {
+      deps.sendJson(res, { ok: false, error: 'agentId must resolve to a canonical VentureOS capability' }, 400);
+      return true;
+    }
+    const digests = listSelfImprovementDigests(deps.dataDir, { limit, agentId: agentId ?? undefined });
     deps.sendJson(res, { total: digests.length, digests });
     return true;
   }

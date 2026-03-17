@@ -116,7 +116,12 @@ export function handleTokenCompaction(
   if (url.pathname === '/api/token-compaction/metrics' && req.method === 'GET') {
     const limit = clampInt(url.searchParams.get('limit'), 100, 1, 500);
     const sessionId = (url.searchParams.get('sessionId') ?? '').trim();
-    const agentId = (url.searchParams.get('agentId') ?? '').trim();
+    const rawAgentId = (url.searchParams.get('agentId') ?? '').trim();
+    const agentId = normalizeAgentId(rawAgentId);
+    if (rawAgentId && !agentId) {
+      deps.sendJson(res, { ok: false, error: 'agentId must resolve to a canonical VentureOS capability' }, 400);
+      return true;
+    }
 
     const history = readMetricsFile(metricsPath)
       .filter((metric) => (!sessionId || metric.sessionId === sessionId))

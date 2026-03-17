@@ -74,10 +74,13 @@ export function authorizeDashboardRbac(req: IncomingMessage, res: ServerResponse
     res.writeHead(403, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       ok: false,
-      error: 'Canonical VentureOS subject headers are required for privileged dashboard routes',
-      requiredHeaders: [
+      error: 'Privileged dashboard routes require canonical VentureOS subject headers from a trusted local or proxy boundary',
+      requiredHeadersAnyOf: [
         'x-ventureos-binding-id',
         'x-ventureos-capability-id',
+      ],
+      optionalHeaders: [
+        'x-ventureos-specialist-id',
       ],
     }));
     return false;
@@ -105,4 +108,3 @@ export function authorizeDashboardRbac(req: IncomingMessage, res: ServerResponse
   }));
   return false;
 }
-

@@ -183,8 +183,31 @@ describe('Auth Middleware', () => {
       expect(subject?.actor.authorityClass).toBe('control_plane');
     });
 
+    it('ignores spoofed authority-class headers and derives authority server-side', () => {
+      const req = mockRequest({
+        headers: {
+          'x-ventureos-binding-id': 'engineering:operator',
+          'x-ventureos-capability-id': 'venture_delivery',
+          'x-ventureos-authority-class': 'human_final_arbiter',
+        },
+      });
+      const subject = extractRequestSubject(req);
+      expect(subject?.actor.authorityClass).toBe('delegated_agent');
+    });
+
     it('returns null when no subject headers are present', () => {
       expect(extractRequestSubject(mockRequest())).toBeNull();
+    });
+
+    it('ignores subject headers from untrusted remote peers', () => {
+      const req = mockRequest({
+        socket: { remoteAddress: '203.0.113.50' },
+        headers: {
+          'x-ventureos-binding-id': 'operations:operator',
+          'x-ventureos-capability-id': 'venture_control',
+        },
+      });
+      expect(extractRequestSubject(req)).toBeNull();
     });
 
     it('attaches subject metadata after successful authentication', () => {

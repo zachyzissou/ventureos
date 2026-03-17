@@ -92,4 +92,12 @@ describe('self-improvement routes', () => {
     expect(res._statusCode).toBe(400);
     expect(parseJsonBody<{ error: string }>(res).error).toMatch(/canonical VentureOS capability/i);
   });
+
+  it('rejects unknown agent filters when listing digests', async () => {
+    const req = mockRequest({ method: 'GET', url: '/api/self-improvement/digests?agentId=not-a-real-agent' });
+    const res = mockResponse();
+    await handleSelfImprovement(req, res, deps());
+    expect(res._statusCode).toBe(400);
+    expect(parseJsonBody<{ error: string }>(res).error).toMatch(/canonical VentureOS capability/i);
+  });
 });
