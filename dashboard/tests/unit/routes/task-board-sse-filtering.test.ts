@@ -519,7 +519,7 @@ describe('GET /api/task-board/events with filter query params', () => {
     expect(body).toContain('"agentId":"sentinel"');
     expect(body).toContain('"priority":"high"');
     expect(body).toContain('"missionId":"mc-200"');
-    expect(body).toContain('"assigneeType":"nexus"');
+    expect(body).toContain('"assigneeType":"control_plane"');
   });
 
   it('ignores invalid filter values gracefully', async () => {

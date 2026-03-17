@@ -46,7 +46,7 @@ describe('lib/paths', () => {
     expect(p.SHARED_CONTEXT_DIR).toBe(path.join(HOME, 'clawd', 'shared-context'));
     expect(p.KPI_DIR).toBe(path.join(HOME, 'clawd', 'shared-context', 'kpis'));
     expect(p.OBSERVATIONS_DIR).toBe(
-      path.join(HOME, '.openclaw', 'workspace-archivist', 'observations'),
+      path.join(HOME, '.openclaw', 'workspace-venture_memory', 'observations'),
     );
     expect(p.RUNTIME_DIR).toBe(path.join(HOME, 'clawd', 'ventureos', 'runtime'));
     expect(p.RUNTIME_LOG_DIR).toBe(path.join(HOME, 'clawd', 'ventureos', 'runtime', 'logs'));
@@ -92,8 +92,8 @@ describe('lib/paths', () => {
   it('agentSessionsDir returns correct path', () => {
     jest.resetModules();
     const p = require('../paths');
-    const dir = p.agentSessionsDir('oracle');
-    expect(dir).toBe(path.join(p.OPENCLAW_DIR, 'agents', 'oracle', 'sessions'));
+    const dir = p.agentSessionsDir('venture_research');
+    expect(dir).toBe(path.join(p.OPENCLAW_DIR, 'agents', 'venture_research', 'sessions'));
   });
 
   it('agentSessionsDir sanitizes agent IDs', () => {
@@ -109,8 +109,8 @@ describe('lib/paths', () => {
   it('agentWorkspaceDir returns correct path', () => {
     jest.resetModules();
     const p = require('../paths');
-    const dir = p.agentWorkspaceDir('synth');
-    expect(dir).toBe(path.join(p.OPENCLAW_DIR, 'workspace-synth'));
+    const dir = p.agentWorkspaceDir('venture_delivery');
+    expect(dir).toBe(path.join(p.OPENCLAW_DIR, 'workspace-venture_delivery'));
   });
 
   it('paths convenience object includes all paths', () => {

@@ -10,16 +10,16 @@ A structured agent identity system for VentureOS. Each role card defines an agen
 |------|----------|
 | `00-SCHEMA.md` | Schema documentation for the 10-layer role card model |
 | `schema.ts` | TypeScript interfaces, validation, and `SOUL.md` generator |
-| `01-echo.ts` | Echo — Strategy Lead |
-| `02-nexus.ts` | Nexus — Program Controller |
-| `03-oracle.ts` | Oracle — Research Lead |
-| `04-atlas.ts` | Atlas — Infrastructure Lead |
-| `05-sentinel.ts` | Sentinel — Security Lead |
-| `06-verifier.ts` | Verifier — Quality Lead |
-| `07-archivist.ts` | Archivist — Knowledge Lead |
-| `08-synth.ts` | Synth — Delivery Lead |
-| `09-scout.ts` | Scout — Signals Lead |
-| `10-liaison.ts` | Liaison — Communications Lead |
+| `01-venture-strategy.ts` | Venture Strategy — Strategy Lead |
+| `02-venture-control.ts` | Venture Control — Program Controller |
+| `03-venture-research.ts` | Venture Research — Research Lead |
+| `04-venture-infrastructure.ts` | Venture Infrastructure — Infrastructure Lead |
+| `05-venture-security.ts` | Venture Security — Security Lead |
+| `06-venture-evidence.ts` | Venture Evidence — Quality Lead |
+| `07-venture-memory.ts` | Venture Memory — Knowledge Lead |
+| `08-venture-delivery.ts` | Venture Delivery — Delivery Lead |
+| `09-venture-signals.ts` | Venture Signals — Signals Lead |
+| `10-venture-comms.ts` | Venture Comms — Communications Lead |
 | `11-voice-directives.md` | Voice and conflict-resolution guidelines |
 | `12-affinity-matrix.md` | Key pairwise collaboration affinities |
 | `13-implementation.md` | Implementation and rollout guidance |
@@ -46,10 +46,10 @@ A structured agent identity system for VentureOS. Each role card defines an agen
 
 | Style | Agents | Default communication pattern |
 |-------|--------|-------------------------------|
-| `strategic` | Echo, Oracle | directional, high-context, decision-oriented |
-| `control` | Nexus, Verifier, Liaison | procedural, explicit, gate-aware |
-| `delivery` | Atlas, Archivist, Synth, Scout | practical, implementation-focused, concise |
-| `security` | Sentinel | protective, risk-focused, minimally ambiguous |
+| `strategic` | Venture Strategy, Venture Research | directional, high-context, decision-oriented |
+| `control` | Venture Control, Venture Evidence, Venture Comms | procedural, explicit, gate-aware |
+| `delivery` | Venture Infrastructure, Venture Memory, Venture Delivery, Venture Signals | practical, implementation-focused, concise |
+| `security` | Venture Security | protective, risk-focused, minimally ambiguous |
 
 ## Quick Start
 

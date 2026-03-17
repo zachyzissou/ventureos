@@ -174,7 +174,7 @@ const VALID_STATUSES: TaskStatus[] = [
   'failed',
 ];
 const VALID_PRIORITIES: TaskPriority[] = ['critical', 'high', 'medium', 'low'];
-const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'nexus', 'agent'];
+const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'control_plane', 'nexus', 'agent'];
 
 /** Allowed state transitions (from → to[]). */
 const TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
@@ -226,9 +226,7 @@ function normalizeStatusHistory(card: TaskCard): TaskStatusHistoryEntry[] {
 
 function normalizeTaskCard(raw: TaskCard): TaskCard {
   const status: TaskStatus = VALID_STATUSES.includes(raw.status) ? raw.status : 'backlog';
-  const assigneeType: TaskAssigneeType = VALID_ASSIGNEE_TYPES.includes(raw.assigneeType as TaskAssigneeType)
-    ? (raw.assigneeType as TaskAssigneeType)
-    : 'agent';
+  const assigneeType = normalizeAssigneeType(raw.assigneeType as string | undefined, 'agent');
   const normalized: TaskCard = {
     ...raw,
     status,
@@ -354,7 +352,8 @@ export function filterTasks(
     out = out.filter((t) => t.missionId === opts.missionId);
   }
   if (opts.assigneeType && VALID_ASSIGNEE_TYPES.includes(opts.assigneeType as TaskAssigneeType)) {
-    out = out.filter((t) => (t.assigneeType ?? 'agent') === opts.assigneeType);
+    const requestedType = normalizeAssigneeType(opts.assigneeType, 'agent');
+    out = out.filter((t) => normalizeAssigneeType(t.assigneeType ?? 'agent', 'agent') === requestedType);
   }
   return out;
 }
@@ -407,7 +406,7 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
     return { ok: false, error: 'missionBrief must be ≤ 300 chars' };
   }
 
-  const assigneeType = (body.assigneeType ?? (agentId ? 'agent' : 'nexus')) as TaskAssigneeType;
+  const assigneeType = normalizeAssigneeType(body.assigneeType ?? (agentId ? 'agent' : 'control_plane'), 'agent');
   if (!VALID_ASSIGNEE_TYPES.includes(assigneeType)) {
     return { ok: false, error: `invalid assigneeType: ${assigneeType}` };
   }
@@ -527,7 +526,7 @@ export async function handleTaskBoard(
   // ── GET /api/task-board/events (SSE) ─────────────────────────────────────
   // Real-time event stream for task mutations. Issue #219.
   // Supports optional subscription filters via query params:
-  //   ?status=running&agentId=oracle&priority=high&missionId=mc-001&assigneeType=agent
+  //   ?status=running&agentId=venture_research&priority=high&missionId=mc-001&assigneeType=agent
   // Server-side filtering is applied before broadcasting to each client.
   if (url.startsWith('/api/task-board/events') && method === 'GET') {
     // Parse optional subscription filter from query string
@@ -660,7 +659,7 @@ export async function handleTaskBoard(
   // Export task board cards as CSV or JSON file download.
   // Query params: same as /api/task-board list + ?format=csv|json (default json)
   //   ?status=running     — filter by status
-  //   ?agentId=oracle     — filter by agent
+  //   ?agentId=venture_research — filter by agent
   //   ?priority=high      — filter by priority
   //   ?missionId=mc-001   — filter by mission id
   //   ?assigneeType=agent — filter by owner type
@@ -786,7 +785,7 @@ export async function handleTaskBoard(
   // ── POST /api/task-board/recovery/resume — Issue #223 ───────────────────
   // Re-queue running work from active-tasks snapshot after restart.
   // Optional body:
-  //   { "agentId": "oracle", "limit": 20 }
+  //   { "agentId": "venture_research", "limit": 20 }
   if (url === '/api/task-board/recovery/resume' && method === 'POST') {
     let body: RecoveryResumeInput = {};
     try {
@@ -1606,4 +1605,9 @@ export async function handleTaskBoard(
   }
 
   return false;
+}
+function normalizeAssigneeType(value: string | null | undefined, fallback: TaskAssigneeType = 'agent'): TaskAssigneeType {
+  if (!value) return fallback;
+  if (value === 'nexus') return 'control_plane';
+  return VALID_ASSIGNEE_TYPES.includes(value as TaskAssigneeType) ? (value as TaskAssigneeType) : fallback;
 }

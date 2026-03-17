@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import Ajv, { type ErrorObject, type ValidateFunction } from 'ajv';
 import type { AgentRoleCard, OperatingStyle } from '../role-cards/schema';
+import { normalizeCapabilityId } from './agent-identity';
 
 export type RoleCardFormat =
   | 'natural_language'
@@ -238,7 +239,8 @@ async function loadAgentRoleCardFromFile(file: string): Promise<AgentRoleCard> {
 }
 
 async function loadAgentRoleCard(agentId: string, roleCardsDir: string): Promise<AgentRoleCard> {
-  const direct = path.join(roleCardsDir, `${agentId}.ts`);
+  const normalizedAgentId = normalizeCapabilityId(agentId) ?? agentId;
+  const direct = path.join(roleCardsDir, `${normalizedAgentId}.ts`);
   let candidate: string | null = null;
 
   try {
@@ -252,7 +254,7 @@ async function loadAgentRoleCard(agentId: string, roleCardsDir: string): Promise
       const file = path.join(roleCardsDir, entry.name);
       const sample = await fs.readFile(file, 'utf8');
       const idMatch = sample.match(/id:\s*["']([^"']+)["']/);
-      if (idMatch && idMatch[1] === agentId) {
+      if (idMatch && idMatch[1] === normalizedAgentId) {
         candidate = file;
         break;
       }
@@ -264,7 +266,7 @@ async function loadAgentRoleCard(agentId: string, roleCardsDir: string): Promise
   }
 
   const card = await loadAgentRoleCardFromFile(candidate);
-  if (card.id != null && card.id !== agentId) {
+  if (card.id != null && card.id !== normalizedAgentId) {
     throw new Error(`Requested agentId ${agentId} but parsed card id is ${card.id}`);
   }
 
@@ -278,14 +280,15 @@ export function getRoleCardFilePath(agentId: string, roleCardsDir = getDefaultRo
 const roleCardCache = new Map<string, RoleCard>();
 
 export async function loadRoleCard(agentId: string, opts: RoleCardLoadOptions = {}): Promise<RoleCard> {
+  const normalizedAgentId = normalizeCapabilityId(agentId) ?? agentId;
   const roleCardsDir = opts.roleCardsDir ?? getDefaultRoleCardsDir();
   const schemaPath = opts.schemaPath ?? getDefaultRoleCardSchemaPath();
-  const cacheKey = `${expandHome(roleCardsDir)}::${agentId}`;
+  const cacheKey = `${expandHome(roleCardsDir)}::${normalizedAgentId}`;
   const cached = roleCardCache.get(cacheKey);
   if (cached) return cached;
 
   const normalizedDir = expandHome(roleCardsDir);
-  const jsonPath = path.join(normalizedDir, `${agentId}.json`);
+  const jsonPath = path.join(normalizedDir, `${normalizedAgentId}.json`);
   let parsed: unknown;
 
   try {
@@ -293,7 +296,7 @@ export async function loadRoleCard(agentId: string, opts: RoleCardLoadOptions = 
     parsed = JSON.parse(raw) as unknown;
   } catch (err: any) {
     if (err?.code === 'ENOENT') {
-      const sourceCard = await loadAgentRoleCard(agentId, normalizedDir);
+      const sourceCard = await loadAgentRoleCard(normalizedAgentId, normalizedDir);
       parsed = toRoleCard(sourceCard);
     } else {
       throw err;

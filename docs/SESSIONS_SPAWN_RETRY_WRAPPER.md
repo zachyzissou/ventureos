@@ -35,13 +35,13 @@ Environment controls:
 
 ### Standard usage (workspace-local)
 ```bash
-AGENT_ID=atlas OPENCLAW_WORKSPACE=~/.openclaw/workspace-atlas \
-  node scripts/spawn-with-retry.mjs -- task:"Analyze roadmap" model:"openai-codex/gpt-5.3-codex" label:"oracle-roadmap"
+AGENT_ID=venture_infrastructure OPENCLAW_WORKSPACE=~/.openclaw/workspace-venture_infrastructure \
+  node scripts/spawn-with-retry.mjs -- task:"Analyze roadmap" model:"openai-codex/gpt-5.3-codex" label:"venture_research-roadmap"
 ```
 
 ### Explicit max retries (include 16s retry)
 ```bash
-AGENT_ID=oracle OPENCLAW_WORKSPACE=~/.openclaw/workspace-oracle \
+AGENT_ID=venture_research OPENCLAW_WORKSPACE=~/.openclaw/workspace-venture_research \
   node scripts/spawn-with-retry.mjs \
     --max-retries 4 \
     -- task:"Draft launch brief" model:"anthropic/claude-sonnet-4-20250514" label:"comms-launch"
@@ -49,9 +49,9 @@ AGENT_ID=oracle OPENCLAW_WORKSPACE=~/.openclaw/workspace-oracle \
 
 ### Custom log path
 ```bash
-AGENT_ID=atlas OPENCLAW_WORKSPACE=~/.openclaw/workspace-atlas \
+AGENT_ID=venture_infrastructure OPENCLAW_WORKSPACE=~/.openclaw/workspace-venture_infrastructure \
   node scripts/spawn-with-retry.mjs \
-    --log-file ~/.openclaw/workspace-atlas/runtime/logs/sessions-spawn-retry.jsonl \
+    --log-file ~/.openclaw/workspace-venture_infrastructure/runtime/logs/sessions-spawn-retry.jsonl \
     -- task:"Build sprint review" label:"producer-sprint-review"
 ```
 
@@ -70,7 +70,7 @@ JSONL records include:
 1. **Mission Control dispatches**
    - Replace direct `sessions_spawn(...)` calls in automation scripts with shell calls to this wrapper.
 2. **Guarded workflows that fan out subagents**
-   - Insert this wrapper before mission fan-out stages (e.g., Oracle research, Verifier QA sub-sessions).
+   - Insert this wrapper before mission fan-out stages (e.g., Venture Research research, Venture Evidence QA sub-sessions).
 3. **Cron/automation runners**
    - Use wrapper output + exit code for alerting and escalation.
 

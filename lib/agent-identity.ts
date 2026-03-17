@@ -15,6 +15,8 @@ export const CANONICAL_CAPABILITY_IDS = [
   'venture_delivery',
   'venture_strategy',
   'venture_control',
+  'venture_signals',
+  'venture_comms',
 ] as const;
 
 export type CanonicalCapabilityId = (typeof CANONICAL_CAPABILITY_IDS)[number];
@@ -39,6 +41,8 @@ export const LEGACY_CAPABILITY_ALIASES: Record<string, CanonicalCapabilityId> = 
   synth: 'venture_delivery',
   echo: 'venture_strategy',
   nexus: 'venture_control',
+  scout: 'venture_signals',
+  liaison: 'venture_comms',
 };
 
 export const CANONICAL_TO_LEGACY_CAPABILITY_IDS: Record<CanonicalCapabilityId, string> = {
@@ -50,6 +54,8 @@ export const CANONICAL_TO_LEGACY_CAPABILITY_IDS: Record<CanonicalCapabilityId, s
   venture_delivery: 'synth',
   venture_strategy: 'echo',
   venture_control: 'nexus',
+  venture_signals: 'scout',
+  venture_comms: 'liaison',
 };
 
 export const AGENT_DISPLAY_NAMES: Record<CanonicalCapabilityId, string> = {
@@ -61,6 +67,8 @@ export const AGENT_DISPLAY_NAMES: Record<CanonicalCapabilityId, string> = {
   venture_delivery: 'Venture Delivery',
   venture_strategy: 'Venture Strategy',
   venture_control: 'Venture Control',
+  venture_signals: 'Venture Signals',
+  venture_comms: 'Venture Comms',
 };
 
 export const AUXILIARY_AGENT_IDS = [

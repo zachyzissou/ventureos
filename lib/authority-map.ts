@@ -6,7 +6,7 @@
  */
 
 export type LegacyAuthorityActorType = 'human' | 'nexus' | 'agent';
-export type AuthorityActorType = LegacyAuthorityActorType;
+export type AuthorityActorType = 'human' | 'control_plane' | 'agent';
 
 export type AuthorityClass = 'delegated_agent' | 'control_plane' | 'human_final_arbiter';
 
@@ -19,7 +19,7 @@ export type AuthorityAction =
 
 export interface AuthorityActor {
   id: string;
-  type?: LegacyAuthorityActorType;
+  type?: AuthorityActorType | LegacyAuthorityActorType;
   authorityClass?: AuthorityClass;
   bindingId?: string;
   capabilityId?: string;
@@ -29,19 +29,20 @@ export interface AuthorityActor {
 export interface AuthorityRule {
   action: AuthorityAction;
   allowedAuthorityClasses: readonly AuthorityClass[];
-  allowedActorTypes: readonly LegacyAuthorityActorType[];
+  allowedActorTypes: readonly AuthorityActorType[];
   rationale: string;
 }
 
-const LEGACY_TYPE_TO_AUTHORITY_CLASS: Record<LegacyAuthorityActorType, AuthorityClass> = {
+const ACTOR_TYPE_TO_AUTHORITY_CLASS: Record<AuthorityActorType | LegacyAuthorityActorType, AuthorityClass> = {
   human: 'human_final_arbiter',
+  control_plane: 'control_plane',
   nexus: 'control_plane',
   agent: 'delegated_agent',
 };
 
-const AUTHORITY_CLASS_TO_LEGACY_TYPES: Record<AuthorityClass, readonly LegacyAuthorityActorType[]> = {
+const AUTHORITY_CLASS_TO_ACTOR_TYPES: Record<AuthorityClass, readonly AuthorityActorType[]> = {
   delegated_agent: ['agent'],
-  control_plane: ['nexus'],
+  control_plane: ['control_plane'],
   human_final_arbiter: ['human'],
 };
 
@@ -49,25 +50,25 @@ const RULES: Record<AuthorityAction, AuthorityRule> = {
   propose: {
     action: 'propose',
     allowedAuthorityClasses: ['delegated_agent', 'control_plane', 'human_final_arbiter'],
-    allowedActorTypes: ['agent', 'nexus', 'human'],
+    allowedActorTypes: ['agent', 'control_plane', 'human'],
     rationale: 'Any bounded VentureOS subject may propose work.',
   },
   execute: {
     action: 'execute',
     allowedAuthorityClasses: ['delegated_agent', 'control_plane', 'human_final_arbiter'],
-    allowedActorTypes: ['agent', 'nexus', 'human'],
+    allowedActorTypes: ['agent', 'control_plane', 'human'],
     rationale: 'Execution can be delegated under control-plane or human supervision.',
   },
   approve: {
     action: 'approve',
     allowedAuthorityClasses: ['control_plane', 'human_final_arbiter'],
-    allowedActorTypes: ['nexus', 'human'],
+    allowedActorTypes: ['control_plane', 'human'],
     rationale: 'Approvals require control-plane or human-final authority.',
   },
   close: {
     action: 'close',
     allowedAuthorityClasses: ['control_plane', 'human_final_arbiter'],
-    allowedActorTypes: ['nexus', 'human'],
+    allowedActorTypes: ['control_plane', 'human'],
     rationale: 'Finalization is restricted to control-plane or human-final authority.',
   },
   override: {
@@ -90,7 +91,7 @@ function isValidCanonicalId(value: string | undefined): boolean {
 
 export function resolveAuthorityClass(actor: AuthorityActor): AuthorityClass | null {
   if (actor.authorityClass) return actor.authorityClass;
-  if (actor.type) return LEGACY_TYPE_TO_AUTHORITY_CLASS[actor.type] ?? null;
+  if (actor.type) return ACTOR_TYPE_TO_AUTHORITY_CLASS[actor.type] ?? null;
   return null;
 }
 
@@ -121,12 +122,12 @@ export interface AuthorityDecision {
   message: string;
   action: AuthorityAction;
   actorId: string;
-  actorType: LegacyAuthorityActorType | 'unknown';
+  actorType: AuthorityActorType | LegacyAuthorityActorType | 'unknown';
   authorityClass: AuthorityClass | 'unknown';
   bindingId?: string;
   capabilityId?: string;
   specialistId?: string;
-  allowedActorTypes: readonly LegacyAuthorityActorType[];
+  allowedActorTypes: readonly AuthorityActorType[];
   allowedAuthorityClasses: readonly AuthorityClass[];
 }
 
@@ -187,6 +188,6 @@ export function evaluateAuthority(actor: AuthorityActor, action: AuthorityAction
   };
 }
 
-export function allowedLegacyActorTypesFor(authorityClass: AuthorityClass): readonly LegacyAuthorityActorType[] {
-  return AUTHORITY_CLASS_TO_LEGACY_TYPES[authorityClass];
+export function allowedLegacyActorTypesFor(authorityClass: AuthorityClass): readonly AuthorityActorType[] {
+  return AUTHORITY_CLASS_TO_ACTOR_TYPES[authorityClass];
 }

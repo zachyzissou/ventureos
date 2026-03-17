@@ -729,8 +729,8 @@ export type TaskStatus =
 /** Valid task card priorities. */
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low';
 
-/** Assignment owner type for mission-linked task cards. */
-export type TaskAssigneeType = 'human' | 'nexus' | 'agent';
+/** Assignment owner type for mission-linked task cards. `nexus` remains accepted as a legacy alias. */
+export type TaskAssigneeType = 'human' | 'control_plane' | 'nexus' | 'agent';
 
 /** Status transition audit entry for task cards. */
 export interface TaskStatusHistoryEntry {
@@ -763,9 +763,9 @@ export interface TaskCard {
   missionId?: string | null;
   /** Origin descriptor (usually mission brief title/path). */
   missionBrief?: string | null;
-  /** Assignment owner dimension: human / nexus / agent. */
+  /** Assignment owner dimension: human / control_plane / agent. */
   assigneeType?: TaskAssigneeType;
-  /** Owner identifier (person, nexus, or agent id). */
+  /** Owner identifier (person, control-plane subject, or agent id). */
   assigneeId?: string | null;
   /** Upstream task IDs this card depends on. */
   dependencies?: string[];

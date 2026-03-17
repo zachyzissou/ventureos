@@ -137,14 +137,14 @@ Isolation:
   - Default deny outside workspace for explicit path args
 
 Examples:
-  AGENT_ID=atlas OPENCLAW_WORKSPACE=~/.openclaw/workspace-atlas \
+  AGENT_ID=venture_infrastructure OPENCLAW_WORKSPACE=~/.openclaw/workspace-venture_infrastructure \
     node scripts/spawn-with-retry.mjs -- task:"Build QA report" label:"qa"
 
-  AGENT_ID=oracle OPENCLAW_WORKSPACE=~/.openclaw/workspace-oracle \
+  AGENT_ID=venture_research OPENCLAW_WORKSPACE=~/.openclaw/workspace-venture_research \
     node scripts/spawn-with-retry.mjs --max-retries 4 -- task:"Dispatch" label:"dispatch-1"
 
-  AGENT_ID=atlas OPENCLAW_WORKSPACE=~/.openclaw/workspace-atlas \
-    node scripts/spawn-with-retry.mjs --spawn-cmd /tmp/agent-atlas/mock-spawn.sh -- --agent invalid-agent
+  AGENT_ID=venture_infrastructure OPENCLAW_WORKSPACE=~/.openclaw/workspace-venture_infrastructure \
+    node scripts/spawn-with-retry.mjs --spawn-cmd /tmp/agent-venture_infrastructure/mock-spawn.sh -- --agent invalid-agent
 `;
   process.stdout.write(msg);
   process.exit(code);

@@ -1,11 +1,11 @@
 import { AgentRoleCard } from "./schema";
 
 /**
- * ARCHIVIST — Knowledge management, documentation, and durable memory.
+ * Venture Memory — Knowledge management, documentation, and durable memory.
  */
-export const archivist: AgentRoleCard = {
-  id: "archivist",
-  name: "Archivist",
+export const venture_memory: AgentRoleCard = {
+  id: "venture_memory",
+  name: "Venture Memory",
   title: "Knowledge Lead",
   glyph: "📚",
   operatingStyle: "delivery",
@@ -26,10 +26,10 @@ export const archivist: AgentRoleCard = {
       "Cross-referencing and linking between documents",
     ],
     boundaries: [
-      "Does NOT create the source content (agents produce content, Archivist documents it)",
+      "Does NOT create the source content (agents produce content, Venture Memory documents it)",
       "Does NOT make technical decisions (documents decisions made by others)",
-      "Does NOT do research (that's Oracle — Archivist documents Oracle's findings)",
-      "Does NOT publish externally (that's Liaison — Archivist maintains internal docs)",
+      "Does NOT do research (that's Venture Research — Venture Memory documents Venture Research's findings)",
+      "Does NOT publish externally (that's Venture Comms — Venture Memory maintains internal docs)",
     ],
   },
 
@@ -92,13 +92,13 @@ export const archivist: AgentRoleCard = {
   },
 
   escalationPolicy: {
-    escalateTo: ["nexus", "oracle"],
+    escalateTo: ["venture_control", "venture_research"],
     escalateTriggers: [
-      "Unable to verify technical accuracy with owning agent (→ Nexus to resolve)",
-      "Documentation reveals contradictions in system design (→ Oracle for analysis)",
-      "Significant undocumented system exists (→ Nexus to schedule documentation sprint)",
-      "Documentation standards need revision (→ Echo for approval)",
-      "Sensitive content requires classification guidance (→ Sentinel)",
+      "Unable to verify technical accuracy with owning agent (→ Venture Control to resolve)",
+      "Documentation reveals contradictions in system design (→ Venture Research for analysis)",
+      "Significant undocumented system exists (→ Venture Control to schedule documentation sprint)",
+      "Documentation standards need revision (→ Venture Strategy for approval)",
+      "Sensitive content requires classification guidance (→ Venture Security)",
     ],
     timeout: "4h for standard documentation, 1h for incident-related docs",
     fallback: "Mark as [DRAFT: UNVERIFIED] and continue — partial docs beat no docs",
@@ -133,15 +133,15 @@ export const archivist: AgentRoleCard = {
   },
 
   affinityMap: {
-    echo: 0.65,      // Strategic alignment for documentation priorities
-    nexus: 0.72,     // Sprint documentation and process records
-    oracle: 0.78,    // Research → documentation pipeline is natural
-    atlas: 0.65,     // Runbook documentation — important but episodic
-    sentinel: 0.60,  // Security documentation — sensitive, careful
-    verifier: 0.75,  // Acceptance criteria documentation, test docs
-    synth: 0.80,     // Code documentation — the highest-volume pipeline
-    scout: 0.58,     // Alert documentation, monitoring guides
-    liaison: 0.70,   // External-facing docs need Archivist quality
+    venture_strategy: 0.65,      // Strategic alignment for documentation priorities
+    venture_control: 0.72,     // Sprint documentation and process records
+    venture_research: 0.78,    // Research → documentation pipeline is natural
+    venture_infrastructure: 0.65,     // Runbook documentation — important but episodic
+    venture_security: 0.60,  // Security documentation — sensitive, careful
+    venture_evidence: 0.75,  // Acceptance criteria documentation, test docs
+    venture_delivery: 0.80,     // Code documentation — the highest-volume pipeline
+    venture_signals: 0.58,     // Alert documentation, monitoring guides
+    venture_comms: 0.70,   // External-facing docs need Venture Memory quality
   },
 
   toolAccess: [

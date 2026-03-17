@@ -6,8 +6,8 @@ SCRIPT="$ROOT/scripts/spawn-with-retry.mjs"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-WS_A="$TMP_DIR/workspace-atlas"
-WS_B="$TMP_DIR/workspace-oracle"
+WS_A="$TMP_DIR/workspace-venture_infrastructure"
+WS_B="$TMP_DIR/workspace-venture_research"
 mkdir -p "$WS_A" "$WS_B"
 
 MOCK_A="$WS_A/mock-sessions-spawn.sh"
@@ -21,15 +21,15 @@ mode="${MOCK_MODE:-invalid-agent}"
 state_file="${MOCK_STATE_FILE:-/tmp/agent-main/mock-spawn-state.txt}"
 target="${1:-}"
 
-echo "${TMPDIR:-}" > "${MOCK_TMPDIR_FILE:-/dev/null}"
+venture_strategy "${TMPDIR:-}" > "${MOCK_TMPDIR_FILE:-/dev/null}"
 
 case "$mode" in
   invalid-agent)
     if [[ "$target" == *"invalid"* ]]; then
-      echo "sessions_spawn: invalid agent target: $target" >&2
+      venture_strategy "sessions_spawn: invalid agent target: $target" >&2
       exit 42
     fi
-    echo "session spawned for $target"
+    venture_strategy "session spawned for $target"
     exit 0
     ;;
   flaky)
@@ -38,18 +38,18 @@ case "$mode" in
       n="$(cat "$state_file")"
     fi
     n=$((n + 1))
-    echo "$n" > "$state_file"
+    venture_strategy "$n" > "$state_file"
 
     if (( n <= 2 )); then
-      echo "sessions_spawn: transient gateway timeout (attempt $n)" >&2
+      venture_strategy "sessions_spawn: transient gateway timeout (attempt $n)" >&2
       exit 75
     fi
 
-    echo "session spawned after transient failures"
+    venture_strategy "session spawned after transient failures"
     exit 0
     ;;
   *)
-    echo "unknown MOCK_MODE=$mode" >&2
+    venture_strategy "unknown MOCK_MODE=$mode" >&2
     exit 2
     ;;
 esac
@@ -66,7 +66,7 @@ PY
 )"
 
 set +e
-AGENT_ID=atlas OPENCLAW_WORKSPACE="$WS_A" MOCK_MODE=invalid-agent node "$SCRIPT" \
+AGENT_ID=venture_infrastructure OPENCLAW_WORKSPACE="$WS_A" MOCK_MODE=invalid-agent node "$SCRIPT" \
   --spawn-cmd "$MOCK_A" \
   --max-retries 3 \
   --log-file "$WS_A/runtime/logs/failure.log" \
@@ -101,13 +101,13 @@ assert len(failed_records) == 1, f"expected 1 terminal failure record, got {len(
 
 backoffs = [r.get("nextBackoffSeconds") for r in retry_records]
 assert backoffs == [2, 4, 8], f"unexpected backoff schedule: {backoffs}"
-assert {r.get('agentId') for r in records} == {'atlas'}
+assert {r.get('agentId') for r in records} == {'venture_infrastructure'}
 
 print("TEST1_OK invalid-agent failure + backoff verified")
 PY
 
 # Test 2: Transient failure then success
-AGENT_ID=oracle OPENCLAW_WORKSPACE="$WS_B" MOCK_MODE=flaky MOCK_STATE_FILE="$STATE_FILE" node "$SCRIPT" \
+AGENT_ID=venture_research OPENCLAW_WORKSPACE="$WS_B" MOCK_MODE=flaky MOCK_STATE_FILE="$STATE_FILE" node "$SCRIPT" \
   --spawn-cmd "$MOCK_B" \
   --max-retries 3 \
   --log-file "$WS_B/runtime/logs/flaky.log" \
@@ -127,14 +127,14 @@ success_records = [r for r in records if r.get("event") == "spawn_success"]
 assert len(retry_records) == 2, f"expected 2 retries, got {len(retry_records)}"
 assert len(success_records) == 1, f"expected 1 success record, got {len(success_records)}"
 assert success_records[0].get("attempt") == 3, success_records[0]
-assert {r.get('agentId') for r in records} == {'oracle'}
+assert {r.get('agentId') for r in records} == {'venture_research'}
 
 print("TEST2_OK transient failure recovered")
 PY
 
 # Test 3: Default deny outside workspace (cross-workspace log path)
 set +e
-AGENT_ID=oracle OPENCLAW_WORKSPACE="$WS_B" node "$SCRIPT" \
+AGENT_ID=venture_research OPENCLAW_WORKSPACE="$WS_B" node "$SCRIPT" \
   --spawn-cmd "$MOCK_B" \
   --max-retries 0 \
   --log-file "$WS_A/runtime/logs/should-deny.log" \
@@ -154,7 +154,7 @@ PY
 
 # Test 4: per-agent TMPDIR propagation
 TMPDIR_EVIDENCE="$TMP_DIR/tmpdir.txt"
-AGENT_ID=atlas OPENCLAW_WORKSPACE="$WS_A" MOCK_MODE=invalid-agent MOCK_TMPDIR_FILE="$TMPDIR_EVIDENCE" node "$SCRIPT" \
+AGENT_ID=venture_infrastructure OPENCLAW_WORKSPACE="$WS_A" MOCK_MODE=invalid-agent MOCK_TMPDIR_FILE="$TMPDIR_EVIDENCE" node "$SCRIPT" \
   --spawn-cmd "$MOCK_A" \
   --max-retries 0 \
   --log-file "$WS_A/runtime/logs/tmpdir.log" \
@@ -164,9 +164,9 @@ python3 - <<PY
 from pathlib import Path
 
 tmpdir = Path("$TMPDIR_EVIDENCE").read_text().strip()
-assert tmpdir == "/tmp/agent-atlas", tmpdir
+assert tmpdir == "/tmp/agent-venture_infrastructure", tmpdir
 assert Path(tmpdir).is_dir(), tmpdir
 print("TEST4_OK per-agent tmp dir verified")
 PY
 
-echo "SPAWN_WITH_RETRY_TESTS_OK"
+venture_strategy "SPAWN_WITH_RETRY_TESTS_OK"

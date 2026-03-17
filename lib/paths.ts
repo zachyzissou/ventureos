@@ -14,6 +14,7 @@
 
 import os from 'node:os';
 import path from 'node:path';
+import fs from 'node:fs';
 
 // ─── Base Directories ────────────────────────────────────────────────────────
 
@@ -54,7 +55,13 @@ export const DASHBOARD_DATA_DIR: string =
 export const OBSERVATIONS_DIR: string =
   process.env.OBSERVATIONS_DIR ??
   process.env.VENTUREOS_OBSERVATIONS_DIR ??
-  path.join(OPENCLAW_DIR, 'workspace-archivist', 'observations');
+  (() => {
+    const canonical = path.join(OPENCLAW_DIR, 'workspace-venture_memory', 'observations');
+    const legacy = path.join(OPENCLAW_DIR, 'workspace-archivist', 'observations');
+    if (fs.existsSync(canonical)) return canonical;
+    if (fs.existsSync(legacy)) return legacy;
+    return canonical;
+  })();
 
 /** VentureOS runtime directory. */
 export const RUNTIME_DIR: string =

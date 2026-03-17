@@ -568,7 +568,7 @@ body {
   padding: 12px;
 }
 
-.team-directory-card.nexus {
+.team-directory-card.control-plane {
   border-color: rgba(99, 102, 241, 0.7);
   box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
 }
@@ -4951,14 +4951,14 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
       <div class="card mb-24">
         <h3 class="card-title">Agent Tactical Overlays</h3>
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;">
-          <tactical-overlay-panel agent="echo"></tactical-overlay-panel>
-          <tactical-overlay-panel agent="nexus"></tactical-overlay-panel>
-          <tactical-overlay-panel agent="oracle"></tactical-overlay-panel>
-          <tactical-overlay-panel agent="atlas"></tactical-overlay-panel>
-          <tactical-overlay-panel agent="sentinel"></tactical-overlay-panel>
-          <tactical-overlay-panel agent="verifier"></tactical-overlay-panel>
-          <tactical-overlay-panel agent="archivist"></tactical-overlay-panel>
-          <tactical-overlay-panel agent="synth"></tactical-overlay-panel>
+          <tactical-overlay-panel agent="venture_strategy"></tactical-overlay-panel>
+          <tactical-overlay-panel agent="venture_control"></tactical-overlay-panel>
+          <tactical-overlay-panel agent="venture_research"></tactical-overlay-panel>
+          <tactical-overlay-panel agent="venture_infrastructure"></tactical-overlay-panel>
+          <tactical-overlay-panel agent="venture_security"></tactical-overlay-panel>
+          <tactical-overlay-panel agent="venture_evidence"></tactical-overlay-panel>
+          <tactical-overlay-panel agent="venture_memory"></tactical-overlay-panel>
+          <tactical-overlay-panel agent="venture_delivery"></tactical-overlay-panel>
         </div>
         <div style="margin-top:10px;font-size:12px;color:var(--text-muted);">Tip: expand a card to inspect supporting metric inputs. Use the affinity threshold slider to focus on the strongest collaboration links.</div>
       </div>
@@ -4968,7 +4968,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
       </div>
 
       <div class="mb-24">
-        <atlas-reliability-metrics agent="atlas"></atlas-reliability-metrics>
+        <atlas-reliability-metrics agent="venture_infrastructure"></atlas-reliability-metrics>
       </div>
 
       <!-- Phase 4.5 Phase 2: Skill Tree & Progression (Issue #207) -->
@@ -4976,21 +4976,21 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         <h3 class="card-title" style="display:flex;align-items:center;gap:8px;">
           🌳 Skill Tree
           <select id="skillTreeAgentSelect" style="padding:4px 10px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;font-size:12px;" onchange="document.querySelector('skill-tree-renderer').setAttribute('agent', this.value); document.querySelector('progression-dashboard').setAttribute('agent', this.value);">
-            <option value="echo">Echo</option>
-            <option value="nexus">Nexus</option>
-            <option value="oracle" selected>Oracle</option>
-            <option value="atlas">Atlas</option>
-            <option value="sentinel">Sentinel</option>
-            <option value="verifier">Verifier</option>
-            <option value="archivist">Archivist</option>
-            <option value="synth">Synth</option>
+            <option value="venture_strategy">Venture Strategy</option>
+            <option value="venture_control">Venture Control</option>
+            <option value="venture_research" selected>Venture Research</option>
+            <option value="venture_infrastructure">Venture Infrastructure</option>
+            <option value="venture_security">Venture Security</option>
+            <option value="venture_evidence">Venture Evidence</option>
+            <option value="venture_memory">Venture Memory</option>
+            <option value="venture_delivery">Venture Delivery</option>
           </select>
         </h3>
-        <skill-tree-renderer agent="oracle"></skill-tree-renderer>
+        <skill-tree-renderer agent="venture_research"></skill-tree-renderer>
       </div>
 
       <div class="mb-24">
-        <progression-dashboard agent="oracle"></progression-dashboard>
+        <progression-dashboard agent="venture_research"></progression-dashboard>
       </div>
     </div>
 
@@ -5012,28 +5012,28 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         </h3>
         <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:16px 0;">
           <div style="text-align:center;">
-            <agent-sprite agent="echo" state="idle" size="64" show-label></agent-sprite>
+            <agent-sprite agent="venture_strategy" state="idle" size="64" show-label></agent-sprite>
           </div>
           <div style="text-align:center;">
-            <agent-sprite agent="nexus" state="idle" size="64" show-label></agent-sprite>
+            <agent-sprite agent="venture_control" state="idle" size="64" show-label></agent-sprite>
           </div>
           <div style="text-align:center;">
-            <agent-sprite agent="oracle" state="speaking" size="64" show-label></agent-sprite>
+            <agent-sprite agent="venture_research" state="speaking" size="64" show-label></agent-sprite>
           </div>
           <div style="text-align:center;">
-            <agent-sprite agent="atlas" state="idle" size="64" show-label></agent-sprite>
+            <agent-sprite agent="venture_infrastructure" state="idle" size="64" show-label></agent-sprite>
           </div>
           <div style="text-align:center;">
-            <agent-sprite agent="sentinel" state="idle" size="64" show-label></agent-sprite>
+            <agent-sprite agent="venture_security" state="idle" size="64" show-label></agent-sprite>
           </div>
           <div style="text-align:center;">
-            <agent-sprite agent="verifier" state="processing" size="64" show-label></agent-sprite>
+            <agent-sprite agent="venture_evidence" state="processing" size="64" show-label></agent-sprite>
           </div>
           <div style="text-align:center;">
-            <agent-sprite agent="archivist" state="idle" size="64" show-label></agent-sprite>
+            <agent-sprite agent="venture_memory" state="idle" size="64" show-label></agent-sprite>
           </div>
           <div style="text-align:center;">
-            <agent-sprite agent="synth" state="idle" size="64" show-label></agent-sprite>
+            <agent-sprite agent="venture_delivery" state="idle" size="64" show-label></agent-sprite>
           </div>
         </div>
         <div style="text-align:center;font-size:11px;color:var(--text-muted);padding-bottom:8px;">
@@ -5052,7 +5052,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
         <h3 class="card-title">Control Plane</h3>
         <div class="team-control-grid">
           <div class="team-control-item">
-            <div class="team-control-label">Nexus Status</div>
+            <div class="team-control-label">Venture Control Status</div>
             <div class="team-control-value" id="teamNexusStatus">--</div>
             <div class="team-control-sub" id="teamNexusDetail">Mission-control status unavailable</div>
           </div>
@@ -5710,7 +5710,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
             <select id="tbFilterAssigneeType" class="tb-input" style="width:auto;min-width:110px;padding:6px 8px;font-size:12px;" onchange="tbApplyFilters()" title="Filter by owner type">
               <option value="">All owners</option>
               <option value="human">🧑 Human</option>
-              <option value="nexus">🧠 Nexus</option>
+              <option value="control_plane">🧠 Venture Control</option>
               <option value="agent">🤖 Agent</option>
             </select>
             <input id="tbFilterMission" class="tb-input" style="width:auto;min-width:120px;padding:6px 8px;font-size:12px;" placeholder="Mission ID" onchange="tbApplyFilters()" title="Filter by mission id">
@@ -5819,7 +5819,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
                 <select id="tbPipelineAssigneeType" class="tb-input">
                   <option value="" selected>Inherit template</option>
                   <option value="human">Human</option>
-                  <option value="nexus">Nexus</option>
+                  <option value="control_plane">Venture Control</option>
                   <option value="agent">Agent</option>
                 </select>
               </div>
@@ -6057,7 +6057,7 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
           </div>
           <div>
             <label class="tb-label">Agent ID (optional)</label>
-            <input type="text" id="tbNewAgent" class="tb-input" placeholder="e.g. synth, nexus…">
+            <input type="text" id="tbNewAgent" class="tb-input" placeholder="e.g. venture_delivery, venture_control…">
           </div>
           <div>
             <label class="tb-label">Mission ID</label>
@@ -6071,13 +6071,13 @@ details[open] > .tb-detail-expand-header .tb-detail-expand-icon {
             <label class="tb-label">Owner Type</label>
             <select id="tbNewAssigneeType" class="tb-input">
               <option value="agent" selected>Agent</option>
-              <option value="nexus">Nexus</option>
+              <option value="control_plane">Venture Control</option>
               <option value="human">Human</option>
             </select>
           </div>
           <div>
             <label class="tb-label">Owner ID</label>
-            <input type="text" id="tbNewAssigneeId" class="tb-input" placeholder="agent id / nexus / your name" maxlength="120">
+            <input type="text" id="tbNewAssigneeId" class="tb-input" placeholder="agent id / venture_control / your name" maxlength="120">
           </div>
           <div>
             <label class="tb-label">Initial Status</label>
@@ -6545,7 +6545,7 @@ let overviewFreshnessEventDedupeWindowMs = 30 * 1000;
 let overviewFreshnessEvents = [];
 let overviewFreshnessEventsError = null;
 
-let selectedAgentId = 'oracle';
+let selectedAgentId = 'venture_research';
 
 function setCoreDataHealth(key, ok, error = '') {
   coreDataHealth[key] = {
@@ -8095,75 +8095,93 @@ function updateStatusBar() {
 
 // ---------------- VentureOS UI + data fetching ----------------
 
+const LEGACY_AGENT_ALIASES = {
+  nexus: 'venture_control',
+  echo: 'venture_strategy',
+  oracle: 'venture_research',
+  atlas: 'venture_infrastructure',
+  sentinel: 'venture_security',
+  verifier: 'venture_evidence',
+  archivist: 'venture_memory',
+  synth: 'venture_delivery',
+  scout: 'venture_signals',
+  liaison: 'venture_comms',
+};
+
+function normalizeAgentId(agentId) {
+  const raw = (agentId || '').toString().trim();
+  return LEGACY_AGENT_ALIASES[raw] || raw;
+}
+
 const AGENT_LABELS = {
-  nexus: 'Nexus',
-  echo: 'Echo',
-  oracle: 'Oracle',
-  atlas: 'Atlas',
-  sentinel: 'Sentinel',
-  verifier: 'Verifier',
-  archivist: 'Archivist',
-  synth: 'Synth',
-  scout: 'Scout',
-  liaison: 'Liaison',
+  venture_control: 'Venture Control',
+  venture_strategy: 'Venture Strategy',
+  venture_research: 'Venture Research',
+  venture_infrastructure: 'Venture Infrastructure',
+  venture_security: 'Venture Security',
+  venture_evidence: 'Venture Evidence',
+  venture_memory: 'Venture Memory',
+  venture_delivery: 'Venture Delivery',
+  venture_signals: 'Venture Signals',
+  venture_comms: 'Venture Comms',
 };
 
 const TEAM_ROLE_PROFILES = {
-  nexus: {
+  venture_control: {
     role: 'Program Controller',
     authorityLevel: 'Control Plane',
     authorityScope: 'Operational coordination, dependency orchestration, and task routing',
     boundary: 'Escalates strategic priority conflicts and irreversible calls to the human final arbiter.',
   },
-  echo: {
+  venture_strategy: {
     role: 'Strategy Lead',
     authorityLevel: 'Strategic',
     authorityScope: 'Mission direction, objective shaping, and strategic tradeoff framing',
     boundary: 'Cannot finalize irreversible actions without human arbiter confirmation.',
   },
-  oracle: {
+  venture_research: {
     role: 'Research Lead',
     authorityLevel: 'Research',
     authorityScope: 'Evidence synthesis, recommendation framing, and source-backed analysis',
-    boundary: 'Provides recommendations only; strategic decisions route through Echo/human.',
+    boundary: 'Provides recommendations only; strategic decisions route through Venture Strategy/human.',
   },
-  atlas: {
+  venture_infrastructure: {
     role: 'Infrastructure Lead',
     authorityLevel: 'Infrastructure',
     authorityScope: 'Build/runtime systems, deployment plumbing, and operational hardening',
-    boundary: 'Security-critical changes require Sentinel gate and human escalation when high risk.',
+    boundary: 'Security-critical changes require Venture Security gate and human escalation when high risk.',
   },
-  sentinel: {
+  venture_security: {
     role: 'Security Lead',
     authorityLevel: 'Security Gate',
     authorityScope: 'Security policy enforcement, threat escalation, and risk containment',
     boundary: 'Can block delivery paths but cannot override human final-arbiter decisions.',
   },
-  verifier: {
+  venture_evidence: {
     role: 'Evidence Auditor',
     authorityLevel: 'Quality Gate',
     authorityScope: 'Validation, test quality gates, and release confidence checks',
     boundary: 'Can fail builds/tests but release overrides are human-arbiter controlled.',
   },
-  archivist: {
+  venture_memory: {
     role: 'Knowledge Lead',
     authorityLevel: 'Memory',
     authorityScope: 'Knowledge retention, runbook curation, and audit memory continuity',
     boundary: 'Documentation authority only; does not dictate strategy or execution priority.',
   },
-  synth: {
+  venture_delivery: {
     role: 'Delivery Lead',
     authorityLevel: 'Implementation',
     authorityScope: 'Code delivery, integration execution, and implementation throughput',
     boundary: 'Build authority only; strategic/irreversible choices escalate to human arbiter.',
   },
-  scout: {
-    role: 'Verifier',
+  venture_signals: {
+    role: 'Signals Lead',
     authorityLevel: 'Signal',
     authorityScope: 'Monitoring, anomaly detection, and proactive environmental scanning',
     boundary: 'Signals and alerts only; prioritization and execution remain upstream.',
   },
-  liaison: {
+  venture_comms: {
     role: 'Communications Lead',
     authorityLevel: 'Comms',
     authorityScope: 'External communication formatting and stakeholder-facing summaries',
@@ -8441,7 +8459,8 @@ function classifyAgentHealth(agent) {
 
 function renderTeamDirectoryCard(agentId, agent, opts = {}) {
   const profile = teamProfileFor(agentId);
-  const label = AGENT_LABELS[agentId] || agentId;
+  const canonicalAgentId = normalizeAgentId(agentId);
+  const label = AGENT_LABELS[canonicalAgentId] || canonicalAgentId;
   const health = classifyAgentHealth(agent);
   const assignment = opts.assignment || inferCurrentAssignment(agent);
   const missionLoad = `${agent?.recentSessions24h ?? 0} sessions / 24h`;
@@ -8497,7 +8516,7 @@ function renderHumanFinalArbiterCard() {
     </div>
     <div class="team-directory-boundary">
       <div style="margin-bottom:4px;"><strong>Authority Scope:</strong> Strategic direction, conflict resolution, and release/deployment go/no-go.</div>
-      <div><strong>Boundary:</strong> No agent (including Nexus) may override human final-arbiter decisions.</div>
+      <div><strong>Boundary:</strong> No agent, including Venture Control, may override human final-arbiter decisions.</div>
     </div>
   </article>`;
 }
@@ -8507,7 +8526,7 @@ function updateTeamDirectoryView() {
   if (!gridEl) return;
 
   const agentsMap = ventureosAgents?.agents || {};
-  const agentIds = Object.keys(agentsMap).filter((id) => id !== 'nexus');
+  const agentIds = Object.keys(agentsMap).map(normalizeAgentId).filter((id) => id && id !== 'venture_control');
   const totalAgents = agentIds.length;
   const busyCount = agentIds.filter((id) => agentsMap[id]?.status === 'working').length;
   const sessions24h = agentIds.reduce((sum, id) => sum + (agentsMap[id]?.recentSessions24h || 0), 0);
@@ -8549,8 +8568,8 @@ function updateTeamDirectoryView() {
   });
 
   const cards = [
-    renderTeamDirectoryCard('nexus', aggregatedNexus, {
-      cardClass: 'nexus',
+    renderTeamDirectoryCard('venture_control', aggregatedNexus, {
+      cardClass: 'control-plane',
       assignment: teamOverall === 'busy'
         ? 'Coordinating active mission execution'
         : 'Monitoring queue and dependencies',
@@ -8627,7 +8646,7 @@ function mcOfficeResolveSeatTask(tasks, seatType, seatId) {
     if (seatType === 'agent') {
       return ownerType === 'agent' && ownerId === seatId;
     }
-    if (seatType === 'nexus') return ownerType === 'nexus';
+    if (seatType === 'control_plane') return ownerType === 'control_plane' || ownerType === 'nexus';
     if (seatType === 'human') return ownerType === 'human';
     return false;
   });
@@ -8664,9 +8683,9 @@ function updateMissionOfficeView() {
     return a.localeCompare(b);
   });
 
-  const coreAgents = allAgentIds.filter((id) => id !== 'nexus');
+  const coreAgents = allAgentIds.map(normalizeAgentId).filter((id) => id !== 'venture_control');
   const seats = [];
-  seats.push({ type: 'nexus', id: 'nexus', label: AGENT_LABELS.nexus || 'Nexus' });
+  seats.push({ type: 'control_plane', id: 'venture_control', label: AGENT_LABELS.venture_control || 'Venture Control' });
   for (const id of coreAgents) {
     seats.push({ type: 'agent', id, label: AGENT_LABELS[id] || id });
   }
@@ -8675,7 +8694,7 @@ function updateMissionOfficeView() {
   let divergenceCount = 0;
   const seatHtml = seats.map((seat) => {
     const task = mcOfficeResolveSeatTask(missionOfficeTasks, seat.type, seat.id);
-    const teamInfo = seat.type === 'agent' || seat.type === 'nexus' ? agentsById.get(seat.id) : null;
+    const teamInfo = seat.type === 'agent' || seat.type === 'control_plane' ? agentsById.get(seat.id) : null;
     const hasBlockedTask = task?.status === 'blocked';
     const isBusy = !!task || teamInfo?.status === 'working';
     const status = hasBlockedTask ? 'blocked' : (isBusy ? 'busy' : 'idle');
@@ -9675,7 +9694,7 @@ function updateAgentsView() {
 
   // Ensure selection exists
   if (!ventureosAgents.agents[selectedAgentId]) {
-    selectedAgentId = Object.keys(ventureosAgents.agents)[0] || 'oracle';
+    selectedAgentId = Object.keys(ventureosAgents.agents)[0] || 'venture_research';
   }
 
   // Active tab
@@ -11475,7 +11494,10 @@ function tbFindTemplate(id) {
 function tbTemplateOwnerLabel(stage) {
   const ownerType = stage?.assigneeType || 'unassigned';
   const ownerId = stage?.assigneeId || '';
-  return ownerId ? `${ownerType}: ${ownerId}` : ownerType;
+  const label = ownerType === 'control_plane' || ownerType === 'nexus'
+    ? 'venture control'
+    : ownerType;
+  return ownerId ? `${label}: ${ownerId}` : label;
 }
 
 function tbReadStageAssignments(template) {
@@ -11551,7 +11573,7 @@ function tbRenderTemplateDetails() {
           <select id="tbStageAssigneeType-${stage.id}" class="tb-input" style="padding:6px 8px;font-size:12px;">
             <option value="">Inherit</option>
             <option value="human">Human</option>
-            <option value="nexus">Nexus</option>
+            <option value="control_plane">Venture Control</option>
             <option value="agent">Agent</option>
           </select>
         </div>

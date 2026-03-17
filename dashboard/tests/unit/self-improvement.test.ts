@@ -18,15 +18,15 @@ function fixedNow(): Date {
 beforeEach(() => {
   fs.rmSync(testRoot, { recursive: true, force: true });
   fs.mkdirSync(dataDir, { recursive: true });
-  fs.mkdirSync(path.join(workspaceDir, 'souls', 'oracle'), { recursive: true });
-  fs.writeFileSync(path.join(workspaceDir, 'souls', 'oracle', 'SOUL.md'), '# Oracle Soul\n');
-  fs.writeFileSync(path.join(workspaceDir, 'souls', 'oracle', 'PRINCIPLES.md'), '# Oracle Principles\n');
+  fs.mkdirSync(path.join(workspaceDir, 'souls', 'venture_research'), { recursive: true });
+  fs.writeFileSync(path.join(workspaceDir, 'souls', 'venture_research', 'SOUL.md'), '# Venture Research Soul\n');
+  fs.writeFileSync(path.join(workspaceDir, 'souls', 'venture_research', 'PRINCIPLES.md'), '# Venture Research Principles\n');
   fs.writeFileSync(
     path.join(dataDir, 'task-board.json'),
     JSON.stringify({
       tasks: [
-        { id: 't1', title: 'Task 1', status: 'done', agentId: 'oracle', runtimeMs: 30_000, startedAt: Date.parse('2026-02-21T11:00:00.000Z') },
-        { id: 't2', title: 'Task 2', status: 'failed', agentId: 'oracle', runtimeMs: 180_000, startedAt: Date.parse('2026-02-21T10:00:00.000Z') },
+        { id: 't1', title: 'Task 1', status: 'done', agentId: 'venture_research', runtimeMs: 30_000, startedAt: Date.parse('2026-02-21T11:00:00.000Z') },
+        { id: 't2', title: 'Task 2', status: 'failed', agentId: 'venture_research', runtimeMs: 180_000, startedAt: Date.parse('2026-02-21T10:00:00.000Z') },
       ],
     }),
   );
@@ -41,7 +41,7 @@ describe('self-improvement engine', () => {
     const { digest, digestPath } = generateSelfImprovementDigest({
       dataDir,
       workspaceDir,
-      agentId: 'oracle',
+      agentId: 'venture_research',
       now: fixedNow,
     });
 
@@ -59,17 +59,17 @@ describe('self-improvement engine', () => {
     const generated = generateSelfImprovementDigest({
       dataDir,
       workspaceDir,
-      agentId: 'oracle',
+      agentId: 'venture_research',
       now: fixedNow,
     });
 
-    const recommendation = generated.digest.recommendations.find((rec) => rec.target.startsWith('souls/oracle/'));
+    const recommendation = generated.digest.recommendations.find((rec) => rec.target.startsWith('souls/venture_research/'));
     expect(recommendation).toBeDefined();
 
     const result = setRecommendationStatus({
       dataDir,
       workspaceDir,
-      agentId: 'oracle',
+      agentId: 'venture_research',
       recommendationId: recommendation!.id,
       action: 'approve',
       now: fixedNow,
@@ -86,7 +86,7 @@ describe('self-improvement engine', () => {
     const generated = generateSelfImprovementDigest({
       dataDir,
       workspaceDir,
-      agentId: 'oracle',
+      agentId: 'venture_research',
       now: fixedNow,
     });
     const recommendation = generated.digest.recommendations[0];
@@ -94,7 +94,7 @@ describe('self-improvement engine', () => {
     const result = setRecommendationStatus({
       dataDir,
       workspaceDir,
-      agentId: 'oracle',
+      agentId: 'venture_research',
       recommendationId: recommendation.id,
       action: 'reject',
       now: fixedNow,
@@ -109,7 +109,7 @@ describe('self-improvement engine', () => {
     const generated = generateSelfImprovementDigest({
       dataDir,
       workspaceDir,
-      agentId: 'oracle',
+      agentId: 'venture_research',
       now: fixedNow,
     });
     const first = generated.digest.recommendations[0];
@@ -120,7 +120,7 @@ describe('self-improvement engine', () => {
     const result = setRecommendationStatus({
       dataDir,
       workspaceDir,
-      agentId: 'oracle',
+      agentId: 'venture_research',
       recommendationId: first.id,
       action: 'approve',
       now: fixedNow,

@@ -36,11 +36,11 @@ describe('token-compaction route', () => {
     const res = mockResponse();
     const deps = createDeps({
       sessionId: 'sess-a',
-      agentId: 'oracle',
+      agentId: 'venture_research',
       compression: { level: 'standard', protected_files: ['SOUL.md'] },
       files: [
         { path: 'src/a.ts', content: '// comment\nconst a = 1;\n'.repeat(50), priority: 1 },
-        { path: 'souls/oracle/SOUL.md', content: '# protected\nkeep me\n' },
+        { path: 'souls/venture_research/SOUL.md', content: '# protected\nkeep me\n' },
       ],
     });
 
@@ -87,17 +87,17 @@ describe('token-compaction route', () => {
       expect(res._statusCode).toBe(200);
     };
 
-    await run('sess-1', 'oracle');
-    await run('sess-2', 'atlas');
+    await run('sess-1', 'venture_research');
+    await run('sess-2', 'venture_infrastructure');
 
-    const req = mockRequest({ method: 'GET', url: '/api/token-compaction/metrics?agentId=atlas' });
+    const req = mockRequest({ method: 'GET', url: '/api/token-compaction/metrics?agentId=venture_infrastructure' });
     const res = mockResponse();
     await handleTokenCompaction(req, res, createDeps());
     expect(res._statusCode).toBe(200);
 
     const body = parseJsonBody<{ total: number; metrics: Array<{ agentId?: string }> }>(res);
     expect(body.total).toBe(1);
-    expect(body.metrics[0]?.agentId).toBe('atlas');
+    expect(body.metrics[0]?.agentId).toBe('venture_infrastructure');
   });
 });
 

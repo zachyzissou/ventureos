@@ -7,7 +7,7 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 HOME_DIR="$TMP_DIR/home"
-WS="$TMP_DIR/workspace-atlas"
+WS="$TMP_DIR/workspace-venture_infrastructure"
 mkdir -p "$HOME_DIR/.openclaw/credentials/discord" "$WS/config"
 
 cat > "$HOME_DIR/.openclaw/credentials/discord/webhooks.json" <<'JSON'
@@ -28,7 +28,7 @@ cat > "$WS/config/alert-routing.json" <<'JSON'
 }
 JSON
 
-HOME="$HOME_DIR" AGENT_ID=atlas OPENCLAW_WORKSPACE="$WS" "$SCRIPT" > "$TMP_DIR/out.txt"
+HOME="$HOME_DIR" AGENT_ID=venture_infrastructure OPENCLAW_WORKSPACE="$WS" "$SCRIPT" > "$TMP_DIR/out.txt"
 
 python3 - <<PY
 import json
@@ -37,10 +37,10 @@ from pathlib import Path
 out = Path("$TMP_DIR/out.txt").read_text()
 assert "HEARTBEAT_OK" in out, out
 
-state = Path("$WS/runtime/monitor/atlas/routing-healthcheck.json")
+state = Path("$WS/runtime/monitor/venture_infrastructure/routing-healthcheck.json")
 assert state.exists(), state
 payload = json.loads(state.read_text())
 assert payload.get("lastStatus") == "ok", payload
-assert payload.get("agentId") == "atlas", payload
+assert payload.get("agentId") == "venture_infrastructure", payload
 print("ROUTING_HEALTHCHECK_PATH_RESOLUTION_OK")
 PY

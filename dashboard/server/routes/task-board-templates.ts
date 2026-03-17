@@ -12,7 +12,14 @@ import type {
 } from '../types.js';
 import { sanitizeStringList } from './task-board-utils.js';
 
-const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'nexus', 'agent'];
+const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'control_plane', 'nexus', 'agent'];
+
+function normalizeAssigneeType(value: string | null | undefined, fallback?: TaskAssigneeType): TaskAssigneeType | undefined {
+  if (!value) return fallback;
+  if (value === 'nexus') return 'control_plane';
+  if (VALID_ASSIGNEE_TYPES.includes(value as TaskAssigneeType)) return value as TaskAssigneeType;
+  return fallback;
+}
 const TEMPLATE_ID_RE = /^[a-z0-9][a-z0-9-_]{1,63}$/;
 const STAGE_ID_RE = /^[a-z0-9][a-z0-9-_]{1,63}$/;
 const TEMPLATE_TAG_RE = /^#?[a-z0-9][a-z0-9:_-]{0,31}$/i;
@@ -32,22 +39,22 @@ const SYSTEM_PIPELINE_TEMPLATES: TaskPipelineTemplate[] = [
       {
         id: 'idea',
         title: 'Idea Brief',
-        assigneeType: 'nexus',
-        assigneeId: 'nexus',
+        assigneeType: 'control_plane',
+        assigneeId: 'venture_control',
         handoffContract: 'Produce a concise concept brief with audience + outcome.',
       },
       {
         id: 'script',
         title: 'Script Draft',
         assigneeType: 'agent',
-        assigneeId: 'synth',
+        assigneeId: 'venture_delivery',
         handoffContract: 'Deliver script draft with structure, hooks, and call-to-action.',
       },
       {
         id: 'thumbnail',
         title: 'Thumbnail Direction',
         assigneeType: 'agent',
-        assigneeId: 'synth',
+        assigneeId: 'venture_delivery',
         handoffContract: 'Provide visual direction and copy variants for thumbnail selection.',
       },
       {
@@ -60,8 +67,8 @@ const SYSTEM_PIPELINE_TEMPLATES: TaskPipelineTemplate[] = [
       {
         id: 'publish',
         title: 'Publish + Distribution',
-        assigneeType: 'nexus',
-        assigneeId: 'nexus',
+        assigneeType: 'control_plane',
+        assigneeId: 'venture_control',
         handoffContract: 'Publish artifact, attach links, and verify live distribution.',
         requiresApproval: true,
       },
@@ -81,28 +88,28 @@ const SYSTEM_PIPELINE_TEMPLATES: TaskPipelineTemplate[] = [
         id: 'research',
         title: 'Research and Scope',
         assigneeType: 'agent',
-        assigneeId: 'oracle',
+        assigneeId: 'venture_research',
         handoffContract: 'Document assumptions, constraints, and acceptance boundaries.',
       },
       {
         id: 'implementation',
         title: 'Implementation',
         assigneeType: 'agent',
-        assigneeId: 'synth',
+        assigneeId: 'venture_delivery',
         handoffContract: 'Produce implementation artifacts linked to mission context.',
       },
       {
         id: 'verification',
         title: 'Verification',
         assigneeType: 'agent',
-        assigneeId: 'verifier',
+        assigneeId: 'venture_evidence',
         handoffContract: 'Attach validation evidence and explicit pass/fail verdict.',
       },
       {
         id: 'ship',
         title: 'Ship / Rollout',
-        assigneeType: 'nexus',
-        assigneeId: 'nexus',
+        assigneeType: 'control_plane',
+        assigneeId: 'venture_control',
         handoffContract: 'Record release outcome and final source-of-truth links.',
         requiresApproval: true,
       },
@@ -152,9 +159,8 @@ function normalizeTemplateStage(
     : null;
 
   const assigneeTypeRaw = (raw as { assigneeType?: unknown }).assigneeType;
-  const assigneeType = typeof assigneeTypeRaw === 'string' &&
-    VALID_ASSIGNEE_TYPES.includes(assigneeTypeRaw as TaskAssigneeType)
-    ? (assigneeTypeRaw as TaskAssigneeType)
+  const assigneeType = typeof assigneeTypeRaw === 'string'
+    ? normalizeAssigneeType(assigneeTypeRaw)
     : undefined;
 
   const assigneeIdRaw = (raw as { assigneeId?: unknown }).assigneeId;
@@ -397,9 +403,8 @@ export function instantiatePipelineFromTemplate(
     return { ok: false, error: 'missionBrief must be ≤ 300 chars' };
   }
 
-  const defaultAssigneeType = typeof options.input.assigneeType === 'string' &&
-    VALID_ASSIGNEE_TYPES.includes(options.input.assigneeType as TaskAssigneeType)
-    ? (options.input.assigneeType as TaskAssigneeType)
+  const defaultAssigneeType = typeof options.input.assigneeType === 'string'
+    ? (normalizeAssigneeType(options.input.assigneeType, undefined) ?? null)
     : null;
   const defaultAssigneeId = options.input.assigneeId?.trim() || null;
   if (defaultAssigneeId && defaultAssigneeId.length > 120) {
@@ -439,10 +444,10 @@ export function instantiatePipelineFromTemplate(
       if (!VALID_ASSIGNEE_TYPES.includes(override.assigneeType as TaskAssigneeType)) {
         return { ok: false, error: `invalid assigneeType for stage ${stage.id}: ${override.assigneeType}` };
       }
-      overrideAssigneeType = override.assigneeType as TaskAssigneeType;
+      overrideAssigneeType = normalizeAssigneeType(override.assigneeType as string, undefined) ?? null;
     }
 
-    const effectiveAssigneeType = overrideAssigneeType ?? stage.assigneeType ?? defaultAssigneeType ?? 'nexus';
+    const effectiveAssigneeType = overrideAssigneeType ?? stage.assigneeType ?? defaultAssigneeType ?? 'control_plane';
     let overrideAssigneeId: string | null = null;
     if (override?.assigneeId != null) {
       if (typeof override.assigneeId !== 'string') {

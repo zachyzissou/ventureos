@@ -49,10 +49,10 @@ export interface ConversationEngineConfig {
   /** Approximate token estimator divisor. Default: 4 chars/token */
   charsPerToken: number;
 
-  /** Low affinity threshold for Echo mediation. Default: 0.5 */
+  /** Low affinity threshold for Venture Strategy mediation. Default: 0.5 */
   mediationAffinityThreshold: number;
 
-  /** Agent ID used for mediation. Default: 'echo' */
+  /** Agent ID used for mediation. Default: 'venture_strategy' */
   mediatorAgentId: AgentId;
 
   /** Optional Discord channel for HITL alerts. */
@@ -68,7 +68,7 @@ const DEFAULT_CONFIG: ConversationEngineConfig = {
   discardSummarizedMessageContent: false,
   charsPerToken: 4,
   mediationAffinityThreshold: 0.5,
-  mediatorAgentId: 'echo',
+  mediatorAgentId: 'venture_strategy',
 };
 
 export interface ConversationSummary {
@@ -522,8 +522,9 @@ export class ConversationEngine {
       // Handoff validation (role card contracts).
       // Notes:
       // - Skip validation for user/system/broadcast targets.
-      // - For affinity-based mediation to Echo, we treat the hop into the mediator as allowed
-      //   even if role cards don't explicitly define universal Echo inbox contracts.
+      // - For affinity-based mediation to Venture Strategy, we treat the hop into the
+      //   mediator as allowed even if role cards don't explicitly define a universal
+      //   Venture Strategy inbox contract.
       const payloadEnvelope = params.payload ?? { data: params.content };
 
       let handoff: HandoffResult | undefined;
@@ -534,7 +535,7 @@ export class ConversationEngine {
       if (mediation.required && deliveredTo.length === 1 && deliveredTo[0] === this.config.mediatorAgentId) {
         handoff = {
           valid: true,
-          reason: 'Mediated hop into Echo allowed by engine policy',
+          reason: 'Mediated hop into Venture Strategy allowed by engine policy',
           contract: {
             from: { agentId: params.from, outputType: 'mediation_message', format: payloadEnvelope.format ?? 'natural_language' },
             to: { agentId: this.config.mediatorAgentId, inputType: 'mediation_message', format: payloadEnvelope.format ?? 'natural_language' },
