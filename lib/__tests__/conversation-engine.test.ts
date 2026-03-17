@@ -195,7 +195,7 @@ describe('ConversationEngine', () => {
     await cleanupDir();
   });
 
-  it('routes low-affinity pairs through Echo mediation', async () => {
+  it('routes low-affinity pairs through Venture Strategy mediation', async () => {
     const { dir: persistDir, cleanup: cleanupDir } = await makeTempDir('ventureos-convstore-');
     const { db, cleanup: cleanupDb } = await makeTempAffinityDb();
 
@@ -205,7 +205,7 @@ describe('ConversationEngine', () => {
     ).run('oracle', 'synth', 0.4, 0.4);
 
     const engine = makeEngine({ persistDir, affinityDb: db, enforceTurns: true, mediationAffinityThreshold: 0.5 });
-    const state = await engine.startConversation({ participants: ['oracle', 'synth', 'echo'], currentTurn: 'oracle' });
+    const state = await engine.startConversation({ participants: ['oracle', 'synth', 'venture_strategy'], currentTurn: 'oracle' });
 
     const msg = await engine.sendMessage({
       conversationId: state.conversationId,
@@ -216,13 +216,13 @@ describe('ConversationEngine', () => {
     });
 
     expect(msg.status).toBe('delivered');
-    expect(msg.deliveredTo).toEqual(['echo']);
+    expect(msg.deliveredTo).toEqual(['venture_strategy']);
     expect(msg.mediation?.required).toBe(true);
     expect(msg.mediation?.originalTo).toEqual(['synth']);
     expect(msg.handoff?.valid).toBe(true);
 
     const after = await engine.getConversation(state.conversationId);
-    expect(after.currentTurn).toBe('echo');
+    expect(after.currentTurn).toBe('venture_strategy');
 
     await cleanupDb();
     await cleanupDir();
