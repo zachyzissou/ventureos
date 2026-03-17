@@ -31,6 +31,13 @@ import type {
   TaskStatusHistoryEntry,
   TaskPipelineTemplate,
 } from '../types.js';
+import type { MaterializeExchangeEnvelopeInput } from '../../../lib/inter-lane-exchange.js';
+import {
+  appendInterLaneExchangeEvidence,
+  materializeInterLaneExchangeEnvelope,
+  reserveInterLaneExchangeEnvelope,
+} from '../../../lib/inter-lane-exchange.js';
+import { getRequestSubject } from '../middleware/auth.js';
 
 import {
   addClient,
@@ -374,9 +381,11 @@ interface CreateInput {
   missionBrief?: string | null;
   assigneeType?: string | null;
   assigneeId?: string | null;
+  consumerBindingId?: string | null;
   dependencies?: unknown;
   artifactLinks?: unknown;
   replaySessionId?: string | null;
+  exchange?: Partial<MaterializeExchangeEnvelopeInput> | null;
 }
 
 function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok: false; error: string } {
@@ -414,6 +423,10 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
   if (assigneeId && assigneeId.length > 120) {
     return { ok: false, error: 'assigneeId must be ≤ 120 chars' };
   }
+  const consumerBindingId = body.consumerBindingId?.trim() || null;
+  if (consumerBindingId && consumerBindingId.length > 120) {
+    return { ok: false, error: 'consumerBindingId must be ≤ 120 chars' };
+  }
 
   const dependencies = sanitizeStringList(body.dependencies, { maxItems: 20, maxLen: 80 });
   const artifactLinks = sanitizeStringList(body.artifactLinks, { maxItems: 20, maxLen: 300 });
@@ -446,6 +459,7 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
     dependencies,
     artifactLinks,
     replaySessionId,
+    exchangeEnvelope: null,
     statusHistory: [
       {
         status,
@@ -457,6 +471,75 @@ function validateCreate(body: CreateInput): { ok: true; card: TaskCard } | { ok:
   };
 
   return { ok: true, card };
+}
+
+function exchangeReplayIndexPath(dataDir: string): string {
+  return path.join(dataDir, 'inter-lane-exchange-index.json');
+}
+
+function attachTaskExchangeEnvelope(
+  req: IncomingMessage,
+  dataDir: string,
+  card: TaskCard,
+  action: 'create' | 'retry' | 'patch',
+  explicitExchange: Partial<MaterializeExchangeEnvelopeInput> | null | undefined,
+  consumerBindingId?: string | null,
+): { ok: true; card: TaskCard } | { ok: false; error: string } {
+  const subject = getRequestSubject(req);
+  if (!subject?.actor?.bindingId) {
+    return { ok: true, card };
+  }
+
+  const materialized = materializeInterLaneExchangeEnvelope({
+    exchange_id: explicitExchange?.exchange_id,
+    artifact_type: explicitExchange?.artifact_type ?? 'task_board_card',
+    producer_binding_id: subject.actor.bindingId,
+    producer_capability_id: explicitExchange?.producer_capability_id ?? subject.actor.capabilityId,
+    consumer_binding_id:
+      explicitExchange?.consumer_binding_id
+      ?? consumerBindingId
+      ?? card.exchangeEnvelope?.consumer_binding_id
+      ?? subject.actor.bindingId,
+    issued_at: explicitExchange?.issued_at,
+    expires_at: explicitExchange?.expires_at,
+    classification: explicitExchange?.classification ?? 'internal_operational',
+    evidence_ref: explicitExchange?.evidence_ref ?? 'runtime/logs/task_runs/task-board-exchanges.jsonl',
+    transport_auth_class: explicitExchange?.transport_auth_class ?? 'dashboard_api_token',
+    approval_chain: explicitExchange?.approval_chain,
+    nonce: explicitExchange?.nonce,
+    payload: {
+      action,
+      cardId: card.id,
+      status: card.status,
+      agentId: card.agentId,
+      missionId: card.missionId ?? null,
+      assigneeType: card.assigneeType ?? null,
+      assigneeId: card.assigneeId ?? null,
+    },
+  });
+  if (!materialized.ok) {
+    return { ok: false, error: materialized.error };
+  }
+
+  const reserved = reserveInterLaneExchangeEnvelope(
+    exchangeReplayIndexPath(dataDir),
+    materialized.envelope,
+  );
+  if (!reserved.ok) {
+    return { ok: false, error: reserved.error };
+  }
+
+  appendInterLaneExchangeEvidence('task-board-exchanges', materialized.envelope, {
+    action,
+    cardId: card.id,
+  });
+  return {
+    ok: true,
+    card: {
+      ...card,
+      exchangeEnvelope: materialized.envelope,
+    },
+  };
 }
 
 // ─── Batch/heartbeat/recovery operations (Issue #219) ───────────────────────
@@ -1407,11 +1490,24 @@ export async function handleTaskBoard(
       return true;
     }
 
+    const cardWithExchange = attachTaskExchangeEnvelope(
+      req,
+      dataDir,
+      result.card,
+      'create',
+      body.exchange ?? null,
+      body.consumerBindingId ?? null,
+    );
+    if (!cardWithExchange.ok) {
+      sendJson(res, { error: cardWithExchange.error }, 400);
+      return true;
+    }
+
     const tasks = loadTasks(dataDir);
-    tasks.push(result.card);
+    tasks.push(cardWithExchange.card);
     saveTasksWithActiveTracker(dataDir, tasks);
-    deps.emitEvent?.('task:created', result.card);
-    sendJson(res, { card: result.card }, 201);
+    deps.emitEvent?.('task:created', cardWithExchange.card);
+    sendJson(res, { card: cardWithExchange.card }, 201);
     return true;
   }
 
@@ -1432,10 +1528,12 @@ export async function handleTaskBoard(
     try {
       const raw = await readRequestBody(req, { maxBytes: 2048 });
       if (raw.trim()) {
-        const body = JSON.parse(raw) as { note?: unknown };
+        const body = JSON.parse(raw) as { note?: unknown; exchange?: Partial<MaterializeExchangeEnvelopeInput> | null };
         if (typeof body.note === 'string' && body.note.trim()) {
           retryNote = body.note.trim().slice(0, 200);
         }
+        const exchange = body.exchange ?? null;
+        (req as IncomingMessage & { __ventureosTaskRetryExchange?: Partial<MaterializeExchangeEnvelopeInput> | null }).__ventureosTaskRetryExchange = exchange;
       }
     } catch {
       sendJson(res, { error: 'invalid JSON body' }, 400);
@@ -1467,10 +1565,17 @@ export async function handleTaskBoard(
     card.runtimeMs = null;
     appendStatusHistory(card, 'queued', 'retry', retryNote ?? 'manual retry from failed', now);
 
-    tasks[idx] = card;
+    const retryExchange = (req as IncomingMessage & { __ventureosTaskRetryExchange?: Partial<MaterializeExchangeEnvelopeInput> | null }).__ventureosTaskRetryExchange;
+    const cardWithExchange = attachTaskExchangeEnvelope(req, dataDir, card, 'retry', retryExchange ?? null);
+    if (!cardWithExchange.ok) {
+      sendJson(res, { error: cardWithExchange.error }, 400);
+      return true;
+    }
+
+    tasks[idx] = cardWithExchange.card;
     saveTasksWithActiveTracker(dataDir, tasks);
-    deps.emitEvent?.('task:updated', card);
-    sendJson(res, { card });
+    deps.emitEvent?.('task:updated', cardWithExchange.card);
+    sendJson(res, { card: cardWithExchange.card });
     return true;
   }
 
@@ -1576,10 +1681,25 @@ export async function handleTaskBoard(
       card.runtimeMs = card.completedAt - card.startedAt;
     }
 
-    tasks[idx] = card;
+    const patchExchange = (body.exchange ?? null) as Partial<MaterializeExchangeEnvelopeInput> | null;
+    const patchConsumerBindingId = typeof body.consumerBindingId === 'string' ? body.consumerBindingId : null;
+    const cardWithExchange = attachTaskExchangeEnvelope(
+      req,
+      dataDir,
+      card,
+      'patch',
+      patchExchange,
+      patchConsumerBindingId,
+    );
+    if (!cardWithExchange.ok) {
+      sendJson(res, { error: cardWithExchange.error }, 400);
+      return true;
+    }
+
+    tasks[idx] = cardWithExchange.card;
     saveTasksWithActiveTracker(dataDir, tasks);
-    deps.emitEvent?.('task:updated', card);
-    sendJson(res, { card });
+    deps.emitEvent?.('task:updated', cardWithExchange.card);
+    sendJson(res, { card: cardWithExchange.card });
     return true;
   }
 
