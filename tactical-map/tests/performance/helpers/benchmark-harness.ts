@@ -190,6 +190,22 @@ export async function waitForTacticalMap(page: Page, timeoutMs: number = 15000):
     () => !!(window as any).__TACTICAL_MAP__,
     { timeout: timeoutMs }
   );
+
+  await page.evaluate(() => {
+    const tm = (window as any).__TACTICAL_MAP__;
+    if (!tm) return;
+
+    // Performance benchmarks should measure client render cost, not backend
+    // retries / websocket reconnect churn from a missing local API.
+    tm.api?.stop?.();
+    tm.economyClient?.stop?.();
+    tm.healthClient?.stop?.();
+    tm.pause?.();
+    tm.resetVisualState?.();
+    tm.snapshot?.();
+  });
+
+  await page.waitForTimeout(250);
 }
 
 // ---------------------------------------------------------------------------
