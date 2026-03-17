@@ -128,7 +128,7 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 
 **MC4. No change management for the OS itself.** How are changes to architecture, KPIs, or lane contracts proposed, reviewed, approved, and deployed? The KPI/SLA doc §6 has change control for KPIs specifically. The Lane Contracts doc §10 has a contract change process. But there is no overarching OS-level change management that coordinates across all docs. **Priority: MEDIUM — define before Phase B when more departments create more change pressure.**
 
-**MC5. No external boundary protocol.** No specification for how the OS interfaces with external parties (customers, vendors, partners, regulators). Sales, CS, Legal, and Marketing all reference external entities, but no boundary contract defines what information can flow out, what approvals are needed, and what audit trail is required for external interactions. **Priority: HIGH — especially for Legal and Sales workflows.**
+**MC5. External boundary protocol is now defined at the doc/spec layer.** `docs/VentureOS_External_Boundary_Protocol_v1.md` and `docs/VentureOS_External_Boundary_Control_Matrix_v1.json` now define counterpart classes, information classes, action classes, approval routes, and required evidence for customer/vendor/partner/regulator/public interactions. The remaining gap is runtime enforcement at outbound communication and approval surfaces. **Priority: MEDIUM-HIGH — protocol defined, enforcement still pending.**
 
 **MC6. Inter-lane communication security model is now defined at the doc/spec layer.** `docs/VentureOS_Inter_Lane_Security_Model_v1.md` now specifies trust boundaries, authentication, authorization, integrity, provenance, replay protection, and exception handling for lane artifact exchange. The remaining gap is runtime enforcement. **Priority: MEDIUM-HIGH — model defined, enforcement still required before production-grade operation.**
 
@@ -143,7 +143,7 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 | R3 | Cross-cutting agent contracts were missing | RESOLVED | Operations Director | Closed by `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md` and `docs/VentureOS_Agent_Ownership_Matrix_v1.json` |
 | R4 | Access boundaries are partially enforced at runtime — shared authority-plane and tactical-map hooks now use canonical VentureOS metadata, but dashboard control surfaces and provisioning flow still need coverage | MEDIUM-HIGH | IT/Security Director | Expand enforcement beyond `lib/authority-map.ts`, `lib/policy-gate.ts`, `lib/nexus-arbiter.ts`, and `tactical-map/src/interaction/permissions.ts` into remaining hook points and agent provisioning flow |
 | R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) were previously unconnected | RESOLVED | Operations Director | Closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Map_v1.md` plus the existing handoff evidence gate |
-| R6 | No external boundary protocol for customer/vendor/regulator interactions | HIGH | Legal Director | Define boundary contracts before Sales/Legal activation in Phase B/C |
+| R6 | No external boundary protocol for customer/vendor/regulator interactions | RESOLVED | Legal Director | Closed at the doc/spec layer by `docs/VentureOS_External_Boundary_Protocol_v1.md` and `docs/VentureOS_External_Boundary_Control_Matrix_v1.json` |
 | R7 | Inter-lane communication security model is defined at the doc/spec layer, but runtime enforcement is still pending | MEDIUM-HIGH | IT/Security Director | Implement the model in exchange envelopes, auth boundaries, and evidence validation |
 | R8 | No KPI baselines — targets are aspirational until measured | MEDIUM | Data/Analytics Operator | Execute baseline measurement sprint in Phase 0 (Mar 16-25 per KPI/SLA doc §1) |
 | R9 | Rollback procedures incomplete for partial-activation scenarios | MEDIUM | Operations Director | Add partial-activation rollback steps to Implementation Plan §8 |
@@ -158,6 +158,5 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 1. **Keep Architecture doc aligned** — `VentureOS_Department_Architecture_v1.md` is restored; companion docs must continue to reference it as normative.
 2. **Complete RBAC enforcement hooks** — The first runtime slice is live in the shared authority-plane and tactical-map permissions. Expand the same canonical policy model into dashboard control surfaces and agent provisioning.
 3. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
-4. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
-5. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
-6. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.
+4. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
+5. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.

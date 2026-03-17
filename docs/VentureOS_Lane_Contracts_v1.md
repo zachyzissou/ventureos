@@ -25,6 +25,7 @@ The normative role and access-control sources are:
 - `docs/VentureOS_Agent_Role_Registry_v1.json`
 - `docs/VentureOS_RBAC_Spec_v1.md`
 - `docs/VentureOS_Tool_Access_Matrix_v1.json`
+- `docs/VentureOS_External_Boundary_Protocol_v1.md`
 
 The table below is a conceptual summary only. System-level permissions, escalation targets, capability overlays, and subordinate specialist restrictions must be taken from the RBAC artifacts listed above.
 
@@ -83,6 +84,7 @@ Execute approved work reliably and produce complete operational evidence.
 - Cannot modify policy targets without Director approval.
 - Cannot mark work as accepted/final without Auditor sign-off where required.
 - Cannot suppress incidents or remove evidence records.
+- Cannot make external commitments or public statements outside the external boundary protocol and its approval routes.
 
 ## 6) Auditor lane contract
 

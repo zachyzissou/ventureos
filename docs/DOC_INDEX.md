@@ -20,6 +20,8 @@
 - **docs/VentureOS_RBAC_Spec_v1.md** – canonical RBAC policy
 - **docs/VentureOS_Tool_Access_Matrix_v1.json** – machine-readable RBAC matrix
 - **docs/VentureOS_Inter_Lane_Security_Model_v1.md** – canonical security model for lane-to-lane artifact exchange, provenance, integrity, and replay protection
+- **docs/VentureOS_External_Boundary_Protocol_v1.md** – canonical protocol for customer/vendor/partner/regulator/public interactions
+- **docs/VentureOS_External_Boundary_Control_Matrix_v1.json** – machine-readable external interaction approval and evidence matrix
 - **docs/VentureOS_SLA_Framework_Map_v1.md** – canonical mapping from technical `P0-P3` incidents to department handoff breach and exception handling
 - **docs/roles/REPO_CHARTER.md** – VentureOS charter + scope boundaries
 - **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitHub-first work contract (legacy filename kept for compatibility)

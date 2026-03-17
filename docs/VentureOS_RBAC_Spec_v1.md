@@ -169,6 +169,7 @@ The RBAC model determines who may emit, receive, approve, or waive a protected e
 In other words:
 - RBAC answers whether a subject may act
 - the inter-lane security model answers how that action must be authenticated, validated, and evidenced
+- the external boundary protocol answers what may cross the company boundary, under what approvals, and with what external evidence trail
 
 ## 12) Change control
 
