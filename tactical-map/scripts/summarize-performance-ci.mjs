@@ -5,7 +5,7 @@ import path from 'node:path';
 
 function parseArgs(argv) {
   const args = {
-    mode: 'executed',
+    mode: 'full-observe',
     output: 'performance-output.txt',
     playwrightStatus: 'test-results/.last-run.json',
     exitCodeFile: 'benchmark-exit-code.txt',
@@ -14,7 +14,10 @@ function parseArgs(argv) {
     branch: 'unknown',
     pr: 'none',
     threshold: '10',
-    issue: '627',
+    issue: '630',
+    stableSuites: 'load',
+    informationalSuites: 'render,network,memory',
+    executedSuites: 'load,render,network,memory',
   };
 
   for (let i = 2; i < argv.length; i += 1) {
@@ -50,17 +53,46 @@ function readJsonIfExists(filePath) {
   }
 }
 
-function detectFailures(outputText) {
-  if (!outputText) return false;
-  return /\b(?:FAIL|FAILED|REGRESSION)\b/i.test(outputText);
+function splitCsv(value) {
+  return String(value ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 }
 
 function collectPerfLines(outputText) {
   if (!outputText) return [];
   return outputText
     .split('\n')
-    .map((line) => line.trimEnd())
-    .filter((line) => /\[perf:/.test(line));
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('[perf:'));
+}
+
+function buildSuiteSummary(perfLines) {
+  const suites = {};
+
+  for (const line of perfLines) {
+    const match = /^\[perf:([a-z0-9_-]+):([a-z0-9_-]+)\]/i.exec(line);
+    if (!match) continue;
+    const suiteName = match[1];
+    const metricName = match[2];
+    if (!suites[suiteName]) {
+      suites[suiteName] = {
+        lineCount: 0,
+        metricKeys: [],
+        sampleLines: [],
+      };
+    }
+    suites[suiteName].lineCount += 1;
+    if (!suites[suiteName].metricKeys.includes(metricName)) {
+      suites[suiteName].metricKeys.push(metricName);
+    }
+    if (suites[suiteName].sampleLines.length < 6) {
+      suites[suiteName].sampleLines.push(line);
+    }
+  }
+
+  return suites;
 }
 
 function buildStatus(args) {
@@ -68,37 +100,58 @@ function buildStatus(args) {
   const playwrightStatus = readJsonIfExists(args.playwrightStatus);
   const exitCodeText = readTextIfExists(args.exitCodeFile);
   const perfLines = collectPerfLines(outputText);
+  const suiteSummary = buildSuiteSummary(perfLines);
+  const stableSuites = splitCsv(args.stableSuites);
+  const informationalSuites = splitCsv(args.informationalSuites);
+  const executedSuites = splitCsv(args.executedSuites);
   const exitCode = Number.parseInt(String(exitCodeText ?? '0').trim(), 10) || 0;
+  const observedSuites = Object.keys(suiteSummary).sort();
+  const missingStableSuites = stableSuites.filter((suiteName) => !suiteSummary[suiteName]);
   const benchmarkFailed =
-    args.mode === 'executed' &&
-    (exitCode !== 0 ||
-      detectFailures(outputText) ||
-      playwrightStatus?.status === 'failed' ||
-      Array.isArray(playwrightStatus?.failedTests) && playwrightStatus.failedTests.length > 0);
+    exitCode !== 0 ||
+    playwrightStatus?.status === 'failed' ||
+    (Array.isArray(playwrightStatus?.failedTests) && playwrightStatus.failedTests.length > 0);
 
-  let headline = '✅ Performance benchmarks passed';
-  let detail =
-    'Benchmark artifacts were generated under the current CI stabilization model.';
-  let gatingDecision = 'pass';
+  let headline = 'Benchmark run completed';
+  let detail = 'Performance artifacts were generated successfully.';
+  let decision = 'pass';
+  let gatingEnabled = false;
+  let reason = 'Stable benchmark suites completed successfully.';
 
-  if (args.mode === 'pr-skip') {
-    headline = `ℹ️ PR benchmarks skipped while CI stabilization is tracked in #${args.issue}`;
+  if (args.mode === 'pr-stable') {
+    gatingEnabled = true;
+    headline = 'Selective PR performance enforcement';
     detail =
-      'PR benchmark runs remain informational until Tactical Map performance gating is trustworthy again.';
-  } else if (benchmarkFailed) {
-    headline = '⚠️ Performance benchmark run reported failures';
+      'Only stable suites are merge-blocking on pull requests while unstable suites remain evidence-only.';
+
+    if (missingStableSuites.length > 0) {
+      decision = 'fail';
+      reason = `Stable suite metrics were missing: ${missingStableSuites.join(', ')}.`;
+      detail = 'The PR run did not produce the required stable-suite metrics.';
+    } else if (benchmarkFailed) {
+      decision = 'fail';
+      reason = 'Stable PR benchmark run failed.';
+      detail = 'The enforced stable suite failed on the GitHub runner.';
+    } else {
+      reason = `Stable suites passed: ${stableSuites.join(', ')}.`;
+    }
+  } else {
+    headline = 'Full benchmark observation run';
     detail =
-      'Failures are recorded for review, but merge gating remains informational while #627 is open.';
-    gatingDecision = 'warn';
-  } else if (perfLines.length === 0) {
-    headline = '⚠️ Benchmark run completed without captured perf metrics';
-    detail =
-      'The CI job completed, but no `[perf:*]` lines were captured. Treat artifacts as incomplete and review before relying on the result.';
-    gatingDecision = 'warn';
+      'Full-suite benchmark execution remains observational so unstable suites can be tracked without blocking merges.';
+
+    if (missingStableSuites.length > 0) {
+      decision = 'warn';
+      reason = `Stable suite metrics were missing: ${missingStableSuites.join(', ')}.`;
+    } else if (benchmarkFailed) {
+      decision = 'warn';
+      reason =
+        'One or more observational suites failed; stable-suite enforcement remains separate.';
+    }
   }
 
   return {
-    version: 1,
+    version: 2,
     mode: args.mode,
     timestamp: new Date().toISOString(),
     metadata: {
@@ -107,25 +160,26 @@ function buildStatus(args) {
       pr: args.pr,
       thresholdPct: Number.parseInt(args.threshold, 10) || 10,
     },
+    policy: {
+      issue: args.issue,
+      stableSuites,
+      informationalSuites,
+      executedSuites,
+    },
     benchmark: {
       exitCode,
       playwrightStatus: playwrightStatus?.status ?? 'missing',
       failedTests: Array.isArray(playwrightStatus?.failedTests) ? playwrightStatus.failedTests.length : 0,
       perfLineCount: perfLines.length,
+      observedSuites,
+      suiteSummary,
       benchmarkFailed,
-      skipped: args.mode === 'pr-skip',
+      missingStableSuites,
     },
     gating: {
-      enabled: false,
-      decision: gatingDecision,
-      reason:
-        args.mode === 'pr-skip'
-          ? `PR performance benchmarks are informational while #${args.issue} is open.`
-          : benchmarkFailed
-            ? `Benchmark failures detected, but gating is informational while #${args.issue} is open.`
-            : perfLines.length === 0
-              ? 'No perf metrics captured; result is informational only.'
-              : 'Benchmark run completed successfully in informational mode.',
+      enabled: gatingEnabled,
+      decision,
+      reason,
     },
     summary: {
       headline,
@@ -137,6 +191,15 @@ function buildStatus(args) {
 
 function renderMarkdown(status) {
   const lines = [];
+  const stableSuites = status.policy.stableSuites.length > 0
+    ? status.policy.stableSuites.join(', ')
+    : 'none';
+  const informationalSuites = status.policy.informationalSuites.length > 0
+    ? status.policy.informationalSuites.join(', ')
+    : 'none';
+  const executedSuites = status.policy.executedSuites.length > 0
+    ? status.policy.executedSuites.join(', ')
+    : 'none';
 
   lines.push('## 🏎️ Performance Benchmark Results');
   lines.push('');
@@ -144,29 +207,51 @@ function renderMarkdown(status) {
   lines.push(`**Branch:** \`${status.metadata.branch}\``);
   lines.push(`**PR:** \`${status.metadata.pr}\``);
   lines.push(`**Mode:** \`${status.mode}\``);
-  lines.push(`**Gating:** \`${status.gating.enabled ? 'enforced' : 'informational'}\``);
+  lines.push(`**Decision:** \`${status.gating.decision}\``);
+  lines.push(`**Merge-blocking enforcement:** \`${status.gating.enabled ? 'enabled' : 'disabled'}\``);
   lines.push('');
   lines.push(`### ${status.summary.headline}`);
   lines.push('');
   lines.push(status.summary.detail);
   lines.push('');
-  lines.push('### CI Execution Model');
-  lines.push('- `workers=1` to avoid runner contention');
-  lines.push('- Chromium-only Playwright execution with the tactical-map performance flags from `playwright.config.ts`');
-  lines.push('- Backend polling stopped inside the benchmark harness so render tests measure client cost, not reconnect churn');
-  lines.push('- Artifacts remain the source of truth while `#627` tracks stabilization');
+  lines.push('### Suite Policy');
+  lines.push(`- Stable suites: \`${stableSuites}\``);
+  lines.push(`- Informational suites: \`${informationalSuites}\``);
+  lines.push(`- Executed suites in this run: \`${executedSuites}\``);
+  lines.push(`- Tracking issue: \`#${status.policy.issue}\``);
   lines.push('');
   lines.push('### Benchmark Status');
   lines.push(`- Playwright status: \`${status.benchmark.playwrightStatus}\``);
   lines.push(`- Benchmark exit code: \`${status.benchmark.exitCode}\``);
   lines.push(`- Failed tests: \`${status.benchmark.failedTests}\``);
   lines.push(`- Perf metric lines captured: \`${status.benchmark.perfLineCount}\``);
+  lines.push(`- Observed suites: \`${status.benchmark.observedSuites.join(', ') || 'none'}\``);
+  lines.push(`- Gating reason: ${status.gating.reason}`);
   lines.push('');
+
+  if (status.benchmark.missingStableSuites.length > 0) {
+    lines.push('### Missing Stable Suites');
+    for (const suiteName of status.benchmark.missingStableSuites) {
+      lines.push(`- \`${suiteName}\``);
+    }
+    lines.push('');
+  }
+
+  lines.push('### Suite Evidence');
+  if (status.benchmark.observedSuites.length === 0) {
+    lines.push('- No structured perf lines were captured.');
+  } else {
+    for (const suiteName of status.benchmark.observedSuites) {
+      const suite = status.benchmark.suiteSummary[suiteName];
+      lines.push(`- \`${suiteName}\`: ${suite.lineCount} lines, metrics \`${suite.metricKeys.join(', ')}\``);
+    }
+  }
+  lines.push('');
+
+  lines.push('### Captured Perf Lines');
   lines.push('```');
   if (status.summary.perfLines.length > 0) {
     lines.push(...status.summary.perfLines);
-  } else if (status.mode === 'pr-skip') {
-    lines.push(`PR benchmark execution intentionally skipped while #${status.metadata.pr === 'none' ? '627' : '627'} remains open.`);
   } else {
     lines.push('No perf metrics captured.');
   }

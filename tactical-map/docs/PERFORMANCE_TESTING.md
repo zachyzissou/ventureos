@@ -173,12 +173,13 @@ The `performance.yml` workflow runs automatically on:
 - Push to `main` branch
 - Manual dispatch
 
-Current stabilization policy while `#627` is open:
-- PR runs are informational and skip benchmark execution rather than pretending to enforce unstable results.
-- Non-PR CI runs execute benchmarks through `./scripts/run-benchmarks.sh --ci`.
+Current stabilization policy while `#630` is open:
+- PR runs execute only the stable `load` suite through `./scripts/run-benchmarks.sh --ci --suite load`.
+- Full push and manual runs continue to execute all suites for evidence collection.
+- Only the stable suite is merge-blocking; `render`, `network`, and `memory` remain informational until their GitHub-runner signals are trustworthy.
 - CI benchmark execution is pinned to `workers=1` and `retries=1` to reduce runner contention.
 - Render isolation comes from `waitForTacticalMap()`, which stops backend polling/reconnect loops before measurement.
-- Workflow summaries come from `scripts/summarize-performance-ci.mjs`, not ad hoc `grep` parsing.
+- Workflow summaries come from `scripts/summarize-performance-ci.mjs`, which emits suite-aware policy and gating data in `performance-status.json`.
 
 ### Regression Detection
 
@@ -206,6 +207,12 @@ Each CI run uploads a `performance-reports` artifact containing:
 - `performance-status.json` — Structured CI status contract for gating/commenting
 - `summary.md` — Human-readable summary
 
+The `performance-status.json` artifact is the canonical machine-readable source for:
+- which suites were executed
+- which suites are treated as stable vs informational
+- whether the run is merge-blocking or observational
+- the final `pass` / `warn` / `fail` decision used by CI
+
 ## Troubleshooting
 
 ### Tests Skipped
@@ -222,9 +229,9 @@ PERF=1 npx playwright test --project=chromium
 
 ### Low FPS in CI
 
-CI runners (GitHub Actions) have limited GPU/CPU. Expected FPS may be lower than local development:
-- Local (Apple Silicon): 58-60 FPS typical
-- CI (Ubuntu, no GPU): 30-50 FPS typical
+CI runners (GitHub Actions) have limited GPU/CPU, and the Tactical Map suites do not all behave the same way on hosted runners:
+- `load` currently produces coherent CI signals around the expected frame budget and is used for enforcement.
+- `render`, `network`, and `memory` still need runner-specific stabilization work before they are safe to make merge-blocking.
 
 Baselines should be set from CI runs, not local machines.
 
