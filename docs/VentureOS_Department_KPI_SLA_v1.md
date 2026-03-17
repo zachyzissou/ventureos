@@ -74,6 +74,14 @@ Scope: KPI definitions and inter-department handoff SLAs for Company OS v1 depar
 
 - P0/P1 operational incidents override standard SLA windows.
 - Repeated Level 2/3 breaches trigger lane contract audit.
+- Technical incident severity mapping is governed by `docs/VentureOS_SLA_Framework_Map_v1.md`.
+
+### 4.1 Technical incident mapping
+
+- `P0` technical incidents may place impacted handoffs into `exception` only with `executive_office:director` approval; otherwise an impacted missed handoff is `level_3`.
+- `P1` technical incidents may place impacted handoffs into `exception` with `operations:director` approval and producer/consumer Director acknowledgement; otherwise an impacted missed handoff defaults to `level_2`.
+- `P2` and `P3` incidents do not automatically grant exceptions; any resulting missed handoff defaults to `level_1` unless separately escalated.
+- Technical severity alone does not create a handoff breach. The incident must materially affect the production, acceptance, or execution window of the handoff.
 
 ## 5) Evidence and audit requirements
 
@@ -81,6 +89,7 @@ Scope: KPI definitions and inter-department handoff SLAs for Company OS v1 depar
 - Handoff record fields: `handoff_id`, `producer`, `consumer`, `producer_binding_id`, `consumer_binding_id`, `artifact`, `sent_at`, `accepted_at`, `producer_ts`, `consumer_ts`, `sla_target_minutes`, `latency_minutes`, `compliance_status`, `breach_level`, `breach_owner`, `breach_action`, `exception_approved_by`, `exception_expires_at`, `exceptions`.
 - `sla_status` remains accepted for compatibility with historical ledgers, but `compliance_status` is the canonical field for current-day evidence and readiness evaluation.
 - Current-day ledgers must use canonical VentureOS role identifiers such as `operations:operator`, `finance:director`, or `venture_control` for binding, capability, and breach-routing fields.
+- When a technical incident affects a handoff, the handoff record must include the incident reference in `exceptions` and follow the approval/escalation rules in `docs/VentureOS_SLA_Framework_Map_v1.md`.
 - Monthly audit sample rate: 10% of KPI entries and 10% of handoffs, minimum 3 samples per department category.
 - Failed audit sample requires correction within 2 business days and re-audit.
 

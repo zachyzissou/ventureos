@@ -19,6 +19,7 @@
 - **docs/VentureOS_Agent_Role_Registry_v1.json** – machine-readable role registry
 - **docs/VentureOS_RBAC_Spec_v1.md** – canonical RBAC policy
 - **docs/VentureOS_Tool_Access_Matrix_v1.json** – machine-readable RBAC matrix
+- **docs/VentureOS_SLA_Framework_Map_v1.md** – canonical mapping from technical `P0-P3` incidents to department handoff breach and exception handling
 - **docs/roles/REPO_CHARTER.md** – VentureOS charter + scope boundaries
 - **docs/process/OPERATING_CONTRACT_GITLAB.md** – GitHub-first work contract (legacy filename kept for compatibility)
 - **docs/process/LABEL_PROTOCOL.md** – how workflow labels are applied/removed

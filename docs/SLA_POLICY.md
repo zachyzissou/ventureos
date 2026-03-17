@@ -1,7 +1,7 @@
 # SLA Policy (Task Queue + Proactive Engine)
 
 ## Purpose
-Define **P0–P3 SLA tiers** for the task queue and proactive engine, including **time‑to‑ack**, **time‑to‑run**, **max retries**, and **escalation defaults**. This policy is the authoritative reference for SLA semantics used by `docs/PROACTIVE_ENGINE.md` and `docs/PROACTIVE_RULES.md`.
+Define **P0–P3 SLA tiers** for the task queue and proactive engine, including **time‑to‑ack**, **time‑to‑run**, **max retries**, and **escalation defaults**. This policy is the authoritative reference for SLA semantics used by `docs/PROACTIVE_ENGINE.md`, `docs/PROACTIVE_RULES.md`, and the VentureOS technical-to-department mapping in `docs/VentureOS_SLA_Framework_Map_v1.md`.
 
 ---
 
@@ -57,3 +57,24 @@ Escalate when any of the following occur (per tier rules above):
 4. **Consecutive failures** exceeding tier threshold
 
 Escalation routing is governed by `docs/PROACTIVE_RULES.md` and `docs/PROACTIVE_MODE.md`.
+
+---
+
+## VentureOS operating-model mapping
+
+This document governs the technical SLA plane only.
+
+When a technical incident blocks or degrades a VentureOS department handoff, the incident must also be interpreted through:
+
+- `docs/VentureOS_Department_KPI_SLA_v1.md`
+- `docs/VentureOS_SLA_Framework_Map_v1.md`
+
+Key rule:
+- technical severity does not automatically create a department handoff breach
+- a department handoff changes state only when the incident materially affects the production, acceptance, or execution window of that handoff
+
+Severity mapping summary:
+- `P0`: impacted handoffs require Executive Office exception approval or become `level_3`
+- `P1`: impacted handoffs may take an Operations-approved exception; otherwise default to `level_2`
+- `P2`: no automatic exception; missed handoffs default to `level_1`
+- `P3`: advisory only unless an actual handoff miss occurs

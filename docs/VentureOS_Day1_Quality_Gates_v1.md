@@ -2,7 +2,7 @@
 
 Date: 2026-03-12
 Owner: Claude lane (architecture/review)
-Upstream: `VentureOS_Day1_Execution_Packet.md`, `VentureOS_30_Day_Operational_Cadence_v1.md`
+Upstream: `VentureOS_Day1_Execution_Packet.md`, `VentureOS_30_Day_Operational_Cadence_v1.md`, `VentureOS_SLA_Framework_Map_v1.md`
 
 ## Purpose
 
@@ -47,7 +47,7 @@ Each gate maps to a checkpoint in the Day-1 Execution Packet. Every gate is bina
 | C2 | Timestamps present | Every handoff record has `producer_ts` and `consumer_ts` fields | Any handoff missing either timestamp |
 | C3 | SLA computed | Each current-day handoff has `compliance_status` with value `on_time`, `late`, or `exception`, plus `sla_target_minutes` and derived `latency_minutes` | Canonical compliance field missing, invalid enum, or SLA instrumentation incomplete |
 | C4 | Breach routing assigned | Every `late` handoff has canonical `breach_owner` and `breach_action` fields | Any late handoff missing owner/action, or owner uses non-canonical identifier |
-| C5 | On-time rate >= 90% | `count(on_time) / count(total) >= 0.90` for active departments, with no unresolved `level_3` breach lacking exception approval evidence | Rate below 90%, or any `level_3` breach without approval evidence |
+| C5 | On-time rate >= 90% | `count(on_time) / count(total) >= 0.90` for active departments, with no unresolved `level_3` breach lacking exception approval evidence and any incident-linked exception recorded per `VentureOS_SLA_Framework_Map_v1.md` | Rate below 90%, any `level_3` breach without approval evidence, or incident-linked exception missing technical-cause metadata |
 
 **Gate C verdict:** PASS only if C1–C5 all pass.
 
@@ -68,7 +68,7 @@ Each gate maps to a checkpoint in the Day-1 Execution Packet. Every gate is bina
 | # | Check | PASS criteria | FAIL criteria |
 |---|-------|---------------|---------------|
 | E1 | Gates A–D all passed | All four gate verdicts are PASS | Any gate verdict is FAIL |
-| E2 | No unresolved P0 incidents | Zero open P0 incidents at 17:00 CT | Any P0 incident without resolution |
+| E2 | No unresolved P0 incidents | Zero open P0 incidents at 17:00 CT | Any P0 incident without resolution, even if an impacted handoff holds approved exception status |
 | E3 | Handoff on-time rate >= 90% | Gate C5 passed | Gate C5 failed |
 | E4 | Decision log complete | Gate D3 passed | Gate D3 failed |
 
