@@ -185,25 +185,45 @@ export async function forceGC(page: Page): Promise<boolean> {
 /**
  * Wait for the tactical map to be fully bootstrapped.
  */
-export async function waitForTacticalMap(page: Page, timeoutMs: number = 15000): Promise<void> {
+export interface WaitForTacticalMapOptions {
+  timeoutMs?: number;
+  stopClients?: boolean;
+}
+
+export async function waitForTacticalMap(
+  page: Page,
+  options: WaitForTacticalMapOptions | number = {}
+): Promise<void> {
+  const timeoutMs =
+    typeof options === 'number'
+      ? options
+      : options.timeoutMs ?? 15000;
+  const stopClients =
+    typeof options === 'number'
+      ? true
+      : options.stopClients ?? true;
+
   await page.waitForFunction(
     () => !!(window as any).__TACTICAL_MAP__,
     { timeout: timeoutMs }
   );
 
-  await page.evaluate(() => {
+  await page.evaluate((shouldStopClients: boolean) => {
     const tm = (window as any).__TACTICAL_MAP__;
     if (!tm) return;
 
-    // Performance benchmarks should measure client render cost, not backend
-    // retries / websocket reconnect churn from a missing local API.
-    tm.api?.stop?.();
-    tm.economyClient?.stop?.();
-    tm.healthClient?.stop?.();
+    if (shouldStopClients) {
+      // Performance benchmarks should measure client render cost, not backend
+      // retries / websocket reconnect churn from a missing local API.
+      tm.api?.stop?.();
+      tm.economyClient?.stop?.();
+      tm.healthClient?.stop?.();
+    }
+
     tm.pause?.();
     tm.resetVisualState?.();
     tm.snapshot?.();
-  });
+  }, stopClients);
 
   await page.waitForTimeout(250);
 }

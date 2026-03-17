@@ -17,15 +17,17 @@ import {
   measureFPS,
   waitForTacticalMap,
 } from './helpers/benchmark-harness';
+import {
+  applyMockLoadPayload,
+  exerciseApiBurst,
+  installMockTacticalMapBackend,
+} from './helpers/mock-backend';
 
 /**
  * Add artificial latency to all API routes.
  */
 async function addLatency(page: import('@playwright/test').Page, delayMs: number) {
-  await page.route('**/api/tactical-map/**', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-    await route.continue();
-  });
+  await installMockTacticalMapBackend(page, { profile: 'stress', delayMs });
 }
 
 /**
@@ -33,6 +35,9 @@ async function addLatency(page: import('@playwright/test').Page, delayMs: number
  */
 async function blockAPIs(page: import('@playwright/test').Page) {
   await page.route('**/api/tactical-map/**', async (route) => {
+    await route.abort('connectionfailed');
+  });
+  await page.route('**/api/rpg/stats', async (route) => {
     await route.abort('connectionfailed');
   });
 }
@@ -49,23 +54,18 @@ test.describe('Network Latency Simulation', () => {
     await addLatency(page, 50);
     await page.goto('/');
     await waitForTacticalMap(page);
-
-    // Set agents active
+    await applyMockLoadPayload(page, 'baseline');
     await page.evaluate(() => {
       const tm = (window as any).__TACTICAL_MAP__;
-      const curr = tm.mapStore.get();
-      const next = structuredClone(curr);
-      for (const id of ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence']) {
-        next.agents[id].state = 'ACTIVE';
-        next.agents[id].sessions = 2;
-      }
-      tm.setMapState(next);
       tm.resume();
     });
 
     await page.waitForTimeout(2000);
 
-    const fps = await measureFPS(page, 3000);
+    const fpsPromise = measureFPS(page, 3000);
+    await page.waitForTimeout(300);
+    await exerciseApiBurst(page, 8);
+    const fps = await fpsPromise;
 
     console.log(`[perf:network:50ms] avg=${fps.avgFps} min=${fps.minFps}`);
 
@@ -77,22 +77,18 @@ test.describe('Network Latency Simulation', () => {
     await addLatency(page, 200);
     await page.goto('/');
     await waitForTacticalMap(page);
-
+    await applyMockLoadPayload(page, 'stress');
     await page.evaluate(() => {
       const tm = (window as any).__TACTICAL_MAP__;
-      const curr = tm.mapStore.get();
-      const next = structuredClone(curr);
-      for (const id of ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_delivery', 'venture_strategy']) {
-        next.agents[id].state = 'ACTIVE';
-        next.agents[id].sessions = 3;
-      }
-      tm.setMapState(next);
       tm.resume();
     });
 
     await page.waitForTimeout(2000);
 
-    const fps = await measureFPS(page, 3000);
+    const fpsPromise = measureFPS(page, 3000);
+    await page.waitForTimeout(300);
+    await exerciseApiBurst(page, 10);
+    const fps = await fpsPromise;
 
     console.log(`[perf:network:200ms] avg=${fps.avgFps} min=${fps.minFps}`);
 
@@ -104,22 +100,18 @@ test.describe('Network Latency Simulation', () => {
     await addLatency(page, 500);
     await page.goto('/');
     await waitForTacticalMap(page);
-
+    await applyMockLoadPayload(page, 'baseline');
     await page.evaluate(() => {
       const tm = (window as any).__TACTICAL_MAP__;
-      const curr = tm.mapStore.get();
-      const next = structuredClone(curr);
-      for (const id of ['venture_research', 'venture_infrastructure', 'venture_security']) {
-        next.agents[id].state = 'ACTIVE';
-        next.agents[id].sessions = 2;
-      }
-      tm.setMapState(next);
       tm.resume();
     });
 
     await page.waitForTimeout(2000);
 
-    const fps = await measureFPS(page, 3000);
+    const fpsPromise = measureFPS(page, 3000);
+    await page.waitForTimeout(300);
+    await exerciseApiBurst(page, 12);
+    const fps = await fpsPromise;
 
     console.log(`[perf:network:500ms] avg=${fps.avgFps} min=${fps.minFps}`);
 
@@ -128,19 +120,12 @@ test.describe('Network Latency Simulation', () => {
   });
 
   test('graceful degradation on API failure (no crash)', async ({ page }) => {
-    // Start normally
+    await installMockTacticalMapBackend(page, { profile: 'baseline' });
     await page.goto('/');
     await waitForTacticalMap(page);
-
+    await applyMockLoadPayload(page, 'baseline');
     await page.evaluate(() => {
       const tm = (window as any).__TACTICAL_MAP__;
-      const curr = tm.mapStore.get();
-      const next = structuredClone(curr);
-      for (const id of ['venture_research', 'venture_infrastructure']) {
-        next.agents[id].state = 'ACTIVE';
-        next.agents[id].sessions = 2;
-      }
-      tm.setMapState(next);
       tm.resume();
     });
 
@@ -149,11 +134,12 @@ test.describe('Network Latency Simulation', () => {
     // Now block all APIs
     await blockAPIs(page);
 
-    // Wait for some poll cycles to fail
-    await page.waitForTimeout(5000);
+    const fpsPromise = measureFPS(page, 3000);
+    await page.waitForTimeout(300);
+    await exerciseApiBurst(page, 10);
 
     // App should still be rendering (not crashed)
-    const fps = await measureFPS(page, 3000);
+    const fps = await fpsPromise;
 
     console.log(`[perf:network:failure] avg=${fps.avgFps} min=${fps.minFps}`);
 
@@ -168,19 +154,19 @@ test.describe('Network Latency Simulation', () => {
   });
 
   test('WebSocket reconnection does not block render loop', async ({ page }) => {
-    await page.goto('/');
-    await waitForTacticalMap(page);
+    await installMockTacticalMapBackend(page, { profile: 'baseline' });
+    // Abort the resource stream handshake so the client exercises reconnect backoff
+    // without relying on a real backend.
+    await page.route('**/api/tactical-map/resources/stream', async (route) => {
+      await route.abort('connectionfailed');
+    });
 
+    await page.goto('/');
+    await waitForTacticalMap(page, { stopClients: false });
+    await applyMockLoadPayload(page, 'baseline');
     await page.evaluate(() => {
       const tm = (window as any).__TACTICAL_MAP__;
       tm.resume();
-    });
-
-    await page.waitForTimeout(1000);
-
-    // Simulate WebSocket disconnection by blocking WS endpoints
-    await page.route('**/api/tactical-map/resources/stream', async (route) => {
-      await route.abort('connectionfailed');
     });
 
     // Wait for reconnection attempts
@@ -196,18 +182,12 @@ test.describe('Network Latency Simulation', () => {
   });
 
   test('recovery after network restoration', async ({ page }) => {
+    await installMockTacticalMapBackend(page, { profile: 'baseline' });
     await page.goto('/');
     await waitForTacticalMap(page);
-
+    await applyMockLoadPayload(page, 'baseline');
     await page.evaluate(() => {
       const tm = (window as any).__TACTICAL_MAP__;
-      const curr = tm.mapStore.get();
-      const next = structuredClone(curr);
-      for (const id of ['venture_research', 'venture_infrastructure', 'venture_security']) {
-        next.agents[id].state = 'ACTIVE';
-        next.agents[id].sessions = 2;
-      }
-      tm.setMapState(next);
       tm.resume();
     });
 
@@ -217,11 +197,13 @@ test.describe('Network Latency Simulation', () => {
 
     // Block network
     await blockAPIs(page);
-    await page.waitForTimeout(3000);
+    await exerciseApiBurst(page, 8);
+    await page.waitForTimeout(500);
 
     // Restore network (unroute)
     await page.unrouteAll();
-    await page.waitForTimeout(3000);
+    await installMockTacticalMapBackend(page, { profile: 'baseline' });
+    await page.waitForTimeout(1000);
 
     // FPS after recovery
     const fpsAfter = await measureFPS(page, 2000);
@@ -240,26 +222,35 @@ test.describe('Network Latency Simulation', () => {
     let delayedCount = 0;
     const batchSize = 5;
 
-    await page.route('**/api/tactical-map/**', async (route) => {
+    await installMockTacticalMapBackend(page, { profile: 'baseline' });
+    await page.route('**/api/tactical-map/state', async (route) => {
       delayedCount++;
-      // First N requests get delayed, then all release at once
       if (delayedCount <= batchSize) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
-      await route.continue();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          updatedAt: new Date().toISOString(),
+          agents: {},
+        }),
+      });
     });
 
     await page.goto('/');
     await waitForTacticalMap(page);
-
+    await applyMockLoadPayload(page, 'baseline');
     await page.evaluate(() => {
       const tm = (window as any).__TACTICAL_MAP__;
       tm.resume();
     });
 
     // Measure during the burst arrival window
-    await page.waitForTimeout(1500);
-    const fps = await measureFPS(page, 3000);
+    const fpsPromise = measureFPS(page, 3000);
+    await page.waitForTimeout(300);
+    await exerciseApiBurst(page, 8);
+    const fps = await fpsPromise;
 
     console.log(`[perf:network:burst] avg=${fps.avgFps} min=${fps.minFps}`);
 

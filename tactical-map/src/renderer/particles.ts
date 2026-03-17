@@ -36,6 +36,11 @@ type Particle = {
   size: number;
 };
 
+const PARTICLE_POOL_MAX = Math.max(
+  PARTICLES.AMBIENT_TARGET * 2,
+  Math.floor(PARTICLES.MAX * 0.35)
+);
+
 function mulberry32(seed: number) {
   let a = seed >>> 0;
   return () => {
@@ -175,7 +180,9 @@ export function createParticleSystem({ seed = 1337 } = {}): ParticleSystem {
         // Remove.
         p.s.removeFromParent();
         active.splice(i, 1);
-        pool.push(p);
+        if (pool.length < PARTICLE_POOL_MAX) {
+          pool.push(p);
+        }
       }
     }
 
