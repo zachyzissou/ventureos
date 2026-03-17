@@ -130,7 +130,7 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 
 **MC5. No external boundary protocol.** No specification for how the OS interfaces with external parties (customers, vendors, partners, regulators). Sales, CS, Legal, and Marketing all reference external entities, but no boundary contract defines what information can flow out, what approvals are needed, and what audit trail is required for external interactions. **Priority: HIGH — especially for Legal and Sales workflows.**
 
-**MC6. No security model for inter-lane communication.** Lanes exchange artifacts and approvals, but no authentication, authorization, or integrity verification is specified for these exchanges. In an agent-operated system, this means any agent could potentially forge a handoff or approval. **Priority: HIGH — must be addressed before production-grade operation.**
+**MC6. Inter-lane communication security model is now defined at the doc/spec layer.** `docs/VentureOS_Inter_Lane_Security_Model_v1.md` now specifies trust boundaries, authentication, authorization, integrity, provenance, replay protection, and exception handling for lane artifact exchange. The remaining gap is runtime enforcement. **Priority: MEDIUM-HIGH — model defined, enforcement still required before production-grade operation.**
 
 ---
 
@@ -144,7 +144,7 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 | R4 | Access boundaries are partially enforced at runtime — shared authority-plane and tactical-map hooks now use canonical VentureOS metadata, but dashboard control surfaces and provisioning flow still need coverage | MEDIUM-HIGH | IT/Security Director | Expand enforcement beyond `lib/authority-map.ts`, `lib/policy-gate.ts`, `lib/nexus-arbiter.ts`, and `tactical-map/src/interaction/permissions.ts` into remaining hook points and agent provisioning flow |
 | R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) were previously unconnected | RESOLVED | Operations Director | Closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Map_v1.md` plus the existing handoff evidence gate |
 | R6 | No external boundary protocol for customer/vendor/regulator interactions | HIGH | Legal Director | Define boundary contracts before Sales/Legal activation in Phase B/C |
-| R7 | No inter-lane communication security model | HIGH | IT/Security Director | Define authentication/authorization for lane artifact exchange |
+| R7 | Inter-lane communication security model is defined at the doc/spec layer, but runtime enforcement is still pending | MEDIUM-HIGH | IT/Security Director | Implement the model in exchange envelopes, auth boundaries, and evidence validation |
 | R8 | No KPI baselines — targets are aspirational until measured | MEDIUM | Data/Analytics Operator | Execute baseline measurement sprint in Phase 0 (Mar 16-25 per KPI/SLA doc §1) |
 | R9 | Rollback procedures incomplete for partial-activation scenarios | MEDIUM | Operations Director | Add partial-activation rollback steps to Implementation Plan §8 |
 | R10 | No degraded-mode procedures for organizational lane failures | MEDIUM | Operations Director | Define temporary fallback authority and restoration SOPs |

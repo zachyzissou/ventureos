@@ -20,6 +20,7 @@ These roles are not department-local variants of the Director, Operator, and Aud
 - `docs/VentureOS_Role_Model_v1.md` remains the normative source for canonical lane bindings, capability overlays, and authority classes.
 - `docs/VentureOS_Agent_Role_Registry_v1.json` is the machine-readable role registry for those canonical identifiers.
 - `docs/VentureOS_RBAC_Spec_v1.md` and `docs/VentureOS_Tool_Access_Matrix_v1.json` remain the normative access-control sources.
+- `docs/VentureOS_Inter_Lane_Security_Model_v1.md` remains the normative security model for cross-lane artifact exchange, integrity, provenance, and replay handling.
 - This document is the normative source for cross-cutting agent mission, I/O, authority limits, and escalation obligations.
 - `docs/VentureOS_Agent_Ownership_Matrix_v1.json` is the machine-readable ownership companion for future enforcement and reporting.
 
@@ -30,6 +31,7 @@ These roles are not department-local variants of the Director, Operator, and Aud
 - No cross-cutting agent may unilaterally approve budget, legal, security, or irreversible production-risk exceptions.
 - Every cross-cutting output must include timestamps, linked evidence, and an accountable lane owner.
 - Every cross-cutting handoff must use the envelope standard defined in `docs/VentureOS_Lane_Contracts_v1.md`.
+- Every cross-cutting handoff that crosses a lane boundary must satisfy the security expectations in `docs/VentureOS_Inter_Lane_Security_Model_v1.md`.
 - Cross-cutting directives that alter department scope or priority must be logged in `runtime/logs/daily/YYYY-MM-DD-decision-log.md`.
 
 ## 4) Contract summary matrix

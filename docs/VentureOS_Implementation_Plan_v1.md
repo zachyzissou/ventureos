@@ -10,6 +10,7 @@ Normative references:
 - `docs/VentureOS_Agent_Role_Registry_v1.json`
 - `docs/VentureOS_RBAC_Spec_v1.md`
 - `docs/VentureOS_Tool_Access_Matrix_v1.json`
+- `docs/VentureOS_Inter_Lane_Security_Model_v1.md`
 - `docs/VentureOS_30_Day_Operational_Cadence_v1.md`
 - `docs/VentureOS_SLA_Framework_Map_v1.md`
 - `docs/VentureOS_Phase0_Readiness_Checklist_v1.md`
@@ -146,6 +147,7 @@ In scope:
 
 - Phase B requires G1 pass and verified KPI data quality from Data/Analytics.
 - Phase C requires G3 pass and documented access-control model from IT/Security using the canonical VentureOS role model and RBAC artifacts.
+- Phase C also requires the inter-lane communication security model to be defined for artifact exchange, approvals, and handoff evidence.
 - Phase D requires G5 pass and full lane contract adoption across all active departments.
 - Any failed gate pauses downstream phase activation until remediation evidence is accepted.
 - Technical incident severity must be translated into department handoff impact using `docs/VentureOS_SLA_Framework_Map_v1.md`; teams may not invent ad hoc exception semantics during gate review.
