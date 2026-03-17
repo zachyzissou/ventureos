@@ -16,6 +16,7 @@ RBAC subjects in VentureOS are evaluated in this order:
 RBAC subjects must be expressed using canonical identifiers from:
 - `docs/VentureOS_Role_Model_v1.md`
 - `docs/VentureOS_Agent_Role_Registry_v1.json`
+- `docs/VentureOS_Inter_Lane_Security_Model_v1.md`
 
 ## 2) Resource classes
 
@@ -161,6 +162,14 @@ The following repo paths are the intended integration points for future runtime 
 - No runtime permission behavior changes in this PR
 - No removal of compatibility aliases required for existing runtime data
 
-## 11) Change control
+## 11) Inter-lane exchange relationship
+
+The RBAC model determines who may emit, receive, approve, or waive a protected exchange. The transport and evidence protections for that exchange are governed by `docs/VentureOS_Inter_Lane_Security_Model_v1.md`.
+
+In other words:
+- RBAC answers whether a subject may act
+- the inter-lane security model answers how that action must be authenticated, validated, and evidenced
+
+## 12) Change control
 
 Any change to the RBAC model must update `docs/VentureOS_Tool_Access_Matrix_v1.json` in the same change.
