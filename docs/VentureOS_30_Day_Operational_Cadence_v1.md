@@ -11,7 +11,8 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 - `VentureOS_Lane_Contracts_v1.md` — Director/Operator/Auditor lane obligations
 
 **Canonical evidence model:** primary artifacts live under `runtime/logs/`; validation and readiness summaries live under `runtime/reports/`.
-**Critical prerequisite:** Evidence infrastructure (store, schema, retention) must be built before Phase 0 activates. See Gap Assessment R2 and `VentureOS_Phase0_Readiness_Checklist_v1.md`.
+**Operational command pack:** `npm run evidence:daily` validates the current daily bundle, refreshes compatibility aliases, syncs the current weekly/monthly rollups, and emits fresh inventory/retention reports under `runtime/reports/evidence/`. `npm run evidence:index` refreshes the machine-readable inventory only. `npm run evidence:retention` previews retention candidates by default and applies pruning only with `--apply`.
+**Critical prerequisite:** Evidence infrastructure (store, schema, retention, inventory/reporting) must be built before Phase 0 activates. See Gap Assessment R2 and `VentureOS_Phase0_Readiness_Checklist_v1.md`.
 
 ---
 
@@ -47,7 +48,7 @@ Scope: Daily/weekly/monthly runbook for Phase A departments (Executive Office, O
 | Step | Owner | Action | Evidence output | Acceptance criteria |
 |---|---|---|---|---|
 | 1 | Each active department Operator | Post daily status update per Lane Contracts §5 | Status entry in department log | Status posted before 17:00 CT deadline |
-| 2 | Operations Program Control | Verify all D-1 through D-3 evidence outputs exist | `runtime/reports/evidence/evidence-validate-latest.json` | Validation summary status is PASS and required daily files are present |
+| 2 | Operations Program Control | Verify all D-1 through D-3 evidence outputs exist and refresh inventory state | `runtime/reports/evidence/evidence-validate-latest.json`, `runtime/reports/evidence/evidence-index-latest.json`, `runtime/reports/evidence/evidence-retention-latest.json` | Validation summary status is PASS; current daily target is complete in the evidence index; retention report is refreshed for the cycle |
 
 ---
 
@@ -163,7 +164,7 @@ runtime/logs/
   incidents/      # Incident logs and retros
 
 runtime/reports/
-  evidence/       # validation summaries
+  evidence/       # validation summaries, inventory, retention reports
   phase0-readiness/ # rollout gate summaries
 ```
 
@@ -173,10 +174,11 @@ Example: `2026-03-16-agent-health.json`
 **Format:** JSON for structured data (KPIs, health checks, spend). Markdown for narrative reports (decisions, retros, forecasts).
 
 **Retention:**
-- Daily logs: retained 90 days (30 days active + 60 days archive).
-- Weekly/monthly reports: retained 12 months.
-- Decision logs: retained indefinitely.
-- Incident logs: retained 12 months minimum; P0/P1 incidents retained indefinitely.
+- Daily evidence artifacts: 45-day active window in `runtime/logs/daily/`.
+- Weekly evidence artifacts: 180-day active window in `runtime/logs/weekly/`.
+- Monthly evidence artifacts: 540-day active window in `runtime/logs/monthly/`.
+- Derived evidence/readiness reports: 45-day active window in `runtime/reports/evidence/` and `runtime/reports/phase0-readiness/`.
+- Incident bundles are not auto-pruned by the current retention command.
 
 **Schema references:** KPI record schema per KPI/SLA doc §5. Handoff record schema per KPI/SLA doc §5. Lane state schema per Lane Contracts doc (to be defined — see Gap Assessment G13).
 

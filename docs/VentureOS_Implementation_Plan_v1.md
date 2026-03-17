@@ -18,6 +18,7 @@ Normative references:
 
 Canonical evidence root: `runtime/logs/`
 Derived validation and readiness reports: `runtime/reports/`
+Derived evidence inventory and retention reports: `runtime/reports/evidence/`
 
 ## 1) Outcomes and non-goals
 
@@ -59,6 +60,7 @@ Objective: establish control plane before expansion.
 In scope:
 - Stand up Executive Office, Operations, Data/Analytics, Finance lanes.
 - Create evidence log structure for KPI and SLA artifacts under `runtime/logs/daily`, `runtime/logs/weekly`, `runtime/logs/monthly`, and `runtime/logs/incidents`.
+- Wire canonical evidence commands so daily execution refreshes weekly/monthly rollups plus evidence inventory and retention reports.
 - Capture KPI baselines for Phase A departments.
 - Activate weekly operating review and breach escalation workflow.
 - Pass `npm run readiness:phase0` before calling G0 complete.
@@ -119,7 +121,7 @@ In scope:
 
 | Gate | Date window | Required evidence | Decision owner |
 |---|---|---|---|
-| G0 Mobilization ready | 2026-03-20 | Executive/Operations/Data/Finance lanes active; evidence directories live; `npm run readiness:phase0` passing; KPI baseline SOP approved | Executive Office Director lane |
+| G0 Mobilization ready | 2026-03-20 | Executive/Operations/Data/Finance lanes active; evidence directories live; `npm run readiness:phase0` passing; `runtime/reports/evidence/evidence-index-latest.json` and `runtime/reports/evidence/evidence-retention-latest.json` refreshed; KPI baseline SOP approved | Executive Office Director lane |
 | G1 Core cadence stable | 2026-04-17 | 10 consecutive business days of daily evidence; 2 weekly reviews complete; >=95% Phase A handoff SLA compliance | Operations Director lane |
 | G2 Phase B launch | 2026-04-18 to 2026-04-20 | Product/Engineering/Design/Marketing/Sales/CS lane charters approved; dependencies mapped; backlog and launch calendar published | Executive Office Director lane |
 | G3 Revenue loop validated | 2026-06-12 | Product-to-market handoffs operating; forecast variance <=10%; customer feedback loop live weekly | Finance Director lane |

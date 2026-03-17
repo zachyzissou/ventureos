@@ -419,4 +419,116 @@ describe('lib/evidence', () => {
     expect(result.status).toBe('pass');
     expect(result.warnings.some((warning) => warning.includes('level_3'))).toBe(false);
   });
+
+  it('builds an evidence index from canonical cadence directories', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ventureos-evidence-index-'));
+    const dailyDir = path.join(tmpDir, 'daily');
+    const weeklyDir = path.join(tmpDir, 'weekly');
+    const monthlyDir = path.join(tmpDir, 'monthly');
+    const incidentsDir = path.join(tmpDir, 'incidents');
+    const reportDir = path.join(tmpDir, 'reports');
+    await fs.mkdir(dailyDir, { recursive: true });
+    await fs.mkdir(weeklyDir, { recursive: true });
+    await fs.mkdir(monthlyDir, { recursive: true });
+    await fs.mkdir(incidentsDir, { recursive: true });
+    await fs.mkdir(path.join(incidentsDir, 'inc-001'), { recursive: true });
+
+    process.env.VENTUREOS_ROOT = repoRoot;
+
+    const date = '2026-03-16';
+    const capturedAt = '2026-03-16T08:00:00Z';
+    await copyFixture('runtime/logs/daily/agent-health.json', path.join(dailyDir, `${date}-agent-health.json`));
+    await copyFixture('runtime/logs/daily/spend.json', path.join(dailyDir, `${date}-spend.json`));
+    await copyFixture('runtime/logs/daily/kpi-snapshot.json', path.join(dailyDir, `${date}-kpi-snapshot.json`));
+    await copyFixture('runtime/logs/daily/handoff-ledger.json', path.join(dailyDir, `${date}-handoff-ledger.json`));
+    await copyFixture('runtime/logs/daily/decision-log.md', path.join(dailyDir, `${date}-decision-log.md`));
+    await copyFixture('runtime/logs/daily/day1-go-no-go.md', path.join(dailyDir, `${date}-go-no-go.md`));
+    await rewriteJsonFixture(path.join(dailyDir, `${date}-agent-health.json`), date, capturedAt);
+    await rewriteJsonFixture(path.join(dailyDir, `${date}-spend.json`), date, capturedAt);
+    await rewriteJsonFixture(path.join(dailyDir, `${date}-kpi-snapshot.json`), date, capturedAt);
+    await rewriteHandoffFixture(path.join(dailyDir, `${date}-handoff-ledger.json`), date, capturedAt, 'all-on-time');
+
+    const evidence = require('../evidence') as typeof import('../evidence');
+    const isoWeek = evidence.formatIsoWeek(new Date('2026-03-16T12:00:00Z'));
+    await evidence.generateWeeklyRollup({ isoWeek, dailyDir, weeklyDir });
+    await evidence.generateMonthlyRollup({ month: '2026-03', dailyDir, monthlyDir });
+
+    const inventory = await evidence.buildEvidenceIndex({
+      now: new Date('2026-03-16T12:00:00Z'),
+      dailyDir,
+      weeklyDir,
+      monthlyDir,
+      incidentsDir,
+      reportDir,
+    });
+
+    expect(inventory.daily.currentTarget).toBe(date);
+    expect(inventory.daily.currentTargetComplete).toBe(true);
+    expect(inventory.weekly.currentTarget).toBe(isoWeek);
+    expect(inventory.weekly.currentTargetComplete).toBe(true);
+    expect(inventory.monthly.currentTarget).toBe('2026-03');
+    expect(inventory.monthly.currentTargetComplete).toBe(true);
+    expect(inventory.incidents.totalIncidents).toBe(1);
+    expect(await fs.readFile(path.join(reportDir, 'evidence-index-latest.json'), 'utf-8')).toContain('"daily"');
+  });
+
+  it('applies evidence retention policy to aged evidence and report artifacts', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ventureos-evidence-retention-'));
+    const dailyDir = path.join(tmpDir, 'daily');
+    const weeklyDir = path.join(tmpDir, 'weekly');
+    const monthlyDir = path.join(tmpDir, 'monthly');
+    const reportDir = path.join(tmpDir, 'reports', 'evidence');
+    const readinessReportDir = path.join(tmpDir, 'reports', 'phase0-readiness');
+    await fs.mkdir(dailyDir, { recursive: true });
+    await fs.mkdir(weeklyDir, { recursive: true });
+    await fs.mkdir(monthlyDir, { recursive: true });
+    await fs.mkdir(reportDir, { recursive: true });
+    await fs.mkdir(readinessReportDir, { recursive: true });
+
+    const oldDaily = path.join(dailyDir, '2026-01-01-agent-health.json');
+    const currentDaily = path.join(dailyDir, '2026-03-16-agent-health.json');
+    const oldEvidenceReport = path.join(reportDir, 'evidence-validate-old.json');
+    const latestEvidenceReport = path.join(reportDir, 'evidence-validate-latest.json');
+    const oldReadinessReport = path.join(readinessReportDir, 'phase0-readiness-old.json');
+
+    await fs.writeFile(oldDaily, '{}\n', 'utf-8');
+    await fs.writeFile(currentDaily, '{}\n', 'utf-8');
+    await fs.writeFile(oldEvidenceReport, '{}\n', 'utf-8');
+    await fs.writeFile(latestEvidenceReport, '{}\n', 'utf-8');
+    await fs.writeFile(oldReadinessReport, '{}\n', 'utf-8');
+
+    const oldTimestamp = new Date('2026-01-01T00:00:00Z');
+    const currentTimestamp = new Date('2026-03-16T00:00:00Z');
+    await fs.utimes(oldEvidenceReport, oldTimestamp, oldTimestamp);
+    await fs.utimes(oldReadinessReport, oldTimestamp, oldTimestamp);
+    await fs.utimes(latestEvidenceReport, oldTimestamp, oldTimestamp);
+    await fs.utimes(oldDaily, oldTimestamp, oldTimestamp);
+    await fs.utimes(currentDaily, currentTimestamp, currentTimestamp);
+
+    const evidence = require('../evidence') as typeof import('../evidence');
+    const retention = await evidence.enforceEvidenceRetention({
+      now: new Date('2026-03-16T12:00:00Z'),
+      apply: true,
+      dailyDir,
+      weeklyDir,
+      monthlyDir,
+      reportDir,
+      readinessReportDir,
+      policy: {
+        dailyDays: 30,
+        weeklyDays: 30,
+        monthlyDays: 30,
+        evidenceReportDays: 30,
+        readinessReportDays: 30,
+      },
+    });
+
+    expect(retention.pruned.some((entry) => entry.path.endsWith('2026-01-01-agent-health.json'))).toBe(true);
+    await expect(fs.access(oldDaily)).rejects.toThrow();
+    await expect(fs.access(oldEvidenceReport)).rejects.toThrow();
+    await expect(fs.access(oldReadinessReport)).rejects.toThrow();
+    await expect(fs.access(currentDaily)).resolves.toBeUndefined();
+    await expect(fs.access(latestEvidenceReport)).resolves.toBeUndefined();
+    expect(await fs.readFile(path.join(reportDir, 'evidence-retention-latest.json'), 'utf-8')).toContain('"pruned"');
+  });
 });
