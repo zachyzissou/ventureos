@@ -3,7 +3,7 @@ import { createAgentDetailPanel } from '@/renderer/agent-detail-panel';
 import { createEventBus } from '@/interaction/event-bus';
 import type { AgentDetailData } from '@/interaction/types';
 
-function makeAgentData(id = 'synth' as const): AgentDetailData {
+function makeAgentData(id = 'venture_delivery' as const): AgentDetailData {
   return {
     id,
     label: id.toUpperCase(),
@@ -36,7 +36,7 @@ describe('renderer/agent-detail-panel', () => {
     const panel = createAgentDetailPanel();
     panel.show(makeAgentData());
     expect(panel.isVisible()).toBe(true);
-    expect(panel.currentAgent()).toBe('synth');
+    expect(panel.currentAgent()).toBe('venture_delivery');
   });
 
   it('hide makes it invisible', () => {
@@ -99,7 +99,7 @@ describe('renderer/agent-detail-panel', () => {
 
   it('handles different agent IDs', () => {
     const panel = createAgentDetailPanel();
-    for (const id of ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'echo', 'nexus'] as const) {
+    for (const id of ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_strategy', 'venture_control'] as const) {
       panel.show(makeAgentData(id));
       expect(panel.currentAgent()).toBe(id);
     }
@@ -116,7 +116,7 @@ describe('renderer/agent-detail-panel', () => {
     panel.show({
       ...makeAgentData(),
       economy: {
-        agentId: 'synth',
+        agentId: 'venture_delivery',
         tokenBudget: 100000,
         tokensUsed: 45000,
         tokensRemaining: 55000,

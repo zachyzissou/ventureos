@@ -14,7 +14,7 @@ function makeMission(overrides: Partial<MissionData> = {}): MissionData {
     description: 'Test',
     phase: 'execute',
     progress: 50,
-    assignedTo: ['oracle'],
+    assignedTo: ['venture_research'],
     tasks: [],
     dependencies: [],
     history: [],
@@ -34,14 +34,14 @@ describe('calculateAgentQueueStats', () => {
   it('counts queued tasks per role', () => {
     const missions = [makeMission({
       tasks: [
-        { id: 't1', title: 'T1', tier: 'P1', status: 'queued', role: 'oracle' },
-        { id: 't2', title: 'T2', tier: 'P2', status: 'queued', role: 'oracle' },
-        { id: 't3', title: 'T3', tier: 'P0', status: 'running', role: 'oracle' },
+        { id: 't1', title: 'T1', tier: 'P1', status: 'queued', role: 'venture_research' },
+        { id: 't2', title: 'T2', tier: 'P2', status: 'queued', role: 'venture_research' },
+        { id: 't3', title: 'T3', tier: 'P0', status: 'running', role: 'venture_research' },
       ],
     })];
 
     const stats = calculateAgentQueueStats(missions);
-    const oracleStats = stats.get('oracle');
+    const oracleStats = stats.get('venture_research');
 
     expect(oracleStats).toBeDefined();
     expect(oracleStats!.totalQueued).toBe(2);
@@ -51,31 +51,31 @@ describe('calculateAgentQueueStats', () => {
   it('separates stats by role', () => {
     const missions = [makeMission({
       tasks: [
-        { id: 't1', title: 'T1', tier: 'P1', status: 'queued', role: 'oracle' },
-        { id: 't2', title: 'T2', tier: 'P2', status: 'queued', role: 'atlas' },
-        { id: 't3', title: 'T3', tier: 'P0', status: 'failed', role: 'atlas' },
+        { id: 't1', title: 'T1', tier: 'P1', status: 'queued', role: 'venture_research' },
+        { id: 't2', title: 'T2', tier: 'P2', status: 'queued', role: 'venture_infrastructure' },
+        { id: 't3', title: 'T3', tier: 'P0', status: 'failed', role: 'venture_infrastructure' },
       ],
     })];
 
     const stats = calculateAgentQueueStats(missions);
 
-    expect(stats.get('oracle')!.totalQueued).toBe(1);
-    expect(stats.get('atlas')!.totalQueued).toBe(1);
-    expect(stats.get('atlas')!.totalFailed).toBe(1);
+    expect(stats.get('venture_research')!.totalQueued).toBe(1);
+    expect(stats.get('venture_infrastructure')!.totalQueued).toBe(1);
+    expect(stats.get('venture_infrastructure')!.totalFailed).toBe(1);
   });
 
   it('tracks tier breakdown', () => {
     const missions = [makeMission({
       tasks: [
-        { id: 't1', title: 'T1', tier: 'P0', status: 'queued', role: 'oracle' },
-        { id: 't2', title: 'T2', tier: 'P0', status: 'queued', role: 'oracle' },
-        { id: 't3', title: 'T3', tier: 'P1', status: 'queued', role: 'oracle' },
-        { id: 't4', title: 'T4', tier: 'P3', status: 'queued', role: 'oracle' },
+        { id: 't1', title: 'T1', tier: 'P0', status: 'queued', role: 'venture_research' },
+        { id: 't2', title: 'T2', tier: 'P0', status: 'queued', role: 'venture_research' },
+        { id: 't3', title: 'T3', tier: 'P1', status: 'queued', role: 'venture_research' },
+        { id: 't4', title: 'T4', tier: 'P3', status: 'queued', role: 'venture_research' },
       ],
     })];
 
     const stats = calculateAgentQueueStats(missions);
-    const breakdown = stats.get('oracle')!.tierBreakdown;
+    const breakdown = stats.get('venture_research')!.tierBreakdown;
 
     expect(breakdown.P0).toBe(2);
     expect(breakdown.P1).toBe(1);
@@ -85,15 +85,15 @@ describe('calculateAgentQueueStats', () => {
 
   it('falls back to mission assignedTo when task has no role', () => {
     const missions = [makeMission({
-      assignedTo: ['sentinel'],
+      assignedTo: ['venture_security'],
       tasks: [
         { id: 't1', title: 'T1', tier: 'P1', status: 'queued' }, // no role
       ],
     })];
 
     const stats = calculateAgentQueueStats(missions);
-    expect(stats.has('sentinel')).toBe(true);
-    expect(stats.get('sentinel')!.totalQueued).toBe(1);
+    expect(stats.has('venture_security')).toBe(true);
+    expect(stats.get('venture_security')!.totalQueued).toBe(1);
   });
 
   it('aggregates across multiple missions', () => {
@@ -101,34 +101,34 @@ describe('calculateAgentQueueStats', () => {
       makeMission({
         missionId: 'm1',
         tasks: [
-          { id: 't1', title: 'T1', tier: 'P1', status: 'queued', role: 'oracle' },
+          { id: 't1', title: 'T1', tier: 'P1', status: 'queued', role: 'venture_research' },
         ],
       }),
       makeMission({
         missionId: 'm2',
         tasks: [
-          { id: 't2', title: 'T2', tier: 'P2', status: 'queued', role: 'oracle' },
-          { id: 't3', title: 'T3', tier: 'P0', status: 'running', role: 'oracle' },
+          { id: 't2', title: 'T2', tier: 'P2', status: 'queued', role: 'venture_research' },
+          { id: 't3', title: 'T3', tier: 'P0', status: 'running', role: 'venture_research' },
         ],
       }),
     ];
 
     const stats = calculateAgentQueueStats(missions);
-    expect(stats.get('oracle')!.totalQueued).toBe(2);
-    expect(stats.get('oracle')!.totalRunning).toBe(1);
+    expect(stats.get('venture_research')!.totalQueued).toBe(2);
+    expect(stats.get('venture_research')!.totalRunning).toBe(1);
   });
 
   it('handles succeeded/cancelled/expired tasks without counting them', () => {
     const missions = [makeMission({
       tasks: [
-        { id: 't1', title: 'T1', tier: 'P1', status: 'succeeded', role: 'oracle' },
-        { id: 't2', title: 'T2', tier: 'P2', status: 'cancelled', role: 'oracle' },
-        { id: 't3', title: 'T3', tier: 'P3', status: 'expired', role: 'oracle' },
+        { id: 't1', title: 'T1', tier: 'P1', status: 'succeeded', role: 'venture_research' },
+        { id: 't2', title: 'T2', tier: 'P2', status: 'cancelled', role: 'venture_research' },
+        { id: 't3', title: 'T3', tier: 'P3', status: 'expired', role: 'venture_research' },
       ],
     })];
 
     const stats = calculateAgentQueueStats(missions);
-    const oracleStats = stats.get('oracle');
+    const oracleStats = stats.get('venture_research');
 
     expect(oracleStats!.totalQueued).toBe(0);
     expect(oracleStats!.totalRunning).toBe(0);

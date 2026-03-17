@@ -89,15 +89,15 @@ describe('renderer/resource-economy', () => {
     const layer = createResourceEconomyLayer();
 
     const state = createEmptyEconomyState(0);
-    state.agents.oracle.tokenBudget = 10_000;
-    state.agents.oracle.tokensUsed = 8_000;
-    state.agents.oracle.tokensRemaining = 2_000;
-    state.agents.oracle.usageRatio = 0.8;
-    state.agents.oracle.quotaRemainingRatio = 0.2;
-    state.agents.oracle.health = 'yellow';
-    state.agents.oracle.costUsd = 12.7;
-    state.agents.oracle.burnRateUsdPerHour = 4.2;
-    state.agents.oracle.history = [
+    state.agents.venture_research.tokenBudget = 10_000;
+    state.agents.venture_research.tokensUsed = 8_000;
+    state.agents.venture_research.tokensRemaining = 2_000;
+    state.agents.venture_research.usageRatio = 0.8;
+    state.agents.venture_research.quotaRemainingRatio = 0.2;
+    state.agents.venture_research.health = 'yellow';
+    state.agents.venture_research.costUsd = 12.7;
+    state.agents.venture_research.burnRateUsdPerHour = 4.2;
+    state.agents.venture_research.history = [
       { ts: 1000, tokensUsed: 5000, costUsd: 8.1 },
       { ts: 2000, tokensUsed: 8000, costUsd: 12.7 }
     ];

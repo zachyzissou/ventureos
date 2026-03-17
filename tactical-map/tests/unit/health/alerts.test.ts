@@ -13,14 +13,14 @@ const { makeCooldownKey, agentLabel, pct } = __test;
 describe('helper utilities', () => {
   describe('makeCooldownKey', () => {
     it('creates a composite key', () => {
-      expect(makeCooldownKey('oracle', 'cpu', 'P0')).toBe('oracle:cpu:P0');
+      expect(makeCooldownKey('venture_research', 'cpu', 'P0')).toBe('venture_research:cpu:P0');
     });
   });
 
   describe('agentLabel', () => {
     it('capitalizes first letter', () => {
-      expect(agentLabel('oracle')).toBe('Oracle');
-      expect(agentLabel('atlas')).toBe('Atlas');
+      expect(agentLabel('venture_research')).toBe('Oracle');
+      expect(agentLabel('venture_infrastructure')).toBe('Atlas');
     });
   });
 
@@ -78,17 +78,17 @@ describe('HealthAlertManager', () => {
   // ─── CPU alerts ───
 
   it('generates P0 for critical CPU', () => {
-    const state = stateWithCpu('oracle', 0.95);
+    const state = stateWithCpu('venture_research', 0.95);
     const alerts = manager.evaluate(state, 1000);
     expect(alerts.length).toBeGreaterThanOrEqual(1);
     const cpuAlert = alerts.find((a) => a.metric === 'cpu');
     expect(cpuAlert).toBeDefined();
     expect(cpuAlert!.severity).toBe('P0');
-    expect(cpuAlert!.agentId).toBe('oracle');
+    expect(cpuAlert!.agentId).toBe('venture_research');
   });
 
   it('generates P1 for warning CPU', () => {
-    const state = stateWithCpu('oracle', 0.75);
+    const state = stateWithCpu('venture_research', 0.75);
     const alerts = manager.evaluate(state, 1000);
     const cpuAlert = alerts.find((a) => a.metric === 'cpu');
     expect(cpuAlert).toBeDefined();
@@ -96,7 +96,7 @@ describe('HealthAlertManager', () => {
   });
 
   it('generates no alerts for healthy CPU', () => {
-    const state = stateWithCpu('oracle', 0.3);
+    const state = stateWithCpu('venture_research', 0.3);
     const alerts = manager.evaluate(state, 1000);
     const cpuAlert = alerts.find((a) => a.metric === 'cpu');
     expect(cpuAlert).toBeUndefined();
@@ -105,7 +105,7 @@ describe('HealthAlertManager', () => {
   // ─── Memory alerts ───
 
   it('generates P0 for critical memory', () => {
-    const state = stateWithMultipleMetrics('atlas', { memory: 0.95 });
+    const state = stateWithMultipleMetrics('venture_infrastructure', { memory: 0.95 });
     const alerts = manager.evaluate(state, 1000);
     const memAlert = alerts.find((a) => a.metric === 'memory');
     expect(memAlert).toBeDefined();
@@ -113,7 +113,7 @@ describe('HealthAlertManager', () => {
   });
 
   it('generates P1 for warning memory', () => {
-    const state = stateWithMultipleMetrics('atlas', { memory: 0.80 });
+    const state = stateWithMultipleMetrics('venture_infrastructure', { memory: 0.80 });
     const alerts = manager.evaluate(state, 1000);
     const memAlert = alerts.find((a) => a.metric === 'memory');
     expect(memAlert).toBeDefined();
@@ -123,7 +123,7 @@ describe('HealthAlertManager', () => {
   // ─── Latency alerts ───
 
   it('generates P0 for critical latency', () => {
-    const state = stateWithMultipleMetrics('sentinel', { latency: 3000 });
+    const state = stateWithMultipleMetrics('venture_security', { latency: 3000 });
     const alerts = manager.evaluate(state, 1000);
     const latAlert = alerts.find((a) => a.metric === 'latency');
     expect(latAlert).toBeDefined();
@@ -131,7 +131,7 @@ describe('HealthAlertManager', () => {
   });
 
   it('generates P1 for warning latency', () => {
-    const state = stateWithMultipleMetrics('sentinel', { latency: 600 });
+    const state = stateWithMultipleMetrics('venture_security', { latency: 600 });
     const alerts = manager.evaluate(state, 1000);
     const latAlert = alerts.find((a) => a.metric === 'latency');
     expect(latAlert).toBeDefined();
@@ -141,7 +141,7 @@ describe('HealthAlertManager', () => {
   // ─── Error rate alerts ───
 
   it('generates P0 for critical error rate', () => {
-    const state = stateWithMultipleMetrics('verifier', { errorRate: 0.20 });
+    const state = stateWithMultipleMetrics('venture_evidence', { errorRate: 0.20 });
     const alerts = manager.evaluate(state, 1000);
     const errAlert = alerts.find((a) => a.metric === 'errorRate');
     expect(errAlert).toBeDefined();
@@ -151,7 +151,7 @@ describe('HealthAlertManager', () => {
   // ─── Connectivity alerts ───
 
   it('generates P0 for offline agent', () => {
-    const state = stateWithMultipleMetrics('synth', { consecutiveFailures: 5 });
+    const state = stateWithMultipleMetrics('venture_delivery', { consecutiveFailures: 5 });
     const alerts = manager.evaluate(state, 1000);
     const connAlert = alerts.find((a) => a.metric === 'connectivity');
     expect(connAlert).toBeDefined();
@@ -159,7 +159,7 @@ describe('HealthAlertManager', () => {
   });
 
   it('generates P1 for degraded connectivity', () => {
-    const state = stateWithMultipleMetrics('synth', { consecutiveFailures: 1 });
+    const state = stateWithMultipleMetrics('venture_delivery', { consecutiveFailures: 1 });
     const alerts = manager.evaluate(state, 1000);
     const connAlert = alerts.find((a) => a.metric === 'connectivity');
     expect(connAlert).toBeDefined();
@@ -169,7 +169,7 @@ describe('HealthAlertManager', () => {
   // ─── Cooldowns ───
 
   it('respects cooldown period', () => {
-    const state = stateWithCpu('oracle', 0.95);
+    const state = stateWithCpu('venture_research', 0.95);
 
     const alerts1 = manager.evaluate(state, 1000);
     expect(alerts1.length).toBeGreaterThan(0);
@@ -180,7 +180,7 @@ describe('HealthAlertManager', () => {
   });
 
   it('triggers again after cooldown expires', () => {
-    const state = stateWithCpu('oracle', 0.95);
+    const state = stateWithCpu('venture_research', 0.95);
 
     const alerts1 = manager.evaluate(state, 1000);
     expect(alerts1.length).toBeGreaterThan(0);
@@ -191,7 +191,7 @@ describe('HealthAlertManager', () => {
   });
 
   it('resets cooldowns', () => {
-    const state = stateWithCpu('oracle', 0.95);
+    const state = stateWithCpu('venture_research', 0.95);
     manager.evaluate(state, 1000);
     manager.reset();
 
@@ -203,7 +203,7 @@ describe('HealthAlertManager', () => {
 
   it('generates system P1 alert when 1 agent is red', () => {
     const state = createEmptyHealthState();
-    state.agents.oracle = { ...state.agents.oracle, status: 'red' };
+    state.agents.venture_research = { ...state.agents.venture_research, status: 'red' };
     state.system.statusCounts = { green: 7, yellow: 0, red: 1 };
 
     const alerts = manager.evaluateSystemAlerts(state, 1000);
@@ -214,9 +214,9 @@ describe('HealthAlertManager', () => {
 
   it('generates system P0 alert when 3+ agents are red', () => {
     const state = createEmptyHealthState();
-    state.agents.oracle = { ...state.agents.oracle, status: 'red' };
-    state.agents.atlas = { ...state.agents.atlas, status: 'red' };
-    state.agents.sentinel = { ...state.agents.sentinel, status: 'red' };
+    state.agents.venture_research = { ...state.agents.venture_research, status: 'red' };
+    state.agents.venture_infrastructure = { ...state.agents.venture_infrastructure, status: 'red' };
+    state.agents.venture_security = { ...state.agents.venture_security, status: 'red' };
     state.system.statusCounts = { green: 5, yellow: 0, red: 3 };
 
     const alerts = manager.evaluateSystemAlerts(state, 1000);
@@ -239,17 +239,17 @@ describe('HealthAlertManager', () => {
     const state = createEmptyHealthState();
     const snapshot: RawHealthSnapshot = {
       agents: {
-        oracle: { cpu: 0.95 },
-        atlas: { memory: 0.95 },
-        sentinel: { errorRate: 0.20 },
+        venture_research: { cpu: 0.95 },
+        venture_infrastructure: { memory: 0.95 },
+        venture_security: { errorRate: 0.20 },
       },
     };
     const next = applyHealthSnapshot(state, snapshot);
     const alerts = manager.evaluate(next, 1000);
 
-    const oracleAlerts = alerts.filter((a) => a.agentId === 'oracle');
-    const atlasAlerts = alerts.filter((a) => a.agentId === 'atlas');
-    const sentinelAlerts = alerts.filter((a) => a.agentId === 'sentinel');
+    const oracleAlerts = alerts.filter((a) => a.agentId === 'venture_research');
+    const atlasAlerts = alerts.filter((a) => a.agentId === 'venture_infrastructure');
+    const sentinelAlerts = alerts.filter((a) => a.agentId === 'venture_security');
 
     expect(oracleAlerts.length).toBeGreaterThan(0);
     expect(atlasAlerts.length).toBeGreaterThan(0);
@@ -259,7 +259,7 @@ describe('HealthAlertManager', () => {
   // ─── Alert content ───
 
   it('includes descriptive message', () => {
-    const state = stateWithCpu('oracle', 0.95);
+    const state = stateWithCpu('venture_research', 0.95);
     const alerts = manager.evaluate(state, 1000);
     const cpuAlert = alerts.find((a) => a.metric === 'cpu');
     expect(cpuAlert!.message).toContain('Oracle');
@@ -268,7 +268,7 @@ describe('HealthAlertManager', () => {
   });
 
   it('includes metric value and threshold', () => {
-    const state = stateWithCpu('oracle', 0.95);
+    const state = stateWithCpu('venture_research', 0.95);
     const alerts = manager.evaluate(state, 1000);
     const cpuAlert = alerts.find((a) => a.metric === 'cpu');
     expect(cpuAlert!.value).toBe(0.95);
@@ -277,7 +277,7 @@ describe('HealthAlertManager', () => {
 
   it('sets correct TTL', () => {
     const mgr = new HealthAlertManager({ p0TtlMs: 0, p1TtlMs: 120_000 });
-    const state = stateWithCpu('oracle', 0.95);
+    const state = stateWithCpu('venture_research', 0.95);
     const alerts = mgr.evaluate(state, 1000);
     const p0 = alerts.find((a) => a.severity === 'P0');
     expect(p0!.ttlMs).toBe(0); // P0 never auto-dismisses

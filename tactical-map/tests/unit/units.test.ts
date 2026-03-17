@@ -71,14 +71,14 @@ import { createUnitsLayer } from '@/renderer/units';
 
 describe('units', () => {
   it('creates units based on sessions count', () => {
-    const units = createUnitsLayer(['oracle']);
-    units.setAgent('oracle', { x: 0, y: 0 }, 'ACTIVE', 2, undefined);
+    const units = createUnitsLayer(['venture_research']);
+    units.setAgent('venture_research', { x: 0, y: 0 }, 'ACTIVE', 2, undefined);
     expect(units.container.children.length).toBe(2);
   });
 
   it('update positions orbiting units around building', () => {
-    const units = createUnitsLayer(['oracle']);
-    units.setAgent('oracle', { x: 0, y: 0 }, 'ACTIVE', 1, undefined);
+    const units = createUnitsLayer(['venture_research']);
+    units.setAgent('venture_research', { x: 0, y: 0 }, 'ACTIVE', 1, undefined);
     units.update(1000);
 
     const u = units.container.children[0] as any;
@@ -86,17 +86,17 @@ describe('units', () => {
   });
 
   it('removes units when sessions drop to 0', () => {
-    const units = createUnitsLayer(['oracle']);
-    units.setAgent('oracle', { x: 0, y: 0 }, 'ACTIVE', 2, undefined);
+    const units = createUnitsLayer(['venture_research']);
+    units.setAgent('venture_research', { x: 0, y: 0 }, 'ACTIVE', 2, undefined);
     expect(units.container.children.length).toBe(2);
 
-    units.setAgent('oracle', { x: 0, y: 0 }, 'IDLE', 0, undefined);
+    units.setAgent('venture_research', { x: 0, y: 0 }, 'IDLE', 0, undefined);
     expect(units.container.children.length).toBe(0);
   });
 
   it('accepts activeSessions and does not throw on untrusted labels', () => {
-    const units = createUnitsLayer(['oracle']);
-    units.setAgent('oracle', { x: 0, y: 0 }, 'ACTIVE', 1, [
+    const units = createUnitsLayer(['venture_research']);
+    units.setAgent('venture_research', { x: 0, y: 0 }, 'ACTIVE', 1, [
       { id: 's1', label: '<img src=x onerror=alert(1)> Research: XSS', startedAt: new Date().toISOString() }
     ]);
     units.update(16);

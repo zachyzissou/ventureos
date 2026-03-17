@@ -109,7 +109,7 @@ describe('MockMissionDataProvider', () => {
         description: 'Test',
         phase: 'execute',
         progress: 50,
-        assignedTo: ['oracle'],
+        assignedTo: ['venture_research'],
         tasks: [],
         dependencies: [],
         history: [],

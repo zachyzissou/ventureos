@@ -205,9 +205,9 @@ describe('RateLimiter — Challenge Limits', () => {
   it('enforces cooldown between challenges', () => {
     const limiter = new RateLimiter({ challengeCooldownMs: 600_000 });
     const now = Date.now();
-    limiter.recordChallenge('oracle', 'synth', now);
+    limiter.recordChallenge('venture_research', 'venture_delivery', now);
 
-    const result = limiter.checkChallengeLimit('oracle', 'synth', now + 1000);
+    const result = limiter.checkChallengeLimit('venture_research', 'venture_delivery', now + 1000);
     assert.equal(result.allowed, false);
     assert.equal(result.limitType, 'challenge_cooldown');
     assert.ok(result.retryAfterMs! > 0);
@@ -215,20 +215,20 @@ describe('RateLimiter — Challenge Limits', () => {
 
   it('pair order does not matter (symmetric)', () => {
     const limiter = new RateLimiter({ challengePerHour: 3, challengeCooldownMs: 0 });
-    limiter.recordChallenge('oracle', 'synth');
-    limiter.recordChallenge('synth', 'oracle');
+    limiter.recordChallenge('venture_research', 'venture_delivery');
+    limiter.recordChallenge('venture_delivery', 'venture_research');
 
-    const r1 = limiter.checkChallengeLimit('oracle', 'synth');
-    const r2 = limiter.checkChallengeLimit('synth', 'oracle');
+    const r1 = limiter.checkChallengeLimit('venture_research', 'venture_delivery');
+    const r2 = limiter.checkChallengeLimit('venture_delivery', 'venture_research');
     assert.equal(r1.challengeCount, r2.challengeCount);
   });
 
-  it('uses pair-specific overrides (sentinel-atlas = 3/hr)', () => {
+  it('uses pair-specific overrides (venture_security-venture_infrastructure = 3/hr)', () => {
     const limiter = new RateLimiter();
     for (let i = 0; i < 3; i++) {
-      limiter.recordChallenge('sentinel', 'atlas');
+      limiter.recordChallenge('venture_security', 'venture_infrastructure');
     }
-    const result = limiter.checkChallengeLimit('sentinel', 'atlas');
+    const result = limiter.checkChallengeLimit('venture_security', 'venture_infrastructure');
     assert.equal(result.allowed, false);
     assert.equal(result.maxPerHour, 3);
   });
@@ -324,7 +324,7 @@ describe('RateLimiter — State Management', () => {
     const limiter = new RateLimiter({ agentPerMinute: 10, burstAllowance: false });
     limiter.recordMessage('agent-1', 'conv-1');
     limiter.recordMessage('agent-1', 'conv-1');
-    limiter.recordChallenge('oracle', 'synth');
+    limiter.recordChallenge('venture_research', 'venture_delivery');
 
     const state = limiter.exportState();
     assert.ok(state.exportedAt);

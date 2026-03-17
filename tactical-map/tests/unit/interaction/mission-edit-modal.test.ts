@@ -7,7 +7,7 @@ function makeMission(overrides: Partial<PersistedMission> = {}): PersistedMissio
     missionId: 'mission-001',
     title: 'Test Mission',
     description: 'A test mission',
-    assignee: 'synth',
+    assignee: 'venture_delivery',
     priority: 'normal',
     createdAt: '2026-02-17T10:00:00.000Z',
     updatedAt: '2026-02-17T10:00:00.000Z',
@@ -30,7 +30,7 @@ describe('mission-edit-modal', () => {
       missionId: 'mission-edit-1',
       title: 'Edit Me',
       description: 'Some description',
-      assignee: 'oracle',
+      assignee: 'venture_research',
       priority: 'high',
       tokenBudget: 50000,
     });
@@ -42,7 +42,7 @@ describe('mission-edit-modal', () => {
     const form = modal.getFormState();
     expect(form.title).toBe('Edit Me');
     expect(form.description).toBe('Some description');
-    expect(form.assignee).toBe('oracle');
+    expect(form.assignee).toBe('venture_research');
     expect(form.priority).toBe('high');
     expect(form.tokenBudget).toBe('50000');
   });
@@ -72,8 +72,8 @@ describe('mission-edit-modal', () => {
     modal.setField('priority', 'critical');
     expect(modal.getFormState().priority).toBe('critical');
 
-    modal.setField('assignee', 'atlas');
-    expect(modal.getFormState().assignee).toBe('atlas');
+    modal.setField('assignee', 'venture_infrastructure');
+    expect(modal.getFormState().assignee).toBe('venture_infrastructure');
   });
 
   it('submit calls callback with missionId and updates', () => {
@@ -84,7 +84,7 @@ describe('mission-edit-modal', () => {
     modal.show(makeMission({ missionId: 'mission-submit-test', title: 'Original' }));
     modal.setField('title', 'Updated Title');
     modal.setField('priority', 'critical');
-    modal.setField('assignee', 'atlas');
+    modal.setField('assignee', 'venture_infrastructure');
 
     modal.submit();
 
@@ -93,7 +93,7 @@ describe('mission-edit-modal', () => {
     expect(missionId).toBe('mission-submit-test');
     expect(updates.title).toBe('Updated Title');
     expect(updates.priority).toBe('critical');
-    expect(updates.assignee).toBe('atlas');
+    expect(updates.assignee).toBe('venture_infrastructure');
   });
 
   it('submit does not fire without title', () => {

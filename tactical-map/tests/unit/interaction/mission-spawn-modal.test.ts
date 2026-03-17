@@ -22,9 +22,9 @@ describe('renderer/mission-spawn-modal', () => {
 
   it('show with default assignee', () => {
     const modal = createMissionSpawnModal();
-    modal.show('oracle');
+    modal.show('venture_research');
     const form = modal.getFormState();
-    expect(form.assignee).toBe('oracle');
+    expect(form.assignee).toBe('venture_research');
   });
 
   it('form state has defaults', () => {
@@ -91,7 +91,7 @@ describe('renderer/mission-spawn-modal', () => {
   it('form assignee cycles through agents', () => {
     const modal = createMissionSpawnModal();
     modal.show();
-    modal.setField('assignee', 'atlas');
-    expect(modal.getFormState().assignee).toBe('atlas');
+    modal.setField('assignee', 'venture_infrastructure');
+    expect(modal.getFormState().assignee).toBe('venture_infrastructure');
   });
 });

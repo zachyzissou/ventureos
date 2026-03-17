@@ -7,7 +7,7 @@ function makeMission(overrides: Partial<PersistedMission> = {}): PersistedMissio
     missionId: 'mission-001',
     title: 'Test Mission',
     description: 'A test mission',
-    assignee: 'synth',
+    assignee: 'venture_delivery',
     priority: 'normal',
     createdAt: '2026-02-17T10:00:00.000Z',
     updatedAt: '2026-02-17T10:00:00.000Z',

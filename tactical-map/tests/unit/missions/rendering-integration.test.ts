@@ -61,10 +61,10 @@ function makeMission(overrides: Partial<MissionData> = {}): MissionData {
     description: 'Test',
     phase: 'execute',
     progress: 50,
-    assignedTo: ['oracle'],
+    assignedTo: ['venture_research'],
     tasks: [
-      { id: 't1', title: 'Task 1', tier: 'P1', status: 'running', progress: 50, role: 'oracle' },
-      { id: 't2', title: 'Task 2', tier: 'P2', status: 'queued', progress: 0, role: 'oracle' },
+      { id: 't1', title: 'Task 1', tier: 'P1', status: 'running', progress: 50, role: 'venture_research' },
+      { id: 't2', title: 'Task 2', tier: 'P2', status: 'queued', progress: 0, role: 'venture_research' },
     ],
     dependencies: [],
     history: [
@@ -127,7 +127,7 @@ describe('renderMissionCard', () => {
   it('renders mission with many assigned roles', () => {
     const ctx = mockCtx();
     const mission = makeMission({
-      assignedTo: ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist'],
+      assignedTo: ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory'],
     });
     const layout = makeLayout(mission);
     expect(() => renderMissionCard(ctx, mission, layout)).not.toThrow();
@@ -189,7 +189,7 @@ describe('renderQueueDepthBar', () => {
   it('renders without error', () => {
     const ctx = mockCtx();
     const stats = {
-      role: 'oracle', totalQueued: 5, totalRunning: 2, totalFailed: 0,
+      role: 'venture_research', totalQueued: 5, totalRunning: 2, totalFailed: 0,
       tierBreakdown: { P0: 1, P1: 2, P2: 1, P3: 1 }, oldestQueuedAge: 60000,
     };
     expect(() => renderQueueDepthBar(ctx, { x: 200, y: 300 }, stats)).not.toThrow();
@@ -198,7 +198,7 @@ describe('renderQueueDepthBar', () => {
   it('skips rendering when no active tasks', () => {
     const ctx = mockCtx();
     const stats = {
-      role: 'oracle', totalQueued: 0, totalRunning: 0, totalFailed: 0,
+      role: 'venture_research', totalQueued: 0, totalRunning: 0, totalFailed: 0,
       tierBreakdown: { P0: 0, P1: 0, P2: 0, P3: 0 }, oldestQueuedAge: 0,
     };
     renderQueueDepthBar(ctx, { x: 200, y: 300 }, stats);

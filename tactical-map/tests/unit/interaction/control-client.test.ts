@@ -39,12 +39,12 @@ describe('data/control-client', () => {
     it('sends POST to correct endpoint', async () => {
       mockOk();
       const client = createControlClient();
-      const result = await client.pauseAgent('synth');
+      const result = await client.pauseAgent('venture_delivery');
 
       expect(result.ok).toBe(true);
       expect(mockFetch).toHaveBeenCalledOnce();
       const [url, opts] = mockFetch.mock.calls[0];
-      expect(url).toContain('/agents/synth/pause');
+      expect(url).toContain('/agents/venture_delivery/pause');
       expect(opts.method).toBe('POST');
     });
 
@@ -52,7 +52,7 @@ describe('data/control-client', () => {
       mockError(500);
       const onError = vi.fn();
       const client = createControlClient({ onError });
-      const result = await client.pauseAgent('synth');
+      const result = await client.pauseAgent('venture_delivery');
 
       expect(result.ok).toBe(false);
       expect(result.error).toBeDefined();
@@ -64,10 +64,10 @@ describe('data/control-client', () => {
     it('sends POST to correct endpoint', async () => {
       mockOk();
       const client = createControlClient();
-      await client.resumeAgent('atlas');
+      await client.resumeAgent('venture_infrastructure');
 
       const [url] = mockFetch.mock.calls[0];
-      expect(url).toContain('/agents/atlas/resume');
+      expect(url).toContain('/agents/venture_infrastructure/resume');
     });
   });
 
@@ -78,7 +78,7 @@ describe('data/control-client', () => {
       const result = await client.spawnMission({
         title: 'Test Mission',
         description: 'A test',
-        assignee: 'synth',
+        assignee: 'venture_delivery',
         priority: 'high',
       });
 
@@ -95,7 +95,7 @@ describe('data/control-client', () => {
       const result = await client.spawnMission({
         title: 'Test',
         description: '',
-        assignee: 'synth',
+        assignee: 'venture_delivery',
         priority: 'normal',
       });
 
@@ -109,13 +109,13 @@ describe('data/control-client', () => {
       mockOk();
       const client = createControlClient();
       await client.adjustBudget({
-        agentId: 'oracle',
+        agentId: 'venture_research',
         newBudget: 50000,
         previousBudget: 30000,
       });
 
       const [url, opts] = mockFetch.mock.calls[0];
-      expect(url).toContain('/agents/oracle/budget');
+      expect(url).toContain('/agents/venture_research/budget');
       const body = JSON.parse(opts.body);
       expect(body.newBudget).toBe(50000);
       expect(body.previousBudget).toBe(30000);
@@ -139,10 +139,10 @@ describe('data/control-client', () => {
     it('sends config update', async () => {
       mockOk();
       const client = createControlClient();
-      await client.updateConfig('sentinel', { maxSessions: 5 });
+      await client.updateConfig('venture_security', { maxSessions: 5 });
 
       const [url, opts] = mockFetch.mock.calls[0];
-      expect(url).toContain('/agents/sentinel/config');
+      expect(url).toContain('/agents/venture_security/config');
       const body = JSON.parse(opts.body);
       expect(body.config.maxSessions).toBe(5);
     });
@@ -150,13 +150,13 @@ describe('data/control-client', () => {
 
   describe('fetchControlState', () => {
     it('loads persisted control state', async () => {
-      mockOk({ ok: true, pausedAgents: ['synth'], budgets: { synth: 50000 } });
+      mockOk({ ok: true, pausedAgents: ['venture_delivery'], budgets: { venture_delivery: 50000 } });
       const client = createControlClient();
       const result = await client.fetchControlState();
 
       expect(result.ok).toBe(true);
-      expect(result.pausedAgents).toContain('synth');
-      expect(result.budgets?.synth).toBe(50000);
+      expect(result.pausedAgents).toContain('venture_delivery');
+      expect(result.budgets?.venture_delivery).toBe(50000);
     });
   });
 
@@ -169,7 +169,7 @@ describe('data/control-client', () => {
             missionId: 'mission-1',
             title: 'Test',
             description: '',
-            assignee: 'synth',
+            assignee: 'venture_delivery',
             priority: 'normal',
             createdAt: '2026-01-01T00:00:00Z',
             updatedAt: '2026-01-01T00:00:00Z',
@@ -239,7 +239,7 @@ describe('data/control-client', () => {
     it('includes Authorization header', async () => {
       mockOk();
       const client = createControlClient();
-      await client.pauseAgent('synth');
+      await client.pauseAgent('venture_delivery');
 
       const headers = mockFetch.mock.calls[0][1].headers;
       expect(headers.Authorization).toBe('Bearer test-token');

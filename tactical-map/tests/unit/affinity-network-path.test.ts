@@ -12,7 +12,7 @@ describe('affinity path generation', () => {
     const control = generateBondControlPoint({
       a,
       b,
-      key: 'oracle:archivist',
+      key: 'venture_research:venture_memory',
       obstacles: [obstacle],
       obstaclePadding: 20,
       curvature: 0.2,

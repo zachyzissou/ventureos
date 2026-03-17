@@ -91,7 +91,7 @@ export function createTourOverlay(): TourOverlayLayer {
 
   function resolveAnchor(anchor: TourAnchor): { point: Point; fullScreen: boolean } {
     if (anchor === 'viewport') return { point: { x: vpWidth / 2, y: vpHeight / 2 }, fullScreen: true };
-    if (anchor === 'nexus') return { point: { x: vpWidth / 2, y: vpHeight / 2 }, fullScreen: false };
+    if (anchor === 'control_hub') return { point: { x: vpWidth / 2, y: vpHeight / 2 }, fullScreen: false };
     if (anchor === 'hud') return { point: { x: vpWidth / 2, y: 22 }, fullScreen: false };
     if (typeof anchor === 'object' && 'x' in anchor) {
       return { point: { x: anchor.x + vpWidth / 2, y: anchor.y + vpHeight / 2 }, fullScreen: false };

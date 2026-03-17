@@ -14,7 +14,7 @@ export type TourStepId = string;
 
 export type TourAnchor =
   | `agent:${AgentId}`
-  | 'nexus'
+  | 'control_hub'
   | 'hud'
   | 'viewport'
   | Point;

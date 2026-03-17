@@ -61,7 +61,7 @@ describe('createHealthIndicatorsLayer', () => {
   it('sets agent health and triggers redraw on update', () => {
     const layer = createHealthIndicatorsLayer();
 
-    layer.setAgentHealth('oracle', { x: 100, y: 100 }, 'green', 'online', 0.3, 0.4, 50);
+    layer.setAgentHealth('venture_research', { x: 100, y: 100 }, 'green', 'online', 0.3, 0.4, 50);
     layer.update(16);
 
     expect(layer.getDrawStats().redraws).toBe(1);
@@ -70,12 +70,12 @@ describe('createHealthIndicatorsLayer', () => {
   it('does not redraw if nothing changed', () => {
     const layer = createHealthIndicatorsLayer();
 
-    layer.setAgentHealth('oracle', { x: 100, y: 100 }, 'green', 'online', 0.3, 0.4, 50);
+    layer.setAgentHealth('venture_research', { x: 100, y: 100 }, 'green', 'online', 0.3, 0.4, 50);
     layer.update(16);
     const redraws1 = layer.getDrawStats().redraws;
 
     // Same values → no redraw
-    layer.setAgentHealth('oracle', { x: 100, y: 100 }, 'green', 'online', 0.3, 0.4, 50);
+    layer.setAgentHealth('venture_research', { x: 100, y: 100 }, 'green', 'online', 0.3, 0.4, 50);
     layer.update(16);
     expect(layer.getDrawStats().redraws).toBe(redraws1);
   });
@@ -83,11 +83,11 @@ describe('createHealthIndicatorsLayer', () => {
   it('redraws when status changes', () => {
     const layer = createHealthIndicatorsLayer();
 
-    layer.setAgentHealth('oracle', { x: 100, y: 100 }, 'green', 'online', 0.3, 0.4, 50);
+    layer.setAgentHealth('venture_research', { x: 100, y: 100 }, 'green', 'online', 0.3, 0.4, 50);
     layer.update(16);
     const redraws1 = layer.getDrawStats().redraws;
 
-    layer.setAgentHealth('oracle', { x: 100, y: 100 }, 'red', 'online', 0.3, 0.4, 50);
+    layer.setAgentHealth('venture_research', { x: 100, y: 100 }, 'red', 'online', 0.3, 0.4, 50);
     layer.update(16);
     expect(layer.getDrawStats().redraws).toBe(redraws1 + 1);
   });
@@ -95,11 +95,11 @@ describe('createHealthIndicatorsLayer', () => {
   it('redraws when connectivity changes', () => {
     const layer = createHealthIndicatorsLayer();
 
-    layer.setAgentHealth('atlas', { x: 200, y: 200 }, 'green', 'online', 0.3, 0.4, 50);
+    layer.setAgentHealth('venture_infrastructure', { x: 200, y: 200 }, 'green', 'online', 0.3, 0.4, 50);
     layer.update(16);
     const redraws1 = layer.getDrawStats().redraws;
 
-    layer.setAgentHealth('atlas', { x: 200, y: 200 }, 'green', 'offline', 0.3, 0.4, 50);
+    layer.setAgentHealth('venture_infrastructure', { x: 200, y: 200 }, 'green', 'offline', 0.3, 0.4, 50);
     layer.update(16);
     expect(layer.getDrawStats().redraws).toBe(redraws1 + 1);
   });
@@ -107,11 +107,11 @@ describe('createHealthIndicatorsLayer', () => {
   it('redraws when metrics change', () => {
     const layer = createHealthIndicatorsLayer();
 
-    layer.setAgentHealth('synth', { x: 300, y: 300 }, 'yellow', 'online', 0.3, 0.4, 50);
+    layer.setAgentHealth('venture_delivery', { x: 300, y: 300 }, 'yellow', 'online', 0.3, 0.4, 50);
     layer.update(16);
     const redraws1 = layer.getDrawStats().redraws;
 
-    layer.setAgentHealth('synth', { x: 300, y: 300 }, 'yellow', 'online', 0.8, 0.4, 50);
+    layer.setAgentHealth('venture_delivery', { x: 300, y: 300 }, 'yellow', 'online', 0.8, 0.4, 50);
     layer.update(16);
     expect(layer.getDrawStats().redraws).toBe(redraws1 + 1);
   });
@@ -126,9 +126,9 @@ describe('createHealthIndicatorsLayer', () => {
   it('handles multiple agents', () => {
     const layer = createHealthIndicatorsLayer();
 
-    layer.setAgentHealth('oracle', { x: 100, y: 0 }, 'green', 'online', 0.1, 0.2, 10);
-    layer.setAgentHealth('atlas', { x: 200, y: 0 }, 'yellow', 'degraded', 0.5, 0.6, 200);
-    layer.setAgentHealth('sentinel', { x: 300, y: 0 }, 'red', 'offline', 0.9, 0.9, 3000);
+    layer.setAgentHealth('venture_research', { x: 100, y: 0 }, 'green', 'online', 0.1, 0.2, 10);
+    layer.setAgentHealth('venture_infrastructure', { x: 200, y: 0 }, 'yellow', 'degraded', 0.5, 0.6, 200);
+    layer.setAgentHealth('venture_security', { x: 300, y: 0 }, 'red', 'offline', 0.9, 0.9, 3000);
 
     layer.update(16);
 

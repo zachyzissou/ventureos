@@ -31,13 +31,13 @@ describe('interaction/fuzzy-search', () => {
     });
 
     it('consecutive matches score higher', () => {
-      const consecutive = fuzzyScore('syn', 'synth');
+      const consecutive = fuzzyScore('syn', 'venture_delivery');
       const scattered = fuzzyScore('syn', 's_y_n_th');
       expect(consecutive.score).toBeGreaterThan(scattered.score);
     });
 
     it('case insensitive matching', () => {
-      const result = fuzzyScore('SYN', 'synth');
+      const result = fuzzyScore('SYN', 'venture_delivery');
       expect(result.score).toBeGreaterThan(0);
     });
 
@@ -57,7 +57,7 @@ describe('interaction/fuzzy-search', () => {
     });
 
     it('returns correct match indices', () => {
-      const result = fuzzyScore('sth', 'synth');
+      const result = fuzzyScore('sth', 'venture_delivery');
       expect(result.matches).toEqual([0, 3, 4]);
     });
   });

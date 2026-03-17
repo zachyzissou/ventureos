@@ -121,7 +121,7 @@ vi.mock('pixi.js', () => {
 import { Container, Text } from 'pixi.js';
 import { createTerrain } from '@/renderer/terrain';
 import { createBuildingsLayer, RING_AGENT_IDS } from '@/renderer/buildings';
-import { createNexus } from '@/renderer/nexus';
+import { createNexus } from '@/renderer/venture_control';
 import { createHud } from '@/renderer/hud';
 
 describe('renderer foundation', () => {
@@ -140,7 +140,7 @@ describe('renderer foundation', () => {
     layer.update(16);
   });
 
-  it('creates nexus view and update does not throw', () => {
+  it('creates venture_control view and update does not throw', () => {
     const n = createNexus();
     expect(n.container).toBeInstanceOf(Container);
     expect(n.container.children.length).toBeGreaterThan(0);

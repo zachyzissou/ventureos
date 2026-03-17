@@ -13,7 +13,7 @@ async function setAllRingStates(page: any, state: 'IDLE' | 'ACTIVE' | 'OVERLOADE
     const curr = tm.mapStore.get();
     const next = structuredClone(curr);
 
-    const ring = ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'echo'];
+    const ring = ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_delivery', 'venture_strategy'];
     for (const id of ring) {
       next.agents[id].state = st;
       // ensure units + non-zero health bars for active-ish states

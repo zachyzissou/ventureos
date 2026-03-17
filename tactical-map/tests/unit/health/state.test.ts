@@ -278,8 +278,8 @@ describe('createEmptyHealthState', () => {
   it('creates state for all 8 agents', () => {
     const state = createEmptyHealthState();
     expect(Object.keys(state.agents)).toHaveLength(8);
-    expect(state.agents.oracle.agentId).toBe('oracle');
-    expect(state.agents.nexus.status).toBe('green');
+    expect(state.agents.venture_research.agentId).toBe('venture_research');
+    expect(state.agents.venture_control.status).toBe('green');
   });
 
   it('has empty alerts', () => {
@@ -308,7 +308,7 @@ describe('computeSystemHealth', () => {
 
   it('shows yellow when any agent is yellow', () => {
     const state = createEmptyHealthState();
-    state.agents.oracle = { ...state.agents.oracle, status: 'yellow' };
+    state.agents.venture_research = { ...state.agents.venture_research, status: 'yellow' };
     const sys = computeSystemHealth(state.agents);
     expect(sys.overallStatus).toBe('yellow');
     expect(sys.statusCounts.yellow).toBe(1);
@@ -316,7 +316,7 @@ describe('computeSystemHealth', () => {
 
   it('shows red when any agent is red', () => {
     const state = createEmptyHealthState();
-    state.agents.atlas = { ...state.agents.atlas, status: 'red' };
+    state.agents.venture_infrastructure = { ...state.agents.venture_infrastructure, status: 'red' };
     const sys = computeSystemHealth(state.agents);
     expect(sys.overallStatus).toBe('red');
     expect(sys.statusCounts.red).toBe(1);
@@ -324,8 +324,8 @@ describe('computeSystemHealth', () => {
 
   it('aggregates metrics correctly', () => {
     const state = createEmptyHealthState();
-    state.agents.oracle = {
-      ...state.agents.oracle,
+    state.agents.venture_research = {
+      ...state.agents.venture_research,
       metrics: { cpuUsage: 0.8, memoryUsage: 0.5, latencyMs: 100, requestsPerSec: 10, errorRate: 0.01, uptimeSec: 3600 },
     };
     const sys = computeSystemHealth(state.agents);
@@ -343,14 +343,14 @@ describe('applyHealthSnapshot', () => {
     const state = createEmptyHealthState();
     const snapshot: RawHealthSnapshot = {
       agents: {
-        oracle: { cpu: 0.5, memory: 0.6, latency: 100, rps: 20, errorRate: 0.01, uptime: 3600 },
+        venture_research: { cpu: 0.5, memory: 0.6, latency: 100, rps: 20, errorRate: 0.01, uptime: 3600 },
       },
     };
 
     const next = applyHealthSnapshot(state, snapshot, undefined, undefined, 5000);
-    expect(next.agents.oracle.metrics.cpuUsage).toBe(0.5);
-    expect(next.agents.oracle.metrics.memoryUsage).toBe(0.6);
-    expect(next.agents.oracle.metrics.latencyMs).toBe(100);
+    expect(next.agents.venture_research.metrics.cpuUsage).toBe(0.5);
+    expect(next.agents.venture_research.metrics.memoryUsage).toBe(0.6);
+    expect(next.agents.venture_research.metrics.latencyMs).toBe(100);
     expect(next.updatedAt).toBe(5000);
   });
 
@@ -358,32 +358,32 @@ describe('applyHealthSnapshot', () => {
     const state = createEmptyHealthState();
     const snapshot: RawHealthSnapshot = {
       agents: {
-        sentinel: { cpu: 0.95, memory: 0.5 },
+        venture_security: { cpu: 0.95, memory: 0.5 },
       },
     };
 
     const next = applyHealthSnapshot(state, snapshot);
-    expect(next.agents.sentinel.status).toBe('red');
+    expect(next.agents.venture_security.status).toBe('red');
   });
 
   it('uses server-provided status', () => {
     const state = createEmptyHealthState();
     const snapshot: RawHealthSnapshot = {
       agents: {
-        sentinel: { status: 'yellow', cpu: 0.3 },
+        venture_security: { status: 'yellow', cpu: 0.3 },
       },
     };
 
     const next = applyHealthSnapshot(state, snapshot);
-    expect(next.agents.sentinel.status).toBe('yellow');
+    expect(next.agents.venture_security.status).toBe('yellow');
   });
 
   it('updates system health after snapshot', () => {
     const state = createEmptyHealthState();
     const snapshot: RawHealthSnapshot = {
       agents: {
-        oracle: { cpu: 0.95 }, // red
-        atlas: { cpu: 0.5 },   // green
+        venture_research: { cpu: 0.95 }, // red
+        venture_infrastructure: { cpu: 0.5 },   // green
       },
     };
 
@@ -398,7 +398,7 @@ describe('applyHealthSnapshot', () => {
       id: 'test-1',
       severity: 'P0',
       state: 'active',
-      agentId: 'oracle',
+      agentId: 'venture_research',
       title: 'Test',
       message: 'Test alert',
       createdAt: 1000,
@@ -419,15 +419,15 @@ describe('applyAgentHealthUpdate', () => {
   it('updates a single agent', () => {
     const state = createEmptyHealthState();
     const update: RawAgentHealth = {
-      agentId: 'atlas',
+      agentId: 'venture_infrastructure',
       cpu: 0.7,
       memory: 0.4,
       latency: 50,
     };
 
     const next = applyAgentHealthUpdate(state, update);
-    expect(next.agents.atlas.metrics.cpuUsage).toBe(0.7);
-    expect(next.agents.oracle.metrics.cpuUsage).toBe(0); // unchanged
+    expect(next.agents.venture_infrastructure.metrics.cpuUsage).toBe(0.7);
+    expect(next.agents.venture_research.metrics.cpuUsage).toBe(0); // unchanged
   });
 
   it('ignores unknown agent IDs', () => {
@@ -439,10 +439,10 @@ describe('applyAgentHealthUpdate', () => {
 
   it('appends to history', () => {
     const state = createEmptyHealthState();
-    const next = applyAgentHealthUpdate(state, { agentId: 'oracle', cpu: 0.5 }, undefined, undefined, 1000);
-    expect(next.agents.oracle.history.length).toBeGreaterThan(0);
-    const next2 = applyAgentHealthUpdate(next, { agentId: 'oracle', cpu: 0.6 }, undefined, undefined, 2000);
-    expect(next2.agents.oracle.history.length).toBe(next.agents.oracle.history.length + 1);
+    const next = applyAgentHealthUpdate(state, { agentId: 'venture_research', cpu: 0.5 }, undefined, undefined, 1000);
+    expect(next.agents.venture_research.history.length).toBeGreaterThan(0);
+    const next2 = applyAgentHealthUpdate(next, { agentId: 'venture_research', cpu: 0.6 }, undefined, undefined, 2000);
+    expect(next2.agents.venture_research.history.length).toBe(next.agents.venture_research.history.length + 1);
   });
 });
 
@@ -456,7 +456,7 @@ describe('alert management', () => {
       id: `alert-${Date.now()}`,
       severity: 'P1',
       state: 'active',
-      agentId: 'oracle',
+      agentId: 'venture_research',
       title: 'Test',
       message: 'Test alert',
       createdAt: Date.now(),
@@ -491,10 +491,10 @@ describe('alert management', () => {
 
   it('resolves alerts for an agent', () => {
     const state = createEmptyHealthState();
-    const s1 = addHealthAlert(state, makeAlert({ id: 'a1', agentId: 'oracle' }));
-    const s2 = addHealthAlert(s1, makeAlert({ id: 'a2', agentId: 'atlas', metric: 'memory' }));
+    const s1 = addHealthAlert(state, makeAlert({ id: 'a1', agentId: 'venture_research' }));
+    const s2 = addHealthAlert(s1, makeAlert({ id: 'a2', agentId: 'venture_infrastructure', metric: 'memory' }));
 
-    const resolved = resolveAlertsForAgent(s2, 'oracle', 5000);
+    const resolved = resolveAlertsForAgent(s2, 'venture_research', 5000);
     expect(resolved.alerts.find((a) => a.id === 'a1')?.state).toBe('resolved');
     expect(resolved.alerts.find((a) => a.id === 'a2')?.state).toBe('active');
   });

@@ -179,7 +179,7 @@ test.describe('Load Testing', () => {
         const curr = tm.mapStore.get();
         const next = structuredClone(curr);
 
-        for (const id of ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'echo']) {
+        for (const id of ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_delivery', 'venture_strategy']) {
           next.agents[id].state = s;
           next.agents[id].sessions = s === 'OVERLOADED' ? 5 : s === 'ACTIVE' ? 3 : 0;
         }

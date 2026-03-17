@@ -5,20 +5,20 @@ import type { PaletteCommand } from '@/interaction/types';
 function makeCommands(): PaletteCommand[] {
   return [
     {
-      id: 'view-synth',
+      id: 'view-venture_delivery',
       label: 'View Synth Details',
       category: 'agent',
       requiredRole: 'viewer',
       execute: vi.fn(),
-      keywords: ['synth', 'inspect'],
+      keywords: ['venture_delivery', 'inspect'],
     },
     {
-      id: 'pause-atlas',
+      id: 'pause-venture_infrastructure',
       label: 'Pause Atlas',
       category: 'agent',
       requiredRole: 'operator',
       execute: vi.fn(),
-      keywords: ['atlas', 'stop'],
+      keywords: ['venture_infrastructure', 'stop'],
     },
     {
       id: 'spawn-mission',
@@ -73,7 +73,7 @@ describe('renderer/command-palette', () => {
     palette.setCommands(makeCommands());
     palette.setUserRole('viewer');
     palette.show();
-    // Only 'view-synth' should be visible (requires viewer role)
+    // Only 'view-venture_delivery' should be visible (requires viewer role)
     expect(palette.resultCount()).toBe(1);
   });
 
@@ -91,7 +91,7 @@ describe('renderer/command-palette', () => {
     palette.setCommands(makeCommands());
     palette.setUserRole('admin');
     palette.show();
-    palette.setQuery('synth');
+    palette.setQuery('venture_delivery');
     expect(palette.resultCount()).toBeGreaterThanOrEqual(1);
   });
 

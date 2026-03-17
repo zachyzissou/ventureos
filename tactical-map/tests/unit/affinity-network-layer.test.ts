@@ -95,7 +95,7 @@ describe('affinity network layer', () => {
     const layer = createAffinityNetworkLayer();
 
     const before = (layer.container.children[1] as any).children.length;
-    layer.setBondAffinity('sentinel', 'synth', 0.9);
+    layer.setBondAffinity('venture_security', 'venture_delivery', 0.9);
     const after = (layer.container.children[1] as any).children.length;
 
     // Tier 5 should allocate more particles than tier 1/2.

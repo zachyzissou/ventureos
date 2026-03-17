@@ -13,14 +13,14 @@ import {
 
 describe('voiceEventId', () => {
   it('builds a scoped event id', () => {
-    expect(voiceEventId('oracle', 'spawn')).toBe('voice:oracle:spawn');
-    expect(voiceEventId('nexus', 'error')).toBe('voice:nexus:error');
+    expect(voiceEventId('venture_research', 'spawn')).toBe('voice:venture_research:spawn');
+    expect(voiceEventId('venture_control', 'error')).toBe('voice:venture_control:error');
   });
 
   it('works for all triggers', () => {
     for (const trigger of ALL_VOICE_TRIGGERS) {
-      const id = voiceEventId('synth', trigger);
-      expect(id).toBe(`voice:synth:${trigger}`);
+      const id = voiceEventId('venture_delivery', trigger);
+      expect(id).toBe(`voice:venture_delivery:${trigger}`);
     }
   });
 });

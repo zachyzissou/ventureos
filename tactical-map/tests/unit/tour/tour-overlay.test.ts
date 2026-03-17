@@ -87,14 +87,14 @@ describe('createTourOverlay', () => {
 
   it('supports all anchor types', () => {
     const o = createTourOverlay();
-    for (const anchor of ['viewport', 'nexus', 'hud', 'agent:oracle', 'agent:sentinel', { x: 100, y: 200 }] as const) {
+    for (const anchor of ['viewport', 'venture_control', 'hud', 'agent:venture_research', 'agent:venture_security', { x: 100, y: 200 }] as const) {
       expect(() => o.show(makeStep({ anchor: anchor as any }), 0, 1)).not.toThrow();
     }
   });
 
   it('supports custom spotlight radius', () => {
     const o = createTourOverlay();
-    expect(() => o.show(makeStep({ anchor: 'nexus', spotlightRadius: 200 }), 0, 1)).not.toThrow();
+    expect(() => o.show(makeStep({ anchor: 'venture_control', spotlightRadius: 200 }), 0, 1)).not.toThrow();
   });
 
   it('callbacks can be registered', () => {

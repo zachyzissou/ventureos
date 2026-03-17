@@ -7,7 +7,7 @@
  */
 
 import { Container, Graphics, Text } from 'pixi.js';
-import { AGENT_COLORS } from '@/config';
+import { AGENT_COLORS, AGENT_DISPLAY_NAMES } from '@/config';
 import type { PersistedMission } from '@/data/control-client';
 import type { MissionPriority } from '@/interaction/types';
 
@@ -216,7 +216,7 @@ export function createMissionListPanel(): MissionListPanelLayer {
       row.titleLabel.position.set(56, 6);
 
       // Assignee
-      row.assigneeLabel.text = m.assignee.toUpperCase();
+      row.assigneeLabel.text = AGENT_DISPLAY_NAMES[m.assignee];
       row.assigneeLabel.style.fill = AGENT_COLORS[m.assignee] ?? 0x888899;
       row.assigneeLabel.position.set(56, 24);
 

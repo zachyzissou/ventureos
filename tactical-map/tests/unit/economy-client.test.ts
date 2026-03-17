@@ -90,7 +90,7 @@ describe('data/economy-client', () => {
     expect(connection.at(-1)).toBe(true);
     expect(ws.sent.some((x) => x.includes('subscribe'))).toBe(true);
 
-    ws.emitMessage({ type: 'agent_update', data: { agentId: 'oracle', tokenBudget: 100 } });
+    ws.emitMessage({ type: 'agent_update', data: { agentId: 'venture_research', tokenBudget: 100 } });
     ws.emitMessage({ type: 'economy.pool', data: { tokenQuotaTotal: 1000 } });
     ws.emitMessage({ type: 'heartbeat' });
 

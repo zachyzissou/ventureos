@@ -148,7 +148,7 @@ components:
 
     AgentId:
       type: string
-      enum: [oracle, atlas, sentinel, verifier, archivist, synth, echo, nexus]
+      enum: [venture_research, venture_infrastructure, venture_security, venture_evidence, venture_memory, venture_delivery, venture_strategy, venture_control]
 
     AgentSession:
       type: object

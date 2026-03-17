@@ -320,7 +320,7 @@ services:
       - DASHBOARD_HOST=0.0.0.0
       - DASHBOARD_API_TOKEN=${DASHBOARD_API_TOKEN}
       - NODE_ENV=production
-      - VENTUREOS_AGENTS=oracle,atlas,sentinel,verifier,archivist,synth
+      - VENTUREOS_AGENTS=venture_research,venture_infrastructure,venture_security,venture_evidence,venture_memory,venture_delivery
     volumes:
       # Persist API token across restarts
       - api-token:/app/dashboard/data
@@ -364,7 +364,7 @@ docker compose up -d --build
 | `WORKSPACE_DIR` | `cwd()` | Base workspace directory |
 | `OPENCLAW_WORKSPACE` | (fallback for WORKSPACE_DIR) | OpenClaw workspace path |
 | `OPENCLAW_AGENT` | `main` | Agent ID for session directory lookup |
-| `VENTUREOS_AGENTS` | `oracle,atlas,...` | Comma-separated list of VentureOS agent IDs |
+| `VENTUREOS_AGENTS` | `venture_research,venture_infrastructure,...` | Comma-separated list of VentureOS agent IDs |
 | `VENTUREOS_CACHE_TTL_MS` | `5000` | Cache TTL for agent metrics (1000-60000) |
 
 ### Client-Side Configuration
@@ -580,7 +580,7 @@ rsync -a ~/.openclaw/agents/ "$BACKUP_DIR/agents/"
 # RPG database
 sqlite3 "$RPG_DB_PATH" ".backup '$BACKUP_DIR/rpg.db'"
 
-echo "Backup complete: $BACKUP_DIR"
+venture_strategy "Backup complete: $BACKUP_DIR"
 ```
 
 ### Recovery
@@ -699,7 +699,7 @@ window.__TACTICAL_MAP__.healthClient.isConnected()
 **Cause:** Map state API returning all agents as IDLE.
 
 **Fix:**
-1. Check server response: `curl -H "Authorization: Bearer $TOKEN" http://localhost:8001/api/tactical-map/state | jq '.agents.oracle.state'`
+1. Check server response: `curl -H "Authorization: Bearer $TOKEN" http://localhost:8001/api/tactical-map/state | jq '.agents.venture_research.state'`
 2. The state is derived from active sessions — verify agents have running sessions
 3. In dev mode: `window.__TACTICAL_MAP__.setMapState({...})` to test manually
 

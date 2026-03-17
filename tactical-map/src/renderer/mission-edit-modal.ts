@@ -9,7 +9,7 @@
  */
 
 import { Container, Graphics, Text } from 'pixi.js';
-import { AGENT_ORDER, AGENT_COLORS } from '@/config';
+import { AGENT_DISPLAY_NAMES, AGENT_ORDER, AGENT_COLORS, CONTROL_HUB_AGENT_ID } from '@/config';
 import type { AgentId } from '@/config';
 import type { MissionPriority } from '@/interaction/types';
 import type { MissionUpdateRequest, PersistedMission } from '@/data/control-client';
@@ -61,7 +61,7 @@ const PRIORITY_COLORS: Record<MissionPriority, number> = {
   critical: 0xff3b3b,
 };
 
-const RING_AGENTS = AGENT_ORDER.filter((a) => a !== 'nexus') as AgentId[];
+const RING_AGENTS = AGENT_ORDER.filter((a) => a !== CONTROL_HUB_AGENT_ID) as AgentId[];
 
 export function createMissionEditModal(): MissionEditModalLayer {
   const container = new Container();
@@ -79,7 +79,7 @@ export function createMissionEditModal(): MissionEditModalLayer {
   const form: MissionEditFormState = {
     title: '',
     description: '',
-    assignee: 'synth',
+    assignee: 'venture_delivery',
     priority: 'normal',
     tokenBudget: '',
   };
@@ -247,7 +247,7 @@ export function createMissionEditModal(): MissionEditModalLayer {
     fieldValues[1].text = form.description || '(enter description)';
     fieldValues[1].style.fill = form.description ? 0xffffff : 0x666688;
 
-    fieldValues[2].text = form.assignee.toUpperCase();
+    fieldValues[2].text = AGENT_DISPLAY_NAMES[form.assignee];
     fieldValues[2].style.fill = AGENT_COLORS[form.assignee] ?? 0xffffff;
 
     fieldValues[3].text = form.priority.toUpperCase();

@@ -15,7 +15,7 @@ function makeMission(overrides: Partial<MissionData> = {}): MissionData {
     description: 'A test mission',
     phase: 'execute',
     progress: 50,
-    assignedTo: ['oracle'],
+    assignedTo: ['venture_research'],
     tasks: [
       { id: 'task-1', title: 'Task 1', tier: 'P1', status: 'running', progress: 50 },
     ],
@@ -30,9 +30,9 @@ function makeMission(overrides: Partial<MissionData> = {}): MissionData {
 
 function makeAgentPositions(): Map<string, Point> {
   return new Map<string, Point>([
-    ['oracle', { x: 200, y: 300 }],
-    ['atlas', { x: 400, y: 300 }],
-    ['sentinel', { x: 600, y: 300 }],
+    ['venture_research', { x: 200, y: 300 }],
+    ['venture_infrastructure', { x: 400, y: 300 }],
+    ['venture_security', { x: 600, y: 300 }],
   ]);
 }
 
@@ -166,7 +166,7 @@ describe('MissionTracker', () => {
       tracker.connect();
 
       const missions: MissionData[] = [];
-      const roles = ['oracle', 'atlas', 'sentinel'];
+      const roles = ['venture_research', 'venture_infrastructure', 'venture_security'];
       for (let i = 0; i < 50; i++) {
         missions.push(makeMission({
           missionId: `m-${i}`,
@@ -188,8 +188,8 @@ describe('MissionTracker', () => {
       tracker.connect();
 
       const missions = [
-        makeMission({ missionId: 'm1', assignedTo: ['oracle'] }),
-        makeMission({ missionId: 'm2', assignedTo: ['atlas'], dependencies: ['m1'] }),
+        makeMission({ missionId: 'm1', assignedTo: ['venture_research'] }),
+        makeMission({ missionId: 'm2', assignedTo: ['venture_infrastructure'], dependencies: ['m1'] }),
       ];
       const deps: MissionDependency[] = [
         { from: 'm1', to: 'm2', type: 'blocks' },

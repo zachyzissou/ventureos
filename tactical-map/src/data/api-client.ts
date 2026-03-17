@@ -1,5 +1,6 @@
 import { API, AGENT_ORDER, AGENTS } from '@/config';
 import type { AgentId, Point } from '@/config';
+import { CONTROL_HUB_AGENT_ID, normalizeAgentId } from '@/identity';
 import type { BuildingState, MapState, RpgStats } from '@/state/types';
 import { fetchJson, getAuthToken } from '@/utils/fetch';
 
@@ -58,8 +59,7 @@ function defaultAgentPositions(): Record<AgentId, Point> {
   const out = {} as Record<AgentId, Point>;
   for (let i = 0; i < AGENT_ORDER.length; i++) {
     const id = AGENT_ORDER[i];
-    // Nexus is centered; ring positions apply to the other 7 + nexus in this MVP.
-    out[id] = id === 'nexus' ? { x: 0, y: 0 } : AGENTS.POSITIONS[i] ?? { x: 0, y: 0 };
+    out[id] = id === CONTROL_HUB_AGENT_ID ? { x: 0, y: 0 } : AGENTS.POSITIONS[i] ?? { x: 0, y: 0 };
   }
   return out;
 }
@@ -67,9 +67,15 @@ function defaultAgentPositions(): Record<AgentId, Point> {
 function parseMapState(resp: TacticalMapStateResponse): MapState {
   const positions = defaultAgentPositions();
   const agents = {} as MapState['agents'];
+  const incomingAgents = new Map<AgentId, TacticalMapStateResponse['agents'][string]>();
+
+  for (const [rawId, node] of Object.entries(resp.agents ?? {})) {
+    const normalizedId = normalizeAgentId(rawId);
+    if (normalizedId) incomingAgents.set(normalizedId, node);
+  }
 
   for (const id of AGENT_ORDER) {
-    const node = resp.agents?.[id];
+    const node = incomingAgents.get(id);
     agents[id] = {
       id,
       position: node?.position ?? positions[id],
@@ -113,7 +119,7 @@ export function createApiClient(
 ): ApiClient {
   let timer: TimeoutId | null = null;
   let stopped = true;
-  let backoffMs = API.POLL_INTERVAL;
+  let backoffMs: number = API.POLL_INTERVAL;
 
   async function fetchOnce(): Promise<MapState> {
     const token = getAuthToken();

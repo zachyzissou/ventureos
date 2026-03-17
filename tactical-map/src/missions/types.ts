@@ -67,17 +67,17 @@ export const PHASE_COLORS: Record<MissionPhase, ColorScheme> = {
 // Agent Role Types
 // ═══════════════════════════════════════════
 
-export type SquadRole = 'oracle' | 'atlas' | 'sentinel' | 'verifier' | 'archivist' | 'synth' | 'echo' | 'nexus';
+export type SquadRole = 'venture_research' | 'venture_infrastructure' | 'venture_security' | 'venture_evidence' | 'venture_memory' | 'venture_delivery' | 'venture_strategy' | 'venture_control';
 
 export const ROLE_DISPLAY_NAMES: Record<SquadRole, string> = {
-  echo: 'Echo',
-  nexus: 'Nexus',
-  oracle: 'Oracle',
-  atlas: 'Atlas',
-  sentinel: 'Sentinel',
-  verifier: 'Verifier',
-  archivist: 'Archivist',
-  synth: 'Synth',
+  venture_strategy: AGENT_DISPLAY_NAMES.venture_strategy,
+  venture_control: AGENT_DISPLAY_NAMES.venture_control,
+  venture_research: AGENT_DISPLAY_NAMES.venture_research,
+  venture_infrastructure: AGENT_DISPLAY_NAMES.venture_infrastructure,
+  venture_security: AGENT_DISPLAY_NAMES.venture_security,
+  venture_evidence: AGENT_DISPLAY_NAMES.venture_evidence,
+  venture_memory: AGENT_DISPLAY_NAMES.venture_memory,
+  venture_delivery: AGENT_DISPLAY_NAMES.venture_delivery,
 };
 
 // ═══════════════════════════════════════════
@@ -244,3 +244,4 @@ export const DEFAULT_CONFIG: MissionTrackingConfig = {
   animationThreshold: 30,
   timelineMaxEntries: 50,
 };
+import { AGENT_DISPLAY_NAMES } from '@/config';

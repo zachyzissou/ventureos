@@ -7,6 +7,7 @@
 
 import { AGENT_ORDER } from '@/config';
 import type { AgentId } from '@/config';
+import { normalizeAgentId } from '@/identity';
 import { clamp01 } from '@/utils/color';
 import type {
   AgentHealthState,
@@ -230,7 +231,7 @@ function parseAgentHealth(
   historyConfig: HistoryConfig,
   nowMs: number
 ): AgentHealthState {
-  const agentId = (raw.agentId as AgentId) ?? existing.agentId;
+  const agentId = normalizeAgentId(String(raw.agentId ?? '')) ?? existing.agentId;
   const metrics = parsePerformanceMetrics(raw);
   const consecutiveFailures = coerceNumber(raw.consecutiveFailures, existing.consecutiveFailures);
 

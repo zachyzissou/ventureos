@@ -42,14 +42,14 @@ The Tactical Map is a real-time 2D command center built with **PIXI.js v8** and 
 
 | Agent ID | current Unit | Color | Role |
 |----------|-------------|-------|------|
-| `oracle` | Oracle | `#7BDCFF` | Research & Foresight |
-| `atlas` | Atlas | `#00D4FF` | Infrastructure Fabricator |
-| `sentinel` | Sentinel | `#4AA0FF` | Security Guardian |
-| `verifier` | Verifier | `#7A7DFF` | Detection & QA |
-| `archivist` | Archivist | `#67FFD1` | Knowledge Keeper |
-| `synth` | Synth | `#00E1C3` | Shadow Weaver / Creator |
-| `echo` | Echo | `#FFD700` | CEO Orchestrator |
-| `nexus` | Nexus | `#FFD700` | Mission Control Hub |
+| `venture_research` | Oracle | `#7BDCFF` | Research & Foresight |
+| `venture_infrastructure` | Atlas | `#00D4FF` | Infrastructure Fabricator |
+| `venture_security` | Sentinel | `#4AA0FF` | Security Guardian |
+| `venture_evidence` | Verifier | `#7A7DFF` | Detection & QA |
+| `venture_memory` | Archivist | `#67FFD1` | Knowledge Keeper |
+| `venture_delivery` | Synth | `#00E1C3` | Shadow Weaver / Creator |
+| `venture_strategy` | Echo | `#FFD700` | CEO Orchestrator |
+| `venture_control` | Nexus | `#FFD700` | Mission Control Hub |
 
 ---
 
@@ -120,7 +120,7 @@ app.stage
 │   ├── particles        Z=2   Activity/ambient particle system
 │   ├── buildings        Z=3   7 hexagonal ring-agent buildings
 │   ├── units            Z=4   Orbiting session sprites
-│   ├── nexus            Z=5   Central Nexus structure
+│   ├── venture_control            Z=5   Central Nexus structure
 │   ├── healthBars       Z=6   Session capacity bars per agent
 │   ├── resourceEconomy  Z=7   Budget rings, sparklines, heat map
 │   │   (worldContainer)
@@ -161,7 +161,7 @@ app.ticker.add((ticker) => {
   unitsLayer.update(elapsedMs);
 
   // 6. Nexus core pulse
-  nexus.update(elapsedMs);
+  venture_control.update(elapsedMs);
 
   // 7. Particle emission (based on agent activity state)
   // ... emit particles per agent based on MapStore state ...
@@ -598,7 +598,7 @@ base-uri 'self';
 | `src/data/activity-mapper.ts` | Session label → activity type classifier |
 | `src/renderer/terrain.ts` | Hex grid, vignette, crystals |
 | `src/renderer/buildings.ts` | Agent buildings with crossfade |
-| `src/renderer/nexus.ts` | Central Nexus structure |
+| `src/renderer/venture_control.ts` | Central Nexus structure |
 | `src/renderer/units.ts` | Orbiting session sprites |
 | `src/renderer/particles.ts` | Object-pooled particle system |
 | `src/renderer/affinity-network.ts` | Bond visualization with particles |

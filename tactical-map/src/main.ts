@@ -1,5 +1,5 @@
 import { Application, Container } from 'pixi.js';
-import { AGENT_ORDER, AGENTS, CANVAS, ECONOMY } from '@/config';
+import { AGENT_ORDER, AGENTS, CANVAS, CONTROL_HUB_AGENT_ID, ECONOMY } from '@/config';
 import type { AgentId, Point } from '@/config';
 import type { UserRole } from '@/interaction';
 import { createApiClient } from '@/data/api-client';
@@ -57,7 +57,7 @@ function createInitialMapState(): MapState {
     const id = AGENT_ORDER[i];
     agents[id] = {
       id,
-      position: id === 'nexus' ? { x: 0, y: 0 } : AGENTS.POSITIONS[i] ?? { x: 0, y: 0 },
+      position: id === CONTROL_HUB_AGENT_ID ? { x: 0, y: 0 } : AGENTS.POSITIONS[i] ?? { x: 0, y: 0 },
       state: 'IDLE',
       paused: false,
     };
@@ -122,8 +122,8 @@ async function bootstrap() {
     });
   }
 
-  const nexus = createNexus();
-  world.addChild(nexus.container);
+  const controlHub = createNexus();
+  world.addChild(controlHub.container);
 
   const healthBars = createHealthBarsLayer(RING_AGENT_IDS);
   world.addChild(healthBars.container);
@@ -280,13 +280,13 @@ async function bootstrap() {
     interactionBus.emit({ type: 'terrain:click', timestamp: performance.now() });
   });
 
-  // Keep nexus centered in world space.
-  nexus.container.position.set(0, 0);
-  nexus.container.eventMode = 'static';
-  nexus.container.cursor = 'pointer';
-  nexus.container.on('pointertap', (evt) => {
+  // Keep the control hub centered in world space.
+  controlHub.container.position.set(0, 0);
+  controlHub.container.eventMode = 'static';
+  controlHub.container.cursor = 'pointer';
+  controlHub.container.on('pointertap', (evt) => {
     evt.stopPropagation();
-    interactionBus.emit({ type: 'agent:click', agentId: 'nexus', timestamp: performance.now() });
+    interactionBus.emit({ type: 'agent:click', agentId: CONTROL_HUB_AGENT_ID, timestamp: performance.now() });
   });
 
   // ── Accessibility: screen reader announcements ──────────────────
@@ -346,16 +346,16 @@ async function bootstrap() {
       healthBars.setAgent(id, node.position, derived, node.sessions);
     }
 
-    // Nexus color reflects overall system health.
+    // Control hub color reflects overall system health.
     const anyError = (Object.entries(s.agents) as [AgentId, MapState['agents'][AgentId]][]).some(
       ([id, a]) => deriveBuildingState(id, a.state, a.sessions) === 'ERROR'
     );
     const anyOverload = (Object.entries(s.agents) as [AgentId, MapState['agents'][AgentId]][]).some(
       ([id, a]) => deriveBuildingState(id, a.state, a.sessions) === 'OVERLOADED'
     );
-    if (anyError) nexus.setStateColor(0xff3366);
-    else if (anyOverload) nexus.setStateColor(0xff9500);
-    else nexus.setStateColor(0xffd700);
+    if (anyError) controlHub.setStateColor(0xff3366);
+    else if (anyOverload) controlHub.setStateColor(0xff9500);
+    else controlHub.setStateColor(0xffd700);
   });
 
   healthStore.subscribe((next) => {
@@ -500,7 +500,7 @@ async function bootstrap() {
     affinityNetwork.update(elapsedMs);
     buildingsLayer.update(elapsedMs);
     unitsLayer.update(elapsedMs);
-    nexus.update(elapsedMs);
+    controlHub.update(elapsedMs);
 
     // Emit activity particles (rate-based, capped by PARTICLES.MAX).
     const s = mapStore.get();

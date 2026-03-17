@@ -32,15 +32,15 @@ import { createHealthBarsLayer } from '@/renderer/health-bars';
 
 describe('health bars layer', () => {
   it('creates 2 graphics per agent (bg + fill)', () => {
-    const layer = createHealthBarsLayer(['oracle']);
+    const layer = createHealthBarsLayer(['venture_research']);
     expect(layer.container.children.length).toBe(2);
   });
 
   it('setAgent positions and redraws without throwing', () => {
-    const layer = createHealthBarsLayer(['oracle']);
-    layer.setAgent('oracle', { x: 10, y: 20 }, 'ACTIVE', 1);
+    const layer = createHealthBarsLayer(['venture_research']);
+    layer.setAgent('venture_research', { x: 10, y: 20 }, 'ACTIVE', 1);
     layer.update(16);
-    layer.setAgent('oracle', { x: 10, y: 20 }, 'OVERLOADED', 3);
+    layer.setAgent('venture_research', { x: 10, y: 20 }, 'OVERLOADED', 3);
     layer.update(1000);
   });
 });

@@ -50,7 +50,7 @@ function mockMissionModal() {
     getFormState: vi.fn(() => ({
       title: '',
       description: '',
-      assignee: 'synth' as AgentId,
+      assignee: 'venture_delivery' as AgentId,
       priority: 'normal' as const,
       tokenBudget: '',
     })),
@@ -61,7 +61,7 @@ function mockMissionModal() {
       submitCb({
         title: 'Default mission',
         description: '',
-        assignee: 'synth',
+        assignee: 'venture_delivery',
         priority: 'normal',
       });
     }),
@@ -133,7 +133,7 @@ function mockMissionEditModal() {
     getFormState: vi.fn(() => ({
       title: 'Test',
       description: '',
-      assignee: 'synth' as AgentId,
+      assignee: 'venture_delivery' as AgentId,
       priority: 'normal' as const,
       tokenBudget: '',
     })),
@@ -144,7 +144,7 @@ function mockMissionEditModal() {
       submitCb('mission-test-1', {
         title: 'Updated',
         priority: 'high',
-        assignee: 'synth',
+        assignee: 'venture_delivery',
         description: '',
       });
     }),
@@ -169,7 +169,7 @@ function mockControlClient() {
           missionId: 'mission-test-1',
           title: 'Test Mission',
           description: 'Desc',
-          assignee: 'synth',
+          assignee: 'venture_delivery',
           priority: 'normal',
           createdAt: '2026-01-01T00:00:00Z',
           updatedAt: '2026-01-01T00:00:00Z',
@@ -186,7 +186,7 @@ function createTestMapState(): MapState {
     const id = AGENT_ORDER[i];
     agents[id] = {
       id,
-      position: id === 'nexus' ? { x: 0, y: 0 } : AGENTS.POSITIONS[i] ?? { x: 0, y: 0 },
+      position: id === 'venture_control' ? { x: 0, y: 0 } : AGENTS.POSITIONS[i] ?? { x: 0, y: 0 },
       state: 'IDLE',
       sessions: 0,
     };
@@ -263,33 +263,33 @@ describe('interaction/controller', () => {
 
   describe('openAgentDetail', () => {
     it('shows the detail panel', () => {
-      controller.openAgentDetail('synth');
+      controller.openAgentDetail('venture_delivery');
       expect(detailPanel.show).toHaveBeenCalledOnce();
-      expect(controller.getUIState().selectedAgent).toBe('synth');
+      expect(controller.getUIState().selectedAgent).toBe('venture_delivery');
     });
 
     it('provides correct agent data', () => {
-      controller.openAgentDetail('oracle');
+      controller.openAgentDetail('venture_research');
       const data = detailPanel.show.mock.calls[0][0];
-      expect(data.id).toBe('oracle');
-      expect(data.label).toBe('ORACLE');
+      expect(data.id).toBe('venture_research');
+      expect(data.label).toBe('Venture Research');
       expect(data.state).toBe('IDLE');
     });
 
     it('blocked for insufficient role', () => {
       controller.setUserRole('viewer' as any);
       // Viewers CAN view (agent:view requires 'viewer')
-      controller.openAgentDetail('synth');
+      controller.openAgentDetail('venture_delivery');
       expect(detailPanel.show).toHaveBeenCalled();
     });
 
     it('shows budget slider only for admin role', () => {
-      controller.openAgentDetail('synth');
+      controller.openAgentDetail('venture_delivery');
       expect(budgetSlider.setVisible).toHaveBeenCalledWith(false);
 
       budgetSlider.setVisible.mockClear();
       controller.setUserRole('admin');
-      controller.openAgentDetail('synth');
+      controller.openAgentDetail('venture_delivery');
       expect(budgetSlider.configure).toHaveBeenCalled();
       expect(budgetSlider.setVisible).toHaveBeenCalledWith(true);
     });
@@ -297,7 +297,7 @@ describe('interaction/controller', () => {
 
   describe('closeAgentDetail', () => {
     it('hides the panel', () => {
-      controller.openAgentDetail('synth');
+      controller.openAgentDetail('venture_delivery');
       controller.closeAgentDetail();
       expect(detailPanel.hide).toHaveBeenCalled();
       expect(budgetSlider.setVisible).toHaveBeenCalledWith(false);
@@ -307,41 +307,41 @@ describe('interaction/controller', () => {
 
   describe('pauseAgent', () => {
     it('shows confirmation dialog', () => {
-      controller.pauseAgent('synth');
+      controller.pauseAgent('venture_delivery');
       expect(confirmDialog.show).toHaveBeenCalledOnce();
       const req = confirmDialog.show.mock.calls[0][0];
-      expect(req.title).toContain('SYNTH');
+      expect(req.title).toContain('Venture Delivery');
       expect(req.severity).toBe('warning');
     });
 
     it('calls control client on confirm', async () => {
-      controller.pauseAgent('atlas');
+      controller.pauseAgent('venture_infrastructure');
       const req = confirmDialog.show.mock.calls[0][0];
       await req.onConfirm();
-      expect(controlClient.pauseAgent).toHaveBeenCalledWith('atlas');
+      expect(controlClient.pauseAgent).toHaveBeenCalledWith('venture_infrastructure');
     });
 
     it('blocked for viewers', () => {
       controller.setUserRole('viewer' as any);
-      controller.pauseAgent('synth');
+      controller.pauseAgent('venture_delivery');
       expect(confirmDialog.show).not.toHaveBeenCalled();
     });
   });
 
   describe('resumeAgent', () => {
     it('shows confirmation dialog for resume', () => {
-      controller.resumeAgent('synth');
+      controller.resumeAgent('venture_delivery');
       expect(confirmDialog.show).toHaveBeenCalledOnce();
       const req = confirmDialog.show.mock.calls[0][0];
-      expect(req.title).toContain('SYNTH');
+      expect(req.title).toContain('Venture Delivery');
       expect(req.severity).toBe('info');
     });
 
     it('calls control client on confirm', async () => {
-      controller.resumeAgent('atlas');
+      controller.resumeAgent('venture_infrastructure');
       const req = confirmDialog.show.mock.calls[0][0];
       await req.onConfirm();
-      expect(controlClient.resumeAgent).toHaveBeenCalledWith('atlas');
+      expect(controlClient.resumeAgent).toHaveBeenCalledWith('venture_infrastructure');
     });
   });
 
@@ -353,12 +353,12 @@ describe('interaction/controller', () => {
     });
 
     it('passes default assignee', () => {
-      controller.openMissionSpawn('oracle');
-      expect(missionModal.show).toHaveBeenCalledWith('oracle');
+      controller.openMissionSpawn('venture_research');
+      expect(missionModal.show).toHaveBeenCalledWith('venture_research');
     });
 
     it('prefills mission title for quick launch', () => {
-      controller.openMissionSpawn('oracle');
+      controller.openMissionSpawn('venture_research');
       expect(missionModal.setField).toHaveBeenCalled();
       const calls = missionModal.setField.mock.calls.map((c: [string]) => c[0]);
       expect(calls).toContain('title');
@@ -408,13 +408,13 @@ describe('interaction/controller', () => {
 
   describe('event bus integration', () => {
     it('opens agent detail on agent:click event', () => {
-      eventBus.emit({ type: 'agent:click', agentId: 'synth', timestamp: 1000 });
+      eventBus.emit({ type: 'agent:click', agentId: 'venture_delivery', timestamp: 1000 });
       expect(detailPanel.show).toHaveBeenCalled();
-      expect(controller.getUIState().selectedAgent).toBe('synth');
+      expect(controller.getUIState().selectedAgent).toBe('venture_delivery');
     });
 
     it('closes detail on terrain:click', () => {
-      eventBus.emit({ type: 'agent:click', agentId: 'synth', timestamp: 1000 });
+      eventBus.emit({ type: 'agent:click', agentId: 'venture_delivery', timestamp: 1000 });
       eventBus.emit({ type: 'terrain:click', timestamp: 2000 });
       expect(detailPanel.hide).toHaveBeenCalled();
     });
@@ -422,7 +422,7 @@ describe('interaction/controller', () => {
 
   describe('store reactivity', () => {
     it('refreshes detail panel on map store change', () => {
-      controller.openAgentDetail('synth');
+      controller.openAgentDetail('venture_delivery');
       detailPanel.updateData.mockClear();
 
       // Trigger store change
@@ -430,7 +430,7 @@ describe('interaction/controller', () => {
         ...s,
         agents: {
           ...s.agents,
-          synth: { ...s.agents.synth, state: 'ACTIVE' },
+          venture_delivery: { ...s.agents.venture_delivery, state: 'ACTIVE' },
         },
       }));
 
@@ -474,7 +474,7 @@ describe('interaction/controller', () => {
         missionId: 'mission-edit-1',
         title: 'Edit Me',
         description: 'Desc',
-        assignee: 'synth' as const,
+        assignee: 'venture_delivery' as const,
         priority: 'high' as const,
         createdAt: '2026-01-01T00:00:00Z',
         updatedAt: '2026-01-01T00:00:00Z',
@@ -488,7 +488,7 @@ describe('interaction/controller', () => {
 
     it('closes the edit modal', () => {
       controller.openMissionEdit({
-        missionId: 'm1', title: 'T', description: '', assignee: 'synth',
+        missionId: 'm1', title: 'T', description: '', assignee: 'venture_delivery',
         priority: 'normal', createdAt: '', updatedAt: '',
       });
       controller.closeMissionEdit();
@@ -498,7 +498,7 @@ describe('interaction/controller', () => {
 
     it('calls updateMission on submit', async () => {
       controller.openMissionEdit({
-        missionId: 'mission-test-1', title: 'T', description: '', assignee: 'synth',
+        missionId: 'mission-test-1', title: 'T', description: '', assignee: 'venture_delivery',
         priority: 'normal', createdAt: '', updatedAt: '',
       });
 
@@ -515,7 +515,7 @@ describe('interaction/controller', () => {
     it('blocked for viewers', () => {
       controller.setUserRole('viewer' as any);
       controller.openMissionEdit({
-        missionId: 'm1', title: 'T', description: '', assignee: 'synth',
+        missionId: 'm1', title: 'T', description: '', assignee: 'venture_delivery',
         priority: 'normal', createdAt: '', updatedAt: '',
       });
       expect(missionEditModal.show).not.toHaveBeenCalled();

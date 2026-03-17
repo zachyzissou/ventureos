@@ -7,7 +7,8 @@
  */
 
 import type { AgentId } from '@/config';
-import { AGENT_ORDER } from '@/config';
+import { AGENT_DISPLAY_NAMES, AGENT_ORDER, CONTROL_HUB_AGENT_ID } from '@/config';
+import { normalizeAgentId } from '@/identity';
 import type { Store } from '@/state/store';
 import type { MapState } from '@/state/types';
 import type { HealthState } from '@/health/types';
@@ -148,7 +149,7 @@ export function createInteractionController(opts: InteractionControllerOptions):
 
     // Re-evaluate budget control visibility when role changes.
     if (!uiState.selectedAgent) return;
-    if (canPerformAction(role, 'budget:adjust') && uiState.selectedAgent !== 'nexus') {
+    if (canPerformAction(role, 'budget:adjust') && uiState.selectedAgent !== CONTROL_HUB_AGENT_ID) {
       const { budget, maxBudget } = resolveAgentBudget(uiState.selectedAgent);
       opts.budgetSlider.configure(uiState.selectedAgent, budget, maxBudget);
       opts.budgetSlider.setVisible(true);
@@ -175,7 +176,7 @@ export function createInteractionController(opts: InteractionControllerOptions):
 
     return {
       id: agentId,
-      label: agentId.toUpperCase(),
+      label: AGENT_DISPLAY_NAMES[agentId],
       state: mapAgent?.state ?? 'IDLE',
       healthStatus: healthAgent?.status ?? 'green',
       connectivity: healthAgent?.connectivity ?? 'online',
@@ -197,7 +198,7 @@ export function createInteractionController(opts: InteractionControllerOptions):
     const data = buildAgentDetail(agentId);
     opts.detailPanel.show(data);
 
-    if (canPerformAction(uiState.userRole, 'budget:adjust') && agentId !== 'nexus') {
+    if (canPerformAction(uiState.userRole, 'budget:adjust') && agentId !== CONTROL_HUB_AGENT_ID) {
       const { budget, maxBudget } = resolveAgentBudget(agentId);
       opts.budgetSlider.configure(agentId, budget, maxBudget);
       opts.budgetSlider.setVisible(true);
@@ -224,8 +225,8 @@ export function createInteractionController(opts: InteractionControllerOptions):
 
     const request: ConfirmationRequest = {
       id: `pause-${agentId}-${Date.now()}`,
-      title: `Pause ${agentId.toUpperCase()}?`,
-      message: `This will pause all active sessions for ${agentId}. The agent will not process new tasks until resumed.`,
+      title: `Pause ${AGENT_DISPLAY_NAMES[agentId]}?`,
+      message: `This will pause all active sessions for ${AGENT_DISPLAY_NAMES[agentId]}. The capability will not process new tasks until resumed.`,
       confirmLabel: 'Pause',
       cancelLabel: 'Cancel',
       severity: 'warning',
@@ -261,8 +262,8 @@ export function createInteractionController(opts: InteractionControllerOptions):
 
     const request: ConfirmationRequest = {
       id: `resume-${agentId}-${Date.now()}`,
-      title: `Resume ${agentId.toUpperCase()}?`,
-      message: `This will resume task processing for ${agentId}.`,
+      title: `Resume ${AGENT_DISPLAY_NAMES[agentId]}?`,
+      message: `This will resume task processing for ${AGENT_DISPLAY_NAMES[agentId]}.`,
       confirmLabel: 'Resume',
       cancelLabel: 'Cancel',
       severity: 'info',
@@ -302,11 +303,11 @@ export function createInteractionController(opts: InteractionControllerOptions):
     // Ensure the modal is immediately submittable without keyboard wiring.
     const stamp = new Date();
     const defaultTitle = defaultAssignee
-      ? `Support ${defaultAssignee.toUpperCase()} — ${stamp.toLocaleTimeString()}`
+      ? `Support ${AGENT_DISPLAY_NAMES[defaultAssignee]} — ${stamp.toLocaleTimeString()}`
       : `New Mission — ${stamp.toLocaleTimeString()}`;
     opts.missionModal.setField('title', defaultTitle);
 
-    if (defaultAssignee && defaultAssignee !== 'nexus') {
+    if (defaultAssignee && defaultAssignee !== CONTROL_HUB_AGENT_ID) {
       opts.missionModal.setField('assignee', defaultAssignee);
     }
 
@@ -543,17 +544,17 @@ export function createInteractionController(opts: InteractionControllerOptions):
     for (const id of AGENT_ORDER) {
       cmds.push({
         id: `view-${id}`,
-        label: `View ${id.toUpperCase()} Details`,
+        label: `View ${AGENT_DISPLAY_NAMES[id]} Details`,
         category: 'agent',
         requiredRole: 'viewer',
         execute: () => openAgentDetail(id),
         keywords: [id, 'inspect', 'detail', 'info'],
       });
 
-      if (id !== 'nexus') {
+      if (id !== CONTROL_HUB_AGENT_ID) {
         cmds.push({
           id: `pause-${id}`,
-          label: `Pause ${id.toUpperCase()}`,
+          label: `Pause ${AGENT_DISPLAY_NAMES[id]}`,
           category: 'agent',
           requiredRole: 'operator',
           execute: () => pauseAgent(id),
@@ -562,7 +563,7 @@ export function createInteractionController(opts: InteractionControllerOptions):
 
         cmds.push({
           id: `resume-${id}`,
-          label: `Resume ${id.toUpperCase()}`,
+          label: `Resume ${AGENT_DISPLAY_NAMES[id]}`,
           category: 'agent',
           requiredRole: 'operator',
           execute: () => resumeAgent(id),
@@ -738,21 +739,22 @@ export function createInteractionController(opts: InteractionControllerOptions):
     if (!state?.ok) return;
 
     for (const id of state.pausedAgents ?? []) {
-      if (AGENT_ORDER.includes(id as AgentId)) pausedAgents.add(id as AgentId);
+      const normalizedId = normalizeAgentId(id);
+      if (normalizedId) pausedAgents.add(normalizedId);
     }
 
     const entries = Object.entries(state.budgets ?? {});
     for (const [id, budget] of entries) {
-      if (!AGENT_ORDER.includes(id as AgentId)) continue;
+      const agentId = normalizeAgentId(id);
+      if (!agentId) continue;
       if (typeof budget !== 'number' || !Number.isFinite(budget)) continue;
-      const agentId = id as AgentId;
       budgetOverrides.set(agentId, Math.max(1, Math.round(budget)));
       updateBudgetInStore(agentId, Math.max(1, Math.round(budget)));
     }
 
     if (uiState.selectedAgent) {
       opts.detailPanel.updateData(buildAgentDetail(uiState.selectedAgent));
-      if (canPerformAction(uiState.userRole, 'budget:adjust') && uiState.selectedAgent !== 'nexus') {
+      if (canPerformAction(uiState.userRole, 'budget:adjust') && uiState.selectedAgent !== CONTROL_HUB_AGENT_ID) {
         const { budget, maxBudget } = resolveAgentBudget(uiState.selectedAgent);
         opts.budgetSlider.configure(uiState.selectedAgent, budget, maxBudget);
         opts.budgetSlider.setVisible(true);
@@ -780,7 +782,7 @@ export function createInteractionController(opts: InteractionControllerOptions):
 
     opts.detailPanel.updateData(buildAgentDetail(uiState.selectedAgent));
 
-    if (canPerformAction(uiState.userRole, 'budget:adjust') && uiState.selectedAgent !== 'nexus') {
+    if (canPerformAction(uiState.userRole, 'budget:adjust') && uiState.selectedAgent !== CONTROL_HUB_AGENT_ID) {
       const { budget, maxBudget } = resolveAgentBudget(uiState.selectedAgent);
       opts.budgetSlider.configure(uiState.selectedAgent, budget, maxBudget);
       opts.budgetSlider.setVisible(true);

@@ -62,7 +62,7 @@ test.describe('WCAG 2.1 AA — Tactical Map', () => {
       const tm = (window as any).__TACTICAL_MAP__;
       const curr = tm.mapStore.get();
       const next = structuredClone(curr);
-      next.agents.oracle.state = 'ACTIVE';
+      next.agents.venture_research.state = 'ACTIVE';
       tm.setMapState(next);
     });
 
@@ -70,7 +70,7 @@ test.describe('WCAG 2.1 AA — Tactical Map', () => {
     await page.waitForTimeout(500);
 
     const text = await page.locator('#sr-announcements').textContent();
-    expect(text).toContain('oracle');
+    expect(text).toContain('venture_research');
     expect(text).toContain('active');
   });
 

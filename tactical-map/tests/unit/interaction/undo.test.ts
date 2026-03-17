@@ -12,7 +12,7 @@ import {
 } from '@/interaction/undo';
 import type { ControlAction } from '@/interaction/types';
 
-function makeAction(type: string, target = 'synth'): ControlAction {
+function makeAction(type: string, target = 'venture_delivery'): ControlAction {
   return {
     type: type as ControlAction['type'],
     target: target as ControlAction['target'],
@@ -96,14 +96,14 @@ describe('interaction/undo', () => {
 
     it('multiple undos work in order', () => {
       let stack = createUndoStack();
-      stack = pushUndo(stack, makeAction('agent:pause', 'synth'), { step: 1 });
-      stack = pushUndo(stack, makeAction('agent:resume', 'atlas'), { step: 2 });
+      stack = pushUndo(stack, makeAction('agent:pause', 'venture_delivery'), { step: 1 });
+      stack = pushUndo(stack, makeAction('agent:resume', 'venture_infrastructure'), { step: 2 });
 
       const [s1, e1] = undo(stack);
-      expect(e1!.action.target).toBe('atlas');
+      expect(e1!.action.target).toBe('venture_infrastructure');
 
       const [s2, e2] = undo(s1);
-      expect(e2!.action.target).toBe('synth');
+      expect(e2!.action.target).toBe('venture_delivery');
 
       const [s3, e3] = undo(s2);
       expect(e3).toBeNull();

@@ -55,7 +55,7 @@ test.describe('Network Latency Simulation', () => {
       const tm = (window as any).__TACTICAL_MAP__;
       const curr = tm.mapStore.get();
       const next = structuredClone(curr);
-      for (const id of ['oracle', 'atlas', 'sentinel', 'verifier']) {
+      for (const id of ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence']) {
         next.agents[id].state = 'ACTIVE';
         next.agents[id].sessions = 2;
       }
@@ -82,7 +82,7 @@ test.describe('Network Latency Simulation', () => {
       const tm = (window as any).__TACTICAL_MAP__;
       const curr = tm.mapStore.get();
       const next = structuredClone(curr);
-      for (const id of ['oracle', 'atlas', 'sentinel', 'verifier', 'archivist', 'synth', 'echo']) {
+      for (const id of ['venture_research', 'venture_infrastructure', 'venture_security', 'venture_evidence', 'venture_memory', 'venture_delivery', 'venture_strategy']) {
         next.agents[id].state = 'ACTIVE';
         next.agents[id].sessions = 3;
       }
@@ -109,7 +109,7 @@ test.describe('Network Latency Simulation', () => {
       const tm = (window as any).__TACTICAL_MAP__;
       const curr = tm.mapStore.get();
       const next = structuredClone(curr);
-      for (const id of ['oracle', 'atlas', 'sentinel']) {
+      for (const id of ['venture_research', 'venture_infrastructure', 'venture_security']) {
         next.agents[id].state = 'ACTIVE';
         next.agents[id].sessions = 2;
       }
@@ -136,7 +136,7 @@ test.describe('Network Latency Simulation', () => {
       const tm = (window as any).__TACTICAL_MAP__;
       const curr = tm.mapStore.get();
       const next = structuredClone(curr);
-      for (const id of ['oracle', 'atlas']) {
+      for (const id of ['venture_research', 'venture_infrastructure']) {
         next.agents[id].state = 'ACTIVE';
         next.agents[id].sessions = 2;
       }
@@ -203,7 +203,7 @@ test.describe('Network Latency Simulation', () => {
       const tm = (window as any).__TACTICAL_MAP__;
       const curr = tm.mapStore.get();
       const next = structuredClone(curr);
-      for (const id of ['oracle', 'atlas', 'sentinel']) {
+      for (const id of ['venture_research', 'venture_infrastructure', 'venture_security']) {
         next.agents[id].state = 'ACTIVE';
         next.agents[id].sessions = 2;
       }

@@ -15,7 +15,7 @@ describe('interaction/event-bus', () => {
 
     const event: InteractionEvent = {
       type: 'agent:click',
-      agentId: 'synth',
+      agentId: 'venture_delivery',
       timestamp: 1000,
     };
     bus.emit(event);

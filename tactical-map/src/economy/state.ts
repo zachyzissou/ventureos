@@ -1,5 +1,6 @@
 import { AGENT_ORDER } from '@/config';
 import type { AgentId } from '@/config';
+import { normalizeAgentId } from '@/identity';
 import { computeBudgetHealth, DEFAULT_HEALTH_THRESHOLDS } from '@/economy/health';
 import { deriveBurnRateUsdPerHour, pushTrendPoint } from '@/economy/time-series';
 import type {
@@ -213,6 +214,12 @@ export function applyEconomySnapshot(
   options: EconomyStateOptions = DEFAULT_ECONOMY_STATE_OPTIONS,
   nowMs = Date.now()
 ): EconomyState {
+  const incomingAgents = new Map<AgentId, RawAgentEconomy>();
+  for (const [rawId, incoming] of Object.entries(snapshot.agents ?? {})) {
+    const normalizedId = normalizeAgentId(rawId);
+    if (normalizedId) incomingAgents.set(normalizedId, incoming);
+  }
+
   const next: EconomyState = {
     updatedAt: parseTs(snapshot.updatedAt, nowMs),
     agents: { ...curr.agents },
@@ -220,7 +227,7 @@ export function applyEconomySnapshot(
   };
 
   for (const id of AGENT_ORDER) {
-    const incoming = snapshot.agents?.[id];
+    const incoming = incomingAgents.get(id);
     if (!incoming) continue;
     next.agents[id] = normalizeAgent(curr.agents[id], incoming, options, nowMs);
   }
@@ -234,8 +241,8 @@ export function applyAgentEconomyUpdate(
   options: EconomyStateOptions = DEFAULT_ECONOMY_STATE_OPTIONS,
   nowMs = Date.now()
 ): EconomyState {
-  const id = String(patch.agentId ?? '').toLowerCase() as AgentId;
-  if (!AGENT_ORDER.includes(id)) return curr;
+  const id = normalizeAgentId(String(patch.agentId ?? '').toLowerCase());
+  if (!id) return curr;
 
   return {
     ...curr,
