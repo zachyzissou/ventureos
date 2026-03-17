@@ -11,12 +11,14 @@ import {
 
 import {
   DEFAULT_API_BASE,
+  DEFAULT_SUBJECT,
   loginWithToken,
   normalizeApiBase,
 } from "@/lib/dashboard-api";
 
 const SESSION_STORAGE_API_BASE = "ventureos.dashboardNext.apiBase";
 const SESSION_STORAGE_TOKEN = "ventureos.dashboardNext.token";
+const SESSION_STORAGE_SUBJECT = "ventureos.dashboardNext.subject";
 
 const DashboardSessionContext = createContext(null);
 
@@ -29,6 +31,7 @@ function readStorage(key, fallbackValue) {
 export function DashboardSessionProvider({ children }) {
   const [apiBase, setApiBase] = useState(DEFAULT_API_BASE);
   const [token, setToken] = useState("");
+  const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [authState, setAuthState] = useState("idle");
   const [authError, setAuthError] = useState("");
   const [lastAuthAt, setLastAuthAt] = useState("");
@@ -36,6 +39,17 @@ export function DashboardSessionProvider({ children }) {
   useEffect(() => {
     setApiBase(readStorage(SESSION_STORAGE_API_BASE, DEFAULT_API_BASE));
     setToken(readStorage(SESSION_STORAGE_TOKEN, ""));
+    try {
+      const stored = JSON.parse(readStorage(SESSION_STORAGE_SUBJECT, JSON.stringify(DEFAULT_SUBJECT)));
+      setSubject({
+        actorId: stored?.actorId ?? DEFAULT_SUBJECT.actorId,
+        bindingId: stored?.bindingId ?? DEFAULT_SUBJECT.bindingId,
+        capabilityId: stored?.capabilityId ?? DEFAULT_SUBJECT.capabilityId,
+        specialistId: stored?.specialistId ?? DEFAULT_SUBJECT.specialistId,
+      });
+    } catch {
+      setSubject(DEFAULT_SUBJECT);
+    }
   }, []);
 
   useEffect(() => {
@@ -47,6 +61,11 @@ export function DashboardSessionProvider({ children }) {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(SESSION_STORAGE_TOKEN, token);
   }, [token]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(SESSION_STORAGE_SUBJECT, JSON.stringify(subject));
+  }, [subject]);
 
   useEffect(() => {
     setAuthState("idle");
@@ -86,6 +105,8 @@ export function DashboardSessionProvider({ children }) {
       setApiBase,
       token,
       setToken,
+      subject,
+      setSubject,
       authState,
       authError,
       lastAuthAt,
@@ -96,6 +117,7 @@ export function DashboardSessionProvider({ children }) {
     [
       apiBase,
       token,
+      subject,
       authState,
       authError,
       lastAuthAt,

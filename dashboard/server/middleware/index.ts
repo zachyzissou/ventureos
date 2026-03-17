@@ -24,3 +24,5 @@ export { rateLimit, limiter, LIMITS, RateLimiter } from './rate-limit.js';
 export { auditLog, flush, LOG_FILE } from './audit-log.js';
 
 export { withCorrelationId, getCorrelationId, CORRELATION_HEADER } from './correlation-id.js';
+
+export { authorizeDashboardRbac } from './rbac.js';

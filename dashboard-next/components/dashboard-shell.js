@@ -40,6 +40,8 @@ export function DashboardShell({
     normalizedApiBase,
     token,
     setToken,
+    subject,
+    setSubject,
     authState,
     authError,
     lastAuthAt,
@@ -115,6 +117,42 @@ export function DashboardShell({
             <p id="dashboard-token-help" className="field-help">
               Stored only in this browser session storage. The token is masked in the UI and sent
               to authenticate or forward authorized requests.
+            </p>
+          </div>
+          <div className="field-group">
+            <label className="field-label" htmlFor="dashboard-binding-id">
+              VentureOS binding
+            </label>
+            <input
+              id="dashboard-binding-id"
+              type="text"
+              value={subject.bindingId}
+              onChange={(e) => setSubject((prev) => ({ ...prev, bindingId: e.target.value }))}
+              placeholder="operations:operator"
+              spellCheck="false"
+              aria-describedby="dashboard-binding-help"
+            />
+            <p id="dashboard-binding-help" className="field-help">
+              Required for privileged mutation routes. Use canonical binding syntax like
+              {" "}<code>operations:operator</code>.
+            </p>
+          </div>
+          <div className="field-group">
+            <label className="field-label" htmlFor="dashboard-capability-id">
+              VentureOS capability
+            </label>
+            <input
+              id="dashboard-capability-id"
+              type="text"
+              value={subject.capabilityId}
+              onChange={(e) => setSubject((prev) => ({ ...prev, capabilityId: e.target.value }))}
+              placeholder="venture_control"
+              spellCheck="false"
+              aria-describedby="dashboard-capability-help"
+            />
+            <p id="dashboard-capability-help" className="field-help">
+              Canonical capability ID forwarded with privileged requests. Legacy aliases are accepted
+              only as compatibility inputs and normalize server-side.
             </p>
           </div>
           <button

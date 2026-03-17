@@ -12,7 +12,7 @@ function deps(body: unknown = {}): SelfImprovementRouteDeps {
   return {
     dataDir,
     workspaceDir,
-    defaultAgentId: 'oracle',
+    defaultAgentId: 'venture_research',
     sendJson: (res, data, status = 200) => {
       res.writeHead(status, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(data));
@@ -24,6 +24,9 @@ function deps(body: unknown = {}): SelfImprovementRouteDeps {
 beforeEach(() => {
   fs.rmSync(testRoot, { recursive: true, force: true });
   fs.mkdirSync(path.join(dataDir), { recursive: true });
+  fs.mkdirSync(path.join(workspaceDir, 'souls', 'venture_research'), { recursive: true });
+  fs.writeFileSync(path.join(workspaceDir, 'souls', 'venture_research', 'SOUL.md'), '# SOUL\n');
+  fs.writeFileSync(path.join(workspaceDir, 'souls', 'venture_research', 'PRINCIPLES.md'), '# PRINCIPLES\n');
   fs.mkdirSync(path.join(workspaceDir, 'souls', 'oracle'), { recursive: true });
   fs.writeFileSync(path.join(workspaceDir, 'souls', 'oracle', 'SOUL.md'), '# SOUL\n');
   fs.writeFileSync(path.join(workspaceDir, 'souls', 'oracle', 'PRINCIPLES.md'), '# PRINCIPLES\n');
@@ -81,5 +84,12 @@ describe('self-improvement routes', () => {
     await handleSelfImprovement(req, res, deps());
     expect(res._statusCode).toBe(404);
   });
-});
 
+  it('rejects unknown agent identifiers', async () => {
+    const req = mockRequest({ method: 'POST', url: '/api/self-improvement/generate' });
+    const res = mockResponse();
+    await handleSelfImprovement(req, res, deps({ agentId: 'not-a-real-agent' }));
+    expect(res._statusCode).toBe(400);
+    expect(parseJsonBody<{ error: string }>(res).error).toMatch(/canonical VentureOS capability/i);
+  });
+});

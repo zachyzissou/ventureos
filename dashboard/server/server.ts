@@ -89,6 +89,7 @@ import { applySecurityHeaders } from './middleware/security-headers.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import { auditLog } from './middleware/audit-log.js';
 import { authorizeActionRequest } from './middleware/action-guard.js';
+import { authorizeDashboardRbac } from './middleware/rbac.js';
 import { withCorrelationId, CORRELATION_HEADER } from './middleware/correlation-id.js';
 import { proxyBridgeJson, proxyBridgeSse } from './bridge-proxy.js';
 import { tryServeStatic } from './static-serve.js';
@@ -1568,6 +1569,7 @@ const server: Server = http.createServer((req: IncomingMessage, res: ServerRespo
   if (!authenticate(req, res)) return;
   if (!rateLimit(req, res)) return;
   if (!authorizeActionRequest(req, res)) return;
+  if (!authorizeDashboardRbac(req, res)) return;
   // ── End Security Middleware ───────────────────────────────────────
 
   // ── Correlation ID (Issue #195) — wraps the async handler ─────────

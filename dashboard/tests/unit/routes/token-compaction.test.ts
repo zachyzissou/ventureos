@@ -65,6 +65,7 @@ describe('token-compaction route', () => {
     expect(metricsBody.total).toBe(1);
     expect(metricsBody.summary.savedTokens).toBeGreaterThan(0);
     expect(metricsBody.summary.bySession['sess-a']?.runs).toBe(1);
+    expect(metricsBody.metrics[0]?.agentId).toBe('venture_research');
   });
 
   it('returns validation errors for malformed payloads', async () => {
@@ -99,5 +100,16 @@ describe('token-compaction route', () => {
     expect(body.total).toBe(1);
     expect(body.metrics[0]?.agentId).toBe('venture_infrastructure');
   });
-});
 
+  it('rejects unknown agent identifiers for compaction runs', async () => {
+    const req = mockRequest({ method: 'POST', url: '/api/token-compaction/run' });
+    const res = mockResponse();
+    await handleTokenCompaction(req, res, createDeps({
+      sessionId: 'sess-3',
+      agentId: 'not-a-real-agent',
+      files: [{ path: 'x.ts', content: 'const x = 1;' }],
+    }));
+    expect(res._statusCode).toBe(400);
+    expect(parseJsonBody<{ error: string }>(res).error).toMatch(/canonical VentureOS capability/i);
+  });
+});

@@ -4,7 +4,7 @@ import {
   isAuthorityActionAllowed,
   resolveAuthorityClass,
 } from '../authority-map';
-import { runPolicyGate } from '../policy-gate';
+import { runPolicyGate, runResourcePolicyGate } from '../policy-gate';
 import {
   applyHumanOverride,
   arbitrateRecommendation,
@@ -69,6 +69,36 @@ describe('authority plane', () => {
     expect(gate.allowedActorTypes).toContain('human');
     expect(gate.allowedAuthorityClasses).toContain('control_plane');
     expect(gate.actor.bindingId).toBe('engineering:operator');
+  });
+
+  test('resource policy gate allows canonical control-plane dashboard actions', () => {
+    const gate = runResourcePolicyGate({
+      resourceClass: 'dashboard_control',
+      resourceId: '/api/action/clear-cache',
+      actor: {
+        id: 'venture-control',
+        authorityClass: 'control_plane',
+        bindingId: 'operations:operator',
+        capabilityId: 'venture_control',
+      },
+    });
+    expect(gate.ok).toBe(true);
+    expect(gate.decision).toBe('allow_with_evidence');
+  });
+
+  test('resource policy gate rejects delegated agents for queue mutation', () => {
+    const gate = runResourcePolicyGate({
+      resourceClass: 'task_queue_mutation',
+      resourceId: '/api/task-board/task-1',
+      actor: {
+        id: 'venture-delivery',
+        authorityClass: 'delegated_agent',
+        bindingId: 'engineering:operator',
+        capabilityId: 'venture_delivery',
+      },
+    });
+    expect(gate.ok).toBe(false);
+    expect(gate.code).toBe('ACTOR_FORBIDDEN');
   });
 
   test('policy gate returns INVALID_INPUT for malformed actor/mission payload', () => {
