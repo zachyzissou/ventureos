@@ -1,7 +1,7 @@
 import { validateHandoff } from '../handoff-validator';
 
 describe('handoff validator', () => {
-  test('validates oracle -> archivist artifact handoff using wildcard contracts', async () => {
+  test('validates legacy alias handoff using canonical contract identities', async () => {
     const res = await validateHandoff('oracle', 'archivist', {
       type: 'artifact',
       format: 'markdown',
@@ -9,8 +9,8 @@ describe('handoff validator', () => {
     });
 
     expect(res.valid).toBe(true);
-    expect(res.contract?.from.agentId).toBe('oracle');
-    expect(res.contract?.to.agentId).toBe('archivist');
+    expect(res.contract?.from.agentId).toBe('venture_research');
+    expect(res.contract?.to.agentId).toBe('venture_memory');
   });
 
   test('rejects payload when envelope type does not match resolved contract', async () => {

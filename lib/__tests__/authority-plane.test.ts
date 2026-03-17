@@ -65,7 +65,7 @@ describe('authority plane', () => {
     });
     expect(gate.ok).toBe(false);
     expect(gate.code).toBe('ACTOR_FORBIDDEN');
-    expect(gate.allowedActorTypes).toContain('nexus');
+    expect(gate.allowedActorTypes).toContain('control_plane');
     expect(gate.allowedActorTypes).toContain('human');
     expect(gate.allowedAuthorityClasses).toContain('control_plane');
     expect(gate.actor.bindingId).toBe('engineering:operator');
