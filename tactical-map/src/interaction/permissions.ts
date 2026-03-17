@@ -109,8 +109,13 @@ export function canPerformAction(
   actionType: ControlActionType,
   permissions: PermissionMap = DEFAULT_PERMISSIONS,
 ): boolean {
-  if (!usesDefaultPermissions(permissions) && typeof subject === 'string') {
-    return canPerformWithLegacyHierarchy(subject, actionType, permissions);
+  if (!usesDefaultPermissions(permissions)) {
+    if (typeof subject === 'string') {
+      return canPerformWithLegacyHierarchy(subject, actionType, permissions);
+    }
+    if (subject.userRole) {
+      return canPerformWithLegacyHierarchy(subject.userRole, actionType, permissions);
+    }
   }
   return canPerformWithCanonicalPolicy(resolvePermissionSubject(subject), actionType);
 }
@@ -141,6 +146,11 @@ export function validatePermission(
   if (!usesDefaultPermissions(permissions) && typeof subject === 'string') {
     const required = permissions[actionType] ?? 'unknown';
     return `Insufficient permissions: '${actionType}' requires '${required}' role (current: '${subject}')`;
+  }
+
+  if (!usesDefaultPermissions(permissions) && isInteractionSubjectProfile(subject) && subject.userRole) {
+    const required = permissions[actionType] ?? 'unknown';
+    return `Insufficient permissions: '${actionType}' requires '${required}' role (current compatibility role: '${subject.userRole}')`;
   }
 
   const resolved = resolvePermissionSubject(subject);

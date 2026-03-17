@@ -83,6 +83,15 @@ describe('interaction/permissions', () => {
       expect(canPerformAction(subject, 'mission:spawn')).toBe(true);
       expect(canPerformAction(subject, 'budget:adjust')).toBe(false);
     });
+
+    it('honors a custom permission map for canonical subjects when a compatibility role is present', () => {
+      const custom: PermissionMap = {
+        ...DEFAULT_PERMISSIONS,
+        'agent:view': 'admin',
+      };
+      expect(canPerformAction(TACTICAL_ROLE_SUBJECTS.viewer, 'agent:view', custom)).toBe(false);
+      expect(canPerformAction(TACTICAL_ROLE_SUBJECTS.admin, 'agent:view', custom)).toBe(true);
+    });
   });
 
   describe('allowedActions', () => {
