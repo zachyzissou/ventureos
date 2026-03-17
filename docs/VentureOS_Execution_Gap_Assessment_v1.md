@@ -100,9 +100,9 @@ The remaining gap is implementation: policy decisions still need to be enforced 
 
 ## 3) Contradictions
 
-### C1. Evidence gate vs. incomplete evidence infrastructure
+### C1. Evidence gate vs. operational execution discipline
 
-All four docs require evidence-first execution, and the repo now has canonical evidence pathing under `runtime/logs/`, JSON schemas under `schemas/evidence/`, and executable validation/readiness entrypoints. The remaining gap is operational completeness: daily/weekly/monthly evidence must be generated consistently and kept fresh. `docs/METRICS_PLAN.md` still covers task-queue metrics only. **Resolution:** treat the storage and validation layer as present, and focus follow-on work on generation coverage, retention enforcement, and query/reporting depth.
+All four docs require evidence-first execution, and the repo now has canonical evidence pathing under `runtime/logs/`, JSON schemas under `schemas/evidence/`, executable validation/readiness entrypoints, automatic weekly/monthly rollup sync from the daily command path, evidence inventory reporting, and retention preview/apply commands under the evidence CLI. The remaining gap is operational discipline, not missing control-plane tooling: daily/weekly/monthly evidence still has to be produced consistently by the active lanes. `docs/METRICS_PLAN.md` still covers task-queue metrics only. **Resolution:** treat the infrastructure gap as closed in-repo and focus follow-on work on disciplined execution and KPI-system integration.
 
 ### C2. Two disjoint KPI systems
 
@@ -139,7 +139,7 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 | # | Risk | Severity | Owner | Mitigation |
 |---|---|---|---|---|
 | R1 | Architecture doc was missing from repo — companion docs referenced a ghost | RESOLVED | Executive Office Director | Restored from git history (commit f8ab267f) on 2026-03-16 |
-| R2 | Evidence infrastructure is partially implemented — evidence generation coverage still needs enforcement | HIGH | Data/Analytics Director + Engineering | Keep canonical store/schema/validation in place; finish generation, retention, and query/reporting depth |
+| R2 | Evidence execution coverage was partially implemented — control-plane generation, retention, and inventory/reporting were incomplete | RESOLVED | Data/Analytics Director + Engineering | Closed by the canonical evidence CLI flow: daily rollup sync, inventory reports, and retention preview/apply under `runtime/reports/evidence/` |
 | R3 | Cross-cutting agent contracts were missing | RESOLVED | Operations Director | Closed by `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md` and `docs/VentureOS_Agent_Ownership_Matrix_v1.json` |
 | R4 | Access boundaries are partially enforced at runtime — shared authority-plane and tactical-map hooks now use canonical VentureOS metadata, but dashboard control surfaces and provisioning flow still need coverage | MEDIUM-HIGH | IT/Security Director | Expand enforcement beyond `lib/authority-map.ts`, `lib/policy-gate.ts`, `lib/nexus-arbiter.ts`, and `tactical-map/src/interaction/permissions.ts` into remaining hook points and agent provisioning flow |
 | R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) were previously unconnected | RESOLVED | Operations Director | Closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Map_v1.md` plus the existing handoff evidence gate |
@@ -156,9 +156,8 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 ## 6) Recommended next actions (priority order)
 
 1. **Keep Architecture doc aligned** — `VentureOS_Department_Architecture_v1.md` is restored; companion docs must continue to reference it as normative.
-2. **Complete evidence execution coverage** — The canonical store/schema/validation layer is now present. Finish generation coverage, retention policy enforcement, and query/reporting depth.
-3. **Complete RBAC enforcement hooks** — The first runtime slice is live in the shared authority-plane and tactical-map permissions. Expand the same canonical policy model into dashboard control surfaces and agent provisioning.
-4. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
-5. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
-6. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
-7. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.
+2. **Complete RBAC enforcement hooks** — The first runtime slice is live in the shared authority-plane and tactical-map permissions. Expand the same canonical policy model into dashboard control surfaces and agent provisioning.
+3. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
+4. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
+5. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.
+6. **Complete rollback procedures** — Add partial-activation rollback steps and data cleanup procedures to Implementation Plan §8.

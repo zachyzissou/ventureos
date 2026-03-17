@@ -40,6 +40,14 @@ export interface EvidenceFreshnessPolicy {
   monthlyDays: number;
 }
 
+export interface EvidenceRetentionPolicy {
+  dailyDays: number;
+  weeklyDays: number;
+  monthlyDays: number;
+  evidenceReportDays: number;
+  readinessReportDays: number;
+}
+
 export interface KpiRecord {
   kpi_id: string;
   period_start: string;
@@ -186,6 +194,57 @@ export interface ReadinessGateResult {
   reportMarkdown?: string;
 }
 
+export interface EvidenceInventoryTargetSummary {
+  target: string;
+  artifactCount: number;
+  requiredCount: number;
+  complete: boolean;
+  artifacts: string[];
+}
+
+export interface EvidenceInventorySection {
+  dir: string;
+  totalTargets: number;
+  completeTargets: number;
+  incompleteTargets: number;
+  latestTarget?: string;
+  currentTarget?: string;
+  currentTargetComplete?: boolean;
+  targets: EvidenceInventoryTargetSummary[];
+}
+
+export interface EvidenceInventoryResult {
+  generatedAtUtc: string;
+  daily: EvidenceInventorySection;
+  weekly: EvidenceInventorySection;
+  monthly: EvidenceInventorySection;
+  incidents: {
+    dir: string;
+    totalIncidents: number;
+    incidentIds: string[];
+  };
+  reportJson?: string;
+  reportMarkdown?: string;
+}
+
+export interface EvidenceRetentionEntry {
+  bucket: string;
+  path: string;
+  ageDays: number;
+  thresholdDays: number;
+  deleted: boolean;
+}
+
+export interface EvidenceRetentionResult {
+  generatedAtUtc: string;
+  apply: boolean;
+  policy: EvidenceRetentionPolicy;
+  candidates: EvidenceRetentionEntry[];
+  pruned: EvidenceRetentionEntry[];
+  reportJson?: string;
+  reportMarkdown?: string;
+}
+
 interface DailyArtifactDefinition {
   kind: EvidenceKind;
   basename: string;
@@ -240,6 +299,26 @@ interface Phase0ReadinessOptions {
   hookLogDir?: string;
 }
 
+interface EvidenceInventoryOptions {
+  now?: Date;
+  reportDir?: string;
+  dailyDir?: string;
+  weeklyDir?: string;
+  monthlyDir?: string;
+  incidentsDir?: string;
+}
+
+interface EvidenceRetentionOptions {
+  now?: Date;
+  apply?: boolean;
+  reportDir?: string;
+  readinessReportDir?: string;
+  dailyDir?: string;
+  weeklyDir?: string;
+  monthlyDir?: string;
+  policy?: Partial<EvidenceRetentionPolicy>;
+}
+
 interface DiscoveredDailyArtifact {
   date: string;
   path: string;
@@ -255,6 +334,14 @@ const DEFAULT_FRESHNESS_POLICY: EvidenceFreshnessPolicy = {
   dailyHours: 36,
   weeklyDays: 8,
   monthlyDays: 35,
+};
+
+const DEFAULT_RETENTION_POLICY: EvidenceRetentionPolicy = {
+  dailyDays: 45,
+  weeklyDays: 180,
+  monthlyDays: 540,
+  evidenceReportDays: 45,
+  readinessReportDays: 45,
 };
 
 const DAILY_ARTIFACTS: DailyArtifactDefinition[] = [
@@ -347,6 +434,18 @@ export function resolveFreshnessPolicy(
     dailyHours: override.dailyHours ?? DEFAULT_FRESHNESS_POLICY.dailyHours,
     weeklyDays: override.weeklyDays ?? DEFAULT_FRESHNESS_POLICY.weeklyDays,
     monthlyDays: override.monthlyDays ?? DEFAULT_FRESHNESS_POLICY.monthlyDays,
+  };
+}
+
+export function resolveRetentionPolicy(
+  override: Partial<EvidenceRetentionPolicy> = {},
+): EvidenceRetentionPolicy {
+  return {
+    dailyDays: override.dailyDays ?? DEFAULT_RETENTION_POLICY.dailyDays,
+    weeklyDays: override.weeklyDays ?? DEFAULT_RETENTION_POLICY.weeklyDays,
+    monthlyDays: override.monthlyDays ?? DEFAULT_RETENTION_POLICY.monthlyDays,
+    evidenceReportDays: override.evidenceReportDays ?? DEFAULT_RETENTION_POLICY.evidenceReportDays,
+    readinessReportDays: override.readinessReportDays ?? DEFAULT_RETENTION_POLICY.readinessReportDays,
   };
 }
 
@@ -582,6 +681,31 @@ function dateInIsoWeek(dateText: string, isoWeek: string): boolean {
 
 function dateInMonth(dateText: string, month: string): boolean {
   return dateText.startsWith(`${month}-`);
+}
+
+function parseDailyFilenameDate(entryName: string): Date | null {
+  const match = entryName.match(/^(\d{4}-\d{2}-\d{2})-/);
+  if (!match) {
+    return null;
+  }
+  return parseTimestamp(`${match[1]}T00:00:00Z`);
+}
+
+function parseMonthlyIdentifierDate(month: string): Date | null {
+  const match = month.match(/^(\d{4})-(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+  const year = Number(match[1]);
+  const monthIndex = Number(match[2]) - 1;
+  if (monthIndex < 0 || monthIndex > 11) {
+    return null;
+  }
+  return new Date(Date.UTC(year, monthIndex + 1, 0, 23, 59, 59));
+}
+
+function getAgeDays(reference: Date, now: Date): number {
+  return Number(((now.getTime() - reference.getTime()) / 86_400_000).toFixed(2));
 }
 
 function collectMarkdownErrors(
@@ -1194,6 +1318,319 @@ async function summarizeDailyCoverage(dailyDir: string): Promise<Map<string, Set
   return coverage;
 }
 
+async function summarizePeriodicCoverage(
+  dir: string,
+  basenames: readonly string[],
+): Promise<Map<string, Set<string>>> {
+  const coverage = new Map<string, Set<string>>();
+  const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    if (!entry.isFile()) {
+      continue;
+    }
+    for (const basename of basenames) {
+      if (!entry.name.endsWith(`-${basename}`)) {
+        continue;
+      }
+      const target = entry.name.slice(0, -(`-${basename}`.length));
+      const bucket = coverage.get(target) ?? new Set<string>();
+      bucket.add(basename);
+      coverage.set(target, bucket);
+    }
+  }
+  return coverage;
+}
+
+function buildInventorySection(
+  dir: string,
+  coverage: Map<string, Set<string>>,
+  requiredCount: number,
+  currentTarget: string,
+): EvidenceInventorySection {
+  const targets = Array.from(coverage.keys()).sort().map((target) => {
+    const artifacts = Array.from(coverage.get(target) ?? []).sort();
+    return {
+      target,
+      artifactCount: artifacts.length,
+      requiredCount,
+      complete: artifacts.length === requiredCount,
+      artifacts,
+    };
+  });
+  const latestTarget = targets.length ? targets[targets.length - 1].target : undefined;
+  const completeTargets = targets.filter((target) => target.complete).length;
+  const current = targets.find((target) => target.target === currentTarget);
+  return {
+    dir: relFromRepo(dir),
+    totalTargets: targets.length,
+    completeTargets,
+    incompleteTargets: targets.length - completeTargets,
+    latestTarget,
+    currentTarget,
+    currentTargetComplete: current?.complete ?? false,
+    targets,
+  };
+}
+
+async function writeEvidenceIndexReport(
+  payload: EvidenceInventoryResult,
+  reportDir: string,
+): Promise<EvidenceInventoryResult> {
+  await fs.mkdir(reportDir, { recursive: true });
+  const timestamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const reportJson = path.join(reportDir, `evidence-index-${timestamp}.json`);
+  const reportMarkdown = path.join(reportDir, `evidence-index-${timestamp}.md`);
+  const latestJson = path.join(reportDir, 'evidence-index-latest.json');
+  const latestMarkdown = path.join(reportDir, 'evidence-index-latest.md');
+  const output = {
+    ...payload,
+    reportJson: relFromRepo(reportJson),
+    reportMarkdown: relFromRepo(reportMarkdown),
+  };
+  await fs.writeFile(reportJson, `${JSON.stringify(output, null, 2)}\n`, 'utf-8');
+
+  const lines = [
+    '# Evidence Inventory Summary',
+    '',
+    `- Generated: \`${payload.generatedAtUtc}\``,
+    '',
+    '| Cadence | Total Targets | Complete | Incomplete | Latest | Current | Current Complete |',
+    '|---|---:|---:|---:|---|---|---|',
+    `| daily | \`${payload.daily.totalTargets}\` | \`${payload.daily.completeTargets}\` | \`${payload.daily.incompleteTargets}\` | \`${payload.daily.latestTarget ?? 'n/a'}\` | \`${payload.daily.currentTarget ?? 'n/a'}\` | \`${payload.daily.currentTargetComplete ? 'yes' : 'no'}\` |`,
+    `| weekly | \`${payload.weekly.totalTargets}\` | \`${payload.weekly.completeTargets}\` | \`${payload.weekly.incompleteTargets}\` | \`${payload.weekly.latestTarget ?? 'n/a'}\` | \`${payload.weekly.currentTarget ?? 'n/a'}\` | \`${payload.weekly.currentTargetComplete ? 'yes' : 'no'}\` |`,
+    `| monthly | \`${payload.monthly.totalTargets}\` | \`${payload.monthly.completeTargets}\` | \`${payload.monthly.incompleteTargets}\` | \`${payload.monthly.latestTarget ?? 'n/a'}\` | \`${payload.monthly.currentTarget ?? 'n/a'}\` | \`${payload.monthly.currentTargetComplete ? 'yes' : 'no'}\` |`,
+    '',
+    `- Incident bundles tracked: \`${payload.incidents.totalIncidents}\``,
+  ];
+
+  for (const [label, section] of [
+    ['Daily Targets', payload.daily],
+    ['Weekly Targets', payload.weekly],
+    ['Monthly Targets', payload.monthly],
+  ] as const) {
+    lines.push('', `## ${label}`);
+    if (!section.targets.length) {
+      lines.push('- No targets discovered.');
+      continue;
+    }
+    for (const target of section.targets.slice(-10)) {
+      lines.push(`- \`${target.target}\`: ${target.complete ? 'complete' : 'partial'} (${target.artifactCount}/${target.requiredCount})`);
+    }
+  }
+
+  await fs.writeFile(reportMarkdown, `${lines.join('\n')}\n`, 'utf-8');
+  await fs.copyFile(reportJson, latestJson);
+  await fs.copyFile(reportMarkdown, latestMarkdown);
+  return {
+    ...payload,
+    reportJson,
+    reportMarkdown,
+  };
+}
+
+async function writeRetentionReport(
+  payload: EvidenceRetentionResult,
+  reportDir: string,
+): Promise<EvidenceRetentionResult> {
+  await fs.mkdir(reportDir, { recursive: true });
+  const timestamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const reportJson = path.join(reportDir, `evidence-retention-${timestamp}.json`);
+  const reportMarkdown = path.join(reportDir, `evidence-retention-${timestamp}.md`);
+  const latestJson = path.join(reportDir, 'evidence-retention-latest.json');
+  const latestMarkdown = path.join(reportDir, 'evidence-retention-latest.md');
+  const output = {
+    ...payload,
+    reportJson: relFromRepo(reportJson),
+    reportMarkdown: relFromRepo(reportMarkdown),
+  };
+  await fs.writeFile(reportJson, `${JSON.stringify(output, null, 2)}\n`, 'utf-8');
+
+  const lines = [
+    '# Evidence Retention Summary',
+    '',
+    `- Generated: \`${payload.generatedAtUtc}\``,
+    `- Mode: \`${payload.apply ? 'apply' : 'preview'}\``,
+    `- Candidates: \`${payload.candidates.length}\``,
+    `- Pruned: \`${payload.pruned.length}\``,
+  ];
+  if (payload.candidates.length) {
+    lines.push('', '## Candidates');
+    for (const entry of payload.candidates.slice(0, 50)) {
+      lines.push(`- [${entry.deleted ? 'x' : ' '}] \`${entry.bucket}\` \`${entry.path}\` (${entry.ageDays}d > ${entry.thresholdDays}d)`);
+    }
+  }
+
+  await fs.writeFile(reportMarkdown, `${lines.join('\n')}\n`, 'utf-8');
+  await fs.copyFile(reportJson, latestJson);
+  await fs.copyFile(reportMarkdown, latestMarkdown);
+  return {
+    ...payload,
+    reportJson,
+    reportMarkdown,
+  };
+}
+
+export async function buildEvidenceIndex(
+  options: EvidenceInventoryOptions = {},
+): Promise<EvidenceInventoryResult> {
+  const now = options.now ?? new Date();
+  const dailyDir = options.dailyDir ?? EVIDENCE_DAILY_DIR;
+  const weeklyDir = options.weeklyDir ?? EVIDENCE_WEEKLY_DIR;
+  const monthlyDir = options.monthlyDir ?? EVIDENCE_MONTHLY_DIR;
+  const incidentsDir = options.incidentsDir ?? EVIDENCE_INCIDENTS_DIR;
+  const reportDir = options.reportDir ?? path.join(VENTUREOS_ROOT, 'runtime', 'reports', 'evidence');
+
+  await ensureEvidenceDirectories({ dailyDir, weeklyDir, monthlyDir, incidentsDir });
+
+  const dailyCoverageRaw = await summarizeDailyCoverage(dailyDir);
+  const dailyCoverage = new Map<string, Set<string>>();
+  for (const [target, artifacts] of dailyCoverageRaw.entries()) {
+    dailyCoverage.set(target, new Set(Array.from(artifacts)));
+  }
+  const weeklyCoverage = await summarizePeriodicCoverage(weeklyDir, WEEKLY_ARTIFACTS);
+  const monthlyCoverage = await summarizePeriodicCoverage(monthlyDir, MONTHLY_ARTIFACTS);
+  const incidentIds = (await fs.readdir(incidentsDir, { withFileTypes: true }).catch(() => []))
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+
+  const payload: EvidenceInventoryResult = {
+    generatedAtUtc: toUtcIso(now),
+    daily: buildInventorySection(dailyDir, dailyCoverage, DAILY_ARTIFACTS.length, formatLocalDate(now)),
+    weekly: buildInventorySection(weeklyDir, weeklyCoverage, WEEKLY_ARTIFACTS.length, formatIsoWeek(now)),
+    monthly: buildInventorySection(monthlyDir, monthlyCoverage, MONTHLY_ARTIFACTS.length, formatMonth(now)),
+    incidents: {
+      dir: relFromRepo(incidentsDir),
+      totalIncidents: incidentIds.length,
+      incidentIds,
+    },
+  };
+
+  return writeEvidenceIndexReport(payload, reportDir);
+}
+
+async function scanRetentionCandidates(
+  dir: string,
+  bucket: string,
+  thresholdDays: number,
+  now: Date,
+  referenceForEntry: (entryName: string, fullPath: string) => Promise<Date | null> | Date | null,
+  apply: boolean,
+): Promise<EvidenceRetentionEntry[]> {
+  const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+  const candidates: EvidenceRetentionEntry[] = [];
+  for (const entry of entries) {
+    if (!entry.isFile()) {
+      continue;
+    }
+    if (entry.name.includes('-latest.')) {
+      continue;
+    }
+    const fullPath = path.join(dir, entry.name);
+    const reference = await referenceForEntry(entry.name, fullPath);
+    if (!reference) {
+      continue;
+    }
+    const ageDays = getAgeDays(reference, now);
+    if (ageDays <= thresholdDays) {
+      continue;
+    }
+    if (apply) {
+      await fs.rm(fullPath, { force: true });
+    }
+    candidates.push({
+      bucket,
+      path: relFromRepo(fullPath),
+      ageDays,
+      thresholdDays,
+      deleted: apply,
+    });
+  }
+  return candidates;
+}
+
+export async function enforceEvidenceRetention(
+  options: EvidenceRetentionOptions = {},
+): Promise<EvidenceRetentionResult> {
+  const now = options.now ?? new Date();
+  const apply = options.apply ?? false;
+  const policy = resolveRetentionPolicy(options.policy);
+  const dailyDir = options.dailyDir ?? EVIDENCE_DAILY_DIR;
+  const weeklyDir = options.weeklyDir ?? EVIDENCE_WEEKLY_DIR;
+  const monthlyDir = options.monthlyDir ?? EVIDENCE_MONTHLY_DIR;
+  const reportDir = options.reportDir ?? path.join(VENTUREOS_ROOT, 'runtime', 'reports', 'evidence');
+  const readinessReportDir = options.readinessReportDir ?? path.join(VENTUREOS_ROOT, 'runtime', 'reports', 'phase0-readiness');
+
+  await ensureEvidenceDirectories({ dailyDir, weeklyDir, monthlyDir });
+  await fs.mkdir(reportDir, { recursive: true });
+  await fs.mkdir(readinessReportDir, { recursive: true });
+
+  const candidates = [
+    ...await scanRetentionCandidates(
+      dailyDir,
+      'daily',
+      policy.dailyDays,
+      now,
+      (entryName) => parseDailyFilenameDate(entryName),
+      apply,
+    ),
+    ...await scanRetentionCandidates(
+      weeklyDir,
+      'weekly',
+      policy.weeklyDays,
+      now,
+      (entryName) => {
+        const match = entryName.match(/^(\d{4}-W\d{2})-/);
+        if (!match) {
+          return null;
+        }
+        return isoWeekDateBounds(match[1]).end;
+      },
+      apply,
+    ),
+    ...await scanRetentionCandidates(
+      monthlyDir,
+      'monthly',
+      policy.monthlyDays,
+      now,
+      (entryName) => {
+        const match = entryName.match(/^(\d{4}-\d{2})-/);
+        if (!match) {
+          return null;
+        }
+        return parseMonthlyIdentifierDate(match[1]);
+      },
+      apply,
+    ),
+    ...await scanRetentionCandidates(
+      reportDir,
+      'evidence-report',
+      policy.evidenceReportDays,
+      now,
+      async (_entryName, fullPath) => fileTimestamp(fullPath),
+      apply,
+    ),
+    ...await scanRetentionCandidates(
+      readinessReportDir,
+      'readiness-report',
+      policy.readinessReportDays,
+      now,
+      async (_entryName, fullPath) => fileTimestamp(fullPath),
+      apply,
+    ),
+  ];
+
+  const payload: EvidenceRetentionResult = {
+    generatedAtUtc: toUtcIso(now),
+    apply,
+    policy,
+    candidates,
+    pruned: candidates.filter((entry) => entry.deleted),
+  };
+
+  return writeRetentionReport(payload, reportDir);
+}
+
 export async function generateWeeklyRollup(
   options: WeeklyGenerationOptions = {},
 ): Promise<Record<string, string>> {
@@ -1382,6 +1819,8 @@ export async function runPhase0Readiness(
   const localReadyStatusJson = options.localReadyStatusJson ?? path.join(VENTUREOS_ROOT, 'runtime', 'reports', 'openclaw-local-smoke', 'openclaw-local-ready-latest.json');
   const postMergeCadenceJson = options.postMergeCadenceJson ?? path.join(VENTUREOS_ROOT, 'runtime', 'reports', 'post-merge-cadence', 'post-merge-cadence-latest.json');
   const hookLogDir = options.hookLogDir ?? path.join(VENTUREOS_ROOT, 'runtime', 'logs', 'git-hooks');
+  const evidenceIndexLatestJson = path.join(VENTUREOS_ROOT, 'runtime', 'reports', 'evidence', 'evidence-index-latest.json');
+  const evidenceRetentionLatestJson = path.join(VENTUREOS_ROOT, 'runtime', 'reports', 'evidence', 'evidence-retention-latest.json');
 
   const checks: ReadinessCheck[] = [];
   const recommendedRemediations: string[] = [];
@@ -1551,6 +1990,8 @@ export async function runPhase0Readiness(
       localChecklist: relFromRepo(localChecklistPath),
       localReadyStatusJson: relFromRepo(localReadyStatusJson),
       postMergeCadenceJson: relFromRepo(postMergeCadenceJson),
+      evidenceIndexLatestJson: relFromRepo(evidenceIndexLatestJson),
+      evidenceRetentionLatestJson: relFromRepo(evidenceRetentionLatestJson),
     },
   };
 
