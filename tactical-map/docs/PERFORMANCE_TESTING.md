@@ -19,7 +19,7 @@ The performance benchmarking suite ensures the Tactical Map maintains consistent
 
 | Scenario | Target FPS | Max P95 Frame Time | Max Memory |
 |----------|-----------|-------------------|------------|
-| Idle (all agents idle) | ≥55 | <25ms | <100MB |
+| Idle (all agents idle) | ≥55 | <30ms | <100MB |
 | Active (all agents busy) | ≥55 | <30ms | <100MB |
 | Mixed states (active + error) | ≥50 | <35ms | <150MB |
 | Baseline load (100 equiv) | ≥55 | <25ms | <100MB |
@@ -179,6 +179,7 @@ Current stabilization policy while `#630` is open:
 - Only the stable suite is merge-blocking; `render`, `network`, and `memory` remain informational until their GitHub-runner signals are trustworthy.
 - CI benchmark execution is pinned to `workers=1` and `retries=1` to reduce runner contention.
 - Render isolation comes from `waitForTacticalMap()`, which stops backend polling/reconnect loops before measurement.
+- Network latency scenarios fulfill browser-side benchmark fixtures instead of delaying requests into a missing local backend.
 - Workflow summaries come from `scripts/summarize-performance-ci.mjs`, which emits suite-aware policy and gating data in `performance-status.json`.
 
 ### Regression Detection

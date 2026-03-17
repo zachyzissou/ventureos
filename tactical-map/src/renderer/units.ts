@@ -60,24 +60,36 @@ function activitySpeed(activity: ActivityType, state: BuildingState): number {
 export function createUnitsLayer(agentIds: AgentId[]): UnitsLayer {
   const container = new Container();
   const unitsByAgent = new Map<AgentId, UnitView[]>();
+  const pooledUnitsByAgent = new Map<AgentId, UnitView[]>();
 
-  for (const id of agentIds) unitsByAgent.set(id, []);
+  for (const id of agentIds) {
+    unitsByAgent.set(id, []);
+    pooledUnitsByAgent.set(id, []);
+  }
 
   let tS = 0;
 
   function ensureCount(agentId: AgentId, count: number) {
     const list = unitsByAgent.get(agentId);
+    const pool = pooledUnitsByAgent.get(agentId);
     if (!list) return [];
 
     while (list.length < count) {
-      const u = createUnit(agentId, list.length);
+      const u = pool?.pop() ?? createUnit(agentId, list.length);
       list.push(u);
-      container.addChild(u.container);
+      if (!u.container.parent) {
+        container.addChild(u.container);
+      }
     }
 
     while (list.length > count) {
       const u = list.pop();
-      if (u) u.container.removeFromParent();
+      if (u) {
+        u.container.removeFromParent();
+        u.session = undefined;
+        u.container.alpha = 0;
+        pool?.push(u);
+      }
     }
 
     return list;
