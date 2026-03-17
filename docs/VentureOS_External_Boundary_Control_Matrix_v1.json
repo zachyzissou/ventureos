@@ -29,9 +29,15 @@
   "approval_routes": [
     {
       "action_class": "outbound_publish",
-      "minimum_approver": "marketing:director",
-      "secondary_approver": "executive_office:director",
-      "human_final_arbiter_required": true
+      "minimum_approver_rule": "<owning_scope>:director",
+      "secondary_approver_rules": [
+        {
+          "binding_id": "executive_office:director",
+          "condition": "high_impact_public_statement"
+        }
+      ],
+      "human_final_arbiter_required": false,
+      "human_final_arbiter_condition": "crisis_or_high_impact_public_communication"
     },
     {
       "action_class": "commercial_commitment",
@@ -54,7 +60,16 @@
     {
       "action_class": "incident_notification",
       "minimum_approver": "operations:director",
-      "secondary_approver": "it_security:director",
+      "secondary_approver_rules": [
+        {
+          "binding_id": "it_security:director",
+          "condition": "security_incident"
+        },
+        {
+          "binding_id": "legal:director",
+          "condition": "liability_or_privacy_exposure"
+        }
+      ],
       "human_final_arbiter_required": true
     }
   ],
@@ -66,7 +81,7 @@
       "default_decision": "allow_with_evidence",
       "owner_binding_id": "sales:operator",
       "required_approvals": ["sales:director"],
-      "required_evidence": ["approved_source_artifacts", "boundary_record_id"],
+      "required_evidence": ["approved_source_artifacts", "boundary_record_id", "approver_binding_ids"],
       "prohibited_without_escalation": ["non_standard_pricing", "custom_legal_terms"]
     },
     {
@@ -76,7 +91,7 @@
       "default_decision": "allow_with_evidence",
       "owner_binding_id": "customer_success:operator",
       "required_approvals": ["customer_success:director"],
-      "required_evidence": ["boundary_record_id", "approved_source_artifacts", "commitments_made"],
+      "required_evidence": ["boundary_record_id", "approved_source_artifacts", "approver_binding_ids", "commitments_made"],
       "prohibited_without_escalation": ["cross_customer_disclosure", "unsupported_root_cause_claims"]
     },
     {
@@ -86,7 +101,7 @@
       "default_decision": "escalation_required",
       "owner_binding_id": "customer_success:director",
       "required_approvals": ["operations:director", "it_security:director", "legal:director", "human_arbiter"],
-      "required_evidence": ["linked_incident_id", "approver_binding_ids", "outbound_artifact"],
+      "required_evidence": ["boundary_record_id", "linked_incident_id", "approver_binding_ids", "outbound_artifact"],
       "prohibited_without_escalation": ["security_incident_disclosure", "liability_admission"]
     },
     {
@@ -96,7 +111,7 @@
       "default_decision": "allow_with_evidence",
       "owner_binding_id": "operations:operator",
       "required_approvals": ["operations:director"],
-      "required_evidence": ["boundary_record_id", "approved_source_artifacts"],
+      "required_evidence": ["boundary_record_id", "approved_source_artifacts", "approver_binding_ids"],
       "prohibited_without_escalation": ["contract_change", "security_exception"]
     },
     {
@@ -126,7 +141,7 @@
       "default_decision": "allow_with_evidence",
       "owner_binding_id": "marketing:director",
       "required_approvals": ["marketing:director", "executive_office:director"],
-      "required_evidence": ["outbound_artifact", "approver_binding_ids"],
+      "required_evidence": ["boundary_record_id", "outbound_artifact", "approved_source_artifacts", "approver_binding_ids"],
       "prohibited_without_escalation": ["forward_looking_commitment", "security_claim"]
     },
     {
@@ -136,7 +151,7 @@
       "default_decision": "allow_with_evidence",
       "owner_binding_id": "marketing:operator",
       "required_approvals": ["marketing:director"],
-      "required_evidence": ["outbound_artifact", "approved_source_artifacts"],
+      "required_evidence": ["boundary_record_id", "outbound_artifact", "approved_source_artifacts", "approver_binding_ids"],
       "prohibited_without_escalation": ["unapproved_financial_claim", "unapproved_legal_claim"]
     }
   ]

@@ -94,13 +94,15 @@ Default approval routes by action class:
 
 | Action class | Minimum required approval | Secondary required partner | Human final arbiter required |
 |---|---|---|---|
-| `outbound_publish` | owning department `director` | `executive_office:director` for high-impact public statements | required for crisis/high-impact public communication |
-| `outbound_direct_response` | owning department `director` when content goes beyond approved script/material | `legal:director` for `I3`; `it_security:director` for `I4` | only for exceptional/high-impact cases |
-| `commercial_commitment` | `sales:director` or owning commercial director | `finance:director` for pricing/budget impact; `legal:director` for non-standard terms | required for material non-standard commitments |
+| `outbound_publish` | `<owning_scope>:director` | `executive_office:director` for high-impact public statements | required for crisis/high-impact public communication |
+| `outbound_direct_response` | `<owning_scope>:director` when content goes beyond approved script/material | `legal:director` for `I3`; `it_security:director` for `I4` | only for exceptional/high-impact cases |
+| `commercial_commitment` | `sales:director` or `<owning_scope>:director` when the owning scope is the commercial authority | `finance:director` for pricing/budget impact; `legal:director` for non-standard terms | required for material non-standard commitments |
 | `legal_commitment` | `legal:director` | `executive_office:director` if company-level risk or policy change is created | only for extraordinary exceptions |
 | `regulatory_submission` | `legal:director` | `executive_office:director` and relevant subject-matter director | yes for extraordinary or irreversible submissions |
 | `incident_notification` | `operations:director` or `customer_success:director` for service communications | `it_security:director` for security incidents; `legal:director` for liability/privacy exposure | required for material public incident statements |
 | `inbound_request_intake` | operator may intake and route | none, unless intake itself discloses non-public information | no |
+
+Where this table uses `<owning_scope>:director`, it means the canonical VentureOS binding for the department that owns the external interaction.
 
 ## 8) Lane responsibilities
 
