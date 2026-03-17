@@ -40,7 +40,7 @@ The repo previously mixed department lane labels, legacy runtime agent names, an
 - `docs/VentureOS_Role_Model_v1.md`
 - `docs/VentureOS_Agent_Role_Registry_v1.json`
 
-These artifacts define canonical lane bindings, capability overlays, subordinate game specialists, and legacy alias handling. Runtime/UI surfaces may still carry compatibility labels, but they are no longer the source of truth for authority or ownership.
+These artifacts define canonical lane bindings, capability overlays, subordinate game specialists, and legacy alias handling. Runtime/UI surfaces may still carry compatibility labels, but they are no longer the source of truth for authority or ownership. The first enforcement slice is now live in the shared authority-plane and tactical-map permission layer, which resolve existing compatibility roles through canonical VentureOS bindings.
 
 ### CF4. Implementation Plan dates vs. Cadence doc
 
@@ -141,7 +141,7 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 | R1 | Architecture doc was missing from repo — companion docs referenced a ghost | RESOLVED | Executive Office Director | Restored from git history (commit f8ab267f) on 2026-03-16 |
 | R2 | Evidence infrastructure is partially implemented — evidence generation coverage still needs enforcement | HIGH | Data/Analytics Director + Engineering | Keep canonical store/schema/validation in place; finish generation, retention, and query/reporting depth |
 | R3 | Cross-cutting agent contracts were missing | RESOLVED | Operations Director | Closed by `docs/VentureOS_Cross_Department_Agent_Contracts_v1.md` and `docs/VentureOS_Agent_Ownership_Matrix_v1.json` |
-| R4 | Access boundaries are defined only at the spec layer — runtime enforcement still pending | HIGH | IT/Security Director | Implement policy decisions through the named RBAC hook points and agent provisioning flow |
+| R4 | Access boundaries are partially enforced at runtime — shared authority-plane and tactical-map hooks now use canonical VentureOS metadata, but dashboard control surfaces and provisioning flow still need coverage | MEDIUM-HIGH | IT/Security Director | Expand enforcement beyond `lib/authority-map.ts`, `lib/policy-gate.ts`, `lib/nexus-arbiter.ts`, and `tactical-map/src/interaction/permissions.ts` into remaining hook points and agent provisioning flow |
 | R5 | Two parallel SLA systems (P0-P3 technical vs. handoff breach tiers) were previously unconnected | RESOLVED | Operations Director | Closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Map_v1.md` plus the existing handoff evidence gate |
 | R6 | No external boundary protocol for customer/vendor/regulator interactions | HIGH | Legal Director | Define boundary contracts before Sales/Legal activation in Phase B/C |
 | R7 | No inter-lane communication security model | HIGH | IT/Security Director | Define authentication/authorization for lane artifact exchange |
@@ -157,7 +157,7 @@ This gap is now closed at the doc/spec layer by `docs/VentureOS_SLA_Framework_Ma
 
 1. **Keep Architecture doc aligned** — `VentureOS_Department_Architecture_v1.md` is restored; companion docs must continue to reference it as normative.
 2. **Complete evidence execution coverage** — The canonical store/schema/validation layer is now present. Finish generation coverage, retention policy enforcement, and query/reporting depth.
-3. **Implement RBAC enforcement hooks** — The role model and access matrix now exist; wire them into runtime policy, dashboard control surfaces, and agent provisioning.
+3. **Complete RBAC enforcement hooks** — The first runtime slice is live in the shared authority-plane and tactical-map permissions. Expand the same canonical policy model into dashboard control surfaces and agent provisioning.
 4. **Add department bootstrap checklist** — Standard activation procedure for onboarding new departments in Phase B/C.
 5. **Define external boundary protocol** — What flows out to customers/vendors/regulators, under what approvals, with what audit trail.
 6. **Add OS-level change management** — How architecture/KPI/contract changes are proposed, reviewed across affected departments, approved, and deployed.

@@ -21,6 +21,16 @@ export type UserRole = 'viewer' | 'operator' | 'admin';
 /** Maps actions to minimum required role. */
 export type PermissionMap = Record<ControlActionType, UserRole>;
 
+export type InteractionAuthorityClass = 'delegated_agent' | 'control_plane' | 'human_final_arbiter';
+
+export interface InteractionSubjectProfile {
+  bindingId: string;
+  authorityClass: InteractionAuthorityClass;
+  capabilityId?: string;
+  specialistId?: string;
+  userRole?: UserRole;
+}
+
 export const DEFAULT_PERMISSIONS: PermissionMap = {
   'agent:view': 'viewer',
   'agent:pause': 'operator',
@@ -37,6 +47,31 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   viewer: 0,
   operator: 1,
   admin: 2,
+};
+
+/**
+ * Compatibility map from legacy tactical-map roles to canonical VentureOS subjects.
+ * This preserves the current UI while RBAC-aware surfaces are rolled out.
+ */
+export const TACTICAL_ROLE_SUBJECTS: Record<UserRole, InteractionSubjectProfile> = {
+  viewer: {
+    bindingId: 'trust_evidence:auditor',
+    authorityClass: 'delegated_agent',
+    capabilityId: 'venture_evidence',
+    userRole: 'viewer',
+  },
+  operator: {
+    bindingId: 'operations:operator',
+    authorityClass: 'control_plane',
+    capabilityId: 'venture_control',
+    userRole: 'operator',
+  },
+  admin: {
+    bindingId: 'executive_office:director',
+    authorityClass: 'human_final_arbiter',
+    capabilityId: 'venture_strategy',
+    userRole: 'admin',
+  },
 };
 
 // ═══════════════════════════════════════════
