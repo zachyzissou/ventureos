@@ -612,6 +612,9 @@ function validateHandoffLedger(
   const errors: string[] = [];
   const warnings: string[] = [];
   const strictCurrentDateValidation = isCurrentTargetDate(targetDate, now);
+  const ledgerReferenceTime = strictCurrentDateValidation
+    ? now
+    : (parseTimestamp(payload.captured_at) ?? now);
   const handoffs = Array.isArray(payload.handoffs) ? payload.handoffs : [];
   const summary = isRecord(payload.summary) ? payload.summary : {};
 
@@ -659,7 +662,7 @@ function validateHandoffLedger(
     const exceptionApprovalActive = Boolean(
       hasApprovalActor
       && exceptionApprovalExpiry
-      && exceptionApprovalExpiry.getTime() > now.getTime(),
+      && exceptionApprovalExpiry.getTime() > ledgerReferenceTime.getTime(),
     );
     const severityText = typeof handoff.exceptions === 'string' ? handoff.exceptions : '';
     const explicitP0 = /\bP0\b/i.test(severityText);
@@ -670,6 +673,9 @@ function validateHandoffLedger(
       }
       if (!handoff.consumer_binding_id) {
         errors.push(`${label} is missing consumer_binding_id`);
+      }
+      if (typeof handoff.compliance_status !== 'string' || !handoff.compliance_status.trim()) {
+        errors.push(`${label} is missing canonical compliance_status`);
       }
       if (!producerTs) {
         errors.push(`${label} is missing producer_ts`);
@@ -722,7 +728,11 @@ function validateHandoffLedger(
     if (handoff.exception_expires_at && !exceptionApprovalExpiry) {
       errors.push(`${label} has invalid exception_expires_at`);
     }
-    if (handoff.exception_expires_at && exceptionApprovalExpiry && exceptionApprovalExpiry.getTime() <= now.getTime()) {
+    if (
+      handoff.exception_expires_at
+      && exceptionApprovalExpiry
+      && exceptionApprovalExpiry.getTime() <= ledgerReferenceTime.getTime()
+    ) {
       errors.push(`${label} has expired exception approval`);
     }
 

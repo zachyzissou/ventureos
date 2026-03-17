@@ -6,8 +6,16 @@ SCRIPT="$ROOT/scripts/phase0-readiness.sh"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-DATE="2026-03-16"
-ISO_WEEK="2026-W12"
+DATE="$(python3 - <<'PY'
+from datetime import datetime, timezone
+print(datetime.now(timezone.utc).strftime('%Y-%m-%d'))
+PY
+)"
+ISO_WEEK="$(python3 - <<'PY'
+from datetime import datetime, timezone
+print(datetime.now(timezone.utc).strftime('%G-W%V'))
+PY
+)"
 
 prepare_case_root() {
   local case_root="$1"
@@ -31,15 +39,16 @@ prepare_case_root() {
   cp "$ROOT/runtime/logs/daily/decision-log.md" "$case_root/runtime/logs/daily/$DATE-decision-log.md"
   cp "$ROOT/runtime/logs/daily/day1-go-no-go.md" "$case_root/runtime/logs/daily/$DATE-go-no-go.md"
 
-  python3 - "$case_root/runtime/logs/daily" "$mode" <<'PY'
+  python3 - "$case_root/runtime/logs/daily" "$mode" "$DATE" <<'PY'
 import json
 import pathlib
 import sys
+from datetime import datetime, timezone
 
 daily_dir = pathlib.Path(sys.argv[1])
 mode = sys.argv[2]
-date = "2026-03-16"
-captured = "2026-03-16T08:00:00Z"
+date = sys.argv[3]
+captured = datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 for path in daily_dir.glob(f"{date}-*.json"):
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -83,22 +92,22 @@ for path in daily_dir.glob(f"{date}-*.json"):
 PY
 
   cat > "$case_root/runtime/logs/weekly/$ISO_WEEK-kpi-rollup.json" <<'JSON'
-{"schemaVersion":1,"generatedAtUtc":"2026-03-16T08:00:00Z","isoWeek":"2026-W12","daysCovered":1,"completeDays":1,"incompleteDays":0,"dailyCoverage":[{"date":"2026-03-16","artifacts":["agent_health","spend_snapshot","kpi_snapshot","handoff_ledger","decision_log","go_no_go"],"complete":true}]}
+{"schemaVersion":1,"generatedAtUtc":"__CAPTURED_AT__","isoWeek":"__ISO_WEEK__","daysCovered":1,"completeDays":1,"incompleteDays":0,"dailyCoverage":[{"date":"__DATE__","artifacts":["agent_health","spend_snapshot","kpi_snapshot","handoff_ledger","decision_log","go_no_go"],"complete":true}]}
 JSON
   cat > "$case_root/runtime/logs/weekly/$ISO_WEEK-ops-review.md" <<'MD'
-# Weekly Ops Review — 2026-W12
+# Weekly Ops Review — __ISO_WEEK__
 
 ## Coverage
 - Days covered: `1`
 
 ## Highlights
-- 2026-03-16: complete evidence set
+- __DATE__: complete evidence set
 
 ## Actions
 - Continue cadence.
 MD
   cat > "$case_root/runtime/logs/weekly/$ISO_WEEK-risk-register.md" <<'MD'
-# Weekly Risk Register — 2026-W12
+# Weekly Risk Register — __ISO_WEEK__
 
 ## Open Risks
 - No material evidence coverage gaps detected this week.
@@ -113,12 +122,35 @@ MD
 # Local Integration Checklist
 MD
   cat > "$case_root/runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json" <<'JSON'
-{"status":"ok","generatedAt":"2026-03-16T08:00:00Z"}
+{"status":"ok","generatedAt":"__CAPTURED_AT__"}
 JSON
   cat > "$case_root/runtime/reports/post-merge-cadence/post-merge-cadence-latest.json" <<'JSON'
-{"generatedAtUtc":"2026-03-16T08:00:00Z"}
+{"generatedAtUtc":"__CAPTURED_AT__"}
 JSON
-  echo 'hook ok' > "$case_root/runtime/logs/git-hooks/post-merge-cadence-20260316T080000Z.log"
+  python3 - "$case_root" "$DATE" "$ISO_WEEK" <<'PY'
+import pathlib
+import sys
+from datetime import datetime, timezone
+
+case_root = pathlib.Path(sys.argv[1])
+date = sys.argv[2]
+iso_week = sys.argv[3]
+captured = datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+captured_slug = captured.replace("-", "").replace(":", "").replace("T", "T").replace("Z", "Z")
+
+for target in [
+    case_root / "runtime/logs/weekly" / f"{iso_week}-kpi-rollup.json",
+    case_root / "runtime/logs/weekly" / f"{iso_week}-ops-review.md",
+    case_root / "runtime/logs/weekly" / f"{iso_week}-risk-register.md",
+    case_root / "runtime/reports/openclaw-local-smoke/openclaw-local-ready-latest.json",
+    case_root / "runtime/reports/post-merge-cadence/post-merge-cadence-latest.json",
+]:
+    contents = target.read_text(encoding="utf-8")
+    contents = contents.replace("__CAPTURED_AT__", captured).replace("__DATE__", date).replace("__ISO_WEEK__", iso_week)
+    target.write_text(contents, encoding="utf-8")
+
+(case_root / "runtime/logs/git-hooks" / f"post-merge-cadence-{captured_slug}.log").write_text("hook ok\n", encoding="utf-8")
+PY
 }
 
 run_case() {

@@ -6,7 +6,11 @@ SCRIPT="$ROOT/scripts/validate-evidence.sh"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-DATE="2026-03-16"
+DATE="$(python3 - <<'PY'
+from datetime import datetime, timezone
+print(datetime.now(timezone.utc).strftime('%Y-%m-%d'))
+PY
+)"
 prepare_bundle() {
   local daily_dir="$1"
   local mode="$2"
@@ -21,11 +25,14 @@ prepare_bundle() {
 import json
 import pathlib
 import sys
+from datetime import datetime, timedelta, timezone
 
 daily_dir = pathlib.Path(sys.argv[1])
 date = sys.argv[2]
 mode = sys.argv[3]
-captured = f"{date}T08:00:00Z"
+captured_dt = datetime.now(timezone.utc).replace(microsecond=0)
+captured = captured_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+exception_expiry = (captured_dt + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
 for name in ("agent-health.json", "spend.json", "kpi-snapshot.json", "handoff-ledger.json"):
     path = daily_dir / f"{date}-{name}"
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -62,7 +69,7 @@ for name in ("agent-health.json", "spend.json", "kpi-snapshot.json", "handoff-le
                 handoff["breach_owner"] = "executive_office:director"
                 handoff["breach_action"] = "Defer downstream closeout until the approved exception window expires."
                 handoff["exception_approved_by"] = "executive_office:director"
-                handoff["exception_expires_at"] = "2026-03-17T12:00:00Z"
+                handoff["exception_expires_at"] = exception_expiry
 
         compliance_values = [handoff.get("compliance_status", handoff.get("sla_status")) for handoff in handoffs]
         payload["summary"] = {
