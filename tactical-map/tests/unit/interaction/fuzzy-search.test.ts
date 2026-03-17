@@ -4,13 +4,13 @@ import { fuzzyScore, fuzzySearch, fuzzySearchMulti } from '@/interaction/fuzzy-s
 describe('interaction/fuzzy-search', () => {
   describe('fuzzyScore', () => {
     it('returns score > 0 for matching strings', () => {
-      const result = fuzzyScore('syn', 'Synth Agent');
+      const result = fuzzyScore('ven', 'Venture Delivery');
       expect(result.score).toBeGreaterThan(0);
       expect(result.matches.length).toBe(3);
     });
 
     it('returns 0 for non-matching strings', () => {
-      const result = fuzzyScore('xyz', 'Synth Agent');
+      const result = fuzzyScore('xyz', 'Venture Delivery');
       expect(result.score).toBe(0);
       expect(result.matches).toHaveLength(0);
     });
@@ -31,13 +31,13 @@ describe('interaction/fuzzy-search', () => {
     });
 
     it('consecutive matches score higher', () => {
-      const consecutive = fuzzyScore('syn', 'venture_delivery');
-      const scattered = fuzzyScore('syn', 's_y_n_th');
+      const consecutive = fuzzyScore('ven', 'venture_delivery');
+      const scattered = fuzzyScore('ven', 'v_e_n_bridge');
       expect(consecutive.score).toBeGreaterThan(scattered.score);
     });
 
     it('case insensitive matching', () => {
-      const result = fuzzyScore('SYN', 'venture_delivery');
+      const result = fuzzyScore('VEN', 'venture_delivery');
       expect(result.score).toBeGreaterThan(0);
     });
 
@@ -51,19 +51,19 @@ describe('interaction/fuzzy-search', () => {
     });
 
     it('exact case match gets bonus', () => {
-      const exact = fuzzyScore('S', 'Synth');
-      const lower = fuzzyScore('s', 'Synth');
+      const exact = fuzzyScore('V', 'Venture');
+      const lower = fuzzyScore('v', 'Venture');
       expect(exact.score).toBeGreaterThanOrEqual(lower.score);
     });
 
     it('returns correct match indices', () => {
-      const result = fuzzyScore('sth', 'venture_delivery');
-      expect(result.matches).toEqual([0, 3, 4]);
+      const result = fuzzyScore('vde', 'venture_delivery');
+      expect(result.matches).toEqual([0, 8, 9]);
     });
   });
 
   describe('fuzzySearch', () => {
-    const items = ['Pause Oracle', 'Resume Atlas', 'Spawn Mission', 'View Synth', 'Undo'];
+    const items = ['Pause Venture Research', 'Resume Venture Infrastructure', 'Spawn Mission', 'View Venture Delivery', 'Undo'];
 
     it('returns all items for empty query', () => {
       const results = fuzzySearch('', items, (x) => x);
@@ -73,7 +73,7 @@ describe('interaction/fuzzy-search', () => {
     it('filters by matching query', () => {
       const results = fuzzySearch('pau', items, (x) => x);
       expect(results).toHaveLength(1);
-      expect(results[0].item).toBe('Pause Oracle');
+      expect(results[0].item).toBe('Pause Venture Research');
     });
 
     it('sorts by score descending', () => {
@@ -97,8 +97,8 @@ describe('interaction/fuzzy-search', () => {
 
   describe('fuzzySearchMulti', () => {
     const items = [
-      { label: 'Pause Oracle', keywords: ['stop', 'halt'] },
-      { label: 'Resume Atlas', keywords: ['start', 'continue'] },
+      { label: 'Pause Venture Research', keywords: ['stop', 'halt'] },
+      { label: 'Resume Venture Infrastructure', keywords: ['start', 'continue'] },
       { label: 'Spawn Mission', keywords: ['create', 'new', 'task'] },
     ];
 
@@ -109,19 +109,19 @@ describe('interaction/fuzzy-search', () => {
         (item) => [item.label, ...item.keywords],
       );
       expect(results).toHaveLength(1);
-      expect(results[0].item.label).toBe('Pause Oracle');
+      expect(results[0].item.label).toBe('Pause Venture Research');
     });
 
     it('primary field (label) gets higher weight', () => {
       // "at" matches "Atlas" in label and "start" in keywords
       // Atlas label match should score higher
       const results = fuzzySearchMulti(
-        'at',
+        'inf',
         items,
         (item) => [item.label, ...item.keywords],
       );
       expect(results.length).toBeGreaterThan(0);
-      expect(results[0].item.label).toBe('Resume Atlas');
+      expect(results[0].item.label).toBe('Resume Venture Infrastructure');
     });
 
     it('returns all for empty query', () => {

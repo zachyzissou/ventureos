@@ -121,7 +121,7 @@ vi.mock('pixi.js', () => {
 import { Container, Text } from 'pixi.js';
 import { createTerrain } from '@/renderer/terrain';
 import { createBuildingsLayer, RING_AGENT_IDS } from '@/renderer/buildings';
-import { createNexus } from '@/renderer/venture_control';
+import { createNexus } from '@/renderer/nexus';
 import { createHud } from '@/renderer/hud';
 
 describe('renderer foundation', () => {
@@ -152,7 +152,7 @@ describe('renderer foundation', () => {
     const hud = createHud();
     expect(hud.container).toBeInstanceOf(Container);
     hud.setSize(1920, 1080);
-    hud.setKpiText('Oracle WIS: 85 | Atlas SPD: 72');
+    hud.setKpiText('Venture Research WIS: 85 | Venture Infrastructure SPD: 72');
     hud.update(16);
     hud.setSize(1366, 768);
     hud.update(16);

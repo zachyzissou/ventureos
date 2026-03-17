@@ -18,9 +18,9 @@ describe('helper utilities', () => {
   });
 
   describe('agentLabel', () => {
-    it('capitalizes first letter', () => {
-      expect(agentLabel('venture_research')).toBe('Oracle');
-      expect(agentLabel('venture_infrastructure')).toBe('Atlas');
+    it('uses canonical display names', () => {
+      expect(agentLabel('venture_research')).toBe('Venture Research');
+      expect(agentLabel('venture_infrastructure')).toBe('Venture Infrastructure');
     });
   });
 
@@ -262,7 +262,7 @@ describe('HealthAlertManager', () => {
     const state = stateWithCpu('venture_research', 0.95);
     const alerts = manager.evaluate(state, 1000);
     const cpuAlert = alerts.find((a) => a.metric === 'cpu');
-    expect(cpuAlert!.message).toContain('Oracle');
+    expect(cpuAlert!.message).toContain('Venture Research');
     expect(cpuAlert!.message).toContain('CPU');
     expect(cpuAlert!.message).toContain('critical');
   });

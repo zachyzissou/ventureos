@@ -6,7 +6,7 @@
  */
 
 import type { AgentId } from '@/config';
-import { AGENT_ORDER } from '@/config';
+import { AGENT_DISPLAY_NAMES, AGENT_ORDER } from '@/config';
 import type {
   AgentHealthState,
   AlertSeverity,
@@ -41,7 +41,7 @@ function makeCooldownKey(agentId: string, metric: string, severity: AlertSeverit
 }
 
 function agentLabel(id: string): string {
-  return id.charAt(0).toUpperCase() + id.slice(1);
+  return AGENT_DISPLAY_NAMES[id as AgentId] ?? id;
 }
 
 export class HealthAlertManager {

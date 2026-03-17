@@ -44,7 +44,7 @@ describe('data/control-client', () => {
       expect(result.ok).toBe(true);
       expect(mockFetch).toHaveBeenCalledOnce();
       const [url, opts] = mockFetch.mock.calls[0];
-      expect(url).toContain('/agents/venture_delivery/pause');
+      expect(url).toContain('/agents/synth/pause');
       expect(opts.method).toBe('POST');
     });
 
@@ -67,7 +67,7 @@ describe('data/control-client', () => {
       await client.resumeAgent('venture_infrastructure');
 
       const [url] = mockFetch.mock.calls[0];
-      expect(url).toContain('/agents/venture_infrastructure/resume');
+      expect(url).toContain('/agents/atlas/resume');
     });
   });
 
@@ -115,7 +115,7 @@ describe('data/control-client', () => {
       });
 
       const [url, opts] = mockFetch.mock.calls[0];
-      expect(url).toContain('/agents/venture_research/budget');
+      expect(url).toContain('/agents/oracle/budget');
       const body = JSON.parse(opts.body);
       expect(body.newBudget).toBe(50000);
       expect(body.previousBudget).toBe(30000);
@@ -142,7 +142,7 @@ describe('data/control-client', () => {
       await client.updateConfig('venture_security', { maxSessions: 5 });
 
       const [url, opts] = mockFetch.mock.calls[0];
-      expect(url).toContain('/agents/venture_security/config');
+      expect(url).toContain('/agents/sentinel/config');
       const body = JSON.parse(opts.body);
       expect(body.config.maxSessions).toBe(5);
     });
