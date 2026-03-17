@@ -11,7 +11,7 @@ function fixedNow(): Date {
 
 describe('token-compactor', () => {
   it('detects protected file globs', () => {
-    expect(isProtectedFile('souls/oracle/SOUL.md', ['SOUL.md'])).toBe(true);
+    expect(isProtectedFile('souls/venture_research/SOUL.md', ['SOUL.md'])).toBe(true);
     expect(isProtectedFile('config/secret.key', ['*.key'])).toBe(true);
     expect(isProtectedFile('src/main.ts', ['*.key'])).toBe(false);
   });
@@ -53,7 +53,7 @@ describe('token-compactor', () => {
     `;
     const result = runTokenCompaction(
       [
-        { path: 'souls/oracle/SOUL.md', content: protectedContent },
+        { path: 'souls/venture_research/SOUL.md', content: protectedContent },
         { path: 'src/worker.ts', content: '// comment\nexport const x = 1;' },
       ],
       { now: fixedNow, protectedFiles: ['SOUL.md'], level: 'standard' },

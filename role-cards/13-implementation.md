@@ -66,8 +66,8 @@ ventureos/
 ├── role-cards/
 │   ├── schema.ts
 │   ├── cards/
-│   │   ├── echo.json
-│   │   ├── nexus.json
+│   │   ├── venture_strategy.json
+│   │   ├── venture_control.json
 │   │   └── ...
 │   ├── affinity-matrix.json
 │   └── loader.ts
@@ -98,15 +98,15 @@ Store affinity scores in the evidence or state backend and update them based on 
 ## Phase 4: Metrics and Health
 
 ### Priority metrics
-1. Echo: delegation accuracy
-2. Nexus: task completion rate
-3. Sentinel: review coverage
-4. Scout: detection latency
+1. Venture Strategy: delegation accuracy
+2. Venture Control: task completion rate
+3. Venture Security: review coverage
+4. Venture Signals: detection latency
 
 ### Implementation
 - reuse VentureOS logging where possible
 - expose daily/weekly rollups through the evidence pipeline
-- let Archivist document metric definitions and drift history
+- let Venture Memory document metric definitions and drift history
 
 ## What to Build First
 

@@ -4,13 +4,16 @@ import path from "node:path";
 
 import { generateSoulMd, validateCard, type AgentRoleCard } from "../role-cards/schema";
 
-import { nexus } from "../role-cards/02-nexus";
-import { oracle } from "../role-cards/03-oracle";
-import { atlas } from "../role-cards/04-atlas";
-import { sentinel } from "../role-cards/05-sentinel";
-import { verifier } from "../role-cards/06-verifier";
-import { archivist } from "../role-cards/07-archivist";
-import { synth } from "../role-cards/08-synth";
+import { venture_strategy } from "../role-cards/01-venture-strategy";
+import { venture_control } from "../role-cards/02-venture-control";
+import { venture_research } from "../role-cards/03-venture-research";
+import { venture_infrastructure } from "../role-cards/04-venture-infrastructure";
+import { venture_security } from "../role-cards/05-venture-security";
+import { venture_evidence } from "../role-cards/06-venture-evidence";
+import { venture_memory } from "../role-cards/07-venture-memory";
+import { venture_delivery } from "../role-cards/08-venture-delivery";
+import { venture_signals } from "../role-cards/09-venture-signals";
+import { venture_comms } from "../role-cards/10-venture-comms";
 
 type Options = {
   outDir: string;
@@ -31,7 +34,7 @@ Usage:
 
 Options:
   --out-dir <dir>          Output directory inside repo (default: souls)
-  --agents <csv>           Comma-separated agent ids (default: nexus,oracle,atlas,sentinel,verifier,archivist,synth)
+  --agents <csv>           Comma-separated agent ids (default: venture_strategy,venture_control,venture_research,venture_infrastructure,venture_security,venture_evidence,venture_memory,venture_delivery,venture_signals,venture_comms)
   --deploy-workspaces      Also write to ~/.openclaw/workspace-<agentId>/SOUL.md when present
   --openclaw-home <dir>    Override OpenClaw home (default: ~/.openclaw)
   --no-workspace-backup    Do not create timestamped backups in workspaces
@@ -42,13 +45,16 @@ Options:
 
 function parseArgs(argv: string[]): Options {
   const defaultAgents = [
-    "nexus",
-    "oracle",
-    "atlas",
-    "sentinel",
-    "verifier",
-    "archivist",
-    "synth",
+    "venture_strategy",
+    "venture_control",
+    "venture_research",
+    "venture_infrastructure",
+    "venture_security",
+    "venture_evidence",
+    "venture_memory",
+    "venture_delivery",
+    "venture_signals",
+    "venture_comms",
   ];
 
   const opts: Options = {
@@ -134,13 +140,16 @@ function maybeBackup(filePath: string): void {
 }
 
 const CARD_BY_ID: Record<string, AgentRoleCard> = {
-  nexus,
-  oracle,
-  atlas,
-  sentinel,
-  verifier,
-  archivist,
-  synth,
+  venture_strategy,
+  venture_control,
+  venture_research,
+  venture_infrastructure,
+  venture_security,
+  venture_evidence,
+  venture_memory,
+  venture_delivery,
+  venture_signals,
+  venture_comms,
 };
 
 function main(): void {

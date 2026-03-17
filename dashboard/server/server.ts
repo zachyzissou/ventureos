@@ -210,7 +210,7 @@ const visualExplainerHtmlPath: string = path.join(import.meta.dirname, '..', 'cl
 const clientAssetsDir: string = path.join(import.meta.dirname, '..', 'client', 'assets');
 
 const VENTUREOS_AGENTS: string[] = (
-  process.env.VENTUREOS_AGENTS ?? 'oracle,atlas,sentinel,verifier,archivist,synth'
+  process.env.VENTUREOS_AGENTS ?? 'venture_research,venture_infrastructure,venture_security,venture_evidence,venture_memory,venture_delivery,venture_strategy,venture_control'
 )
   .split(',')
   .map((s) => s.trim())
@@ -1386,7 +1386,7 @@ function getMissionControl(): MissionControlResponse {
   return missionControlCache;
 }
 
-// ─── Observational Memory (Archivist) ────────────────────────────────────────
+// ─── Observational Memory (Venture Memory) ───────────────────────────────────
 
 let observationsCache: {
   updatedAt: number;

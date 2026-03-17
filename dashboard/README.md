@@ -136,9 +136,9 @@ All paths are resolved through `lib/paths.ts`. Override with environment variabl
 | `OPENCLAW_AGENT` | `main` | Agent ID for session data |
 | `SHARED_CONTEXT` | `~/clawd/shared-context` | Cross-agent data |
 | `KPI_DIR` | `$SHARED_CONTEXT/kpis` | KPI JSON files |
-| `OBSERVATIONS_DIR` | `~/.openclaw/workspace-archivist/observations` | Observation files |
+| `OBSERVATIONS_DIR` | `~/.openclaw/workspace-venture_memory/observations` | Observation files |
 | `VENTUREOS_LOG_DIR` | `~/clawd/logs` | Dashboard log output |
-| `VENTUREOS_AGENTS` | `oracle,atlas,sentinel,verifier,archivist,synth` | Agent IDs to monitor |
+| `VENTUREOS_AGENTS` | `venture_research,venture_infrastructure,venture_security,venture_evidence,venture_memory,venture_delivery` | Agent IDs to monitor |
 
 ### Cache Tuning
 
@@ -330,7 +330,7 @@ ls ~/clawd/shared-context/kpis/
 ls ~/.openclaw/agents/
 
 # Each agent needs a sessions/ subdirectory
-ls ~/.openclaw/agents/oracle/sessions/
+ls ~/.openclaw/agents/venture_research/sessions/
 ```
 
 ### Rate limited (429)

@@ -165,7 +165,13 @@ const VALID_STATUSES: TaskStatus[] = [
   'failed',
 ];
 const VALID_PRIORITIES: TaskPriority[] = ['critical', 'high', 'medium', 'low'];
-const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'nexus', 'agent'];
+const VALID_ASSIGNEE_TYPES: TaskAssigneeType[] = ['human', 'control_plane', 'nexus', 'agent'];
+
+function normalizeAssigneeType(value: string | null | undefined, fallback: TaskAssigneeType = 'agent'): TaskAssigneeType {
+  if (!value) return fallback;
+  if (value === 'nexus') return 'control_plane';
+  return VALID_ASSIGNEE_TYPES.includes(value as TaskAssigneeType) ? (value as TaskAssigneeType) : fallback;
+}
 
 /**
  * Filter task cards for export.
@@ -199,7 +205,8 @@ export function filterCardsForExport(
     out = out.filter((t) => t.missionId === opts.missionId);
   }
   if (opts.assigneeType && VALID_ASSIGNEE_TYPES.includes(opts.assigneeType as TaskAssigneeType)) {
-    out = out.filter((t) => (t.assigneeType ?? 'agent') === opts.assigneeType);
+    const requestedType = normalizeAssigneeType(opts.assigneeType, 'agent');
+    out = out.filter((t) => normalizeAssigneeType(t.assigneeType ?? 'agent', 'agent') === requestedType);
   }
   if (opts.search) {
     const q = opts.search.toLowerCase();

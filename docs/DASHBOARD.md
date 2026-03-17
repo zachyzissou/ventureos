@@ -24,7 +24,7 @@ The dashboard is a read-only monitoring layer that surfaces data from across the
 │  ~/clawd/shared-context/kpis/    ← KPI snapshots     │
 │  ~/.openclaw/agents/*/sessions/  ← Agent sessions    │
 │  ~/.openclaw/workspace-*/        ← Agent workspaces  │
-│  ~/.openclaw/workspace-archivist/observations/        │
+│  ~/.openclaw/workspace-venture_memory/observations/        │
 │  ~/clawd/shared-context/         ← Active work/prios │
 └──────────────────────────────────────────────────────┘
 ```
@@ -94,12 +94,12 @@ The dashboard scans each agent's sessions directory for:
 - **Status**: `working` if active in last 2 minutes, `idle` otherwise
 
 **Monitored agents** (configurable via `VENTUREOS_AGENTS`):
-`oracle`, `atlas`, `sentinel`, `verifier`, `archivist`, `synth`
+`venture_research`, `venture_infrastructure`, `venture_security`, `venture_evidence`, `venture_memory`, `venture_delivery`
 
 ### Observations
 
 ```
-Archivist agent → writes observations/YYYY-MM-DD.md + index.json
+Venture Memory agent → writes observations/YYYY-MM-DD.md + index.json
                                     ↓
 Dashboard reads ← GET /api/observations/recent?hours=N
                 ← GET /api/observations/search?q=term

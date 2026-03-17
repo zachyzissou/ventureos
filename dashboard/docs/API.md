@@ -189,8 +189,8 @@ Returns health summary for all registered OpenClaw agents.
   },
   "agents": [
     {
-      "agentId": "oracle",
-      "sessionsDir": "/Users/you/.openclaw/agents/oracle/sessions",
+      "agentId": "venture_research",
+      "sessionsDir": "/Users/you/.openclaw/agents/venture_research/sessions",
       "sessionCount": 142,
       "abortedCount": 3,
       "successRate": 0.9789,
@@ -205,7 +205,7 @@ Returns health summary for all registered OpenClaw agents.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `agentId` | string | Agent identifier (e.g., `oracle`, `atlas`) |
+| `agentId` | string | Agent identifier (e.g., `venture_research`, `venture_infrastructure`) |
 | `sessionCount` | integer | Total sessions for this agent |
 | `abortedCount` | integer | Sessions that ended with abort/failure |
 | `successRate` | number \| null | `(total - aborted) / total`, null if no sessions |
@@ -216,7 +216,7 @@ Returns health summary for all registered OpenClaw agents.
 
 ## Observation Endpoints
 
-Observations are markdown and JSONL files in the observations directory (`$OBSERVATIONS_DIR`, default: `~/.openclaw/workspace-archivist/observations/`).
+Observations are markdown and JSONL files in the observations directory (`$OBSERVATIONS_DIR`, default: `~/.openclaw/workspace-venture_memory/observations/`).
 
 ### `GET /api/observations/recent`
 
@@ -237,7 +237,7 @@ Returns recently modified observation files.
 {
   "hours": 48,
   "cutoff": 1708070400000,
-  "dir": "/Users/you/.openclaw/workspace-archivist/observations",
+  "dir": "/Users/you/.openclaw/workspace-venture_memory/observations",
   "count": 12,
   "items": [
     {
@@ -270,7 +270,7 @@ Full-text search across all observation files.
 ```json
 {
   "q": "dashboard",
-  "dir": "/Users/you/.openclaw/workspace-archivist/observations",
+  "dir": "/Users/you/.openclaw/workspace-venture_memory/observations",
   "count": 5,
   "items": [
     {
@@ -289,7 +289,7 @@ Full-text search across all observation files.
 ```json
 {
   "error": "Missing q parameter",
-  "dir": "/Users/you/.openclaw/workspace-archivist/observations",
+  "dir": "/Users/you/.openclaw/workspace-venture_memory/observations",
   "count": 0,
   "items": []
 }
@@ -350,10 +350,10 @@ Returns health and activity for all VentureOS agents.
 ```json
 {
   "updatedAt": 1708070400000,
-  "agentIds": ["oracle", "atlas", "sentinel", "verifier", "archivist", "synth"],
+  "agentIds": ["venture_research", "venture_infrastructure", "venture_security", "venture_evidence", "venture_memory", "venture_delivery"],
   "agents": {
-    "oracle": {
-      "agentId": "oracle",
+    "venture_research": {
+      "agentId": "venture_research",
       "status": "idle",
       "lastActivityMs": 1708070000000,
       "sessionCount": 142,
@@ -393,7 +393,7 @@ Returns Mission Control overview: active work, priorities, team status, and rece
     "overall": "idle",
     "agents": [
       {
-        "agentId": "oracle",
+        "agentId": "venture_research",
         "status": "idle",
         "lastActivityMs": 1708070000000,
         "successRate24h": 1.0,
@@ -404,7 +404,7 @@ Returns Mission Control overview: active work, priorities, team status, and rece
   },
   "recentCompletions": [
     {
-      "agentId": "archivist",
+      "agentId": "venture_memory",
       "label": "Dashboard docs",
       "sessionId": "abc-123",
       "updatedAt": 1708070000000,
@@ -528,7 +528,7 @@ Returns all cron jobs with schedule, status, and timing info.
 
 Returns unified scheduled jobs for Mission Control:
 - OpenClaw cron jobs (`~/.openclaw/cron/jobs.json`)
-- macOS LaunchAgents (Nexus/OpenClaw/VentureOS automation labels)
+- macOS LaunchAgents (Venture Control/OpenClaw/VentureOS automation labels)
 
 Each row includes:
 - `label`
@@ -783,7 +783,7 @@ Heartbeat-driven queue pickup for agent workers.
 **Request:**
 ```json
 {
-  "agentId": "oracle",
+  "agentId": "venture_research",
   "limit": 1,
   "allowParallel": false
 }
@@ -799,7 +799,7 @@ Heartbeat-driven queue pickup for agent workers.
 **Response (200):**
 ```json
 {
-  "agentId": "oracle",
+  "agentId": "venture_research",
   "pickedCount": 1,
   "existingRunning": 0,
   "scannedQueued": 3,
@@ -857,7 +857,7 @@ Returns the current `memory/active-tasks.md` snapshot plus stale-task detection.
       {
         "taskId": "task-123",
         "status": "RUNNING",
-        "assigneeId": "oracle",
+        "assigneeId": "venture_research",
         "startedAt": "2026-02-21T08:45:00.000Z",
         "updatedAt": "2026-02-21T08:59:00.000Z"
       }
@@ -877,7 +877,7 @@ Requeues running tasks found in the active-task snapshot. Used for crash/restart
 **Request (optional):**
 ```json
 {
-  "agentId": "oracle",
+  "agentId": "venture_research",
   "limit": 20
 }
 ```
@@ -964,7 +964,7 @@ Runs the 5-layer token-compaction pipeline on an input file set.
 ```json
 {
   "sessionId": "sess-abc",
-  "agentId": "oracle",
+  "agentId": "venture_research",
   "files": [
     {
       "path": "src/main.ts",
@@ -1004,7 +1004,7 @@ Runs the 5-layer token-compaction pipeline on an input file set.
     ],
     "metrics": {
       "sessionId": "sess-abc",
-      "agentId": "oracle",
+      "agentId": "venture_research",
       "level": "standard",
       "preTokens": 12,
       "postTokens": 7,
@@ -1038,7 +1038,7 @@ Returns persisted compaction run history with per-session savings summary.
   "metrics": [
     {
       "sessionId": "sess-abc",
-      "agentId": "oracle",
+      "agentId": "venture_research",
       "level": "standard",
       "preTokens": 1200,
       "postTokens": 310,
@@ -1078,7 +1078,7 @@ Generates a daily digest with actionable, diffable recommendations for one agent
 **Request (optional):**
 ```json
 {
-  "agentId": "oracle",
+  "agentId": "venture_research",
   "date": "2026-02-21",
   "minRecommendations": 3
 }
@@ -1090,8 +1090,8 @@ Generates a daily digest with actionable, diffable recommendations for one agent
   "ok": true,
   "digestPath": "memory/self-improvement/2026-02-21.md",
   "digest": {
-    "id": "sid-2026-02-21-oracle-abc123",
-    "agentId": "oracle",
+    "id": "sid-2026-02-21-venture_research-abc123",
+    "agentId": "venture_research",
     "date": "2026-02-21",
     "approvedCount": 0,
     "rejectedCount": 0,
@@ -1100,9 +1100,9 @@ Generates a daily digest with actionable, diffable recommendations for one agent
       {
         "id": "sir-123",
         "type": "workflow_change",
-        "target": "souls/oracle/PRINCIPLES.md",
+        "target": "souls/venture_research/PRINCIPLES.md",
         "status": "pending",
-        "diff": "--- a/souls/oracle/PRINCIPLES.md\n+++ b/souls/oracle/PRINCIPLES.md\n@@\n-...\n+..."
+        "diff": "--- a/souls/venture_research/PRINCIPLES.md\n+++ b/souls/venture_research/PRINCIPLES.md\n@@\n-...\n+..."
       }
     ]
   }
@@ -1123,8 +1123,8 @@ Lists stored digest runs.
   "total": 1,
   "digests": [
     {
-      "id": "sid-2026-02-21-oracle-abc123",
-      "agentId": "oracle",
+      "id": "sid-2026-02-21-venture_research-abc123",
+      "agentId": "venture_research",
       "date": "2026-02-21",
       "approvedCount": 1,
       "rejectedCount": 0,
@@ -1144,7 +1144,7 @@ Explicitly approves and auto-applies a recommendation.
 
 **Request (optional):**
 ```json
-{ "agentId": "oracle" }
+{ "agentId": "venture_research" }
 ```
 
 ### `POST /api/self-improvement/recommendations/:id/reject`
@@ -1318,7 +1318,7 @@ Submit a structured work proposal from an agent.
 {
   "title": "Ship partner onboarding flow",
   "goal": "Implement and verify onboarding automation",
-  "submittedByAgentId": "echo",
+  "submittedByAgentId": "venture_strategy",
   "estimatedCostUsd": 8.5,
   "requiredSkills": ["backend", "qa", "docs"],
   "riskAssessment": {
@@ -1331,13 +1331,13 @@ Submit a structured work proposal from an agent.
       "stepId": "build",
       "title": "Implement workflow",
       "description": "Create onboarding orchestration",
-      "agentId": "synth"
+      "agentId": "venture_delivery"
     },
     {
       "stepId": "verify",
       "title": "Run validation",
       "description": "Execute QA + acceptance tests",
-      "agentId": "verifier",
+      "agentId": "venture_evidence",
       "dependsOnStepIds": ["build"]
     }
   ]
@@ -1402,7 +1402,7 @@ Returns freshness counts, per-file status snapshots, recent checks, and open tri
 
 ### `GET /api/living-files/files`
 
-List registered file ownership records (`?ownerAgentId=archivist` optional filter).
+List registered file ownership records (`?ownerAgentId=venture_memory` optional filter).
 
 ### `POST /api/living-files/files`
 
@@ -1412,7 +1412,7 @@ Register (or upsert) a managed file.
 ```json
 {
   "filePath": "docs/API.md",
-  "ownerAgentId": "archivist",
+  "ownerAgentId": "venture_memory",
   "expectedUpdateHours": 24,
   "intentionallyStatic": false,
   "notes": "API docs should be refreshed on endpoint changes"

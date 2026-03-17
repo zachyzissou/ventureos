@@ -1,5 +1,5 @@
 import { generateSoulMd, validateCard } from '../schema';
-import { nexus } from '../02-nexus';
+import { venture_control } from '../02-venture-control';
 
 function extractSection(md: string, header: string, nextHeader: string): string {
   const start = md.indexOf(header);
@@ -24,7 +24,7 @@ function extractNeverBullets(md: string): string[] {
 
 describe('role-cards SOUL.md generator', () => {
   test('generateSoulMd produces key sections and normalizes NEVER rules', () => {
-    const card = structuredClone(nexus);
+    const card = structuredClone(venture_control);
 
     card.hardBoundaries.hardBans = [
       'never ship secrets',
@@ -55,7 +55,7 @@ describe('role-cards SOUL.md generator', () => {
   });
 
   test('generateSoulMd drops empty/whitespace NEVER entries', () => {
-    const card = structuredClone(nexus) as any;
+    const card = structuredClone(venture_control) as any;
 
     card.hardBoundaries.hardBans = ['', '   ', 'never do this'];
     card.hardBoundaries.rationale = ['', '', ''];

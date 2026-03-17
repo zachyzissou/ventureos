@@ -5,8 +5,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 HOME="$(mktemp -d)"
 export HOME
-export AGENT_ID="atlas"
-export OPENCLAW_WORKSPACE="$HOME/workspace-atlas"
+export AGENT_ID="venture_infrastructure"
+export OPENCLAW_WORKSPACE="$HOME/workspace-venture_infrastructure"
 mkdir -p "$OPENCLAW_WORKSPACE"
 mkdir -p "$HOME/.openclaw/cron/runs"
 

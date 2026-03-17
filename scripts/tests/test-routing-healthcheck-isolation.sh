@@ -45,20 +45,20 @@ EOF
   chmod +x "$ws/scripts/discord-webhook-send.mjs"
 }
 
-WS_A="$TMP_DIR/workspace-atlas"
-WS_B="$TMP_DIR/workspace-oracle"
+WS_A="$TMP_DIR/workspace-venture_infrastructure"
+WS_B="$TMP_DIR/workspace-venture_research"
 setup_workspace "$WS_A"
 setup_workspace "$WS_B"
 
-AGENT_ID=atlas OPENCLAW_WORKSPACE="$WS_A" "$SCRIPT" >/dev/null
-AGENT_ID=oracle OPENCLAW_WORKSPACE="$WS_B" "$SCRIPT" >/dev/null
+AGENT_ID=venture_infrastructure OPENCLAW_WORKSPACE="$WS_A" "$SCRIPT" >/dev/null
+AGENT_ID=venture_research OPENCLAW_WORKSPACE="$WS_B" "$SCRIPT" >/dev/null
 
 python3 - <<PY
 import json
 from pathlib import Path
 
-a = Path("$WS_A/runtime/monitor/atlas/routing-healthcheck.json")
-b = Path("$WS_B/runtime/monitor/oracle/routing-healthcheck.json")
+a = Path("$WS_A/runtime/monitor/venture_infrastructure/routing-healthcheck.json")
+b = Path("$WS_B/runtime/monitor/venture_research/routing-healthcheck.json")
 
 assert a.exists(), a
 assert b.exists(), b
@@ -66,8 +66,8 @@ assert b.exists(), b
 aj = json.loads(a.read_text())
 bj = json.loads(b.read_text())
 
-assert aj.get("agentId") == "atlas", aj
-assert bj.get("agentId") == "oracle", bj
+assert aj.get("agentId") == "venture_infrastructure", aj
+assert bj.get("agentId") == "venture_research", bj
 assert aj.get("workspace") != bj.get("workspace"), (aj, bj)
 print("ROUTING_HEALTHCHECK_ISOLATION_OK")
 PY

@@ -57,7 +57,12 @@ const VALID_STATUSES: readonly string[] = [
   'failed',
 ];
 const VALID_PRIORITIES: readonly string[] = ['critical', 'high', 'medium', 'low'];
-const VALID_ASSIGNEE_TYPES: readonly string[] = ['human', 'nexus', 'agent'];
+const VALID_ASSIGNEE_TYPES: readonly string[] = ['human', 'control_plane', 'nexus', 'agent'];
+
+function normalizeAssigneeType(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return value === 'nexus' ? 'control_plane' : value;
+}
 
 // ─── Event Bus ───────────────────────────────────────────────────────────────
 
@@ -106,7 +111,7 @@ export function parseSubscriptionFilter(params: {
     filter.missionId = params.missionId.trim();
   }
   if (params.assigneeType && VALID_ASSIGNEE_TYPES.includes(params.assigneeType)) {
-    filter.assigneeType = params.assigneeType as TaskAssigneeType;
+    filter.assigneeType = normalizeAssigneeType(params.assigneeType) as TaskAssigneeType;
   }
   return filter;
 }
@@ -120,7 +125,7 @@ export function matchesFilter(card: TaskCard, filter: SseSubscriptionFilter): bo
   if (filter.agentId && card.agentId !== filter.agentId) return false;
   if (filter.priority && card.priority !== filter.priority) return false;
   if (filter.missionId && card.missionId !== filter.missionId) return false;
-  if (filter.assigneeType && (card.assigneeType ?? 'agent') !== filter.assigneeType) return false;
+  if (filter.assigneeType && normalizeAssigneeType(card.assigneeType ?? 'agent') !== filter.assigneeType) return false;
   return true;
 }
 
