@@ -80,6 +80,34 @@ export async function installDeterministicApiMocks(page: Page): Promise<void> {
 }
 
 export async function stabilizeForVisualSnapshot(page: Page): Promise<void> {
+  const fixedTs = Date.parse(FIXED_TIMESTAMP);
+
+  await page.waitForFunction(
+    (expectedTs) => {
+      const tm = (window as unknown as {
+        __TACTICAL_MAP__?: {
+          mapStore?: { get?: () => { updatedAt?: string } };
+          economyStore?: { get?: () => { updatedAt?: number } };
+          healthStore?: { get?: () => { updatedAt?: number } };
+        };
+      }).__TACTICAL_MAP__;
+
+      const mapUpdatedAt = tm?.mapStore?.get?.()?.updatedAt;
+      const economyUpdatedAt = tm?.economyStore?.get?.()?.updatedAt;
+      const healthUpdatedAt = tm?.healthStore?.get?.()?.updatedAt;
+
+      return (
+        typeof mapUpdatedAt === 'string' &&
+        Date.parse(mapUpdatedAt) === expectedTs &&
+        typeof economyUpdatedAt === 'number' &&
+        economyUpdatedAt === expectedTs &&
+        typeof healthUpdatedAt === 'number' &&
+        healthUpdatedAt > 0
+      );
+    },
+    fixedTs
+  );
+
   await page.evaluate(() => {
     const tm = (window as unknown as {
       __TACTICAL_MAP__?: {
