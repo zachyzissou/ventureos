@@ -1,0 +1,158 @@
+{
+  "version": "v1.0",
+  "updated_at": "2026-03-17T00:00:00Z",
+  "counterpart_classes": [
+    { "counterpart_class": "prospective_customer", "description": "Pre-contract commercial prospect or buyer." },
+    { "counterpart_class": "customer", "description": "Active customer or contracted account." },
+    { "counterpart_class": "vendor", "description": "External supplier or service provider." },
+    { "counterpart_class": "partner", "description": "Strategic, channel, or delivery partner." },
+    { "counterpart_class": "regulator", "description": "Regulator, auditor, or formal oversight authority." },
+    { "counterpart_class": "press", "description": "Press, analyst, or media contact." },
+    { "counterpart_class": "public", "description": "General public or one-to-many public audience." }
+  ],
+  "information_classes": [
+    { "information_class": "I0_public", "description": "Already approved for public release." },
+    { "information_class": "I1_approved_operational", "description": "Approved factual operational content for external use." },
+    { "information_class": "I2_counterparty_confidential", "description": "Counterparty-specific commercial or operational information." },
+    { "information_class": "I3_contractual_or_regulated", "description": "Contractual, legal, privacy, or regulated content." },
+    { "information_class": "I4_security_or_incident_restricted", "description": "Security incidents, legal holds, or restricted crisis communications." }
+  ],
+  "action_classes": [
+    { "action_class": "outbound_publish", "description": "One-to-many public distribution." },
+    { "action_class": "outbound_direct_response", "description": "One-to-one or limited external response." },
+    { "action_class": "commercial_commitment", "description": "Pricing, scope, SLA, or delivery commitment." },
+    { "action_class": "legal_commitment", "description": "Contractual or compliance commitment." },
+    { "action_class": "regulatory_submission", "description": "Submission or response to regulator or formal auditor." },
+    { "action_class": "inbound_request_intake", "description": "Intake and routing of inbound request before substantive response." },
+    { "action_class": "incident_notification", "description": "External notice tied to service disruption or incident." }
+  ],
+  "approval_routes": [
+    {
+      "action_class": "outbound_publish",
+      "minimum_approver_rule": "<owning_scope>:director",
+      "secondary_approver_rules": [
+        {
+          "binding_id": "executive_office:director",
+          "condition": "high_impact_public_statement"
+        }
+      ],
+      "human_final_arbiter_required": false,
+      "human_final_arbiter_condition": "crisis_or_high_impact_public_communication"
+    },
+    {
+      "action_class": "commercial_commitment",
+      "minimum_approver": "sales:director",
+      "secondary_approver": "finance:director",
+      "human_final_arbiter_required": false
+    },
+    {
+      "action_class": "legal_commitment",
+      "minimum_approver": "legal:director",
+      "secondary_approver": "executive_office:director",
+      "human_final_arbiter_required": false
+    },
+    {
+      "action_class": "regulatory_submission",
+      "minimum_approver": "legal:director",
+      "secondary_approver": "executive_office:director",
+      "human_final_arbiter_required": true
+    },
+    {
+      "action_class": "incident_notification",
+      "minimum_approver": "operations:director",
+      "secondary_approver_rules": [
+        {
+          "binding_id": "it_security:director",
+          "condition": "security_incident"
+        },
+        {
+          "binding_id": "legal:director",
+          "condition": "liability_or_privacy_exposure"
+        }
+      ],
+      "human_final_arbiter_required": true
+    }
+  ],
+  "controls": [
+    {
+      "counterpart_class": "prospective_customer",
+      "action_class": "outbound_direct_response",
+      "information_class": "I1_approved_operational",
+      "default_decision": "allow_with_evidence",
+      "owner_binding_id": "sales:operator",
+      "required_approvals": ["sales:director"],
+      "required_evidence": ["approved_source_artifacts", "boundary_record_id", "approver_binding_ids"],
+      "prohibited_without_escalation": ["non_standard_pricing", "custom_legal_terms"]
+    },
+    {
+      "counterpart_class": "customer",
+      "action_class": "outbound_direct_response",
+      "information_class": "I2_counterparty_confidential",
+      "default_decision": "allow_with_evidence",
+      "owner_binding_id": "customer_success:operator",
+      "required_approvals": ["customer_success:director"],
+      "required_evidence": ["boundary_record_id", "approved_source_artifacts", "approver_binding_ids", "commitments_made"],
+      "prohibited_without_escalation": ["cross_customer_disclosure", "unsupported_root_cause_claims"]
+    },
+    {
+      "counterpart_class": "customer",
+      "action_class": "incident_notification",
+      "information_class": "I4_security_or_incident_restricted",
+      "default_decision": "escalation_required",
+      "owner_binding_id": "customer_success:director",
+      "required_approvals": ["operations:director", "it_security:director", "legal:director", "human_arbiter"],
+      "required_evidence": ["boundary_record_id", "linked_incident_id", "approver_binding_ids", "outbound_artifact"],
+      "prohibited_without_escalation": ["security_incident_disclosure", "liability_admission"]
+    },
+    {
+      "counterpart_class": "vendor",
+      "action_class": "outbound_direct_response",
+      "information_class": "I2_counterparty_confidential",
+      "default_decision": "allow_with_evidence",
+      "owner_binding_id": "operations:operator",
+      "required_approvals": ["operations:director"],
+      "required_evidence": ["boundary_record_id", "approved_source_artifacts", "approver_binding_ids"],
+      "prohibited_without_escalation": ["contract_change", "security_exception"]
+    },
+    {
+      "counterpart_class": "partner",
+      "action_class": "commercial_commitment",
+      "information_class": "I2_counterparty_confidential",
+      "default_decision": "escalation_required",
+      "owner_binding_id": "sales:director",
+      "required_approvals": ["sales:director", "finance:director", "legal:director"],
+      "required_evidence": ["commitments_made", "approver_binding_ids", "linked_contract_id"],
+      "prohibited_without_escalation": ["revenue_share_change", "non_standard_scope_commitment"]
+    },
+    {
+      "counterpart_class": "regulator",
+      "action_class": "regulatory_submission",
+      "information_class": "I3_contractual_or_regulated",
+      "default_decision": "escalation_required",
+      "owner_binding_id": "legal:director",
+      "required_approvals": ["legal:director", "executive_office:director", "human_arbiter"],
+      "required_evidence": ["boundary_record_id", "submission_artifact", "approver_binding_ids"],
+      "prohibited_without_escalation": ["unsupervised_submission", "unsupported_compliance_claim"]
+    },
+    {
+      "counterpart_class": "press",
+      "action_class": "outbound_publish",
+      "information_class": "I0_public",
+      "default_decision": "allow_with_evidence",
+      "owner_binding_id": "marketing:director",
+      "required_approvals": ["marketing:director", "executive_office:director"],
+      "required_evidence": ["boundary_record_id", "outbound_artifact", "approved_source_artifacts", "approver_binding_ids"],
+      "prohibited_without_escalation": ["forward_looking_commitment", "security_claim"]
+    },
+    {
+      "counterpart_class": "public",
+      "action_class": "outbound_publish",
+      "information_class": "I0_public",
+      "default_decision": "allow_with_evidence",
+      "owner_binding_id": "marketing:operator",
+      "required_approvals": ["marketing:director"],
+      "required_evidence": ["boundary_record_id", "outbound_artifact", "approved_source_artifacts", "approver_binding_ids"],
+      "prohibited_without_escalation": ["unapproved_financial_claim", "unapproved_legal_claim"]
+    }
+  ]
+}

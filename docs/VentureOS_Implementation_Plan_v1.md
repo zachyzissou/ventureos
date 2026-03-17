@@ -11,6 +11,7 @@ Normative references:
 - `docs/VentureOS_RBAC_Spec_v1.md`
 - `docs/VentureOS_Tool_Access_Matrix_v1.json`
 - `docs/VentureOS_Inter_Lane_Security_Model_v1.md`
+- `docs/VentureOS_External_Boundary_Protocol_v1.md`
 - `docs/VentureOS_30_Day_Operational_Cadence_v1.md`
 - `docs/VentureOS_SLA_Framework_Map_v1.md`
 - `docs/VentureOS_Phase0_Readiness_Checklist_v1.md`
@@ -81,6 +82,7 @@ In scope:
 - Activate Product, Engineering, Design, Marketing, Sales, Customer Success.
 - Implement product-to-market handoff SLAs (spec, release, launch, lead, customer feedback).
 - Add forecast integration across Finance, Sales, and Product.
+- Apply the external boundary protocol to customer, partner, and public-facing interactions before Phase B lanes operate independently.
 
 ### Phase C: Governance and scale safeguards (2026-06-15 to 2026-07-24)
 Objective: add risk-control departments and full-company governance.
@@ -148,6 +150,7 @@ In scope:
 ## 7) Dependency controls
 
 - Phase B requires G1 pass and verified KPI data quality from Data/Analytics.
+- Phase B also requires the external boundary protocol to be approved for customer, partner, and public-facing lanes.
 - Phase C requires G3 pass and documented access-control model from IT/Security using the canonical VentureOS role model and RBAC artifacts.
 - Phase C also requires the inter-lane communication security model to be defined for artifact exchange, approvals, and handoff evidence.
 - Phase D requires G5 pass and full lane contract adoption across all active departments.
