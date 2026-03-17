@@ -4,9 +4,10 @@ import {
   canPerformAction,
   allowedActions,
   validatePermission,
+  resolvePermissionSubject,
 } from '@/interaction/permissions';
-import { DEFAULT_PERMISSIONS, ROLE_HIERARCHY } from '@/interaction/types';
-import type { UserRole, ControlActionType, PermissionMap } from '@/interaction/types';
+import { DEFAULT_PERMISSIONS, ROLE_HIERARCHY, TACTICAL_ROLE_SUBJECTS } from '@/interaction/types';
+import type { UserRole, ControlActionType, PermissionMap, InteractionSubjectProfile } from '@/interaction/types';
 
 describe('interaction/permissions', () => {
   describe('hasRole', () => {
@@ -72,6 +73,25 @@ describe('interaction/permissions', () => {
       expect(canPerformAction('viewer', 'agent:view', custom)).toBe(false);
       expect(canPerformAction('admin', 'agent:view', custom)).toBe(true);
     });
+
+    it('accepts canonical subject profiles directly', () => {
+      const subject: InteractionSubjectProfile = {
+        bindingId: 'operations:operator',
+        authorityClass: 'control_plane',
+        capabilityId: 'venture_control',
+      };
+      expect(canPerformAction(subject, 'mission:spawn')).toBe(true);
+      expect(canPerformAction(subject, 'budget:adjust')).toBe(false);
+    });
+
+    it('honors a custom permission map for canonical subjects when a compatibility role is present', () => {
+      const custom: PermissionMap = {
+        ...DEFAULT_PERMISSIONS,
+        'agent:view': 'admin',
+      };
+      expect(canPerformAction(TACTICAL_ROLE_SUBJECTS.viewer, 'agent:view', custom)).toBe(false);
+      expect(canPerformAction(TACTICAL_ROLE_SUBJECTS.admin, 'agent:view', custom)).toBe(true);
+    });
   });
 
   describe('allowedActions', () => {
@@ -106,8 +126,15 @@ describe('interaction/permissions', () => {
       const result = validatePermission('viewer', 'agent:pause');
       expect(result).toBeTypeOf('string');
       expect(result).toContain('Insufficient permissions');
-      expect(result).toContain('operator');
-      expect(result).toContain('viewer');
+      expect(result).toContain('trust_evidence:auditor');
+    });
+  });
+
+  describe('resolvePermissionSubject', () => {
+    it('maps legacy tactical-map roles to canonical VentureOS subjects', () => {
+      expect(resolvePermissionSubject('viewer')).toEqual(TACTICAL_ROLE_SUBJECTS.viewer);
+      expect(resolvePermissionSubject('operator')).toEqual(TACTICAL_ROLE_SUBJECTS.operator);
+      expect(resolvePermissionSubject('admin')).toEqual(TACTICAL_ROLE_SUBJECTS.admin);
     });
   });
 

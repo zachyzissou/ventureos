@@ -1,5 +1,5 @@
 /**
- * Nexus Arbiter — Nexus 2.0 M2 (#285)
+ * VentureOS Arbiter
  *
  * Arbitration helpers that enforce policy-gate authority constraints.
  */
@@ -58,7 +58,7 @@ export function arbitrateRecommendation(input: ArbitrationInput): ArbitrationRes
     return {
       accepted: false,
       code: gate.code === 'INVALID_INPUT' ? 'ARBITRATION_INVALID' : 'ARBITRATION_DENIED',
-      message: 'Competition acceptance requires nexus or human authority',
+      message: 'Competition acceptance requires control-plane or human-final authority',
       recommendationId,
       overrideAvailable: true,
     };

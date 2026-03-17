@@ -3,6 +3,7 @@ import {
   createInitialUIState,
   DEFAULT_PERMISSIONS,
   ROLE_HIERARCHY,
+  TACTICAL_ROLE_SUBJECTS,
 } from '@/interaction/types';
 import type { ControlActionType, UserRole } from '@/interaction/types';
 
@@ -70,6 +71,14 @@ describe('interaction/types', () => {
     it('hierarchy is strictly ordered', () => {
       expect(ROLE_HIERARCHY.viewer).toBeLessThan(ROLE_HIERARCHY.operator);
       expect(ROLE_HIERARCHY.operator).toBeLessThan(ROLE_HIERARCHY.admin);
+    });
+  });
+
+  describe('TACTICAL_ROLE_SUBJECTS', () => {
+    it('maps each legacy UI role to a canonical subject', () => {
+      expect(TACTICAL_ROLE_SUBJECTS.viewer.bindingId).toBe('trust_evidence:auditor');
+      expect(TACTICAL_ROLE_SUBJECTS.operator.bindingId).toBe('operations:operator');
+      expect(TACTICAL_ROLE_SUBJECTS.admin.bindingId).toBe('executive_office:director');
     });
   });
 });
