@@ -906,9 +906,9 @@ describe('handleTaskBoard', () => {
       expect(card.exchangeEnvelope?.producer_binding_id).toBe('operations:operator');
       expect(card.exchangeEnvelope?.producer_capability_id).toBe('venture_control');
       expect(card.exchangeEnvelope?.consumer_binding_id).toBe('engineering:operator');
-      expect(card.exchangeEnvelope?.evidence_ref).toBe('runtime/logs/task_runs/task-board-exchanges.jsonl');
 
       const evidencePath = path.join(testRootDir, 'runtime', 'logs', 'task_runs', 'task-board-exchanges.jsonl');
+      expect(card.exchangeEnvelope?.evidence_ref).toBe(evidencePath);
       expect(fs.existsSync(evidencePath)).toBe(true);
       const evidenceLines = fs.readFileSync(evidencePath, 'utf8').trim().split('\n');
       expect(evidenceLines.length).toBe(1);

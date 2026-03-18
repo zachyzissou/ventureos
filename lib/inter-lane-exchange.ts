@@ -5,7 +5,10 @@ import path from 'node:path';
 import { normalizeCapabilityId } from './agent-identity.js';
 import paths from './paths.js';
 
-const { RUNTIME_LOG_DIR } = paths as typeof import('./paths.js');
+const { RUNTIME_LOG_DIR, VENTUREOS_ROOT } = paths as typeof import('./paths.js');
+const CANONICAL_BINDING_PATTERN = /^[a-z][a-z0-9_]*:(director|operator|auditor)$/;
+const ISO_UTC_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
+const MAX_ISSUED_AT_CLOCK_SKEW_MS = 10 * 60 * 1000;
 
 export type ExchangeClassification =
   | 'public_operational'
@@ -70,7 +73,7 @@ export interface ExchangeValidationResult {
 
 function isCanonicalBindingId(value: string | null | undefined): boolean {
   if (!value) return false;
-  return /^[a-z_]+:[a-z_]+$/.test(String(value).trim());
+  return CANONICAL_BINDING_PATTERN.test(String(value).trim());
 }
 
 function isHexSha256(value: string | null | undefined): boolean {
@@ -80,6 +83,7 @@ function isHexSha256(value: string | null | undefined): boolean {
 
 function parseTimestamp(raw: string | null | undefined): number | null {
   if (!raw) return null;
+  if (!ISO_UTC_TIMESTAMP_PATTERN.test(raw)) return null;
   const parsed = Date.parse(raw);
   return Number.isFinite(parsed) ? parsed : null;
 }
@@ -157,13 +161,16 @@ export function validateInterLaneExchangeEnvelope(
   const issuedAtMs = parseTimestamp(envelope.issued_at);
   const expiresAtMs = parseTimestamp(envelope.expires_at);
   if (issuedAtMs === null) {
-    errors.push('issued_at must be a valid ISO timestamp');
+    errors.push('issued_at must be a valid ISO-8601 UTC timestamp');
   }
   if (expiresAtMs === null) {
-    errors.push('expires_at must be a valid ISO timestamp');
+    errors.push('expires_at must be a valid ISO-8601 UTC timestamp');
   }
   if (issuedAtMs !== null && expiresAtMs !== null && expiresAtMs <= issuedAtMs) {
     errors.push('expires_at must be later than issued_at');
+  }
+  if (issuedAtMs !== null && issuedAtMs > (now.getTime() + MAX_ISSUED_AT_CLOCK_SKEW_MS)) {
+    errors.push('issued_at cannot be more than 10 minutes in the future');
   }
   if (expiresAtMs !== null && expiresAtMs <= now.getTime()) {
     errors.push('exchange envelope is expired');
@@ -231,14 +238,30 @@ function readReplayIndex(filePath: string): ReplayIndexStore {
   }
 }
 
+function replayEntryDeadlineMs(entry: ReplayIndexEntry, replayWindowMs: number): number | null {
+  const issuedAtMs = parseTimestamp(entry.issued_at);
+  const expiresAtMs = parseTimestamp(entry.expires_at);
+  if (issuedAtMs === null || expiresAtMs === null) return null;
+  return Math.min(expiresAtMs, issuedAtMs + replayWindowMs);
+}
+
 function pruneReplayEntries(entries: ReplayIndexEntry[], replayWindowMs: number, nowMs: number): ReplayIndexEntry[] {
   return entries.filter((entry) => {
-    const issuedAtMs = parseTimestamp(entry.issued_at);
-    const expiresAtMs = parseTimestamp(entry.expires_at);
-    if (issuedAtMs === null || expiresAtMs === null) return false;
-    if (expiresAtMs <= nowMs) return false;
-    return issuedAtMs >= (nowMs - replayWindowMs);
+    const deadlineMs = replayEntryDeadlineMs(entry, replayWindowMs);
+    return deadlineMs !== null && deadlineMs > nowMs;
   });
+}
+
+function writeReplayIndexAtomically(filePath: string, store: ReplayIndexStore): void {
+  const tmpPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    fs.writeFileSync(tmpPath, JSON.stringify(store, null, 2), 'utf8');
+    fs.renameSync(tmpPath, filePath);
+  } finally {
+    if (fs.existsSync(tmpPath)) {
+      fs.rmSync(tmpPath, { force: true });
+    }
+  }
 }
 
 export function reserveInterLaneExchangeEnvelope(
@@ -265,8 +288,24 @@ export function reserveInterLaneExchangeEnvelope(
   });
 
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify({ entries }, null, 2), 'utf8');
+  writeReplayIndexAtomically(filePath, { entries });
   return { ok: true };
+}
+
+export function resolveInterLaneExchangeEvidenceLog(
+  relativeName: string,
+): { logPath: string; evidenceRef: string } {
+  const safeName = String(relativeName || 'inter-lane-exchanges')
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const runtimeLogDir = process.env.VENTUREOS_RUNTIME_LOG_DIR ?? RUNTIME_LOG_DIR;
+  const logPath = path.join(runtimeLogDir, 'task_runs', `${safeName}.jsonl`);
+  const repoRelative = path.relative(VENTUREOS_ROOT, logPath);
+  const evidenceRef = repoRelative.startsWith('..') || path.isAbsolute(repoRelative)
+    ? logPath
+    : repoRelative;
+  return { logPath, evidenceRef };
 }
 
 export function appendInterLaneExchangeEvidence(
@@ -274,12 +313,7 @@ export function appendInterLaneExchangeEvidence(
   envelope: InterLaneExchangeEnvelope,
   metadata: Record<string, unknown> = {},
 ): string {
-  const safeName = String(relativeName || 'inter-lane-exchanges')
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  const runtimeLogDir = process.env.VENTUREOS_RUNTIME_LOG_DIR ?? RUNTIME_LOG_DIR;
-  const logPath = path.join(runtimeLogDir, 'task_runs', `${safeName}.jsonl`);
+  const { logPath } = resolveInterLaneExchangeEvidenceLog(relativeName);
   fs.mkdirSync(path.dirname(logPath), { recursive: true });
   fs.appendFileSync(
     logPath,

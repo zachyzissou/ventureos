@@ -36,6 +36,7 @@ import {
   appendInterLaneExchangeEvidence,
   materializeInterLaneExchangeEnvelope,
   reserveInterLaneExchangeEnvelope,
+  resolveInterLaneExchangeEvidenceLog,
 } from '../../../lib/inter-lane-exchange.js';
 import { getRequestSubject } from '../middleware/auth.js';
 
@@ -489,6 +490,7 @@ function attachTaskExchangeEnvelope(
   if (!subject?.actor?.bindingId) {
     return { ok: true, card };
   }
+  const evidenceLog = resolveInterLaneExchangeEvidenceLog('task-board-exchanges');
 
   const materialized = materializeInterLaneExchangeEnvelope({
     exchange_id: explicitExchange?.exchange_id,
@@ -503,7 +505,7 @@ function attachTaskExchangeEnvelope(
     issued_at: explicitExchange?.issued_at,
     expires_at: explicitExchange?.expires_at,
     classification: explicitExchange?.classification ?? 'internal_operational',
-    evidence_ref: explicitExchange?.evidence_ref ?? 'runtime/logs/task_runs/task-board-exchanges.jsonl',
+    evidence_ref: explicitExchange?.evidence_ref ?? evidenceLog.evidenceRef,
     transport_auth_class: explicitExchange?.transport_auth_class ?? 'dashboard_api_token',
     approval_chain: explicitExchange?.approval_chain,
     nonce: explicitExchange?.nonce,
