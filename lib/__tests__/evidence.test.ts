@@ -17,6 +17,37 @@ async function rewriteJsonFixture(destPath: string, date: string, capturedAt: st
   await fs.writeFile(destPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf-8');
 }
 
+function addUtcDays(base: Date, days: number): Date {
+  return new Date(base.getTime() + (days * 24 * 60 * 60 * 1000));
+}
+
+function formatUtcDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function buildUtcTimestamp(date: Date, hour: number, minute = 0): string {
+  return new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    hour,
+    minute,
+    0,
+    0,
+  )).toISOString().replace('.000Z', 'Z');
+}
+
+function buildFreshEvidenceClock(): { date: string; capturedAt: string; now: Date; month: string } {
+  const now = new Date();
+  const targetDate = addUtcDays(now, -1);
+  return {
+    date: formatUtcDate(targetDate),
+    capturedAt: buildUtcTimestamp(targetDate, 8),
+    now: new Date(buildUtcTimestamp(targetDate, 12)),
+    month: targetDate.toISOString().slice(0, 7),
+  };
+}
+
 type HandoffFixtureMode = 'all-on-time' | 'late-missing-breach-fields' | 'exception-approved' | 'legacy-status-only';
 
 function buildHandoffSummary(handoffs: Array<Record<string, unknown>>): Record<string, number> {
@@ -86,7 +117,7 @@ async function rewriteHandoffFixture(
       handoff.sla_status = 'exception';
       handoff.breach_level = 'level_3';
       handoff.exception_approved_by = 'executive_office:director';
-      handoff.exception_expires_at = '2026-03-17T12:00:00Z';
+      handoff.exception_expires_at = buildUtcTimestamp(addUtcDays(new Date(`${date}T00:00:00Z`), 1), 12);
       handoff.breach_owner = 'executive_office:director';
       handoff.breach_action = 'Defer downstream closeout until the approved exception window expires.';
     }
@@ -156,8 +187,7 @@ describe('lib/evidence', () => {
     process.env.VENTUREOS_EVIDENCE_WEEKLY_DIR = weeklyDir;
     process.env.VENTUREOS_EVIDENCE_MONTHLY_DIR = monthlyDir;
 
-    const date = '2026-03-16';
-    const capturedAt = '2026-03-16T08:00:00Z';
+    const { date, capturedAt, now, month } = buildFreshEvidenceClock();
     await copyFixture('runtime/logs/daily/agent-health.json', path.join(dailyDir, `${date}-agent-health.json`));
     await copyFixture('runtime/logs/daily/spend.json', path.join(dailyDir, `${date}-spend.json`));
     await copyFixture('runtime/logs/daily/kpi-snapshot.json', path.join(dailyDir, `${date}-kpi-snapshot.json`));
@@ -179,25 +209,25 @@ describe('lib/evidence', () => {
     expect(result.artifacts.every((artifact) => artifact.valid)).toBe(true);
     expect(await fs.readFile(path.join(dailyDir, 'agent-health.json'), 'utf-8')).toContain('captured_at');
 
-    const weeklyTarget = evidence.formatIsoWeek(new Date('2026-03-16T12:00:00Z'));
+    const weeklyTarget = evidence.formatIsoWeek(now);
     await evidence.generateWeeklyRollup({ isoWeek: weeklyTarget, dailyDir, weeklyDir });
     const weeklyValidation = await evidence.validateEvidence({
       cadence: 'weekly',
       target: weeklyTarget,
       weeklyDir,
       reportDir,
-      now: new Date('2026-03-13T12:00:00Z'),
+      now,
     });
     expect(weeklyValidation.status).toBe('pass');
 
-    const monthlyTarget = '2026-03';
+    const monthlyTarget = month;
     await evidence.generateMonthlyRollup({ month: monthlyTarget, dailyDir, monthlyDir });
     const monthlyValidation = await evidence.validateEvidence({
       cadence: 'monthly',
       target: monthlyTarget,
       monthlyDir,
       reportDir,
-      now: new Date('2026-03-13T12:00:00Z'),
+      now,
     });
     expect(monthlyValidation.status).toBe('pass');
   });
@@ -274,8 +304,7 @@ describe('lib/evidence', () => {
     process.env.VENTUREOS_EVIDENCE_WEEKLY_DIR = envWeeklyDir;
     process.env.VENTUREOS_EVIDENCE_MONTHLY_DIR = envMonthlyDir;
 
-    const date = '2026-03-16';
-    const capturedAt = '2026-03-16T08:00:00Z';
+    const { date, capturedAt, now, month } = buildFreshEvidenceClock();
     await copyFixture('runtime/logs/daily/agent-health.json', path.join(dailyDir, `${date}-agent-health.json`));
     await copyFixture('runtime/logs/daily/spend.json', path.join(dailyDir, `${date}-spend.json`));
     await copyFixture('runtime/logs/daily/kpi-snapshot.json', path.join(dailyDir, `${date}-kpi-snapshot.json`));
@@ -288,7 +317,7 @@ describe('lib/evidence', () => {
     await rewriteHandoffFixture(path.join(dailyDir, `${date}-handoff-ledger.json`), date, capturedAt, 'all-on-time');
 
     const evidence = require('../evidence') as typeof import('../evidence');
-    const isoWeek = evidence.formatIsoWeek(new Date('2026-03-16T12:00:00Z'));
+    const isoWeek = evidence.formatIsoWeek(now);
     await evidence.generateWeeklyRollup({ isoWeek, dailyDir, weeklyDir });
 
     const result = await evidence.validateEvidence({
@@ -296,13 +325,12 @@ describe('lib/evidence', () => {
       target: isoWeek,
       weeklyDir,
       reportDir,
-      now: new Date('2026-03-16T12:00:00Z'),
+      now,
     });
 
     expect(result.status).toBe('pass');
     expect(result.artifacts.every((artifact) => artifact.path.startsWith(weeklyDir))).toBe(true);
 
-    const month = '2026-03';
     await evidence.generateMonthlyRollup({ month, dailyDir, monthlyDir });
 
     const monthlyResult = await evidence.validateEvidence({
@@ -310,7 +338,7 @@ describe('lib/evidence', () => {
       target: month,
       monthlyDir,
       reportDir,
-      now: new Date('2026-03-16T12:00:00Z'),
+      now,
     });
 
     expect(monthlyResult.status).toBe('pass');
@@ -325,8 +353,7 @@ describe('lib/evidence', () => {
     process.env.VENTUREOS_ROOT = repoRoot;
     process.env.VENTUREOS_EVIDENCE_DAILY_DIR = dailyDir;
 
-    const date = '2026-03-16';
-    const capturedAt = '2026-03-16T08:00:00Z';
+    const { date, capturedAt, now } = buildFreshEvidenceClock();
     await copyFixture('runtime/logs/daily/agent-health.json', path.join(dailyDir, `${date}-agent-health.json`));
     await copyFixture('runtime/logs/daily/spend.json', path.join(dailyDir, `${date}-spend.json`));
     await copyFixture('runtime/logs/daily/kpi-snapshot.json', path.join(dailyDir, `${date}-kpi-snapshot.json`));
@@ -394,8 +421,7 @@ describe('lib/evidence', () => {
     process.env.VENTUREOS_ROOT = repoRoot;
     process.env.VENTUREOS_EVIDENCE_DAILY_DIR = dailyDir;
 
-    const date = '2026-03-16';
-    const capturedAt = '2026-03-16T08:00:00Z';
+    const { date, capturedAt, now } = buildFreshEvidenceClock();
     await copyFixture('runtime/logs/daily/agent-health.json', path.join(dailyDir, `${date}-agent-health.json`));
     await copyFixture('runtime/logs/daily/spend.json', path.join(dailyDir, `${date}-spend.json`));
     await copyFixture('runtime/logs/daily/kpi-snapshot.json', path.join(dailyDir, `${date}-kpi-snapshot.json`));
@@ -412,7 +438,7 @@ describe('lib/evidence', () => {
       cadence: 'daily',
       target: date,
       dailyDir,
-      now: new Date('2026-03-16T12:00:00Z'),
+      now,
       writeReport: false,
     });
 
@@ -435,8 +461,7 @@ describe('lib/evidence', () => {
 
     process.env.VENTUREOS_ROOT = repoRoot;
 
-    const date = '2026-03-16';
-    const capturedAt = '2026-03-16T08:00:00Z';
+    const { date, capturedAt, now, month } = buildFreshEvidenceClock();
     await copyFixture('runtime/logs/daily/agent-health.json', path.join(dailyDir, `${date}-agent-health.json`));
     await copyFixture('runtime/logs/daily/spend.json', path.join(dailyDir, `${date}-spend.json`));
     await copyFixture('runtime/logs/daily/kpi-snapshot.json', path.join(dailyDir, `${date}-kpi-snapshot.json`));
@@ -449,12 +474,12 @@ describe('lib/evidence', () => {
     await rewriteHandoffFixture(path.join(dailyDir, `${date}-handoff-ledger.json`), date, capturedAt, 'all-on-time');
 
     const evidence = require('../evidence') as typeof import('../evidence');
-    const isoWeek = evidence.formatIsoWeek(new Date('2026-03-16T12:00:00Z'));
+    const isoWeek = evidence.formatIsoWeek(now);
     await evidence.generateWeeklyRollup({ isoWeek, dailyDir, weeklyDir });
-    await evidence.generateMonthlyRollup({ month: '2026-03', dailyDir, monthlyDir });
+    await evidence.generateMonthlyRollup({ month, dailyDir, monthlyDir });
 
     const inventory = await evidence.buildEvidenceIndex({
-      now: new Date('2026-03-16T12:00:00Z'),
+      now,
       dailyDir,
       weeklyDir,
       monthlyDir,
@@ -466,7 +491,7 @@ describe('lib/evidence', () => {
     expect(inventory.daily.currentTargetComplete).toBe(true);
     expect(inventory.weekly.currentTarget).toBe(isoWeek);
     expect(inventory.weekly.currentTargetComplete).toBe(true);
-    expect(inventory.monthly.currentTarget).toBe('2026-03');
+    expect(inventory.monthly.currentTarget).toBe(month);
     expect(inventory.monthly.currentTargetComplete).toBe(true);
     expect(inventory.incidents.totalIncidents).toBe(1);
     expect(await fs.readFile(path.join(reportDir, 'evidence-index-latest.json'), 'utf-8')).toContain('"daily"');

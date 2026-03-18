@@ -5,6 +5,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Socket } from 'node:net';
+import type { InterLaneExchangeEnvelope } from '../../lib/inter-lane-exchange.js';
 
 // ─── HTTP Primitives ─────────────────────────────────────────────────────────
 
@@ -775,6 +776,8 @@ export interface TaskCard {
   replaySessionId?: string | null;
   /** Status transition audit trail. */
   statusHistory?: TaskStatusHistoryEntry[];
+  /** Canonical inter-lane exchange envelope recorded for the latest control mutation. */
+  exchangeEnvelope?: InterLaneExchangeEnvelope | null;
 }
 
 /** Summary counts per column returned by the summary endpoint. */

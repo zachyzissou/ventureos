@@ -93,6 +93,7 @@ function makeSampleCard(overrides: Partial<TaskCard> = {}): TaskCard {
 beforeEach(() => {
   fs.rmSync(testRootDir, { recursive: true, force: true });
   fs.mkdirSync(testDataDir, { recursive: true });
+  process.env.VENTUREOS_RUNTIME_LOG_DIR = path.join(testRootDir, 'runtime', 'logs');
 });
 
 afterEach(() => {
@@ -101,6 +102,7 @@ afterEach(() => {
   } catch {
     // ignore
   }
+  delete process.env.VENTUREOS_RUNTIME_LOG_DIR;
 });
 
 // ─── Unit tests for pure functions ───────────────────────────────────────────
@@ -880,6 +882,97 @@ describe('handleTaskBoard', () => {
       const loaded = loadTasks(testDataDir);
       expect(loaded).toHaveLength(1);
       expect(loaded[0].title).toBe('New task');
+    });
+
+    it('records an inter-lane exchange envelope for trusted canonical subjects', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({
+          url: '/api/task-board',
+          method: 'POST',
+          headers: {
+            'x-ventureos-binding-id': 'operations:operator',
+            'x-ventureos-capability-id': 'venture_control',
+          },
+        }),
+        res,
+        depsWithBody({
+          title: 'Envelope task',
+          consumerBindingId: 'engineering:operator',
+        }),
+      );
+      expect(res._statusCode).toBe(201);
+      const card = parseJsonBody<{ card: TaskCard }>(res).card;
+      expect(card.exchangeEnvelope?.producer_binding_id).toBe('operations:operator');
+      expect(card.exchangeEnvelope?.producer_capability_id).toBe('venture_control');
+      expect(card.exchangeEnvelope?.consumer_binding_id).toBe('engineering:operator');
+
+      const evidencePath = path.join(testRootDir, 'runtime', 'logs', 'task_runs', 'task-board-exchanges.jsonl');
+      expect(card.exchangeEnvelope?.evidence_ref).toBe(evidencePath);
+      expect(fs.existsSync(evidencePath)).toBe(true);
+      const evidenceLines = fs.readFileSync(evidencePath, 'utf8').trim().split('\n');
+      expect(evidenceLines.length).toBe(1);
+    });
+
+    it('rejects expired explicit exchange envelopes', async () => {
+      const res = mockResponse();
+      await handleTaskBoard(
+        mockRequest({
+          url: '/api/task-board',
+          method: 'POST',
+          headers: {
+            'x-ventureos-binding-id': 'operations:operator',
+            'x-ventureos-capability-id': 'venture_control',
+          },
+        }),
+        res,
+        depsWithBody({
+          title: 'Expired envelope task',
+          consumerBindingId: 'engineering:operator',
+          exchange: {
+            exchange_id: 'exch-expired',
+            nonce: 'nonce-expired',
+            issued_at: '2026-03-17T10:00:00.000Z',
+            expires_at: '2026-03-17T09:00:00.000Z',
+          },
+        }),
+      );
+      expect(res._statusCode).toBe(400);
+      expect(parseJsonBody<{ error: string }>(res).error).toMatch(/expires_at/i);
+    });
+
+    it('rejects duplicate explicit exchange ids within the replay window', async () => {
+      const requestHeaders = {
+        'x-ventureos-binding-id': 'operations:operator',
+        'x-ventureos-capability-id': 'venture_control',
+      };
+      const payload = {
+        title: 'Replay-protected task',
+        consumerBindingId: 'engineering:operator',
+        exchange: {
+          exchange_id: 'exch-duplicate',
+          nonce: 'nonce-duplicate',
+          issued_at: new Date(Date.now() - 60_000).toISOString(),
+          expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        },
+      };
+
+      const firstRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST', headers: requestHeaders }),
+        firstRes,
+        depsWithBody(payload),
+      );
+      expect(firstRes._statusCode).toBe(201);
+
+      const secondRes = mockResponse();
+      await handleTaskBoard(
+        mockRequest({ url: '/api/task-board', method: 'POST', headers: requestHeaders }),
+        secondRes,
+        depsWithBody(payload),
+      );
+      expect(secondRes._statusCode).toBe(400);
+      expect(parseJsonBody<{ error: string }>(secondRes).error).toMatch(/already consumed/i);
     });
 
     it('rejects empty title', async () => {
