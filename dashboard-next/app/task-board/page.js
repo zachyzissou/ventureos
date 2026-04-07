@@ -22,6 +22,7 @@ function formatTs(epochMs) {
 
 export default function TaskBoardPage() {
   const {
+    normalizedApiBase,
     token,
     authenticateIfNeeded,
   } = useDashboardSession();

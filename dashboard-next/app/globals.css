@@ -159,11 +159,38 @@ a {
   gap: 10px;
 }
 
+.auth-form {
+  align-items: flex-start;
+}
+
+.field-group {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 320px;
+  min-width: min(320px, 100%);
+}
+
+.field-group label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.field-help {
+  margin: 0;
+  max-width: 60ch;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
 .compact-actions {
   margin-top: 0;
 }
 
-input[type="text"] {
+input[type="text"],
+input[type="password"] {
   width: min(420px, 100%);
   background: #0a202a;
   color: var(--text);
