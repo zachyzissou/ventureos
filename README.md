@@ -1,5 +1,5 @@
 > **License Notice**
-> This repository is source-visible only. No copying, modification, redistribution, deployment, or commercial use is permitted without prior written permission from Zach Gonser. See `LICENSE` for details.
+> This repository is source-visible only. You may view/read the source for personal reference; no other rights are granted. No modification, redistribution, deployment, or commercial use is permitted without prior written permission from Zach Gonser. See `LICENSE` for details.
 
 # ventureos
 
@@ -192,6 +192,6 @@ Acceptance is expected from:
 
 ## License & contact
 
-- License: MIT (see repo metadata for exact terms if changed).
-- Maintainer contact: `@zachyzissou`
+- License: SlurpNet Source-Visible License v1.0 (see [LICENSE](./LICENSE)).
+- Maintainer contact: https://github.com/zachyzissou
 - Security contact: via [SECURITY.md](./SECURITY.md)
