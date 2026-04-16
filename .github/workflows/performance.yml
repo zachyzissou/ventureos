@@ -13,6 +13,11 @@
 
 name: Performance Benchmarks
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 on:
   push:
     branches: [main]
@@ -128,7 +133,7 @@ jobs:
           retention-days: 30
 
       - name: Comment on PR with results
-        if: github.event_name == 'pull_request' && always()
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' && always()
         uses: actions/github-script@v7
         with:
           script: |
