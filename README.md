@@ -13,6 +13,15 @@ VentureOS is a TypeScript monorepo that coordinates multi-agent operations, dash
 It combines shared libraries, API services, and a web dashboard to track role readiness, mission health, and session handoffs with audit-friendly artifacts.
 The repo currently acts as the local execution layer for roadmap delivery and readiness checks used in OpenClaw-integrated environments.
 
+## Current Truth
+
+- Canonical GitHub Project: [#41 ventureos](https://github.com/users/zachyzissou/projects/41)
+- Last refreshed: 2026-05-31T06:40Z.
+- Current roadmap source of truth: issue [#138](https://github.com/zachyzissou/ventureos/issues/138).
+- Current active implementation issue: [#640](https://github.com/zachyzissou/ventureos/issues/640).
+- Current active PR: [#650](https://github.com/zachyzissou/ventureos/pull/650).
+- `docs/ROADMAP.md` and `docs/STATUS.md` are archived pointers; keep active planning in GitHub issues and Project #41.
+
 ## Problem / value
 
 - **Problem:** Operations visibility and reproducibility were fragmented across ad hoc scripts, docs, and one-off dashboards.
